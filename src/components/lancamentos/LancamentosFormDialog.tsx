@@ -27,7 +27,12 @@ export const LancamentosFormDialog = () => {
     fornecedores,
     formasPagamento,
     contasBancarias,
-    selectedId
+    selectedId,
+    refreshCategorias,
+    refreshFornecedores,
+    refreshClientes,
+    refreshFormasPagamento,
+    refreshContasBancarias,
   } = useLancamentosContext();
 
   const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita">(formData.tipo || "despesa");
@@ -143,6 +148,7 @@ export const LancamentosFormDialog = () => {
             onChange={(value) => handleSelectChange('categoria_id', value)}
             categorias={categorias}
             tipo={selectedTipo}
+            onRefresh={refreshCategorias}
           />
           
           <ClienteFornecedorSelect 
@@ -153,6 +159,8 @@ export const LancamentosFormDialog = () => {
             onFornecedorChange={(value) => handleSelectChange('fornecedor_id', value)}
             clientes={clientes}
             fornecedores={fornecedores}
+            onRefreshClientes={refreshClientes}
+            onRefreshFornecedores={refreshFornecedores}
           />
           
           <GenericSelect 
@@ -163,6 +171,12 @@ export const LancamentosFormDialog = () => {
             noneOptionValue="no-payment-method"
             nameField="descricao"
             placeholder="Selecione a forma de pagamento"
+            quickAdd={{
+              title: "Forma de Pagamento",
+              table: "formas_pagamento",
+              fields: [{ name: "descricao", label: "Descrição", required: true }],
+              onSuccess: refreshFormasPagamento,
+            }}
           />
           
           <GenericSelect 
@@ -172,6 +186,17 @@ export const LancamentosFormDialog = () => {
             options={contasBancarias}
             noneOptionValue="no-bank-account"
             placeholder="Selecione a conta bancária"
+            quickAdd={{
+              title: "Conta Bancária",
+              table: "contas_bancarias",
+              fields: [
+                { name: "nome", label: "Nome", required: true },
+                { name: "banco", label: "Banco", required: false },
+                { name: "agencia", label: "Agência", required: false },
+                { name: "conta", label: "Conta", required: false },
+              ],
+              onSuccess: refreshContasBancarias,
+            }}
           />
         </div>
         <DialogFooter>
