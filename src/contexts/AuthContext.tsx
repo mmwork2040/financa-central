@@ -11,6 +11,7 @@ type AuthContextType = {
   userProfile: any | null;
   empresaId: string | null;
   userRole: string | null;
+  isSuperAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   userProfile: null,
   empresaId: null,
   userRole: null,
+  isSuperAdmin: false,
   login: async () => {},
   logout: async () => {},
 });
@@ -187,6 +189,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         userProfile,
         empresaId,
         userRole,
+        isSuperAdmin: userRole === 'super_admin',
         login,
         logout
       }}
