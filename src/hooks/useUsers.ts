@@ -13,7 +13,7 @@ export const useUsers = () => {
   const [saving, setSaving] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const { toast } = useToast();
-  const { user: authUser } = useAuth();
+  const { user: authUser, empresaId } = useAuth();
 
   const fetchUsers = async () => {
     try {
@@ -64,7 +64,7 @@ export const useUsers = () => {
       } else {
         // Create new user
         try {
-          await createUser(formData);
+          await createUser(formData, empresaId);
           toast({
             title: "Sucesso",
             description: "Usuário cadastrado com sucesso. Ele receberá um email de confirmação.",

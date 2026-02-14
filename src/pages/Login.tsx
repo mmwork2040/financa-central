@@ -25,6 +25,12 @@ export const Login = () => {
       description="Entre com suas credenciais para acessar o sistema"
     >
       <LoginForm onLogin={handleLogin} isLoading={loading} />
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        Não tem uma conta?{" "}
+        <button type="button" onClick={() => navigate("/register")} className="text-primary hover:underline">
+          Registre-se
+        </button>
+      </p>
     </AuthContainer>
   );
 };

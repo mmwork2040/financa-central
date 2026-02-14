@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface FormaPagamento {
   id: string;
@@ -15,6 +16,7 @@ export const useFormasPagamento = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast: toastOld } = useToast();
+  const { empresaId } = useAuth();
 
   const fetchFormasPagamento = async () => {
     try {
@@ -73,7 +75,7 @@ export const useFormasPagamento = () => {
         // Insert
         const { error } = await supabase
           .from('formas_pagamento')
-          .insert([{ descricao }]);
+          .insert([{ descricao, empresa_id: empresaId }]);
 
         if (error) throw error;
 

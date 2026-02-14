@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +9,8 @@ type AuthContextType = {
   loading: boolean;
   user: User | null;
   userProfile: any | null;
+  empresaId: string | null;
+  userRole: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -19,6 +20,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   user: null,
   userProfile: null,
+  empresaId: null,
+  userRole: null,
   login: async () => {},
   logout: async () => {},
 });
@@ -28,10 +31,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<any | null>(null);
+  const [empresaId, setEmpresaId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Função para carregar o perfil do usuário
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -53,8 +57,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('empresa_id, role')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error("Erro ao carregar role do usuário:", error);
+        return null;
+      }
+
+      if (data) {
+        setEmpresaId(data.empresa_id);
+        setUserRole(data.role);
+      }
+      return data;
+    } catch (error) {
+      console.error("Erro ao carregar role:", error);
+      return null;
+    }
+  };
+
   useEffect(() => {
-    // Configurar o listener de mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         setSession(currentSession);
@@ -63,20 +90,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (currentSession?.user) {
           setTimeout(() => {
             fetchUserProfile(currentSession.user.id);
+            fetchUserRole(currentSession.user.id);
           }, 0);
         } else {
           setUserProfile(null);
+          setEmpresaId(null);
+          setUserRole(null);
         }
       }
     );
 
-    // Verificar sessão inicial
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       
       if (currentSession?.user) {
-        fetchUserProfile(currentSession.user.id).finally(() => {
+        Promise.all([
+          fetchUserProfile(currentSession.user.id),
+          fetchUserRole(currentSession.user.id),
+        ]).finally(() => {
           setLoading(false);
         });
       } else {
@@ -107,11 +139,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data.user) {
-        await fetchUserProfile(data.user.id);
+        const [profile] = await Promise.all([
+          fetchUserProfile(data.user.id),
+          fetchUserRole(data.user.id),
+        ]);
         navigate("/dashboard");
         toast({
           title: "Login realizado com sucesso",
-          description: `Bem-vindo ${userProfile?.nome || email}!`,
+          description: `Bem-vindo ${profile?.nome || email}!`,
         });
       }
     } catch (error: any) {
@@ -125,6 +160,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setLoading(true);
       await supabase.auth.signOut();
+      setEmpresaId(null);
+      setUserRole(null);
       navigate("/login");
       toast({
         title: "Logout realizado com sucesso",
@@ -148,6 +185,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         user,
         userProfile,
+        empresaId,
+        userRole,
         login,
         logout
       }}

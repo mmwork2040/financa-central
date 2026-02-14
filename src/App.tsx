@@ -11,6 +11,7 @@ import { AppLayout } from "@/layouts/AppLayout";
 // Pages
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import Fornecedores from "./pages/Fornecedores";
@@ -44,10 +45,11 @@ const App = () => {
               <Routes>
                 {/* Public routes */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
                 
                 {/* Home route for initial redirection */}
                 <Route path="/" element={<Navigate to="/login" />} />
-                
+
                 {/* Protected routes */}
                 <Route path="/dashboard" element={<RequireAuth><AppLayout><Dashboard /></AppLayout></RequireAuth>} />
                 <Route path="/users" element={<RequireAuth><AppLayout><Users /></AppLayout></RequireAuth>} />

@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Define the types for the data
 export type Lancamento = {
@@ -143,6 +144,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [formasPagamento, setFormasPagamento] = useState<FormaPagamento[]>([]);
   const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
   const { toast } = useToast();
+  const { empresaId } = useAuth();
 
   // Add sort state
   const [sortField, setSortField] = useState<string>('data_vencimento');
@@ -492,7 +494,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         // Create new lancamento
         const { data, error } = await supabase
           .from("lancamentos")
-          .insert([dataToSave])
+          .insert([{ ...dataToSave, empresa_id: empresaId }])
           .select();
 
         if (error) {

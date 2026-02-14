@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import { ContaBancaria } from "@/components/contas-bancarias/ContasBancariasTable";
 import { formatCurrency } from "@/utils/format";
 
@@ -28,6 +29,7 @@ export const useContasBancarias = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast: toastOld } = useToast();
+  const { empresaId } = useAuth();
 
   useEffect(() => {
     fetchContasBancarias();
@@ -138,7 +140,8 @@ export const useContasBancarias = () => {
           .from('contas_bancarias')
           .insert([{
             ...contaData,
-            saldo_atual: contaData.saldo_inicial
+            saldo_atual: contaData.saldo_inicial,
+            empresa_id: empresaId
           }]);
 
         if (error) throw error;
