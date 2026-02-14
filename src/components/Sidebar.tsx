@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 export const Sidebar = () => {
   const { isExpanded, toggle } = useSidebar();
   const location = useLocation();
-  const { userProfile, logout } = useAuth();
+  const { userProfile, logout, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   
   const isActive = (path: string) => location.pathname === path;
@@ -76,6 +76,11 @@ export const Sidebar = () => {
         <div className="border-t border-b border-sidebar-border p-4">
           <div className="text-sidebar-foreground text-sm font-medium">{userProfile?.nome || "Usuário"}</div>
           <div className="text-sidebar-foreground/80 text-xs">{userProfile?.email || ""}</div>
+          {isSuperAdmin && (
+            <div className="mt-1 inline-block rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+              Super Admin
+            </div>
+          )}
         </div>
       )}
       
