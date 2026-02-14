@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Categoria {
   id: string;
@@ -23,6 +23,7 @@ export function useCategorias() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { empresaId } = useAuth();
 
   useEffect(() => {
     fetchCategorias();
@@ -36,28 +37,16 @@ export function useCategorias() {
         .select('*')
         .order('nome');
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      // Type assertion to validate and convert the tipo field
       const validatedCategorias = data?.map(item => {
-        // Ensure tipo is either "receita" or "despesa"
         const tipo = item.tipo === "receita" ? "receita" : "despesa";
-        
-        return {
-          ...item,
-          tipo,
-        } as Categoria;
+        return { ...item, tipo } as Categoria;
       }) || [];
 
       setCategorias(validatedCategorias);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar categorias",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao carregar categorias", description: error.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -79,17 +68,11 @@ export function useCategorias() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setCurrentCategoria(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setCurrentCategoria(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (value: "receita" | "despesa") => {
-    setCurrentCategoria(prev => ({
-      ...prev,
-      tipo: value
-    }));
+    setCurrentCategoria(prev => ({ ...prev, tipo: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,31 +80,19 @@ export function useCategorias() {
     setIsSaving(true);
     
     try {
-      if (!currentCategoria.nome) {
-        throw new Error("Nome da categoria é obrigatório");
-      }
+      if (!currentCategoria.nome) throw new Error("Nome da categoria é obrigatório");
 
       if (currentCategoria.id) {
-        // Update
         const { error } = await supabase
           .from('categorias')
-          .update({
-            nome: currentCategoria.nome,
-            tipo: currentCategoria.tipo,
-          })
+          .update({ nome: currentCategoria.nome, tipo: currentCategoria.tipo })
           .eq('id', currentCategoria.id);
-
         if (error) throw error;
         toast({ title: "Categoria atualizada com sucesso!" });
       } else {
-        // Insert
         const { error } = await supabase
           .from('categorias')
-          .insert({
-            nome: currentCategoria.nome,
-            tipo: currentCategoria.tipo,
-          });
-
+          .insert({ nome: currentCategoria.nome, tipo: currentCategoria.tipo, empresa_id: empresaId });
         if (error) throw error;
         toast({ title: "Categoria cadastrada com sucesso!" });
       }
@@ -129,11 +100,7 @@ export function useCategorias() {
       setIsModalOpen(false);
       fetchCategorias();
     } catch (error: any) {
-      toast({
-        title: "Erro ao salvar categoria",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao salvar categoria", description: error.message, variant: "destructive" });
     } finally {
       setIsSaving(false);
     }
@@ -141,40 +108,19 @@ export function useCategorias() {
 
   const handleDelete = async () => {
     try {
-      const { error } = await supabase
-        .from('categorias')
-        .delete()
-        .eq('id', currentCategoria.id);
-
+      const { error } = await supabase.from('categorias').delete().eq('id', currentCategoria.id);
       if (error) throw error;
-      
       toast({ title: "Categoria excluída com sucesso!" });
       setIsDeleteDialogOpen(false);
       fetchCategorias();
     } catch (error: any) {
-      toast({
-        title: "Erro ao excluir categoria",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao excluir categoria", description: error.message, variant: "destructive" });
     }
   };
 
   return {
-    categorias,
-    loading,
-    currentCategoria,
-    isModalOpen,
-    isDeleteDialogOpen,
-    isSaving,
-    fetchCategorias,
-    openModal,
-    confirmDelete,
-    handleInputChange,
-    handleSelectChange,
-    handleSubmit,
-    handleDelete,
-    setIsModalOpen,
-    setIsDeleteDialogOpen
+    categorias, loading, currentCategoria, isModalOpen, isDeleteDialogOpen, isSaving,
+    fetchCategorias, openModal, confirmDelete, handleInputChange, handleSelectChange,
+    handleSubmit, handleDelete, setIsModalOpen, setIsDeleteDialogOpen
   };
 }

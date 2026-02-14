@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Cliente {
   id: string;
@@ -28,6 +29,7 @@ export const useClientes = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { empresaId } = useAuth();
 
   const fetchClientes = async () => {
     try {
@@ -92,6 +94,7 @@ export const useClientes = () => {
             email: cliente.email || null,
             endereco: cliente.endereco || null,
             ativo: cliente.ativo,
+            empresa_id: empresaId,
           });
 
         if (error) throw error;

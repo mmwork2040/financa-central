@@ -5,6 +5,7 @@ import { fetchFornecedores, saveFornecedor, deleteFornecedor } from "@/services/
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { useFormatInput } from "@/hooks/use-format-input";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useFornecedores = () => {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
@@ -15,6 +16,7 @@ export const useFornecedores = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast: toastOld } = useToast();
+  const { empresaId } = useAuth();
   
   // Hooks para formatação dos inputs
   const cpfCnpjInput = useFormatInput(currentFornecedor.cpf_cnpj || "", "document");
@@ -90,7 +92,7 @@ export const useFornecedores = () => {
         telefone: telefoneInput.getRawValue() ? telefoneInput.displayValue : null
       };
       
-      const result = await saveFornecedor(fornecedorData);
+      const result = await saveFornecedor(fornecedorData, empresaId);
       toastOld({ description: result.message });
       setIsModalOpen(false);
       loadFornecedores();

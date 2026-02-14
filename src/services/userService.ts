@@ -8,90 +8,63 @@ export const fetchUsersData = async () => {
     .select('*')
     .order('nome');
 
-  if (error) {
-    throw error;
-  }
-
+  if (error) throw error;
   return data || [];
 };
 
 export const updateUser = async (userId: string, userData: { nome: string; permissao: string }) => {
+  // Update perfil
   const { error } = await supabase
     .from('perfis')
-    .update(userData)
+    .update({ nome: userData.nome, permissao: userData.permissao })
     .eq('id', userId);
 
   if (error) throw error;
+
+  // Also update user_roles role
+  const roleMap: Record<string, "admin" | "usuario" | "leitura"> = {
+    admin: 'admin',
+    editor: 'usuario',
+    leitura: 'leitura',
+  };
+  const role = roleMap[userData.permissao] || 'leitura';
+  
+  await supabase
+    .from('user_roles')
+    .update({ role })
+    .eq('user_id', userId);
+
   return true;
 };
 
-export const createUser = async (formData: FormData) => {
+export const createUser = async (formData: FormData, empresaId?: string | null) => {
   try {
-    // Check if email already exists in the profiles table
-    const { data: existingProfiles, error: profileCheckError } = await supabase
+    // Check if email already exists
+    const { data: existingProfiles } = await supabase
       .from('perfis')
       .select('email')
       .eq('email', formData.email)
       .maybeSingle();
 
-    if (profileCheckError) {
-      console.error("Error checking existing profile:", profileCheckError);
-      throw profileCheckError;
-    }
-
     if (existingProfiles) {
       throw new Error("Este email já está registrado. Por favor, use outro email.");
     }
 
-    // Create the user in Auth using signUp
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.senha || '',
-      options: {
-        data: {
-          nome: formData.nome,
-          permissao: formData.permissao
-        }
-      }
+    // Create user via edge function to handle everything server-side
+    const { data, error } = await supabase.functions.invoke("create-tenant-user", {
+      body: {
+        email: formData.email,
+        password: formData.senha || '',
+        nome: formData.nome,
+        permissao: formData.permissao,
+        empresaId,
+      },
     });
 
-    if (authError) {
-      // Check for specific error messages related to existing user
-      if (authError.message?.includes("User already registered") || 
-          authError.message?.includes("already exists") ||
-          authError.message?.includes("já está registrado")) {
-        throw new Error("Este email já está registrado. Por favor, use outro email.");
-      }
-      
-      console.error("Error creating user in Auth:", authError);
-      throw authError;
-    }
-
-    if (!authData.user) {
-      throw new Error("Falha ao criar usuário. Nenhum ID de usuário retornado.");
-    }
-
-    // Create the user profile
-    const { error: profileError } = await supabase
-      .from('perfis')
-      .insert({
-        id: authData.user.id,
-        email: formData.email,
-        nome: formData.nome,
-        permissao: formData.permissao
-      });
-
-    if (profileError) {
-      console.error("Error creating user profile:", profileError);
-      
-      // Unfortunately, we can't easily delete the auth user without admin privileges
-      // But we'll leave the error handling in place for completeness
-      console.error("Unable to clean up auth user after profile creation error due to permission limits");
-      
-      throw profileError;
-    }
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
     
-    return { id: authData.user.id };
+    return { id: data?.userId };
   } catch (error: any) {
     console.error("Error creating user:", error);
     throw error;
@@ -100,17 +73,19 @@ export const createUser = async (formData: FormData) => {
 
 export const deleteUserAccount = async (userId: string) => {
   try {
-    // Without admin privileges, we can only delete the profile
-    // The auth user would remain but cannot log in without profile
+    // Delete user_roles first
+    await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId);
+
+    // Delete profile
     const { error: profileError } = await supabase
       .from('perfis')
       .delete()
       .eq('id', userId);
 
-    if (profileError) {
-      console.error("Error deleting profile:", profileError);
-      throw profileError;
-    }
+    if (profileError) throw profileError;
     
     return true;
   } catch (error) {

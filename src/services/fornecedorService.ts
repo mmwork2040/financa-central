@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Fornecedor } from "@/types/fornecedor.types";
-import { useToast } from "@/hooks/use-toast";
 
 export const fetchFornecedores = async () => {
   try {
@@ -10,24 +9,18 @@ export const fetchFornecedores = async () => {
       .select('*')
       .order('nome');
 
-    if (error) {
-      throw error;
-    }
-
+    if (error) throw error;
     return data || [];
   } catch (error: any) {
     throw error;
   }
 };
 
-export const saveFornecedor = async (fornecedor: Fornecedor) => {
+export const saveFornecedor = async (fornecedor: Fornecedor, empresaId?: string | null) => {
   try {
-    if (!fornecedor.nome) {
-      throw new Error("Nome do fornecedor é obrigatório");
-    }
+    if (!fornecedor.nome) throw new Error("Nome do fornecedor é obrigatório");
 
     if (fornecedor.id) {
-      // Update
       const { error } = await supabase
         .from('fornecedores')
         .update({
@@ -43,7 +36,6 @@ export const saveFornecedor = async (fornecedor: Fornecedor) => {
       if (error) throw error;
       return { success: true, message: "Fornecedor atualizado com sucesso!" };
     } else {
-      // Insert
       const { error } = await supabase
         .from('fornecedores')
         .insert({
@@ -53,6 +45,7 @@ export const saveFornecedor = async (fornecedor: Fornecedor) => {
           email: fornecedor.email,
           endereco: fornecedor.endereco,
           ativo: fornecedor.ativo,
+          empresa_id: empresaId,
         });
 
       if (error) throw error;
@@ -71,7 +64,6 @@ export const deleteFornecedor = async (id: string) => {
       .eq('id', id);
 
     if (error) throw error;
-    
     return { success: true, message: "Fornecedor excluído com sucesso!" };
   } catch (error: any) {
     throw error;
