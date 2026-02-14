@@ -16,7 +16,8 @@ import {
   CreditCard, 
   Files, 
   PieChart,
-  LogOut
+  LogOut,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,7 @@ export const Sidebar = () => {
     { name: "Relatórios", icon: PieChart, path: "/reports" },
     { name: "Usuários", icon: Users, path: "/users" },
     { name: "Permissões", icon: ShieldCheck, path: "/permissions" },
+    { name: "Configurações", icon: Settings, path: "/settings" },
   ];
 
   const handleLogout = async (e: React.MouseEvent) => {

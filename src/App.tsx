@@ -22,6 +22,7 @@ import FormasPagamento from "./pages/FormasPagamento";
 import Lancamentos from "./pages/Lancamentos";
 import Relatorios from "./pages/Relatorios";
 import Permissoes from "./pages/Permissoes";
+import ConfiguracoesEmpresa from "./pages/ConfiguracoesEmpresa";
 import NotFoundPage from "./pages/NotFoundPage";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,7 @@ const App = () => {
                 <Route path="/transactions" element={<RequireAuth><AppLayout><Lancamentos /></AppLayout></RequireAuth>} />
                 <Route path="/reports" element={<RequireAuth><AppLayout><Relatorios /></AppLayout></RequireAuth>} />
                 <Route path="/permissions" element={<RequireAuth><AppLayout><Permissoes /></AppLayout></RequireAuth>} />
+                <Route path="/settings" element={<RequireAuth><AppLayout><ConfiguracoesEmpresa /></AppLayout></RequireAuth>} />
                 
                 {/* 404 route */}
                 <Route path="*" element={<NotFoundPage />} />
