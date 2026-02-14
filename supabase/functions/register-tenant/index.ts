@@ -30,7 +30,7 @@ serve(async (req) => {
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false,
+      email_confirm: true,
       user_metadata: { nome },
     });
 
@@ -96,7 +96,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: "Conta criada com sucesso! Verifique seu email para confirmar." }),
+      JSON.stringify({ success: true, message: "Conta criada com sucesso!" }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
