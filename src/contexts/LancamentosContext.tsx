@@ -115,6 +115,11 @@ interface LancamentosContextType {
   exportToCSV: () => void;
   exportToPDF: () => void;
   handleSort: (field: string) => void;
+  refreshCategorias: () => void;
+  refreshFornecedores: () => void;
+  refreshClientes: () => void;
+  refreshFormasPagamento: () => void;
+  refreshContasBancarias: () => void;
 }
 
 const LancamentosContext = createContext<LancamentosContextType | undefined>(
@@ -682,7 +687,12 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         getTipoBadgeClass,
         exportToCSV,
         exportToPDF,
-        handleSort
+        handleSort,
+        refreshCategorias: fetchCategorias,
+        refreshFornecedores: fetchFornecedores,
+        refreshClientes: fetchClientes,
+        refreshFormasPagamento: fetchFormasPagamento,
+        refreshContasBancarias: fetchContasBancarias,
       }}
     >
       {children}

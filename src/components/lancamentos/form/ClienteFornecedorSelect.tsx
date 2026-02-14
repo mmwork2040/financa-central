@@ -10,6 +10,8 @@ interface ClienteFornecedorSelectProps {
   onFornecedorChange: (value: string) => void;
   clientes: Cliente[];
   fornecedores: Fornecedor[];
+  onRefreshClientes?: () => void;
+  onRefreshFornecedores?: () => void;
 }
 
 export const ClienteFornecedorSelect = ({ 
@@ -19,7 +21,9 @@ export const ClienteFornecedorSelect = ({
   onClienteChange,
   onFornecedorChange,
   clientes,
-  fornecedores
+  fornecedores,
+  onRefreshClientes,
+  onRefreshFornecedores,
 }: ClienteFornecedorSelectProps) => {
   if (tipo === "receita") {
     return (
@@ -30,6 +34,17 @@ export const ClienteFornecedorSelect = ({
         options={clientes}
         noneOptionValue="no-client"
         placeholder="Selecione o cliente"
+        quickAdd={onRefreshClientes ? {
+          title: "Cliente",
+          table: "clientes",
+          fields: [
+            { name: "nome", label: "Nome", required: true },
+            { name: "cpf_cnpj", label: "CPF/CNPJ", required: false },
+            { name: "telefone", label: "Telefone", required: false },
+            { name: "email", label: "Email", required: false },
+          ],
+          onSuccess: onRefreshClientes,
+        } : undefined}
       />
     );
   } else {
@@ -41,6 +56,17 @@ export const ClienteFornecedorSelect = ({
         options={fornecedores}
         noneOptionValue="no-supplier"
         placeholder="Selecione o fornecedor"
+        quickAdd={onRefreshFornecedores ? {
+          title: "Fornecedor",
+          table: "fornecedores",
+          fields: [
+            { name: "nome", label: "Nome", required: true },
+            { name: "cpf_cnpj", label: "CPF/CNPJ", required: false },
+            { name: "telefone", label: "Telefone", required: false },
+            { name: "email", label: "Email", required: false },
+          ],
+          onSuccess: onRefreshFornecedores,
+        } : undefined}
       />
     );
   }
