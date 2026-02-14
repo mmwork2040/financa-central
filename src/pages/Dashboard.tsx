@@ -1,23 +1,23 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardSummary from "@/components/dashboard/DashboardSummary";
 import CashFlowChart from "@/components/dashboard/CashFlowChart";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
-import TransactionForm from "@/components/dashboard/TransactionForm";
+import { LancamentosFormDialog } from "@/components/lancamentos/LancamentosFormDialog";
+import { LancamentosProvider, useLancamentosContext } from "@/contexts/LancamentosContext";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 
-const Dashboard = () => {
-  const { isAuthenticated } = useAuth(); // Update to use only what exists in AuthContextType
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const DashboardContent = () => {
+  const { isAuthenticated } = useAuth();
   const { loading, summary, lancamentosRecentes, dataFluxo, fetchDashboardData } = useDashboardData();
+  const { handleOpenModal } = useLancamentosContext();
 
-  // Handler for opening the new transaction modal
   const handleNewTransactionClick = () => {
-    setIsModalOpen(true);
+    handleOpenModal();
   };
 
   return (
@@ -54,13 +54,16 @@ const Dashboard = () => {
         </>
       )}
 
-      {/* Transaction form modal */}
-      <TransactionForm 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={fetchDashboardData}
-      />
+      <LancamentosFormDialog />
     </div>
+  );
+};
+
+const Dashboard = () => {
+  return (
+    <LancamentosProvider>
+      <DashboardContent />
+    </LancamentosProvider>
   );
 };
 
