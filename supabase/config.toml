@@ -1,1 +1,4 @@
 project_id = "fwybnoctkktseemhacrw"
+
+[functions.process-exit-request]
+verify_jwt = false

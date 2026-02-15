@@ -21,8 +21,11 @@ import {
   ChevronsUpDown,
   UserPlus,
   Check,
+  DoorOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
+import { ExitRequestDialog } from "@/components/solicitacoes/ExitRequestDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +55,10 @@ export const Sidebar = () => {
   const [inviteCode, setInviteCode] = useState("");
   const [joiningLoading, setJoiningLoading] = useState(false);
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+  const [exitDialogOpen, setExitDialogOpen] = useState(false);
+  const [exitEmpresaId, setExitEmpresaId] = useState<string | null>(null);
+  const [exitEmpresaNome, setExitEmpresaNome] = useState("");
+  const { pendingCount, createRequest, hasPendingRequest, actionLoading } = useSolicitacoesSaida();
 
   useEffect(() => {
     if (!empresaId) return;
@@ -197,6 +204,18 @@ export const Sidebar = () => {
                     <UserPlus size={14} className="mr-2" />
                     Entrar com código de convite
                   </DropdownMenuItem>
+                  {empresas.length > 1 && activeEmpresa && !hasPendingRequest(activeEmpresa.empresa_id) && (
+                    <>
+                      <DropdownMenuItem onClick={() => {
+                        setExitEmpresaId(activeEmpresa.empresa_id);
+                        setExitEmpresaNome(activeEmpresa.empresa_nome || "");
+                        setExitDialogOpen(true);
+                      }}>
+                        <DoorOpen size={14} className="mr-2" />
+                        Solicitar saída da empresa
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -231,6 +250,16 @@ export const Sidebar = () => {
                     <UserPlus size={14} className="mr-2" />
                     Entrar com código
                   </DropdownMenuItem>
+                  {empresas.length > 1 && activeEmpresa && !hasPendingRequest(activeEmpresa.empresa_id) && (
+                    <DropdownMenuItem onClick={() => {
+                      setExitEmpresaId(activeEmpresa.empresa_id);
+                      setExitEmpresaNome(activeEmpresa.empresa_nome || "");
+                      setExitDialogOpen(true);
+                    }}>
+                      <DoorOpen size={14} className="mr-2" />
+                      Sair da empresa
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -248,12 +277,17 @@ export const Sidebar = () => {
                 <Link
                   to={item.path}
                   className={cn(
-                    "sidebar-link",
+                    "sidebar-link relative",
                     isActive(item.path) && "active"
                   )}
                 >
                   <item.icon size={20} />
                   {isExpanded && <span>{item.name}</span>}
+                  {item.path === "/users" && pendingCount > 0 && (
+                    <span className="absolute top-1 right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1">
+                      {pendingCount}
+                    </span>
+                  )}
                 </Link>
               </li>
             ))}
@@ -297,6 +331,18 @@ export const Sidebar = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Exit Request Dialog */}
+      <ExitRequestDialog
+        isOpen={exitDialogOpen}
+        onClose={() => setExitDialogOpen(false)}
+        empresaNome={exitEmpresaNome}
+        onConfirm={async (motivo) => {
+          if (!exitEmpresaId) return false;
+          return await createRequest(exitEmpresaId, motivo);
+        }}
+        loading={actionLoading}
+      />
     </>
   );
 };

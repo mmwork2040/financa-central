@@ -8,6 +8,9 @@ import { useUsersContext } from "@/contexts/UsersContext";
 import { UsersSearch } from "@/components/users/UsersSearch";
 import { exportToCSV, exportToPDF } from "@/components/users/UsersExport";
 import { useAuth } from "@/contexts/AuthContext";
+import { PendingExitRequests } from "@/components/solicitacoes/PendingExitRequests";
+import { MyExitRequests } from "@/components/solicitacoes/MyExitRequests";
+import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
 
 export const UsersContainer = () => {
   const { user: authUser } = useAuth();
@@ -104,8 +107,37 @@ export const UsersContainer = () => {
     }
   };
 
+  const {
+    myRequests,
+    pendingRequests,
+    isAdmin: isExitAdmin,
+    approveRequest,
+    rejectRequest,
+    cancelRequest,
+    actionLoading: exitLoading,
+  } = useSolicitacoesSaida();
+
   return (
     <>
+      {/* Pending Exit Requests for admins */}
+      {isExitAdmin && pendingRequests.length > 0 && (
+        <PendingExitRequests
+          requests={pendingRequests}
+          onApprove={approveRequest}
+          onReject={rejectRequest}
+          loading={exitLoading}
+        />
+      )}
+
+      {/* My Exit Requests */}
+      {myRequests.length > 0 && (
+        <MyExitRequests
+          requests={myRequests}
+          onCancel={cancelRequest}
+          loading={exitLoading}
+        />
+      )}
+
       <UsersSearch onExport={handleExport} />
       
       {loading ? (
