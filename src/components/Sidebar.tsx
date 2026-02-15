@@ -158,7 +158,9 @@ export const Sidebar = () => {
                       className="flex items-center justify-between"
                     >
                       <div className="truncate">
-                        <div className="text-sm">{emp.empresa_nome}</div>
+                        <div className="text-sm flex items-center gap-1.5">
+                          {emp.empresa_nome}
+                        </div>
                         <div className="text-xs text-muted-foreground">{emp.role}</div>
                       </div>
                       {emp.empresa_id === empresaId && <Check size={14} className="shrink-0 text-primary" />}
