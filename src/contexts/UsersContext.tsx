@@ -18,7 +18,23 @@ interface UsersContextType {
   getPermissaoClass: (permissao: string) => string;
 }
 
-const UsersContext = createContext<UsersContextType | undefined>(undefined);
+const defaultContext: UsersContextType = {
+  users: [],
+  loading: true,
+  saving: false,
+  deleting: false,
+  saveUser: async () => false,
+  deleteUser: async () => false,
+  revokeUser: async () => false,
+  isSuperAdmin: false,
+  filteredUsers: [],
+  searchQuery: "",
+  setSearchQuery: () => {},
+  getPermissaoLabel: () => "",
+  getPermissaoClass: () => "",
+};
+
+const UsersContext = createContext<UsersContextType>(defaultContext);
 
 interface UsersProviderProps {
   children: ReactNode;
@@ -79,9 +95,5 @@ export const UsersProvider = ({ children }: UsersProviderProps) => {
 };
 
 export const useUsersContext = (): UsersContextType => {
-  const context = useContext(UsersContext);
-  if (context === undefined) {
-    throw new Error("useUsersContext must be used within a UsersProvider");
-  }
-  return context;
+  return useContext(UsersContext);
 };
