@@ -6,11 +6,13 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
+import { useCompanyTheme } from "@/hooks/useCompanyTheme";
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
   const { isAuthenticated, loading, empresaId, userProfile } = useAuth();
   const navigate = useNavigate();
+  useCompanyTheme();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
