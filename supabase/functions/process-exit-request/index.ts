@@ -134,17 +134,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ACTION: cancel - user cancels their request
+    // ACTION: cancel - user cancels their own request OR admin cancels any pending request
     if (action === "cancel") {
       if (!requestId) throw new Error("requestId é obrigatório");
 
-      const { error } = await supabaseAdmin
+      // Check if user is admin
+      const { data: isAdminUser } = await supabaseAdmin.rpc("has_role", {
+        _user_id: userId,
+        _role: "admin",
+      });
+      const { data: isSuperAdminUser } = await supabaseAdmin.rpc("is_super_admin", {
+        _user_id: userId,
+      });
+
+      const isAdmin = isAdminUser || isSuperAdminUser;
+
+      let query = supabaseAdmin
         .from("solicitacoes_saida")
         .update({ status: "cancelado", updated_at: new Date().toISOString() })
         .eq("id", requestId)
-        .eq("user_id", userId)
         .eq("status", "pendente");
 
+      // Non-admins can only cancel their own requests
+      if (!isAdmin) {
+        query = query.eq("user_id", userId);
+      }
+
+      const { error } = await query;
       if (error) throw error;
 
       return new Response(JSON.stringify({ success: true }), {
