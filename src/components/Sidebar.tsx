@@ -111,7 +111,7 @@ export const Sidebar = () => {
         <button 
           onClick={handleLogout}
           className={cn(
-            "sidebar-link text-red-500 hover:bg-red-50 hover:text-red-600",
+            "sidebar-link",
             !isExpanded && "justify-center"
           )}
         >
