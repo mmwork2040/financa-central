@@ -35,7 +35,7 @@ export const useUsers = () => {
     if (authUser) {
       fetchUsers();
     }
-  }, [authUser]);
+  }, [authUser, empresaId, isSuperAdmin]);
 
   const saveUser = async (formData: FormData, selectedId: string | null) => {
     try {
