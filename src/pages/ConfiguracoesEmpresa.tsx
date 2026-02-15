@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Upload, Loader2, User, ArrowRight } from "lucide-react";
+import { Building2, Upload, Loader2, User, Undo2, Check } from "lucide-react";
 import InviteCodesCard from "@/components/convites/InviteCodesCard";
+
+const SYSTEM_PRIMARY_COLOR = "#f97316";
 
 const ConfiguracoesEmpresa = () => {
   const { empresaId, userRole, isSuperAdmin } = useAuth();
@@ -16,13 +18,15 @@ const ConfiguracoesEmpresa = () => {
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [isPessoal, setIsPessoal] = useState(false);
+  const [originalColor, setOriginalColor] = useState<string | null>(null);
+  const [colorChanged, setColorChanged] = useState(false);
   const [empresa, setEmpresa] = useState({
     nome: "",
     cnpj: "",
     email: "",
     telefone: "",
     endereco: "",
-    cor_primaria: "#3b82f6",
+    cor_primaria: SYSTEM_PRIMARY_COLOR,
     logo_url: "",
   });
 
@@ -44,15 +48,25 @@ const ConfiguracoesEmpresa = () => {
       if (error) throw error;
       if (data) {
         setIsPessoal((data as any).pessoal === true);
+        const corFromDb = data.cor_primaria || SYSTEM_PRIMARY_COLOR;
+        setOriginalColor(corFromDb);
         setEmpresa({
           nome: data.nome || "",
           cnpj: data.cnpj || "",
           email: data.email || "",
           telefone: data.telefone || "",
           endereco: data.endereco || "",
-          cor_primaria: data.cor_primaria || "#3b82f6",
+          cor_primaria: corFromDb,
           logo_url: data.logo_url || "",
         });
+
+        // Auto-save system default if DB has no color
+        if (!data.cor_primaria && empresaId) {
+          await supabase
+            .from("empresas")
+            .update({ cor_primaria: SYSTEM_PRIMARY_COLOR })
+            .eq("id", empresaId);
+        }
       }
     } catch (error: any) {
       toast({ title: "Erro ao carregar dados", description: error.message, variant: "destructive" });
@@ -124,6 +138,36 @@ const ConfiguracoesEmpresa = () => {
       toast({ title: "Erro ao enviar logo", description: error.message, variant: "destructive" });
     } finally {
       setUploadingLogo(false);
+    }
+  };
+
+  const handleColorChange = (value: string) => {
+    setEmpresa(prev => ({ ...prev, cor_primaria: value }));
+    if (!colorChanged && value !== originalColor) {
+      setColorChanged(true);
+    }
+  };
+
+  const handleUndoColor = () => {
+    if (originalColor) {
+      setEmpresa(prev => ({ ...prev, cor_primaria: originalColor }));
+      setColorChanged(false);
+    }
+  };
+
+  const handleConfirmColor = async () => {
+    if (!empresaId || !isAdmin) return;
+    try {
+      const { error } = await supabase
+        .from("empresas")
+        .update({ cor_primaria: empresa.cor_primaria })
+        .eq("id", empresaId);
+      if (error) throw error;
+      setOriginalColor(empresa.cor_primaria);
+      setColorChanged(false);
+      toast({ title: "Cor atualizada", description: "A cor primária foi salva com sucesso." });
+    } catch (error: any) {
+      toast({ title: "Erro ao salvar cor", description: error.message, variant: "destructive" });
     }
   };
 
@@ -272,15 +316,15 @@ const ConfiguracoesEmpresa = () => {
                   type="color"
                   id="cor_primaria"
                   value={empresa.cor_primaria}
-                  onChange={(e) => handleChange("cor_primaria", e.target.value)}
+                  onChange={(e) => handleColorChange(e.target.value)}
                   className="h-10 w-14 cursor-pointer rounded border border-input"
                   disabled={!isAdmin}
                 />
                 <Input
                   value={empresa.cor_primaria}
-                  onChange={(e) => handleChange("cor_primaria", e.target.value)}
+                  onChange={(e) => handleColorChange(e.target.value)}
                   className="w-32"
-                  placeholder="#3b82f6"
+                  placeholder={SYSTEM_PRIMARY_COLOR}
                   disabled={!isAdmin}
                 />
                 <div
@@ -288,6 +332,29 @@ const ConfiguracoesEmpresa = () => {
                   style={{ backgroundColor: empresa.cor_primaria }}
                 />
               </div>
+              {colorChanged && isAdmin && (
+                <div className="flex items-center gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUndoColor}
+                    className="gap-1.5"
+                  >
+                    <Undo2 className="h-3.5 w-3.5" />
+                    Desfazer
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleConfirmColor}
+                    className="gap-1.5"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    Confirmar cor
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
