@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Session, User } from "@supabase/supabase-js";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 type EmpresaInfo = {
   empresa_id: string;
@@ -19,6 +20,9 @@ type AuthContextType = {
   userRole: string | null;
   isSuperAdmin: boolean;
   empresas: EmpresaInfo[];
+  canAccessRoute: (path: string) => boolean;
+  canAccessScreen: (screenKey: string) => boolean;
+  canPerformAction: (screenKey: string, action: 'pode_incluir' | 'pode_alterar' | 'pode_excluir') => boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   switchEmpresa: (empresaId: string) => Promise<void>;
@@ -33,6 +37,9 @@ const AuthContext = createContext<AuthContextType>({
   userRole: null,
   isSuperAdmin: false,
   empresas: [],
+  canAccessRoute: () => true,
+  canAccessScreen: () => true,
+  canPerformAction: () => false,
   login: async () => {},
   logout: async () => {},
   switchEmpresa: async () => {},
@@ -46,6 +53,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [empresas, setEmpresas] = useState<EmpresaInfo[]>([]);
+  const isSuperAdmin = userRole === 'super_admin';
+  const { canAccessRoute, canAccessScreen, canPerformAction } = usePermissoes(user?.id || null, userRole, isSuperAdmin);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -292,8 +301,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         userProfile,
         empresaId,
         userRole,
-        isSuperAdmin: userRole === 'super_admin',
+        isSuperAdmin,
         empresas,
+        canAccessRoute,
+        canAccessScreen,
+        canPerformAction,
         login,
         logout,
         switchEmpresa,
