@@ -46,18 +46,26 @@ serve(async (req) => {
 
     const userId = callerData.user.id;
 
-    // Verify user has a role in the target empresa
-    const { data: role } = await supabaseAdmin
-      .from("user_roles")
-      .select("role, empresa_id")
-      .eq("user_id", userId)
-      .eq("empresa_id", empresaId)
-      .single();
+    // Check if user is super_admin
+    const { data: superAdminCheck } = await supabaseAdmin.rpc("is_super_admin", { _user_id: userId });
+    const isSuperAdmin = superAdminCheck === true;
 
-    if (!role) {
-      return new Response(JSON.stringify({ error: "Você não pertence a esta empresa" }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Verify user has a role in the target empresa (skip for super admin)
+    let userRole = "super_admin";
+    if (!isSuperAdmin) {
+      const { data: role } = await supabaseAdmin
+        .from("user_roles")
+        .select("role, empresa_id")
+        .eq("user_id", userId)
+        .eq("empresa_id", empresaId)
+        .single();
+
+      if (!role) {
+        return new Response(JSON.stringify({ error: "Você não pertence a esta empresa" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userRole = role.role;
     }
 
     // Update perfis.empresa_id to switch active empresa
@@ -72,7 +80,7 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ success: true, empresaId, role: role.role }), {
+    return new Response(JSON.stringify({ success: true, empresaId, role: userRole }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
