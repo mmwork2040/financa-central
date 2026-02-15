@@ -125,6 +125,7 @@ export const UsersContainer = () => {
           requests={pendingRequests}
           onApprove={approveRequest}
           onReject={rejectRequest}
+          onCancel={cancelRequest}
           loading={exitLoading}
         />
       )}

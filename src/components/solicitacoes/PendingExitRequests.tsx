@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Clock, AlertTriangle } from "lucide-react";
+import { Check, X, Clock, AlertTriangle, Ban } from "lucide-react";
 import { SolicitacaoSaida } from "@/hooks/useSolicitacoesSaida";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -11,6 +11,7 @@ interface PendingExitRequestsProps {
   requests: SolicitacaoSaida[];
   onApprove: (id: string) => Promise<boolean>;
   onReject: (id: string) => Promise<boolean>;
+  onCancel?: (id: string) => Promise<boolean>;
   loading?: boolean;
 }
 
@@ -18,6 +19,7 @@ export const PendingExitRequests = ({
   requests,
   onApprove,
   onReject,
+  onCancel,
   loading,
 }: PendingExitRequestsProps) => {
   if (requests.length === 0) return null;
@@ -59,6 +61,17 @@ export const PendingExitRequests = ({
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">
+                {onCancel && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onCancel(req.id)}
+                    disabled={loading}
+                  >
+                    <Ban className="h-4 w-4 mr-1" />
+                    Cancelar
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
