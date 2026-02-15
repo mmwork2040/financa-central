@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Upload, Loader2, User, Undo2, Check } from "lucide-react";
+import { Building2, Upload, Loader2, User, Undo2, Check, Trash2 } from "lucide-react";
 import InviteCodesCard from "@/components/convites/InviteCodesCard";
 
 const SYSTEM_PRIMARY_COLOR = "#f97316";
@@ -133,11 +133,24 @@ const ConfiguracoesEmpresa = () => {
       setEmpresa(prev => ({ ...prev, logo_url: logoUrl }));
 
       await supabase.from("empresas").update({ logo_url: logoUrl }).eq("id", empresaId);
+      window.dispatchEvent(new CustomEvent("company-logo-changed", { detail: { logo_url: logoUrl } }));
       toast({ title: "Logo atualizado", description: "A logo foi enviada com sucesso." });
     } catch (error: any) {
       toast({ title: "Erro ao enviar logo", description: error.message, variant: "destructive" });
     } finally {
       setUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!empresaId || !isAdmin) return;
+    try {
+      await supabase.from("empresas").update({ logo_url: null }).eq("id", empresaId);
+      setEmpresa(prev => ({ ...prev, logo_url: "" }));
+      window.dispatchEvent(new CustomEvent("company-logo-changed", { detail: { logo_url: null } }));
+      toast({ title: "Logo removida", description: "A logo foi removida com sucesso." });
+    } catch (error: any) {
+      toast({ title: "Erro ao remover logo", description: error.message, variant: "destructive" });
     }
   };
 
@@ -287,14 +300,28 @@ const ConfiguracoesEmpresa = () => {
                   )}
                 </div>
                 {isAdmin && (
-                  <div>
-                    <Label
-                      htmlFor="logo-upload"
-                      className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
-                    >
-                      {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                      {uploadingLogo ? "Enviando..." : "Enviar Logo"}
-                    </Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Label
+                        htmlFor="logo-upload"
+                        className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                      >
+                        {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        {uploadingLogo ? "Enviando..." : "Enviar Logo"}
+                      </Label>
+                      {empresa.logo_url && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRemoveLogo}
+                          className="gap-1.5 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Remover
+                        </Button>
+                      )}
+                    </div>
                     <input
                       id="logo-upload"
                       type="file"
@@ -303,7 +330,7 @@ const ConfiguracoesEmpresa = () => {
                       onChange={handleLogoUpload}
                       disabled={uploadingLogo}
                     />
-                    <p className="mt-1 text-xs text-muted-foreground">PNG, JPG, WebP ou SVG. Máx 2MB.</p>
+                    <p className="text-xs text-muted-foreground">PNG, JPG, WebP ou SVG. Máx 2MB.</p>
                   </div>
                 )}
               </div>
