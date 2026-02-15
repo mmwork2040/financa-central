@@ -72,6 +72,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUserRoles = async (userId: string) => {
     try {
+      // Check if super admin first
+      const { data: isSuperAdminResult } = await supabase.rpc('is_super_admin', { _user_id: userId });
+      const superAdmin = isSuperAdminResult === true;
+
       // Fetch all roles for this user
       const { data: roles, error } = await supabase
         .from('user_roles')
@@ -80,23 +84,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error("Erro ao carregar roles do usuário:", error);
-        return null;
       }
 
-      if (!roles || roles.length === 0) return null;
+      let empresasList: EmpresaInfo[] = [];
 
-      // Fetch empresa names for all roles
-      const empresaIds = roles.map(r => r.empresa_id);
-      const { data: empresasData } = await supabase
-        .from('empresas')
-        .select('id, nome')
-        .in('id', empresaIds);
+      if (superAdmin) {
+        // Super admin sees ALL empresas
+        const { data: allEmpresas } = await supabase
+          .from('empresas')
+          .select('id, nome')
+          .order('nome');
 
-      const empresasList: EmpresaInfo[] = roles.map(r => ({
-        empresa_id: r.empresa_id,
-        role: r.role,
-        empresa_nome: empresasData?.find(e => e.id === r.empresa_id)?.nome || 'Empresa',
-      }));
+        empresasList = (allEmpresas || []).map(e => ({
+          empresa_id: e.id,
+          role: roles?.find(r => r.empresa_id === e.id)?.role || 'super_admin',
+          empresa_nome: e.nome,
+        }));
+      } else {
+        if (!roles || roles.length === 0) return null;
+
+        // Fetch empresa names for user's roles
+        const empresaIds = roles.map(r => r.empresa_id);
+        const { data: empresasData } = await supabase
+          .from('empresas')
+          .select('id, nome')
+          .in('id', empresaIds);
+
+        empresasList = roles.map(r => ({
+          empresa_id: r.empresa_id,
+          role: r.role,
+          empresa_nome: empresasData?.find(e => e.id === r.empresa_id)?.nome || 'Empresa',
+        }));
+      }
 
       setEmpresas(empresasList);
 
@@ -107,11 +126,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('id', userId)
         .single();
 
-      const activeEmpresaId = profile?.empresa_id || roles[0].empresa_id;
-      const activeRole = roles.find(r => r.empresa_id === activeEmpresaId);
+      const activeEmpresaId = profile?.empresa_id || (roles && roles.length > 0 ? roles[0].empresa_id : empresasList[0]?.empresa_id);
+      
+      if (superAdmin) {
+        setUserRole('super_admin');
+      } else {
+        const activeRole = roles?.find(r => r.empresa_id === activeEmpresaId);
+        setUserRole(activeRole?.role || (roles && roles.length > 0 ? roles[0].role : null));
+      }
 
-      setEmpresaId(activeEmpresaId);
-      setUserRole(activeRole?.role || roles[0].role);
+      setEmpresaId(activeEmpresaId || null);
 
       return { empresasList, activeEmpresaId };
     } catch (error) {
@@ -229,7 +253,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data?.error) throw new Error(data.error);
 
       setEmpresaId(targetEmpresaId);
-      setUserRole(data.role);
+      // Keep super_admin role if applicable
+      if (data.role === 'super_admin') {
+        setUserRole('super_admin');
+      } else {
+        setUserRole(data.role);
+      }
 
       // Update profile empresa_id locally
       setUserProfile((prev: any) => prev ? { ...prev, empresa_id: targetEmpresaId } : prev);
