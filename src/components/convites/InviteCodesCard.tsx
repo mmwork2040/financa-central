@@ -20,6 +20,9 @@ interface InviteCode {
   active: boolean;
   created_at: string;
   empresa_id?: string;
+  redeemed_by_name?: string | null;
+  redeemed_by_email?: string | null;
+  redeemed_at?: string | null;
 }
 
 interface Empresa {
@@ -59,7 +62,14 @@ const InviteCodesCard = () => {
         .select("id, nome")
         .order("nome");
       if (error) throw error;
-      setAllEmpresas(data || []);
+      // Deduplicate by name (keep first occurrence)
+      const seen = new Set<string>();
+      const unique = (data || []).filter(e => {
+        if (seen.has(e.nome)) return false;
+        seen.add(e.nome);
+        return true;
+      });
+      setAllEmpresas(unique);
     } catch (error: any) {
       console.error("Error fetching empresas:", error);
     }
@@ -210,28 +220,41 @@ const InviteCodesCard = () => {
             {codes.map(code => {
               const isExpired = code.expires_at && new Date(code.expires_at) < new Date();
               const isUsedUp = code.uses >= code.max_uses;
+              const isInactive = !code.active;
               return (
-                <div key={code.id} className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="flex items-center gap-3">
-                    <code className="font-mono text-lg font-bold tracking-wider">{code.code}</code>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(code.code)}>
-                      <Copy className="h-3.5 w-3.5" />
-                    </Button>
+                <div key={code.id} className={`rounded-lg border p-3 space-y-2 ${isInactive ? "opacity-60" : ""}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <code className="font-mono text-lg font-bold tracking-wider">{code.code}</code>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(code.code)}>
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isSuperAdmin && code.empresa_id && (
+                        <Badge variant="outline" className="text-xs bg-muted">
+                          {allEmpresas.find(e => e.id === code.empresa_id)?.nome || "Empresa"}
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="text-xs">{code.role}</Badge>
+                      <span className="text-xs text-muted-foreground">{code.uses}/{code.max_uses} usos</span>
+                      {isInactive && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
+                      {isExpired && <Badge variant="destructive" className="text-xs">Expirado</Badge>}
+                      {isUsedUp && !isInactive && <Badge variant="secondary" className="text-xs">Esgotado</Badge>}
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(code.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {isSuperAdmin && code.empresa_id && (
-                      <Badge variant="outline" className="text-xs bg-muted">
-                        {allEmpresas.find(e => e.id === code.empresa_id)?.nome || "Empresa"}
-                      </Badge>
-                    )}
-                    <Badge variant="outline" className="text-xs">{code.role}</Badge>
-                    <span className="text-xs text-muted-foreground">{code.uses}/{code.max_uses} usos</span>
-                    {isExpired && <Badge variant="destructive" className="text-xs">Expirado</Badge>}
-                    {isUsedUp && <Badge variant="secondary" className="text-xs">Esgotado</Badge>}
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(code.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                  {code.redeemed_by_name && (
+                    <div className="text-xs text-muted-foreground pl-1">
+                      Usado por <span className="font-medium text-foreground">{code.redeemed_by_name}</span>
+                      {code.redeemed_by_email && <span> ({code.redeemed_by_email})</span>}
+                      {code.redeemed_at && (
+                        <span> em {new Date(code.redeemed_at).toLocaleDateString("pt-BR")} às {new Date(code.redeemed_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
