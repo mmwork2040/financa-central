@@ -19,6 +19,12 @@ interface InviteCode {
   expires_at: string | null;
   active: boolean;
   created_at: string;
+  empresa_id?: string;
+}
+
+interface Empresa {
+  id: string;
+  nome: string;
 }
 
 const InviteCodesCard = () => {
@@ -30,22 +36,49 @@ const InviteCodesCard = () => {
   const [newRole, setNewRole] = useState("leitura");
   const [maxUses, setMaxUses] = useState("5");
   const [expiresInDays, setExpiresInDays] = useState("7");
+  const [allEmpresas, setAllEmpresas] = useState<Empresa[]>([]);
+  const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>("");
 
   const isAdmin = userRole === "admin" || isSuperAdmin;
 
   useEffect(() => {
-    if (empresaId && isAdmin) fetchCodes();
-  }, [empresaId, isAdmin]);
+    if (isAdmin) {
+      fetchCodes();
+      if (isSuperAdmin) fetchAllEmpresas();
+    }
+  }, [empresaId, isAdmin, isSuperAdmin]);
+
+  useEffect(() => {
+    if (empresaId) setSelectedEmpresaId(empresaId);
+  }, [empresaId]);
+
+  const fetchAllEmpresas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("empresas")
+        .select("id, nome")
+        .order("nome");
+      if (error) throw error;
+      setAllEmpresas(data || []);
+    } catch (error: any) {
+      console.error("Error fetching empresas:", error);
+    }
+  };
 
   const fetchCodes = async () => {
     try {
       setLoading(true);
-      const { data, error } = await (supabase as any)
+      let query = (supabase as any)
         .from("invite_codes")
         .select("*")
-        .eq("empresa_id", empresaId!)
         .order("created_at", { ascending: false });
 
+      // Super admin sees all codes; regular admin only their empresa
+      if (!isSuperAdmin && empresaId) {
+        query = query.eq("empresa_id", empresaId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       setCodes(data || []);
     } catch (error: any) {
@@ -58,12 +91,19 @@ const InviteCodesCard = () => {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
+      const body: any = {
+        role: newRole,
+        maxUses: parseInt(maxUses) || 5,
+        expiresInDays: parseInt(expiresInDays) || 7,
+      };
+
+      // Super admin can target a specific empresa
+      if (isSuperAdmin && selectedEmpresaId) {
+        body.empresaId = selectedEmpresaId;
+      }
+
       const { data, error } = await supabase.functions.invoke("generate-invite-code", {
-        body: {
-          role: newRole,
-          maxUses: parseInt(maxUses) || 5,
-          expiresInDays: parseInt(expiresInDays) || 7,
-        },
+        body,
       });
 
       if (error) throw error;
@@ -107,11 +147,30 @@ const InviteCodesCard = () => {
           <Ticket className="h-5 w-5" />
           Códigos de Convite
         </CardTitle>
-        <CardDescription>Gere códigos para convidar pessoas para sua empresa</CardDescription>
+        <CardDescription>
+          {isSuperAdmin
+            ? "Gere códigos para convidar pessoas para qualquer empresa do sistema"
+            : "Gere códigos para convidar pessoas para sua empresa"}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Generate form */}
         <div className="flex flex-wrap items-end gap-3">
+          {isSuperAdmin && (
+            <div className="space-y-1">
+              <Label className="text-xs">Empresa</Label>
+              <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Selecione a empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allEmpresas.map(e => (
+                    <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1">
             <Label className="text-xs">Permissão</Label>
             <Select value={newRole} onValueChange={setNewRole}>
@@ -160,6 +219,11 @@ const InviteCodesCard = () => {
                     </Button>
                   </div>
                   <div className="flex items-center gap-2">
+                    {isSuperAdmin && code.empresa_id && (
+                      <Badge variant="outline" className="text-xs bg-muted">
+                        {allEmpresas.find(e => e.id === code.empresa_id)?.nome || "Empresa"}
+                      </Badge>
+                    )}
                     <Badge variant="outline" className="text-xs">{code.role}</Badge>
                     <span className="text-xs text-muted-foreground">{code.uses}/{code.max_uses} usos</span>
                     {isExpired && <Badge variant="destructive" className="text-xs">Expirado</Badge>}
