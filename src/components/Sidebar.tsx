@@ -64,6 +64,13 @@ export const Sidebar = () => {
       setCompanyLogo(data?.logo_url || null);
     };
     fetchLogo();
+
+    const handler = (e: Event) => {
+      const logoUrl = (e as CustomEvent).detail?.logo_url ?? null;
+      setCompanyLogo(logoUrl);
+    };
+    window.addEventListener("company-logo-changed", handler);
+    return () => window.removeEventListener("company-logo-changed", handler);
   }, [empresaId]);
   
   const isActive = (path: string) => location.pathname === path;
