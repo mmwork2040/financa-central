@@ -9,6 +9,7 @@ type EmpresaInfo = {
   empresa_id: string;
   role: string;
   empresa_nome?: string;
+  pessoal?: boolean;
 };
 
 type AuthContextType = {
@@ -19,6 +20,7 @@ type AuthContextType = {
   empresaId: string | null;
   userRole: string | null;
   isSuperAdmin: boolean;
+  isPessoal: boolean;
   empresas: EmpresaInfo[];
   canAccessRoute: (path: string) => boolean;
   canAccessScreen: (screenKey: string) => boolean;
@@ -36,6 +38,7 @@ const AuthContext = createContext<AuthContextType>({
   empresaId: null,
   userRole: null,
   isSuperAdmin: false,
+  isPessoal: false,
   empresas: [],
   canAccessRoute: () => true,
   canAccessScreen: () => true,
@@ -54,6 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [empresas, setEmpresas] = useState<EmpresaInfo[]>([]);
   const isSuperAdmin = userRole === 'super_admin';
+  const isPessoal = empresas.find(e => e.empresa_id === empresaId)?.pessoal === true;
   const { canAccessRoute, canAccessScreen, canPerformAction } = usePermissoes(user?.id || null, userRole, isSuperAdmin);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -105,13 +109,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Super admin sees ALL empresas
         const { data: allEmpresas } = await supabase
           .from('empresas')
-          .select('id, nome')
+          .select('id, nome, pessoal')
           .order('nome');
 
         empresasList = (allEmpresas || []).map(e => ({
           empresa_id: e.id,
           role: roles?.find(r => r.empresa_id === e.id)?.role || 'super_admin',
           empresa_nome: e.nome,
+          pessoal: e.pessoal,
         }));
       } else {
         if (!roles || roles.length === 0) return null;
@@ -120,13 +125,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const empresaIds = roles.map(r => r.empresa_id);
         const { data: empresasData } = await supabase
           .from('empresas')
-          .select('id, nome')
+          .select('id, nome, pessoal')
           .in('id', empresaIds);
 
         empresasList = roles.map(r => ({
           empresa_id: r.empresa_id,
           role: r.role,
           empresa_nome: empresasData?.find(e => e.id === r.empresa_id)?.nome || 'Empresa',
+          pessoal: empresasData?.find(e => e.id === r.empresa_id)?.pessoal || false,
         }));
       }
 
@@ -302,6 +308,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         empresaId,
         userRole,
         isSuperAdmin,
+        isPessoal,
         empresas,
         canAccessRoute,
         canAccessScreen,
