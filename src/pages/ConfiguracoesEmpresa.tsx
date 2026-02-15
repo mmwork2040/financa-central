@@ -165,7 +165,7 @@ const ConfiguracoesEmpresa = () => {
       if (error) throw error;
       setOriginalColor(empresa.cor_primaria);
       setColorChanged(false);
-      window.dispatchEvent(new Event("company-theme-changed"));
+      window.dispatchEvent(new CustomEvent("company-theme-changed", { detail: { hex: empresa.cor_primaria } }));
       toast({ title: "Cor atualizada", description: "A cor primária foi salva com sucesso." });
     } catch (error: any) {
       toast({ title: "Erro ao salvar cor", description: error.message, variant: "destructive" });

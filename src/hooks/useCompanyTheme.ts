@@ -45,43 +45,51 @@ function generateSidebarVariants(h: number, s: number, l: number) {
   };
 }
 
+function applyHex(hex: string) {
+  const hsl = hexToHsl(hex);
+  if (!hsl) return;
+
+  const root = document.documentElement;
+  const { h, s, l } = hsl;
+  const primaryHsl = `${h} ${s}% ${l}%`;
+
+  root.style.setProperty("--primary", primaryHsl);
+  root.style.setProperty("--ring", primaryHsl);
+
+  const sv = generateSidebarVariants(h, s, l);
+  root.style.setProperty("--sidebar-background", sv.sidebar);
+  root.style.setProperty("--sidebar-primary", sv.sidebarPrimary);
+  root.style.setProperty("--sidebar-accent", sv.sidebarAccent);
+  root.style.setProperty("--sidebar-border", sv.sidebarBorder);
+  root.style.setProperty("--sidebar-ring", sv.sidebarRing);
+}
+
 export function useCompanyTheme() {
   const { empresaId } = useAuth();
 
   useEffect(() => {
     if (!empresaId) return;
 
-    const applyTheme = async () => {
+    const fetchAndApply = async () => {
       const { data } = await supabase
         .from("empresas")
         .select("cor_primaria")
         .eq("id", empresaId)
         .single();
 
-      const hex = data?.cor_primaria || SYSTEM_PRIMARY_COLOR;
-      const hsl = hexToHsl(hex);
-      if (!hsl) return;
-
-      const root = document.documentElement;
-      const { h, s, l } = hsl;
-      const primaryHsl = `${h} ${s}% ${l}%`;
-
-      // Primary color
-      root.style.setProperty("--primary", primaryHsl);
-      root.style.setProperty("--ring", primaryHsl);
-
-      // Sidebar colors derived from primary
-      const sv = generateSidebarVariants(h, s, l);
-      root.style.setProperty("--sidebar-background", sv.sidebar);
-      root.style.setProperty("--sidebar-primary", sv.sidebarPrimary);
-      root.style.setProperty("--sidebar-accent", sv.sidebarAccent);
-      root.style.setProperty("--sidebar-border", sv.sidebarBorder);
-      root.style.setProperty("--sidebar-ring", sv.sidebarRing);
+      applyHex(data?.cor_primaria || SYSTEM_PRIMARY_COLOR);
     };
 
-    applyTheme();
+    fetchAndApply();
 
-    const handler = () => applyTheme();
+    const handler = (e: Event) => {
+      const hex = (e as CustomEvent).detail?.hex;
+      if (hex) {
+        applyHex(hex);
+      } else {
+        fetchAndApply();
+      }
+    };
     window.addEventListener("company-theme-changed", handler);
     return () => window.removeEventListener("company-theme-changed", handler);
   }, [empresaId]);
