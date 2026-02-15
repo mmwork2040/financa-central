@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, UserX } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface User {
   id: string;
@@ -17,15 +18,19 @@ interface User {
   email: string;
   permissao: string;
   created_at: string;
+  empresa_id?: string | null;
+  empresa_nome?: string | null;
 }
 
 interface UsersListProps {
   users: User[];
   onEdit: (user: User) => void;
   onDelete: (id: string) => void;
+  onRevoke?: (userId: string, empresaId: string) => void;
+  isSuperAdmin?: boolean;
 }
 
-export const UsersList = ({ users, onEdit, onDelete }: UsersListProps) => {
+export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin }: UsersListProps) => {
   const getPermissaoLabel = (permissao: string): string => {
     switch (permissao) {
       case "admin":
@@ -59,9 +64,10 @@ export const UsersList = ({ users, onEdit, onDelete }: UsersListProps) => {
           <TableRow>
             <TableHead>Nome</TableHead>
             <TableHead>Email</TableHead>
+            {isSuperAdmin && <TableHead>Empresa</TableHead>}
             <TableHead>Permissão</TableHead>
             <TableHead>Data de Cadastro</TableHead>
-            <TableHead className="w-[100px] text-center">Ações</TableHead>
+            <TableHead className="w-[140px] text-center">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -69,6 +75,13 @@ export const UsersList = ({ users, onEdit, onDelete }: UsersListProps) => {
             <TableRow key={user.id}>
               <TableCell className="font-medium">{user.nome}</TableCell>
               <TableCell>{user.email}</TableCell>
+              {isSuperAdmin && (
+                <TableCell>
+                  <Badge variant="outline" className="text-xs">
+                    {user.empresa_nome || "Sem empresa"}
+                  </Badge>
+                </TableCell>
+              )}
               <TableCell>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPermissaoClass(user.permissao)}`}>
                   {getPermissaoLabel(user.permissao)}
@@ -76,21 +89,35 @@ export const UsersList = ({ users, onEdit, onDelete }: UsersListProps) => {
               </TableCell>
               <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
               <TableCell>
-                <div className="flex justify-center space-x-2">
+                <div className="flex justify-center space-x-1">
                   <Button
                     size="icon"
                     variant="ghost"
                     onClick={() => onEdit(user)}
                     className="h-8 w-8 text-blue-500 hover:text-blue-600"
+                    title="Editar"
                   >
                     <span className="sr-only">Editar</span>
                     <Pencil className="h-4 w-4" />
                   </Button>
+                  {onRevoke && user.empresa_id && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => onRevoke(user.id, user.empresa_id!)}
+                      className="h-8 w-8 text-orange-500 hover:text-orange-600"
+                      title="Revogar acesso à empresa"
+                    >
+                      <span className="sr-only">Revogar</span>
+                      <UserX className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button 
                     size="icon"
                     variant="ghost"
                     onClick={() => onDelete(user.id)} 
                     className="h-8 w-8 text-red-500 hover:text-red-600"
+                    title="Excluir"
                   >
                     <span className="sr-only">Excluir</span>
                     <Trash2 className="h-4 w-4" />

@@ -9,6 +9,8 @@ interface UsersContextType {
   deleting: boolean;
   saveUser: (formData: FormData, selectedId: string | null) => Promise<boolean>;
   deleteUser: (id: string) => Promise<boolean>;
+  revokeUser: (userId: string, empresaId: string) => Promise<boolean>;
+  isSuperAdmin: boolean;
   filteredUsers: User[];
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -23,7 +25,7 @@ interface UsersProviderProps {
 }
 
 export const UsersProvider = ({ children }: UsersProviderProps) => {
-  const { users, loading, saving, deleting, saveUser, deleteUser } = useUsers();
+  const { users, loading, saving, deleting, saveUser, deleteUser, revokeUser, isSuperAdmin } = useUsers();
   const [searchQuery, setSearchQuery] = React.useState("");
 
   const filteredUsers = users.filter(user => 
@@ -64,6 +66,8 @@ export const UsersProvider = ({ children }: UsersProviderProps) => {
     deleting,
     saveUser,
     deleteUser,
+    revokeUser,
+    isSuperAdmin,
     filteredUsers,
     searchQuery,
     setSearchQuery,

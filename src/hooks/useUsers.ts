@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { User, FormData } from "@/types/user.types";
-import { fetchUsersData, updateUser, createUser, deleteUserAccount } from "@/services/userService";
+import { fetchUsersData, updateUser, createUser, deleteUserAccount, revokeUserAccess } from "@/services/userService";
 import { useAuth } from "@/contexts/AuthContext";
 
 export type { User, FormData };
@@ -13,12 +13,12 @@ export const useUsers = () => {
   const [saving, setSaving] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const { toast } = useToast();
-  const { user: authUser, empresaId } = useAuth();
+  const { user: authUser, empresaId, isSuperAdmin } = useAuth();
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const data = await fetchUsersData();
+      const data = await fetchUsersData(isSuperAdmin);
       setUsers(data);
     } catch (error: any) {
       toast({
@@ -122,6 +122,31 @@ export const useUsers = () => {
     }
   };
 
+  const revokeUser = async (userId: string, targetEmpresaId: string) => {
+    try {
+      setDeleting(true);
+      
+      await revokeUserAccess(userId, targetEmpresaId);
+
+      toast({
+        title: "Acesso revogado",
+        description: "O usuário perdeu acesso a esta empresa.",
+      });
+      
+      await fetchUsers();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return {
     users,
     loading,
@@ -129,6 +154,8 @@ export const useUsers = () => {
     deleting,
     fetchUsers,
     saveUser,
-    deleteUser
+    deleteUser,
+    revokeUser,
+    isSuperAdmin
   };
 };

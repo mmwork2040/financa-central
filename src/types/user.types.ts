@@ -5,6 +5,8 @@ export interface User {
   email: string;
   permissao: string;
   created_at: string;
+  empresa_id?: string | null;
+  empresa_nome?: string | null;
 }
 
 export type FormData = {
