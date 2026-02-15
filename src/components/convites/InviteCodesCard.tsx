@@ -1,0 +1,181 @@
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { Copy, Plus, Trash2, Loader2, Ticket } from "lucide-react";
+
+interface InviteCode {
+  id: string;
+  code: string;
+  role: string;
+  max_uses: number;
+  uses: number;
+  expires_at: string | null;
+  active: boolean;
+  created_at: string;
+}
+
+const InviteCodesCard = () => {
+  const { empresaId, userRole, isSuperAdmin } = useAuth();
+  const { toast } = useToast();
+  const [codes, setCodes] = useState<InviteCode[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [newRole, setNewRole] = useState("leitura");
+  const [maxUses, setMaxUses] = useState("5");
+  const [expiresInDays, setExpiresInDays] = useState("7");
+
+  const isAdmin = userRole === "admin" || isSuperAdmin;
+
+  useEffect(() => {
+    if (empresaId && isAdmin) fetchCodes();
+  }, [empresaId, isAdmin]);
+
+  const fetchCodes = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await (supabase as any)
+        .from("invite_codes")
+        .select("*")
+        .eq("empresa_id", empresaId!)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setCodes(data || []);
+    } catch (error: any) {
+      console.error("Error fetching invite codes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-invite-code", {
+        body: {
+          role: newRole,
+          maxUses: parseInt(maxUses) || 5,
+          expiresInDays: parseInt(expiresInDays) || 7,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: "Código gerado!", description: `Código: ${data.invite.code}` });
+      fetchCodes();
+    } catch (error: any) {
+      toast({ title: "Erro ao gerar código", description: error.message, variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleCopy = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast({ title: "Copiado!", description: "Código copiado para a área de transferência." });
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await (supabase as any)
+        .from("invite_codes")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      setCodes(prev => prev.filter(c => c.id !== id));
+      toast({ title: "Código removido" });
+    } catch (error: any) {
+      toast({ title: "Erro ao remover", description: error.message, variant: "destructive" });
+    }
+  };
+
+  if (!isAdmin) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Ticket className="h-5 w-5" />
+          Códigos de Convite
+        </CardTitle>
+        <CardDescription>Gere códigos para convidar pessoas para sua empresa</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Generate form */}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Permissão</Label>
+            <Select value={newRole} onValueChange={setNewRole}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="leitura">Leitura</SelectItem>
+                <SelectItem value="usuario">Usuário</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Máx. usos</Label>
+            <Input className="w-20" type="number" min="1" value={maxUses} onChange={e => setMaxUses(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Expira em (dias)</Label>
+            <Input className="w-24" type="number" min="1" value={expiresInDays} onChange={e => setExpiresInDays(e.target.value)} />
+          </div>
+          <Button onClick={handleGenerate} disabled={generating} size="sm">
+            {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+            Gerar Código
+          </Button>
+        </div>
+
+        {/* Codes list */}
+        {loading ? (
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : codes.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Nenhum código gerado ainda.</p>
+        ) : (
+          <div className="space-y-2">
+            {codes.map(code => {
+              const isExpired = code.expires_at && new Date(code.expires_at) < new Date();
+              const isUsedUp = code.uses >= code.max_uses;
+              return (
+                <div key={code.id} className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="flex items-center gap-3">
+                    <code className="font-mono text-lg font-bold tracking-wider">{code.code}</code>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(code.code)}>
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">{code.role}</Badge>
+                    <span className="text-xs text-muted-foreground">{code.uses}/{code.max_uses} usos</span>
+                    {isExpired && <Badge variant="destructive" className="text-xs">Expirado</Badge>}
+                    {isUsedUp && <Badge variant="secondary" className="text-xs">Esgotado</Badge>}
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(code.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default InviteCodesCard;
