@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Upload, Loader2 } from "lucide-react";
+import InviteCodesCard from "@/components/convites/InviteCodesCard";
+import JoinCompanyCard from "@/components/convites/JoinCompanyCard";
 
 const ConfiguracoesEmpresa = () => {
   const { empresaId, userRole, isSuperAdmin } = useAuth();
@@ -286,6 +288,12 @@ const ConfiguracoesEmpresa = () => {
           </Button>
         </div>
       )}
+
+      {/* Invite Codes */}
+      <InviteCodesCard />
+
+      {/* Join Company */}
+      <JoinCompanyCard />
     </div>
   );
 };

@@ -10,9 +10,10 @@ import { LancamentosFormDialog } from "@/components/lancamentos/LancamentosFormD
 import { LancamentosProvider, useLancamentosContext } from "@/contexts/LancamentosContext";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { formatCurrency, formatDate } from "@/utils/formatters";
+import JoinCompanyCard from "@/components/convites/JoinCompanyCard";
 
 const DashboardContent = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, userProfile } = useAuth();
   const { loading, summary, lancamentosRecentes, dataFluxo, fetchDashboardData } = useDashboardData();
   const { handleOpenModal } = useLancamentosContext();
 
@@ -23,10 +24,13 @@ const DashboardContent = () => {
   return (
     <div className="space-y-6">
       <DashboardHeader 
-        title="Página Inicial"
+        title={`Olá, ${userProfile?.nome || 'Usuário'}!`}
         onNewTransactionClick={handleNewTransactionClick}
         icon={Plus}
       />
+
+      {/* Join Company Card */}
+      <JoinCompanyCard />
       
       {loading ? (
         <div className="flex justify-center items-center h-64">
