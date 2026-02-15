@@ -9,6 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, Plus, Trash2, Loader2, Ticket } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface InviteCode {
   id: string;
@@ -20,6 +28,7 @@ interface InviteCode {
   active: boolean;
   created_at: string;
   empresa_id?: string;
+  redeemed_by?: string | null;
   redeemed_by_name?: string | null;
   redeemed_by_email?: string | null;
   redeemed_at?: string | null;
@@ -41,6 +50,8 @@ const InviteCodesCard = () => {
   const [expiresInDays, setExpiresInDays] = useState("7");
   const [allEmpresas, setAllEmpresas] = useState<Empresa[]>([]);
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>("");
+  const [deleteTarget, setDeleteTarget] = useState<InviteCode | null>(null);
+  const [deletingCode, setDeletingCode] = useState(false);
 
   const isAdmin = userRole === "admin" || isSuperAdmin;
 
@@ -126,24 +137,61 @@ const InviteCodesCard = () => {
     toast({ title: "Copiado!", description: "Código copiado para a área de transferência." });
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeletingCode(true);
     try {
+      // If code was used, revoke the user's access first
+      if (deleteTarget.redeemed_by && deleteTarget.empresa_id) {
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", deleteTarget.redeemed_by)
+          .eq("empresa_id", deleteTarget.empresa_id);
+        if (roleError) throw roleError;
+
+        // Check remaining roles and update perfil
+        const { data: remainingRoles } = await supabase
+          .from("user_roles")
+          .select("empresa_id")
+          .eq("user_id", deleteTarget.redeemed_by);
+
+        if (remainingRoles && remainingRoles.length > 0) {
+          await supabase
+            .from("perfis")
+            .update({ empresa_id: remainingRoles[0].empresa_id })
+            .eq("id", deleteTarget.redeemed_by);
+        } else {
+          await supabase
+            .from("perfis")
+            .update({ empresa_id: null })
+            .eq("id", deleteTarget.redeemed_by);
+        }
+      }
+
       const { error } = await (supabase as any)
         .from("invite_codes")
         .delete()
-        .eq("id", id);
+        .eq("id", deleteTarget.id);
 
       if (error) throw error;
-      setCodes(prev => prev.filter(c => c.id !== id));
-      toast({ title: "Código removido" });
+      setCodes(prev => prev.filter(c => c.id !== deleteTarget.id));
+      toast({ 
+        title: "Código removido", 
+        description: deleteTarget.redeemed_by ? "O acesso do usuário à empresa também foi revogado." : undefined 
+      });
     } catch (error: any) {
       toast({ title: "Erro ao remover", description: error.message, variant: "destructive" });
+    } finally {
+      setDeletingCode(false);
+      setDeleteTarget(null);
     }
   };
 
   if (!isAdmin) return null;
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -236,7 +284,7 @@ const InviteCodesCard = () => {
                       {isInactive && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
                       {isExpired && <Badge variant="destructive" className="text-xs">Expirado</Badge>}
                       {isUsedUp && !isInactive && <Badge variant="secondary" className="text-xs">Esgotado</Badge>}
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(code.id)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(code)}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -257,6 +305,27 @@ const InviteCodesCard = () => {
         )}
       </CardContent>
     </Card>
+
+    {/* Delete confirmation dialog */}
+    <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Confirmar Exclusão</DialogTitle>
+          <DialogDescription>
+            {deleteTarget?.redeemed_by
+              ? `Este código foi utilizado por ${deleteTarget.redeemed_by_name || "um usuário"}. Ao excluí-lo, o acesso deste usuário à empresa será revogado. Deseja continuar?`
+              : "Tem certeza que deseja excluir este código de convite? Esta ação não pode ser desfeita."}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deletingCode}>Cancelar</Button>
+          <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deletingCode}>
+            {deletingCode ? "Processando..." : deleteTarget?.redeemed_by ? "Excluir e Revogar Acesso" : "Excluir"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
