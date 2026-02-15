@@ -62,14 +62,7 @@ const InviteCodesCard = () => {
         .select("id, nome")
         .order("nome");
       if (error) throw error;
-      // Deduplicate by name (keep first occurrence)
-      const seen = new Set<string>();
-      const unique = (data || []).filter(e => {
-        if (seen.has(e.nome)) return false;
-        seen.add(e.nome);
-        return true;
-      });
-      setAllEmpresas(unique);
+      setAllEmpresas(data || []);
     } catch (error: any) {
       console.error("Error fetching empresas:", error);
     }
@@ -103,8 +96,8 @@ const InviteCodesCard = () => {
     try {
       const body: any = {
         role: newRole,
-        maxUses: parseInt(maxUses) || 5,
-        expiresInDays: parseInt(expiresInDays) || 7,
+        maxUses: parseInt(maxUses),
+        expiresInDays: parseInt(expiresInDays),
       };
 
       // Super admin can target a specific empresa
@@ -195,12 +188,12 @@ const InviteCodesCard = () => {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Máx. usos</Label>
-            <Input className="w-20" type="number" min="1" value={maxUses} onChange={e => setMaxUses(e.target.value)} />
+            <Label className="text-xs">Máx. usos (0 = ilimitado)</Label>
+            <Input className="w-20" type="number" min="0" value={maxUses} onChange={e => setMaxUses(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Expira em (dias)</Label>
-            <Input className="w-24" type="number" min="1" value={expiresInDays} onChange={e => setExpiresInDays(e.target.value)} />
+            <Label className="text-xs">Expira em dias (0 = nunca)</Label>
+            <Input className="w-24" type="number" min="0" value={expiresInDays} onChange={e => setExpiresInDays(e.target.value)} />
           </div>
           <Button onClick={handleGenerate} disabled={generating} size="sm">
             {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
@@ -219,7 +212,7 @@ const InviteCodesCard = () => {
           <div className="space-y-2">
             {codes.map(code => {
               const isExpired = code.expires_at && new Date(code.expires_at) < new Date();
-              const isUsedUp = code.uses >= code.max_uses;
+              const isUsedUp = code.max_uses > 0 && code.uses >= code.max_uses;
               const isInactive = !code.active;
               return (
                 <div key={code.id} className={`rounded-lg border p-3 space-y-2 ${isInactive ? "opacity-60" : ""}`}>
@@ -237,7 +230,9 @@ const InviteCodesCard = () => {
                         </Badge>
                       )}
                       <Badge variant="outline" className="text-xs">{code.role}</Badge>
-                      <span className="text-xs text-muted-foreground">{code.uses}/{code.max_uses} usos</span>
+                      <span className="text-xs text-muted-foreground">
+                        {code.uses}/{code.max_uses === 0 ? "∞" : code.max_uses} usos
+                      </span>
                       {isInactive && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
                       {isExpired && <Badge variant="destructive" className="text-xs">Expirado</Badge>}
                       {isUsedUp && !isInactive && <Badge variant="secondary" className="text-xs">Esgotado</Badge>}

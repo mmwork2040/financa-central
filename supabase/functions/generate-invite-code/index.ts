@@ -73,7 +73,7 @@ serve(async (req) => {
     // Generate a random 8-char code
     const code = crypto.randomUUID().replace(/-/g, "").substring(0, 8).toUpperCase();
 
-    const expiresAt = expiresInDays
+    const expiresAt = expiresInDays && expiresInDays > 0
       ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
       : null;
 
@@ -82,7 +82,7 @@ serve(async (req) => {
       code,
       created_by: callerData.user.id,
       role: role || "leitura",
-      max_uses: maxUses || 1,
+      max_uses: typeof maxUses === "number" ? maxUses : 1,
       expires_at: expiresAt,
     }).select().single();
 

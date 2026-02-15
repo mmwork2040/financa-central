@@ -72,8 +72,8 @@ serve(async (req) => {
       });
     }
 
-    // Check max uses
-    if (invite.uses >= invite.max_uses) {
+    // Check max uses (0 = unlimited)
+    if (invite.max_uses > 0 && invite.uses >= invite.max_uses) {
       return new Response(JSON.stringify({ error: "Código de convite já atingiu o limite de usos" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -120,7 +120,7 @@ serve(async (req) => {
 
     // Increment uses and record redeemer info
     const newUses = invite.uses + 1;
-    const shouldDeactivate = newUses >= invite.max_uses;
+    const shouldDeactivate = invite.max_uses > 0 && newUses >= invite.max_uses;
 
     // Get redeemer profile info
     const { data: redeemerProfile } = await supabaseAdmin
