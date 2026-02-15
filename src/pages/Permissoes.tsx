@@ -242,6 +242,24 @@ const Permissoes = () => {
                 ) : (
                   <>
                     <div className="rounded-md border">
+                      <div className="flex items-center gap-2 p-2 border-b bg-muted/30">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs h-7"
+                          onClick={() => {
+                            const allChecked = permissions.every(p => p.pode_incluir && p.pode_alterar && p.pode_excluir);
+                            setPermissions(permissions.map(p => ({
+                              ...p,
+                              pode_incluir: !allChecked,
+                              pode_alterar: !allChecked,
+                              pode_excluir: !allChecked,
+                            })));
+                          }}
+                        >
+                          {permissions.every(p => p.pode_incluir && p.pode_alterar && p.pode_excluir) ? "Desmarcar Tudo" : "Selecionar Tudo"}
+                        </Button>
+                      </div>
                       <table className="w-full table-auto">
                         <thead className="bg-muted/50">
                           <tr>
@@ -259,13 +277,27 @@ const Permissoes = () => {
                               pode_alterar: false,
                               pode_excluir: false
                             };
+                            const allRowChecked = permission.pode_incluir && permission.pode_alterar && permission.pode_excluir;
                             
                             return (
                               <tr key={screen.value} className="border-t hover:bg-muted/50">
                                 <td className="px-4 py-2">
-                                  <div>
-                                    <p className="font-medium">{screen.name}</p>
-                                    <p className="text-xs text-muted-foreground">{screen.description}</p>
+                                  <div className="flex items-center gap-2">
+                                    <Checkbox
+                                      checked={allRowChecked}
+                                      onCheckedChange={(checked) => {
+                                        const val = !!checked;
+                                        setPermissions(permissions.map(p =>
+                                          p.tela === screen.value
+                                            ? { ...p, pode_incluir: val, pode_alterar: val, pode_excluir: val }
+                                            : p
+                                        ));
+                                      }}
+                                    />
+                                    <div>
+                                      <p className="font-medium">{screen.name}</p>
+                                      <p className="text-xs text-muted-foreground">{screen.description}</p>
+                                    </div>
                                   </div>
                                 </td>
                                 <td className="px-4 py-2 text-center">

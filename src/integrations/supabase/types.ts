@@ -261,6 +261,41 @@ export type Database = {
           },
         ]
       }
+      invite_code_permissoes: {
+        Row: {
+          id: string
+          invite_code_id: string
+          pode_alterar: boolean
+          pode_excluir: boolean
+          pode_incluir: boolean
+          tela: string
+        }
+        Insert: {
+          id?: string
+          invite_code_id: string
+          pode_alterar?: boolean
+          pode_excluir?: boolean
+          pode_incluir?: boolean
+          tela: string
+        }
+        Update: {
+          id?: string
+          invite_code_id?: string
+          pode_alterar?: boolean
+          pode_excluir?: boolean
+          pode_incluir?: boolean
+          tela?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invite_code_permissoes_invite_code_id_fkey"
+            columns: ["invite_code_id"]
+            isOneToOne: false
+            referencedRelation: "invite_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invite_codes: {
         Row: {
           active: boolean | null
