@@ -74,6 +74,7 @@ const InviteCodesCard = () => {
   const [deleteTarget, setDeleteTarget] = useState<InviteCode | null>(null);
   const [deletingCode, setDeletingCode] = useState(false);
   const [showPermissions, setShowPermissions] = useState(false);
+  const [showConfirmGenerate, setShowConfirmGenerate] = useState(false);
   const [screenPermissions, setScreenPermissions] = useState<ScreenPermission[]>(
     screens.map(s => ({ tela: s.value, nome: s.name, pode_incluir: false, pode_alterar: false, pode_excluir: false }))
   );
@@ -291,8 +292,8 @@ const InviteCodesCard = () => {
               <Label className="text-xs">Expira em dias (0 = nunca)</Label>
               <Input className="w-24" type="number" min="0" value={expiresInDays} onChange={e => setExpiresInDays(e.target.value)} />
             </div>
-            <Button onClick={handleGenerate} disabled={generating} size="sm">
-              {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+            <Button onClick={() => setShowConfirmGenerate(true)} disabled={generating} size="sm">
+              <Plus className="h-4 w-4 mr-1" />
               Gerar Código
             </Button>
           </div>
@@ -465,6 +466,82 @@ const InviteCodesCard = () => {
           <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deletingCode}>Cancelar</Button>
           <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deletingCode}>
             {deletingCode ? "Processando..." : deleteTarget?.redeemed_by ? "Excluir e Revogar Acesso" : "Excluir"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Generate confirmation dialog */}
+    <Dialog open={showConfirmGenerate} onOpenChange={setShowConfirmGenerate}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Confirmar Geração de Código</DialogTitle>
+          <DialogDescription>
+            Revise as configurações antes de gerar o código de convite.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 text-sm">
+          <div className="grid grid-cols-2 gap-2">
+            <span className="text-muted-foreground">Permissão:</span>
+            <span className="font-medium">
+              {newRole === "admin" ? "Administrador" : newRole === "usuario" ? "Usuário" : "Leitura"}
+            </span>
+            <span className="text-muted-foreground">Máx. usos:</span>
+            <span className="font-medium">{parseInt(maxUses) === 0 ? "Ilimitado" : maxUses}</span>
+            <span className="text-muted-foreground">Expiração:</span>
+            <span className="font-medium">{parseInt(expiresInDays) === 0 ? "Nunca" : `${expiresInDays} dias`}</span>
+            {isSuperAdmin && selectedEmpresaId && (
+              <>
+                <span className="text-muted-foreground">Empresa:</span>
+                <span className="font-medium">{allEmpresas.find(e => e.id === selectedEmpresaId)?.nome || "—"}</span>
+              </>
+            )}
+          </div>
+
+          {newRole !== "admin" && (
+            <div className="space-y-2">
+              <p className="font-medium text-muted-foreground">Permissões de acesso por tela:</p>
+              {(() => {
+                const activePerms = screenPermissions.filter(p => p.pode_incluir || p.pode_alterar || p.pode_excluir);
+                if (activePerms.length === 0) {
+                  return <p className="text-muted-foreground italic">Nenhuma permissão específica definida — o usuário terá apenas acesso de visualização.</p>;
+                }
+                return (
+                  <div className="rounded-md border text-xs">
+                    <table className="w-full">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="px-3 py-1.5 text-left font-medium">Tela</th>
+                          <th className="px-3 py-1.5 text-center font-medium">Incluir</th>
+                          <th className="px-3 py-1.5 text-center font-medium">Alterar</th>
+                          <th className="px-3 py-1.5 text-center font-medium">Excluir</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {activePerms.map(p => (
+                          <tr key={p.tela} className="border-t">
+                            <td className="px-3 py-1.5 font-medium">{p.nome}</td>
+                            <td className="px-3 py-1.5 text-center">{p.pode_incluir ? "✓" : "—"}</td>
+                            <td className="px-3 py-1.5 text-center">{p.pode_alterar ? "✓" : "—"}</td>
+                            <td className="px-3 py-1.5 text-center">{p.pode_excluir ? "✓" : "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+          {newRole === "admin" && (
+            <p className="text-muted-foreground italic">Administradores possuem acesso total a todas as funcionalidades.</p>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowConfirmGenerate(false)} disabled={generating}>Cancelar</Button>
+          <Button onClick={() => { setShowConfirmGenerate(false); handleGenerate(); }} disabled={generating}>
+            {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+            Confirmar e Gerar
           </Button>
         </DialogFooter>
       </DialogContent>
