@@ -20,7 +20,7 @@ serve(async (req) => {
       });
     }
 
-    const { role, maxUses, expiresInDays, empresaId: targetEmpresaId } = await req.json();
+    const { role, maxUses, expiresInDays, empresaId: targetEmpresaId, permissoes } = await req.json();
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -91,6 +91,25 @@ serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Save permissions for the invite code
+    if (permissoes && Array.isArray(permissoes) && permissoes.length > 0) {
+      const permRows = permissoes.map((p: any) => ({
+        invite_code_id: data.id,
+        tela: p.tela,
+        pode_incluir: !!p.pode_incluir,
+        pode_alterar: !!p.pode_alterar,
+        pode_excluir: !!p.pode_excluir,
+      }));
+
+      const { error: permError } = await supabaseAdmin
+        .from("invite_code_permissoes")
+        .insert(permRows);
+
+      if (permError) {
+        console.error("Error saving invite permissions:", permError);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, invite: data }), {

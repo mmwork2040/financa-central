@@ -118,6 +118,37 @@ serve(async (req) => {
       .update({ empresa_id: invite.empresa_id })
       .eq("id", userId);
 
+    // Copy permissions from invite code to user
+    const { data: invitePerms } = await supabaseAdmin
+      .from("invite_code_permissoes")
+      .select("tela, pode_incluir, pode_alterar, pode_excluir")
+      .eq("invite_code_id", invite.id);
+
+    if (invitePerms && invitePerms.length > 0) {
+      // Remove any existing permissions for this user (fresh start)
+      await supabaseAdmin
+        .from("permissoes")
+        .delete()
+        .eq("perfis_id", userId);
+
+      // Insert permissions from invite code
+      const userPerms = invitePerms.map((p: any) => ({
+        perfis_id: userId,
+        tela: p.tela,
+        pode_incluir: p.pode_incluir,
+        pode_alterar: p.pode_alterar,
+        pode_excluir: p.pode_excluir,
+      }));
+
+      const { error: permError } = await supabaseAdmin
+        .from("permissoes")
+        .insert(userPerms);
+
+      if (permError) {
+        console.error("Error copying permissions:", permError);
+      }
+    }
+
     // Increment uses and record redeemer info
     const newUses = invite.uses + 1;
     const shouldDeactivate = invite.max_uses > 0 && newUses >= invite.max_uses;

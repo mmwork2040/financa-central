@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Plus, Trash2, Loader2, Ticket } from "lucide-react";
+import { Copy, Plus, Trash2, Loader2, Ticket, ChevronDown, ChevronUp } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,26 @@ interface Empresa {
   nome: string;
 }
 
+interface ScreenPermission {
+  tela: string;
+  nome: string;
+  pode_incluir: boolean;
+  pode_alterar: boolean;
+  pode_excluir: boolean;
+}
+
+const screens = [
+  { value: "users", name: "Usuários" },
+  { value: "permissions", name: "Permissões" },
+  { value: "fornecedores", name: "Fornecedores" },
+  { value: "clientes", name: "Clientes" },
+  { value: "categorias", name: "Categorias" },
+  { value: "contas_bancarias", name: "Contas Bancárias" },
+  { value: "formas_pagamento", name: "Formas de Pagamento" },
+  { value: "lancamentos", name: "Lançamentos" },
+  { value: "relatorios", name: "Relatórios" },
+];
+
 const InviteCodesCard = () => {
   const { empresaId, userRole, isSuperAdmin } = useAuth();
   const { toast } = useToast();
@@ -52,6 +73,10 @@ const InviteCodesCard = () => {
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>("");
   const [deleteTarget, setDeleteTarget] = useState<InviteCode | null>(null);
   const [deletingCode, setDeletingCode] = useState(false);
+  const [showPermissions, setShowPermissions] = useState(false);
+  const [screenPermissions, setScreenPermissions] = useState<ScreenPermission[]>(
+    screens.map(s => ({ tela: s.value, nome: s.name, pode_incluir: false, pode_alterar: false, pode_excluir: false }))
+  );
 
   const isAdmin = userRole === "admin" || isSuperAdmin;
 
@@ -87,7 +112,6 @@ const InviteCodesCard = () => {
         .select("*")
         .order("created_at", { ascending: false });
 
-      // Super admin sees all codes; regular admin only their empresa
       if (!isSuperAdmin && empresaId) {
         query = query.eq("empresa_id", empresaId);
       }
@@ -102,6 +126,12 @@ const InviteCodesCard = () => {
     }
   };
 
+  const handlePermissionChange = (tela: string, field: 'pode_incluir' | 'pode_alterar' | 'pode_excluir', value: boolean) => {
+    setScreenPermissions(prev => prev.map(p =>
+      p.tela === tela ? { ...p, [field]: value } : p
+    ));
+  };
+
   const handleGenerate = async () => {
     setGenerating(true);
     try {
@@ -111,9 +141,19 @@ const InviteCodesCard = () => {
         expiresInDays: parseInt(expiresInDays),
       };
 
-      // Super admin can target a specific empresa
       if (isSuperAdmin && selectedEmpresaId) {
         body.empresaId = selectedEmpresaId;
+      }
+
+      // Include permissions if role is not admin (admins have full access)
+      if (newRole !== "admin") {
+        const activePerms = screenPermissions.filter(p => p.pode_incluir || p.pode_alterar || p.pode_excluir);
+        body.permissoes = activePerms.map(p => ({
+          tela: p.tela,
+          pode_incluir: p.pode_incluir,
+          pode_alterar: p.pode_alterar,
+          pode_excluir: p.pode_excluir,
+        }));
       }
 
       const { data, error } = await supabase.functions.invoke("generate-invite-code", {
@@ -125,6 +165,9 @@ const InviteCodesCard = () => {
 
       toast({ title: "Código gerado!", description: `Código: ${data.invite.code}` });
       fetchCodes();
+      // Reset permissions
+      setScreenPermissions(screens.map(s => ({ tela: s.value, nome: s.name, pode_incluir: false, pode_alterar: false, pode_excluir: false })));
+      setShowPermissions(false);
     } catch (error: any) {
       toast({ title: "Erro ao gerar código", description: error.message, variant: "destructive" });
     } finally {
@@ -141,7 +184,6 @@ const InviteCodesCard = () => {
     if (!deleteTarget) return;
     setDeletingCode(true);
     try {
-      // If code was used, revoke the user's access first
       if (deleteTarget.redeemed_by && deleteTarget.empresa_id) {
         const { error: roleError } = await supabase
           .from("user_roles")
@@ -150,7 +192,12 @@ const InviteCodesCard = () => {
           .eq("empresa_id", deleteTarget.empresa_id);
         if (roleError) throw roleError;
 
-        // Check remaining roles and update perfil
+        // Also remove permissions for this user
+        await (supabase as any)
+          .from("permissoes")
+          .delete()
+          .eq("perfis_id", deleteTarget.redeemed_by);
+
         const { data: remainingRoles } = await supabase
           .from("user_roles")
           .select("empresa_id")
@@ -176,9 +223,9 @@ const InviteCodesCard = () => {
 
       if (error) throw error;
       setCodes(prev => prev.filter(c => c.id !== deleteTarget.id));
-      toast({ 
-        title: "Código removido", 
-        description: deleteTarget.redeemed_by ? "O acesso do usuário à empresa também foi revogado." : undefined 
+      toast({
+        title: "Código removido",
+        description: deleteTarget.redeemed_by ? "O acesso do usuário à empresa também foi revogado." : undefined
       });
     } catch (error: any) {
       toast({ title: "Erro ao remover", description: error.message, variant: "destructive" });
@@ -206,47 +253,110 @@ const InviteCodesCard = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Generate form */}
-        <div className="flex flex-wrap items-end gap-3">
-          {isSuperAdmin && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-end gap-3">
+            {isSuperAdmin && (
+              <div className="space-y-1">
+                <Label className="text-xs">Empresa</Label>
+                <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Selecione a empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allEmpresas.map(e => (
+                      <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-1">
-              <Label className="text-xs">Empresa</Label>
-              <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Selecione a empresa" />
+              <Label className="text-xs">Permissão</Label>
+              <Select value={newRole} onValueChange={setNewRole}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {allEmpresas.map(e => (
-                    <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
-                  ))}
+                  <SelectItem value="leitura">Leitura</SelectItem>
+                  <SelectItem value="usuario">Usuário</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Máx. usos (0 = ilimitado)</Label>
+              <Input className="w-20" type="number" min="0" value={maxUses} onChange={e => setMaxUses(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Expira em dias (0 = nunca)</Label>
+              <Input className="w-24" type="number" min="0" value={expiresInDays} onChange={e => setExpiresInDays(e.target.value)} />
+            </div>
+            <Button onClick={handleGenerate} disabled={generating} size="sm">
+              {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+              Gerar Código
+            </Button>
+          </div>
+
+          {/* Permissions section - only show for non-admin roles */}
+          {newRole !== "admin" && (
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPermissions(!showPermissions)}
+                className="w-full justify-between"
+              >
+                <span>Configurar Permissões de Acesso</span>
+                {showPermissions ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+
+              {showPermissions && (
+                <div className="rounded-md border">
+                  <table className="w-full table-auto text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-medium">Tela</th>
+                        <th className="px-3 py-2 text-center font-medium">Incluir</th>
+                        <th className="px-3 py-2 text-center font-medium">Alterar</th>
+                        <th className="px-3 py-2 text-center font-medium">Excluir</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {screenPermissions.map(perm => (
+                        <tr key={perm.tela} className="border-t hover:bg-muted/50">
+                          <td className="px-3 py-2 font-medium">{perm.nome}</td>
+                          <td className="px-3 py-2 text-center">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={perm.pode_incluir}
+                                onCheckedChange={(checked) => handlePermissionChange(perm.tela, 'pode_incluir', !!checked)}
+                              />
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={perm.pode_alterar}
+                                onCheckedChange={(checked) => handlePermissionChange(perm.tela, 'pode_alterar', !!checked)}
+                              />
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={perm.pode_excluir}
+                                onCheckedChange={(checked) => handlePermissionChange(perm.tela, 'pode_excluir', !!checked)}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           )}
-          <div className="space-y-1">
-            <Label className="text-xs">Permissão</Label>
-            <Select value={newRole} onValueChange={setNewRole}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="leitura">Leitura</SelectItem>
-                <SelectItem value="usuario">Usuário</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Máx. usos (0 = ilimitado)</Label>
-            <Input className="w-20" type="number" min="0" value={maxUses} onChange={e => setMaxUses(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Expira em dias (0 = nunca)</Label>
-            <Input className="w-24" type="number" min="0" value={expiresInDays} onChange={e => setExpiresInDays(e.target.value)} />
-          </div>
-          <Button onClick={handleGenerate} disabled={generating} size="sm">
-            {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-            Gerar Código
-          </Button>
         </div>
 
         {/* Codes list */}
