@@ -98,6 +98,7 @@ const InviteCodesCard = () => {
       const { data, error } = await supabase
         .from("empresas")
         .select("id, nome")
+        .eq("pessoal", false)
         .order("nome");
       if (error) throw error;
       setAllEmpresas(data || []);
