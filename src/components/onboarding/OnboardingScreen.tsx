@@ -131,10 +131,10 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
               </CardContent>
             </Card>
 
-            <div className="flex justify-center pt-2">
+            <div className="flex justify-center gap-3 pt-2">
               <Button variant="ghost" size="sm" onClick={() => logout()} className="text-muted-foreground">
                 <LogOut className="h-4 w-4 mr-2" />
-                Sair do sistema
+                Sair
               </Button>
             </div>
           </div>
