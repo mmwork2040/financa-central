@@ -1,8 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Session, User } from "@supabase/supabase-js";
+
+type EmpresaInfo = {
+  empresa_id: string;
+  role: string;
+  empresa_nome?: string;
+};
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -12,8 +18,10 @@ type AuthContextType = {
   empresaId: string | null;
   userRole: string | null;
   isSuperAdmin: boolean;
+  empresas: EmpresaInfo[];
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  switchEmpresa: (empresaId: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,8 +32,10 @@ const AuthContext = createContext<AuthContextType>({
   empresaId: null,
   userRole: null,
   isSuperAdmin: false,
+  empresas: [],
   login: async () => {},
   logout: async () => {},
+  switchEmpresa: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -35,6 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userProfile, setUserProfile] = useState<any | null>(null);
   const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [empresas, setEmpresas] = useState<EmpresaInfo[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -59,26 +70,52 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const fetchUserRole = async (userId: string) => {
+  const fetchUserRoles = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      // Fetch all roles for this user
+      const { data: roles, error } = await supabase
         .from('user_roles')
         .select('empresa_id, role')
-        .eq('user_id', userId)
-        .single();
+        .eq('user_id', userId);
 
       if (error) {
-        console.error("Erro ao carregar role do usuário:", error);
+        console.error("Erro ao carregar roles do usuário:", error);
         return null;
       }
 
-      if (data) {
-        setEmpresaId(data.empresa_id);
-        setUserRole(data.role);
-      }
-      return data;
+      if (!roles || roles.length === 0) return null;
+
+      // Fetch empresa names for all roles
+      const empresaIds = roles.map(r => r.empresa_id);
+      const { data: empresasData } = await supabase
+        .from('empresas')
+        .select('id, nome')
+        .in('id', empresaIds);
+
+      const empresasList: EmpresaInfo[] = roles.map(r => ({
+        empresa_id: r.empresa_id,
+        role: r.role,
+        empresa_nome: empresasData?.find(e => e.id === r.empresa_id)?.nome || 'Empresa',
+      }));
+
+      setEmpresas(empresasList);
+
+      // Get profile to determine active empresa
+      const { data: profile } = await supabase
+        .from('perfis')
+        .select('empresa_id')
+        .eq('id', userId)
+        .single();
+
+      const activeEmpresaId = profile?.empresa_id || roles[0].empresa_id;
+      const activeRole = roles.find(r => r.empresa_id === activeEmpresaId);
+
+      setEmpresaId(activeEmpresaId);
+      setUserRole(activeRole?.role || roles[0].role);
+
+      return { empresasList, activeEmpresaId };
     } catch (error) {
-      console.error("Erro ao carregar role:", error);
+      console.error("Erro ao carregar roles:", error);
       return null;
     }
   };
@@ -92,12 +129,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (currentSession?.user) {
           setTimeout(() => {
             fetchUserProfile(currentSession.user.id);
-            fetchUserRole(currentSession.user.id);
+            fetchUserRoles(currentSession.user.id);
           }, 0);
         } else {
           setUserProfile(null);
           setEmpresaId(null);
           setUserRole(null);
+          setEmpresas([]);
         }
       }
     );
@@ -109,7 +147,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (currentSession?.user) {
         Promise.all([
           fetchUserProfile(currentSession.user.id),
-          fetchUserRole(currentSession.user.id),
+          fetchUserRoles(currentSession.user.id),
         ]).finally(() => {
           setLoading(false);
         });
@@ -143,7 +181,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data.user) {
         const [profile] = await Promise.all([
           fetchUserProfile(data.user.id),
-          fetchUserRole(data.user.id),
+          fetchUserRoles(data.user.id),
         ]);
         navigate("/dashboard");
         toast({
@@ -164,6 +202,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await supabase.auth.signOut();
       setEmpresaId(null);
       setUserRole(null);
+      setEmpresas([]);
       navigate("/login");
       toast({
         title: "Logout realizado com sucesso",
@@ -180,6 +219,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const switchEmpresa = async (targetEmpresaId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("switch-empresa", {
+        body: { empresaId: targetEmpresaId },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setEmpresaId(targetEmpresaId);
+      setUserRole(data.role);
+
+      // Update profile empresa_id locally
+      setUserProfile((prev: any) => prev ? { ...prev, empresa_id: targetEmpresaId } : prev);
+
+      toast({
+        title: "Empresa alterada",
+        description: `Você está agora na empresa selecionada.`,
+      });
+
+      // Reload to refresh all data
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao trocar empresa",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -190,8 +260,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         empresaId,
         userRole,
         isSuperAdmin: userRole === 'super_admin',
+        empresas,
         login,
-        logout
+        logout,
+        switchEmpresa,
       }}
     >
       {children}

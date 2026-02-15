@@ -10,7 +10,6 @@ import { LancamentosFormDialog } from "@/components/lancamentos/LancamentosFormD
 import { LancamentosProvider, useLancamentosContext } from "@/contexts/LancamentosContext";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { formatCurrency, formatDate } from "@/utils/formatters";
-import JoinCompanyCard from "@/components/convites/JoinCompanyCard";
 
 const DashboardContent = () => {
   const { isAuthenticated, userProfile } = useAuth();
@@ -29,8 +28,6 @@ const DashboardContent = () => {
         icon={Plus}
       />
 
-      {/* Join Company Card */}
-      <JoinCompanyCard />
       
       {loading ? (
         <div className="flex justify-center items-center h-64">
