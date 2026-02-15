@@ -16,17 +16,78 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
+    const { action, requestId, motivo, empresaId } = await req.json();
+
+    // check-expired doesn't require auth
+    if (action === "check-expired") {
+      const { data: expired } = await supabaseAdmin
+        .from("solicitacoes_saida")
+        .select("*")
+        .eq("status", "pendente")
+        .lt("expira_em", new Date().toISOString());
+
+      if (expired && expired.length > 0) {
+        for (const request of expired) {
+          await supabaseAdmin
+            .from("user_roles")
+            .delete()
+            .eq("user_id", request.user_id)
+            .eq("empresa_id", request.empresa_id);
+
+          const { data: remaining } = await supabaseAdmin
+            .from("user_roles")
+            .select("empresa_id")
+            .eq("user_id", request.user_id);
+
+          if (remaining && remaining.length > 0) {
+            await supabaseAdmin
+              .from("perfis")
+              .update({ empresa_id: remaining[0].empresa_id })
+              .eq("id", request.user_id);
+          } else {
+            await supabaseAdmin
+              .from("perfis")
+              .update({ empresa_id: null })
+              .eq("id", request.user_id);
+          }
+
+          await supabaseAdmin
+            .from("solicitacoes_saida")
+            .update({
+              status: "aprovado",
+              auto_aprovado: true,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", request.id);
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true, processed: expired?.length || 0 }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // All other actions require auth
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Não autorizado");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: authErr } = await userClient.auth.getUser();
-    if (authErr || !user) throw new Error("Não autorizado");
 
-    const { action, requestId, motivo, empresaId } = await req.json();
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = claimsData.claims.sub;
 
     // ACTION: create - user requests to leave
     if (action === "create") {
@@ -36,7 +97,7 @@ Deno.serve(async (req) => {
       const { data: roles } = await supabaseAdmin
         .from("user_roles")
         .select("empresa_id")
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
       if (!roles || roles.length <= 1) {
         throw new Error("Você não pode sair da única empresa que pertence. Entre em outra empresa primeiro.");
@@ -46,7 +107,7 @@ Deno.serve(async (req) => {
       const { data: existing } = await supabaseAdmin
         .from("solicitacoes_saida")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("empresa_id", empresaId)
         .eq("status", "pendente")
         .maybeSingle();
@@ -58,7 +119,7 @@ Deno.serve(async (req) => {
       const { data, error } = await supabaseAdmin
         .from("solicitacoes_saida")
         .insert({
-          user_id: user.id,
+          user_id: userId,
           empresa_id: empresaId,
           motivo: motivo || null,
           status: "pendente",
@@ -81,7 +142,7 @@ Deno.serve(async (req) => {
         .from("solicitacoes_saida")
         .update({ status: "cancelado", updated_at: new Date().toISOString() })
         .eq("id", requestId)
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("status", "pendente");
 
       if (error) throw error;
@@ -107,11 +168,11 @@ Deno.serve(async (req) => {
 
       // Verify admin has permission
       const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
-        _user_id: user.id,
+        _user_id: userId,
         _role: "admin",
       });
       const { data: isSuperAdmin } = await supabaseAdmin.rpc("is_super_admin", {
-        _user_id: user.id,
+        _user_id: userId,
       });
 
       if (!isAdmin && !isSuperAdmin) {
@@ -149,7 +210,7 @@ Deno.serve(async (req) => {
         .from("solicitacoes_saida")
         .update({
           status: "aprovado",
-          respondido_por: user.id,
+          respondido_por: userId,
           respondido_em: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -168,7 +229,7 @@ Deno.serve(async (req) => {
         .from("solicitacoes_saida")
         .update({
           status: "rejeitado",
-          respondido_por: user.id,
+          respondido_por: userId,
           respondido_em: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -176,57 +237,6 @@ Deno.serve(async (req) => {
         .eq("status", "pendente");
 
       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ACTION: auto-approve expired requests (called periodically or on page load)
-    if (action === "check-expired") {
-      const { data: expired } = await supabaseAdmin
-        .from("solicitacoes_saida")
-        .select("*")
-        .eq("status", "pendente")
-        .lt("expira_em", new Date().toISOString());
-
-      if (expired && expired.length > 0) {
-        for (const request of expired) {
-          // Remove user_role
-          await supabaseAdmin
-            .from("user_roles")
-            .delete()
-            .eq("user_id", request.user_id)
-            .eq("empresa_id", request.empresa_id);
-
-          // Check remaining roles
-          const { data: remaining } = await supabaseAdmin
-            .from("user_roles")
-            .select("empresa_id")
-            .eq("user_id", request.user_id);
-
-          if (remaining && remaining.length > 0) {
-            await supabaseAdmin
-              .from("perfis")
-              .update({ empresa_id: remaining[0].empresa_id })
-              .eq("id", request.user_id);
-          } else {
-            await supabaseAdmin
-              .from("perfis")
-              .update({ empresa_id: null })
-              .eq("id", request.user_id);
-          }
-
-          await supabaseAdmin
-            .from("solicitacoes_saida")
-            .update({
-              status: "aprovado",
-              auto_aprovado: true,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", request.id);
-        }
-      }
-
-      return new Response(JSON.stringify({ success: true, processed: expired?.length || 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
