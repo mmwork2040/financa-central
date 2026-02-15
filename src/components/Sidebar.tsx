@@ -45,7 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 export const Sidebar = () => {
   const { isExpanded, toggle } = useSidebar();
   const location = useLocation();
-  const { userProfile, logout, isSuperAdmin, empresaId, empresas, switchEmpresa, canAccessRoute } = useAuth();
+  const { userProfile, logout, isSuperAdmin, isPessoal, empresaId, empresas, switchEmpresa, canAccessRoute } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
@@ -214,7 +214,10 @@ export const Sidebar = () => {
         {/* Menu de navegação */}
         <nav className="flex-1 overflow-y-auto py-4">
           <ul className="space-y-1 px-2">
-            {menuItems.filter(item => canAccessRoute(item.path)).map((item) => (
+            {menuItems.filter(item => {
+              if (isPessoal && (item.path === '/users' || item.path === '/permissions')) return false;
+              return canAccessRoute(item.path);
+            }).map((item) => (
               <li key={item.path}>
                 <Link
                   to={item.path}
