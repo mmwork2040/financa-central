@@ -20,7 +20,7 @@ serve(async (req) => {
       });
     }
 
-    const { role, maxUses, expiresInDays } = await req.json();
+    const { role, maxUses, expiresInDays, empresaId: targetEmpresaId } = await req.json();
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -41,19 +41,34 @@ serve(async (req) => {
       });
     }
 
+    // Check if caller is super_admin
+    const { data: superAdminCheck } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerData.user.id)
+      .eq("role", "super_admin")
+      .maybeSingle();
+
+    const isSuperAdmin = !!superAdminCheck;
+
     // Get caller's empresa and verify admin
     const { data: callerRole } = await supabaseAdmin
       .from("user_roles")
       .select("empresa_id, role")
       .eq("user_id", callerData.user.id)
+      .in("role", ["admin", "super_admin"])
+      .limit(1)
       .single();
 
-    if (!callerRole || callerRole.role !== "admin") {
+    if (!callerRole) {
       return new Response(JSON.stringify({ error: "Apenas administradores podem gerar códigos de convite" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Super admin can target any empresa; regular admin only their own
+    const finalEmpresaId = isSuperAdmin && targetEmpresaId ? targetEmpresaId : callerRole.empresa_id;
 
     // Generate a random 8-char code
     const code = crypto.randomUUID().replace(/-/g, "").substring(0, 8).toUpperCase();
@@ -63,7 +78,7 @@ serve(async (req) => {
       : null;
 
     const { data, error } = await supabaseAdmin.from("invite_codes").insert({
-      empresa_id: callerRole.empresa_id,
+      empresa_id: finalEmpresaId,
       code,
       created_by: callerData.user.id,
       role: role || "leitura",
