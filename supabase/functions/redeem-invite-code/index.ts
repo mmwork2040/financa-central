@@ -118,10 +118,27 @@ serve(async (req) => {
       .update({ empresa_id: invite.empresa_id })
       .eq("id", userId);
 
-    // Increment uses
+    // Increment uses and record redeemer info
+    const newUses = invite.uses + 1;
+    const shouldDeactivate = newUses >= invite.max_uses;
+
+    // Get redeemer profile info
+    const { data: redeemerProfile } = await supabaseAdmin
+      .from("perfis")
+      .select("nome, email")
+      .eq("id", userId)
+      .single();
+
     await supabaseAdmin
       .from("invite_codes")
-      .update({ uses: invite.uses + 1 })
+      .update({
+        uses: newUses,
+        active: shouldDeactivate ? false : true,
+        redeemed_by: userId,
+        redeemed_at: new Date().toISOString(),
+        redeemed_by_name: redeemerProfile?.nome || null,
+        redeemed_by_email: redeemerProfile?.email || null,
+      })
       .eq("id", invite.id);
 
     // Get empresa name
