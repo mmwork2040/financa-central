@@ -9,7 +9,7 @@ import { SidebarProvider } from "@/contexts/SidebarContext";
 import { AppLayout } from "@/layouts/AppLayout";
 
 // Pages
-import Index from "./pages/Index";
+import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -45,11 +45,9 @@ const App = () => {
               <Sonner />
               <Routes>
                 {/* Public routes */}
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                
-                {/* Home route for initial redirection */}
-                <Route path="/" element={<Navigate to="/login" />} />
 
                 {/* Protected routes */}
                 <Route path="/dashboard" element={<RequireAuth><AppLayout><Dashboard /></AppLayout></RequireAuth>} />
