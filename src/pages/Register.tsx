@@ -16,7 +16,6 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    nomeEmpresa: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -24,7 +23,7 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.nome || !form.email || !form.password || !form.nomeEmpresa) {
+    if (!form.nome || !form.email || !form.password) {
       toast({ title: "Erro", description: "Preencha todos os campos obrigatórios.", variant: "destructive" });
       return;
     }
@@ -42,12 +41,11 @@ const Register = () => {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase.functions.invoke("register-tenant", {
+      const { data, error } = await supabase.functions.invoke("register-user", {
         body: {
           email: form.email,
           password: form.password,
           nome: form.nome,
-          nomeEmpresa: form.nomeEmpresa,
         },
       });
 
@@ -56,7 +54,7 @@ const Register = () => {
 
       toast({
         title: "Conta criada com sucesso!",
-        description: "Verifique seu email para confirmar sua conta antes de fazer login.",
+        description: "Faça login para acessar o sistema.",
       });
 
       navigate("/login");
@@ -72,22 +70,9 @@ const Register = () => {
   };
 
   return (
-    <AuthContainer title="Criar Conta" description="Registre sua empresa e comece a usar o sistema">
+    <AuthContainer title="Criar Conta" description="Registre-se para acessar o sistema">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="nomeEmpresa" className="text-sm font-medium text-foreground">
-              Nome da Empresa <span className="text-destructive">*</span>
-            </label>
-            <Input
-              id="nomeEmpresa"
-              placeholder="Nome da sua empresa"
-              value={form.nomeEmpresa}
-              onChange={(e) => setForm({ ...form, nomeEmpresa: e.target.value })}
-              required
-            />
-          </div>
-
           <div className="space-y-2">
             <label htmlFor="nome" className="text-sm font-medium text-foreground">
               Seu Nome <span className="text-destructive">*</span>
