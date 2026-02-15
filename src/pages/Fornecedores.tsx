@@ -7,8 +7,14 @@ import FornecedorForm from "@/components/fornecedores/FornecedorForm";
 import FornecedoresActions from "@/components/fornecedores/FornecedoresActions";
 import FornecedoresTable from "@/components/fornecedores/FornecedoresTable";
 import DeleteFornecedorDialog from "@/components/fornecedores/DeleteFornecedorDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Fornecedores = () => {
+  const { canPerformAction } = useAuth();
+  const canIncluir = canPerformAction("fornecedores", "pode_incluir");
+  const canAlterar = canPerformAction("fornecedores", "pode_alterar");
+  const canExcluir = canPerformAction("fornecedores", "pode_excluir");
+
   const {
     fornecedores,
     currentFornecedor,
@@ -39,6 +45,7 @@ const Fornecedores = () => {
         description="Gerencie os fornecedores do sistema."
         buttonLabel="Novo Fornecedor"
         onButtonClick={() => openModal()}
+        showButton={canIncluir}
       />
 
       <FornecedoresActions 
@@ -61,6 +68,8 @@ const Fornecedores = () => {
           fornecedores={fornecedores}
           onEdit={openModal}
           onDelete={confirmDelete}
+          canEdit={canAlterar}
+          canDelete={canExcluir}
         />
       )}
 

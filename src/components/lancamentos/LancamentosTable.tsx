@@ -5,8 +5,13 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Check, Pencil, Trash2 } from "lucide-react";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import { formatCurrency } from "@/utils/format";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const LancamentosTable = () => {
+  const { canPerformAction } = useAuth();
+  const canAlterar = canPerformAction("lancamentos", "pode_alterar");
+  const canExcluir = canPerformAction("lancamentos", "pode_excluir");
+
   const { 
     lancamentos, 
     handleSort, 
@@ -17,6 +22,8 @@ export const LancamentosTable = () => {
     getStatusLabel,
     getTipoBadgeClass
   } = useLancamentosContext();
+
+  const showActions = canAlterar || canExcluir;
 
   return (
     <div className="rounded-md border overflow-hidden">
@@ -44,7 +51,7 @@ export const LancamentosTable = () => {
               </div>
             </TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="w-[150px] text-center">Ações</TableHead>
+            {showActions && <TableHead className="w-[150px] text-center">Ações</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -76,42 +83,48 @@ export const LancamentosTable = () => {
                   {getStatusLabel(lancamento.status, lancamento.tipo)}
                 </span>
               </TableCell>
-              <TableCell>
-                <div className="flex justify-center space-x-1">
-                  {lancamento.status === "pendente" && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => handleUpdateStatus(
-                        lancamento.id!, 
-                        lancamento.tipo === "receita" ? "recebido" : "pago"
-                      )} 
-                      className="h-8 w-8 p-0 text-green-600"
-                    >
-                      <span className="sr-only">Marcar como pago/recebido</span>
-                      <Check className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => handleOpenModal(lancamento)} 
-                    className="h-8 w-8 p-0 text-blue-600"
-                  >
-                    <span className="sr-only">Editar</span>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => handleOpenDeleteModal(lancamento.id!)} 
-                    className="h-8 w-8 p-0 text-red-600"
-                  >
-                    <span className="sr-only">Excluir</span>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
+              {showActions && (
+                <TableCell>
+                  <div className="flex justify-center space-x-1">
+                    {canAlterar && lancamento.status === "pendente" && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleUpdateStatus(
+                          lancamento.id!, 
+                          lancamento.tipo === "receita" ? "recebido" : "pago"
+                        )} 
+                        className="h-8 w-8 p-0 text-green-600"
+                      >
+                        <span className="sr-only">Marcar como pago/recebido</span>
+                        <Check className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {canAlterar && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleOpenModal(lancamento)} 
+                        className="h-8 w-8 p-0 text-blue-600"
+                      >
+                        <span className="sr-only">Editar</span>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {canExcluir && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleOpenDeleteModal(lancamento.id!)} 
+                        className="h-8 w-8 p-0 text-red-600"
+                      >
+                        <span className="sr-only">Excluir</span>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

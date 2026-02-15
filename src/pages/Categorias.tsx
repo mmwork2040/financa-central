@@ -7,8 +7,14 @@ import CategoriasTable from "@/components/categorias/CategoriasTable";
 import CategoriaForm from "@/components/categorias/CategoriaForm";
 import CategoriaDeleteDialog from "@/components/categorias/CategoriaDeleteDialog";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Categorias = () => {
+  const { canPerformAction } = useAuth();
+  const canIncluir = canPerformAction("categorias", "pode_incluir");
+  const canAlterar = canPerformAction("categorias", "pode_alterar");
+  const canExcluir = canPerformAction("categorias", "pode_excluir");
+
   const {
     categorias,
     loading,
@@ -43,7 +49,6 @@ const Categorias = () => {
 
   const exportToCSV = () => {
     try {
-      // Preparar dados para CSV
       const headers = "Nome,Tipo\n";
       let csvContent = "data:text/csv;charset=utf-8," + headers;
       
@@ -57,7 +62,6 @@ const Categorias = () => {
         csvContent += row + "\n";
       });
       
-      // Criar e simular clique no link de download
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
@@ -75,14 +79,12 @@ const Categorias = () => {
 
   const exportToPDF = () => {
     try {
-      // Abrir nova janela para o PDF
       const printWindow = window.open('', '_blank');
       
       if (!printWindow) {
         throw new Error("Não foi possível abrir uma nova janela para o PDF.");
       }
       
-      // Estilo para o PDF
       const style = `
         <style>
           body { font-family: Arial, sans-serif; margin: 20px; }
@@ -96,11 +98,9 @@ const Categorias = () => {
         </style>
       `;
       
-      // Contar categorias por tipo
       const totalReceitas = filteredCategorias.filter(cat => cat.tipo === "receita").length;
       const totalDespesas = filteredCategorias.filter(cat => cat.tipo === "despesa").length;
       
-      // Gerar conteúdo da tabela
       let tableRows = "";
       
       filteredCategorias.forEach(categoria => {
@@ -115,7 +115,6 @@ const Categorias = () => {
         `;
       });
       
-      // Construir documento HTML para impressão/PDF
       const html = `
         <!DOCTYPE html>
         <html>
@@ -156,7 +155,6 @@ const Categorias = () => {
       printWindow.document.write(html);
       printWindow.document.close();
       
-      // Dar tempo para os estilos carregarem antes de imprimir
       setTimeout(() => {
         printWindow.print();
       }, 500);
@@ -174,6 +172,7 @@ const Categorias = () => {
         description="Gerencie as categorias de receitas e despesas."
         buttonLabel="Nova Categoria"
         onButtonClick={() => openModal()}
+        showButton={canIncluir}
       />
 
       <CategoriasSearch 
@@ -194,7 +193,9 @@ const Categorias = () => {
         <CategoriasTable 
           categorias={filteredCategorias} 
           onEdit={openModal} 
-          onDelete={confirmDelete} 
+          onDelete={confirmDelete}
+          canEdit={canAlterar}
+          canDelete={canExcluir}
         />
       )}
 

@@ -6,8 +6,14 @@ import FormasPagamentoTable from "@/components/formas-pagamento/FormasPagamentoT
 import FormaPagamentoForm from "@/components/formas-pagamento/FormaPagamentoForm";
 import DeleteConfirmationDialog from "@/components/formas-pagamento/DeleteConfirmationDialog";
 import PageHeader from "@/components/common/PageHeader";
+import { useAuth } from "@/contexts/AuthContext";
 
 const FormasPagamento = () => {
+  const { canPerformAction } = useAuth();
+  const canIncluir = canPerformAction("formas_pagamento", "pode_incluir");
+  const canAlterar = canPerformAction("formas_pagamento", "pode_alterar");
+  const canExcluir = canPerformAction("formas_pagamento", "pode_excluir");
+
   const {
     loading,
     formasPagamento,
@@ -72,6 +78,7 @@ const FormasPagamento = () => {
         description="Gerencie as formas de pagamento do sistema."
         buttonLabel="Nova Forma de Pagamento" 
         onButtonClick={() => handleOpenModal()}
+        showButton={canIncluir}
       />
       
       <FormasPagamentoSearch 
@@ -93,6 +100,8 @@ const FormasPagamento = () => {
           formasPagamento={formasPagamento}
           onEdit={handleOpenModal}
           onDelete={handleOpenDeleteModal}
+          canEdit={canAlterar}
+          canDelete={canExcluir}
         />
       )}
       
