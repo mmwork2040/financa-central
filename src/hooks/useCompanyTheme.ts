@@ -80,5 +80,9 @@ export function useCompanyTheme() {
     };
 
     applyTheme();
+
+    const handler = () => applyTheme();
+    window.addEventListener("company-theme-changed", handler);
+    return () => window.removeEventListener("company-theme-changed", handler);
   }, [empresaId]);
 }
