@@ -57,8 +57,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('id', userId)
         .single();
 
-      if (error) {
+      if (error || !data) {
         console.error("Erro ao carregar perfil do usuário:", error);
+        setUserProfile(null);
+        setEmpresaId(null);
         return null;
       }
 
@@ -66,6 +68,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return data;
     } catch (error) {
       console.error("Erro ao carregar perfil:", error);
+      setUserProfile(null);
+      setEmpresaId(null);
       return null;
     }
   };
