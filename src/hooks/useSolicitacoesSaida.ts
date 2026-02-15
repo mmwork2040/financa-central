@@ -98,6 +98,15 @@ export const useSolicitacoesSaida = () => {
     if (user) fetchAll();
   }, [user, empresaId]);
 
+  // Listen for cross-instance sync events
+  useEffect(() => {
+    const handler = () => {
+      if (user) fetchAll();
+    };
+    window.addEventListener("exit-requests-changed", handler);
+    return () => window.removeEventListener("exit-requests-changed", handler);
+  }, [user, fetchAll]);
+
   const createRequest = async (targetEmpresaId: string, motivo?: string) => {
     setActionLoading(true);
     try {
@@ -109,6 +118,7 @@ export const useSolicitacoesSaida = () => {
 
       toast({ title: "Solicitação enviada", description: "Seu pedido de saída foi enviado aos administradores." });
       await fetchAll();
+      window.dispatchEvent(new Event("exit-requests-changed"));
       return true;
     } catch (error: any) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -129,6 +139,7 @@ export const useSolicitacoesSaida = () => {
 
       toast({ title: "Solicitação cancelada" });
       await fetchAll();
+      window.dispatchEvent(new Event("exit-requests-changed"));
       return true;
     } catch (error: any) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -149,6 +160,7 @@ export const useSolicitacoesSaida = () => {
 
       toast({ title: "Solicitação aprovada", description: "O usuário foi removido da empresa." });
       await fetchAll();
+      window.dispatchEvent(new Event("exit-requests-changed"));
       return true;
     } catch (error: any) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -169,6 +181,7 @@ export const useSolicitacoesSaida = () => {
 
       toast({ title: "Solicitação rejeitada" });
       await fetchAll();
+      window.dispatchEvent(new Event("exit-requests-changed"));
       return true;
     } catch (error: any) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });

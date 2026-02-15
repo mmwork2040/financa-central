@@ -537,6 +537,56 @@ export type Database = {
           },
         ]
       }
+      solicitacoes_saida: {
+        Row: {
+          auto_aprovado: boolean
+          created_at: string
+          empresa_id: string
+          expira_em: string
+          id: string
+          motivo: string | null
+          respondido_em: string | null
+          respondido_por: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_aprovado?: boolean
+          created_at?: string
+          empresa_id: string
+          expira_em?: string
+          id?: string
+          motivo?: string | null
+          respondido_em?: string | null
+          respondido_por?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_aprovado?: boolean
+          created_at?: string
+          empresa_id?: string
+          expira_em?: string
+          id?: string
+          motivo?: string | null
+          respondido_em?: string | null
+          respondido_por?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_saida_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
