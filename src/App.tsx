@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { AppLayout } from "@/layouts/AppLayout";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 // Pages
 import LandingPage from "./pages/LandingPage";
@@ -28,13 +29,6 @@ import NotFoundPage from "./pages/NotFoundPage";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Função para verificar a autenticação
-  const RequireAuth = ({ children }: { children: React.ReactNode }) => {
-    // Como a autenticação é gerenciada no AuthProvider, o componente AppLayout
-    // verifica a autenticação e redireciona conforme necessário
-    return <>{children}</>;
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
@@ -50,17 +44,19 @@ const App = () => {
                 <Route path="/register" element={<Register />} />
 
                 {/* Protected routes */}
-                <Route path="/dashboard" element={<RequireAuth><AppLayout><Dashboard /></AppLayout></RequireAuth>} />
-                <Route path="/users" element={<RequireAuth><AppLayout><Users /></AppLayout></RequireAuth>} />
-                <Route path="/fornecedores" element={<RequireAuth><AppLayout><Fornecedores /></AppLayout></RequireAuth>} />
-                <Route path="/clientes" element={<RequireAuth><AppLayout><Clientes /></AppLayout></RequireAuth>} />
-                <Route path="/categorias" element={<RequireAuth><AppLayout><Categorias /></AppLayout></RequireAuth>} />
-                <Route path="/bank-accounts" element={<RequireAuth><AppLayout><ContasBancarias /></AppLayout></RequireAuth>} />
-                <Route path="/payment-methods" element={<RequireAuth><AppLayout><FormasPagamento /></AppLayout></RequireAuth>} />
-                <Route path="/transactions" element={<RequireAuth><AppLayout><Lancamentos /></AppLayout></RequireAuth>} />
-                <Route path="/reports" element={<RequireAuth><AppLayout><Relatorios /></AppLayout></RequireAuth>} />
-                <Route path="/permissions" element={<RequireAuth><AppLayout><Permissoes /></AppLayout></RequireAuth>} />
-                <Route path="/settings" element={<RequireAuth><AppLayout><ConfiguracoesEmpresa /></AppLayout></RequireAuth>} />
+                <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
+                <Route path="/settings" element={<AppLayout><ConfiguracoesEmpresa /></AppLayout>} />
+                
+                {/* Permission-protected routes */}
+                <Route path="/users" element={<ProtectedRoute path="/users"><AppLayout><Users /></AppLayout></ProtectedRoute>} />
+                <Route path="/permissions" element={<ProtectedRoute path="/permissions"><AppLayout><Permissoes /></AppLayout></ProtectedRoute>} />
+                <Route path="/fornecedores" element={<ProtectedRoute path="/fornecedores"><AppLayout><Fornecedores /></AppLayout></ProtectedRoute>} />
+                <Route path="/clientes" element={<ProtectedRoute path="/clientes"><AppLayout><Clientes /></AppLayout></ProtectedRoute>} />
+                <Route path="/categorias" element={<ProtectedRoute path="/categorias"><AppLayout><Categorias /></AppLayout></ProtectedRoute>} />
+                <Route path="/bank-accounts" element={<ProtectedRoute path="/bank-accounts"><AppLayout><ContasBancarias /></AppLayout></ProtectedRoute>} />
+                <Route path="/payment-methods" element={<ProtectedRoute path="/payment-methods"><AppLayout><FormasPagamento /></AppLayout></ProtectedRoute>} />
+                <Route path="/transactions" element={<ProtectedRoute path="/transactions"><AppLayout><Lancamentos /></AppLayout></ProtectedRoute>} />
+                <Route path="/reports" element={<ProtectedRoute path="/reports"><AppLayout><Relatorios /></AppLayout></ProtectedRoute>} />
                 
                 {/* 404 route */}
                 <Route path="*" element={<NotFoundPage />} />
