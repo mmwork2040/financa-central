@@ -19,7 +19,7 @@ serve(async (req) => {
       });
     }
 
-    const { nomeEmpresa } = await req.json();
+    const { nomeEmpresa, cnpj, email, telefone, endereco } = await req.json();
     if (!nomeEmpresa) {
       return new Response(JSON.stringify({ error: "Nome da empresa é obrigatório" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -46,14 +46,21 @@ serve(async (req) => {
 
     const userId = callerData.user.id;
 
-    // Create empresa
+    // Create empresa with full details
     const { data: empresa, error: empresaError } = await supabaseAdmin
       .from("empresas")
-      .insert({ nome: nomeEmpresa })
+      .insert({
+        nome: nomeEmpresa,
+        cnpj: cnpj || null,
+        email: email || null,
+        telefone: telefone || null,
+        endereco: endereco || null,
+      })
       .select("id")
       .single();
 
     if (empresaError) {
+      console.error("Empresa error:", empresaError);
       return new Response(JSON.stringify({ error: "Erro ao criar empresa" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -67,6 +74,7 @@ serve(async (req) => {
       .insert({ user_id: userId, empresa_id: empresaId, role: "admin" });
 
     if (roleError) {
+      console.error("Role error:", roleError);
       await supabaseAdmin.from("empresas").delete().eq("id", empresaId);
       return new Response(JSON.stringify({ error: "Erro ao atribuir permissão" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },

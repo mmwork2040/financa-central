@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Ticket, Loader2, ArrowRight } from "lucide-react";
+import { Building2, Ticket, Loader2, ArrowRight, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface OnboardingScreenProps {
   userName: string;
@@ -12,22 +14,42 @@ interface OnboardingScreenProps {
 
 const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
   const { toast } = useToast();
+  const { logout } = useAuth();
   const [mode, setMode] = useState<"choose" | "create" | "invite">("choose");
   const [loading, setLoading] = useState(false);
-  const [empresaNome, setEmpresaNome] = useState("");
   const [inviteCode, setInviteCode] = useState("");
+  const [empresa, setEmpresa] = useState({
+    nome: "",
+    cnpj: "",
+    email: "",
+    telefone: "",
+    endereco: "",
+  });
+
+  const handleChange = (field: string, value: string) => {
+    setEmpresa(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleCreateEmpresa = async () => {
-    if (!empresaNome.trim()) return;
+    if (!empresa.nome.trim()) {
+      toast({ title: "Erro", description: "O nome da empresa é obrigatório.", variant: "destructive" });
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-empresa", {
-        body: { nomeEmpresa: empresaNome.trim() },
+        body: {
+          nomeEmpresa: empresa.nome.trim(),
+          cnpj: empresa.cnpj.trim() || null,
+          email: empresa.email.trim() || null,
+          telefone: empresa.telefone.trim() || null,
+          endereco: empresa.endereco.trim() || null,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({ title: "Empresa criada!", description: `"${empresaNome}" foi criada com sucesso.` });
+      toast({ title: "Empresa criada!", description: `"${empresa.nome}" foi criada com sucesso.` });
       setTimeout(() => window.location.reload(), 1000);
     } catch (error: any) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -108,6 +130,13 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
                 </div>
               </CardContent>
             </Card>
+
+            <div className="flex justify-center pt-2">
+              <Button variant="ghost" size="sm" onClick={() => logout()} className="text-muted-foreground">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair do sistema
+              </Button>
+            </div>
           </div>
         )}
 
@@ -116,23 +145,63 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-primary" />
-                Criar Empresa
+                Cadastrar Empresa
               </CardTitle>
-              <CardDescription>Informe o nome da sua empresa para começar.</CardDescription>
+              <CardDescription>Preencha os dados da sua empresa para começar.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Input
-                placeholder="Nome da empresa"
-                value={empresaNome}
-                onChange={e => setEmpresaNome(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleCreateEmpresa()}
-                autoFocus
-              />
-              <div className="flex gap-2">
+              <div className="space-y-2">
+                <Label htmlFor="nome">Nome da Empresa <span className="text-destructive">*</span></Label>
+                <Input
+                  id="nome"
+                  placeholder="Nome da sua empresa"
+                  value={empresa.nome}
+                  onChange={e => handleChange("nome", e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cnpj">CPF/CNPJ</Label>
+                <Input
+                  id="cnpj"
+                  placeholder="00.000.000/0000-00"
+                  value={empresa.cnpj}
+                  onChange={e => handleChange("cnpj", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="empresa@email.com"
+                  value={empresa.email}
+                  onChange={e => handleChange("email", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input
+                  id="telefone"
+                  placeholder="(00) 00000-0000"
+                  value={empresa.telefone}
+                  onChange={e => handleChange("telefone", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endereco">Endereço</Label>
+                <Input
+                  id="endereco"
+                  placeholder="Rua, número, cidade - UF"
+                  value={empresa.endereco}
+                  onChange={e => handleChange("endereco", e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
                 <Button variant="outline" onClick={() => setMode("choose")} disabled={loading}>
                   Voltar
                 </Button>
-                <Button onClick={handleCreateEmpresa} disabled={loading || !empresaNome.trim()} className="flex-1">
+                <Button onClick={handleCreateEmpresa} disabled={loading || !empresa.nome.trim()} className="flex-1">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Criar Empresa
                 </Button>
