@@ -11,6 +11,14 @@ export const fetchUsersData = async (isSuperAdmin: boolean = false) => {
 
   if (error) throw error;
   
+  // Fetch super_admin user_ids to flag them
+  const { data: superAdminRoles } = await supabase
+    .from('user_roles')
+    .select('user_id')
+    .eq('role', 'super_admin');
+  
+  const superAdminIds = new Set(superAdminRoles?.map(r => r.user_id) || []);
+
   if (isSuperAdmin && perfisData) {
     // For super admin, also fetch empresa names for each user
     const empresaIds = [...new Set(perfisData.filter(p => p.empresa_id).map(p => p.empresa_id!))];
@@ -22,13 +30,33 @@ export const fetchUsersData = async (isSuperAdmin: boolean = false) => {
     return perfisData.map(p => ({
       ...p,
       empresa_nome: empresas?.find(e => e.id === p.empresa_id)?.nome || null,
+      is_super_admin: superAdminIds.has(p.id),
     }));
   }
 
-  return perfisData || [];
+  return (perfisData || []).map(p => ({
+    ...p,
+    is_super_admin: superAdminIds.has(p.id),
+  }));
 };
 
 export const updateUser = async (userId: string, userData: { nome: string; permissao: string }) => {
+  // Check if target is super_admin — only self can edit
+  const { data: targetRoles } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', 'super_admin')
+    .maybeSingle();
+
+  if (targetRoles) {
+    // Target is super_admin — RLS will enforce, but let's also guard here
+    const { data: currentUser } = await supabase.auth.getUser();
+    if (currentUser?.user?.id !== userId) {
+      throw new Error("Não é possível alterar dados de um Super Admin.");
+    }
+  }
+
   // Update perfil
   const { error } = await supabase
     .from('perfis')
@@ -89,6 +117,18 @@ export const createUser = async (formData: FormData, empresaId?: string | null) 
 
 export const deleteUserAccount = async (userId: string) => {
   try {
+    // Guard: cannot delete super_admin
+    const { data: targetRoles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'super_admin')
+      .maybeSingle();
+
+    if (targetRoles) {
+      throw new Error("Não é possível excluir um Super Admin.");
+    }
+
     // Delete user_roles first
     await supabase
       .from('user_roles')
@@ -112,6 +152,18 @@ export const deleteUserAccount = async (userId: string) => {
 
 export const revokeUserAccess = async (userId: string, empresaId: string) => {
   try {
+    // Guard: cannot revoke super_admin
+    const { data: targetRoles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'super_admin')
+      .maybeSingle();
+
+    if (targetRoles) {
+      throw new Error("Não é possível revogar acesso de um Super Admin.");
+    }
+
     // Remove user_role for this empresa
     const { error: roleError } = await supabase
       .from('user_roles')

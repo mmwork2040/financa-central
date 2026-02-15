@@ -7,6 +7,7 @@ export interface User {
   created_at: string;
   empresa_id?: string | null;
   empresa_nome?: string | null;
+  is_super_admin?: boolean;
 }
 
 export type FormData = {
