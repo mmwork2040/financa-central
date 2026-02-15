@@ -312,6 +312,24 @@ const InviteCodesCard = () => {
 
               {showPermissions && (
                 <div className="rounded-md border">
+                  <div className="flex items-center gap-2 p-2 border-b bg-muted/30">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-7"
+                      onClick={() => {
+                        const allChecked = screenPermissions.every(p => p.pode_incluir && p.pode_alterar && p.pode_excluir);
+                        setScreenPermissions(prev => prev.map(p => ({
+                          ...p,
+                          pode_incluir: !allChecked,
+                          pode_alterar: !allChecked,
+                          pode_excluir: !allChecked,
+                        })));
+                      }}
+                    >
+                      {screenPermissions.every(p => p.pode_incluir && p.pode_alterar && p.pode_excluir) ? "Desmarcar Tudo" : "Selecionar Tudo"}
+                    </Button>
+                  </div>
                   <table className="w-full table-auto text-sm">
                     <thead className="bg-muted/50">
                       <tr>
@@ -322,9 +340,24 @@ const InviteCodesCard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {screenPermissions.map(perm => (
+                      {screenPermissions.map(perm => {
+                        const allRowChecked = perm.pode_incluir && perm.pode_alterar && perm.pode_excluir;
+                        return (
                         <tr key={perm.tela} className="border-t hover:bg-muted/50">
-                          <td className="px-3 py-2 font-medium">{perm.nome}</td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={allRowChecked}
+                                onCheckedChange={(checked) => {
+                                  const val = !!checked;
+                                  setScreenPermissions(prev => prev.map(p =>
+                                    p.tela === perm.tela ? { ...p, pode_incluir: val, pode_alterar: val, pode_excluir: val } : p
+                                  ));
+                                }}
+                              />
+                              <span className="font-medium">{perm.nome}</span>
+                            </div>
+                          </td>
                           <td className="px-3 py-2 text-center">
                             <div className="flex justify-center">
                               <Checkbox
@@ -350,7 +383,8 @@ const InviteCodesCard = () => {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
