@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -66,7 +67,7 @@ const InviteCodesCard = () => {
   const [codes, setCodes] = useState<InviteCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [newRole, setNewRole] = useState("leitura");
+  const [isAdminRole, setIsAdminRole] = useState(false);
   const [maxUses, setMaxUses] = useState("5");
   const [expiresInDays, setExpiresInDays] = useState("7");
   const [allEmpresas, setAllEmpresas] = useState<Empresa[]>([]);
@@ -136,8 +137,9 @@ const InviteCodesCard = () => {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
+      const role = isAdminRole ? "admin" : "usuario";
       const body: any = {
-        role: newRole,
+        role,
         maxUses: parseInt(maxUses),
         expiresInDays: parseInt(expiresInDays),
       };
@@ -146,8 +148,8 @@ const InviteCodesCard = () => {
         body.empresaId = selectedEmpresaId;
       }
 
-      // Include permissions if role is not admin (admins have full access)
-      if (newRole !== "admin") {
+      // Include permissions if not admin
+      if (!isAdminRole) {
         const activePerms = screenPermissions.filter(p => p.pode_incluir || p.pode_alterar || p.pode_excluir);
         body.permissoes = activePerms.map(p => ({
           tela: p.tela,
@@ -169,6 +171,7 @@ const InviteCodesCard = () => {
       // Reset permissions
       setScreenPermissions(screens.map(s => ({ tela: s.value, nome: s.name, pode_incluir: false, pode_alterar: false, pode_excluir: false })));
       setShowPermissions(false);
+      setIsAdminRole(false);
     } catch (error: any) {
       toast({ title: "Erro ao gerar código", description: error.message, variant: "destructive" });
     } finally {
@@ -271,18 +274,9 @@ const InviteCodesCard = () => {
                 </Select>
               </div>
             )}
-            <div className="space-y-1">
-              <Label className="text-xs">Permissão</Label>
-              <Select value={newRole} onValueChange={setNewRole}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="leitura">Leitura</SelectItem>
-                  <SelectItem value="usuario">Usuário</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs">Administrador</Label>
+              <Switch checked={isAdminRole} onCheckedChange={setIsAdminRole} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Máx. usos (0 = ilimitado)</Label>
@@ -299,7 +293,7 @@ const InviteCodesCard = () => {
           </div>
 
           {/* Permissions section - only show for non-admin roles */}
-          {newRole !== "admin" && (
+          {!isAdminRole && (
             <div className="space-y-3">
               <Button
                 variant="outline"
@@ -484,7 +478,7 @@ const InviteCodesCard = () => {
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Permissão:</span>
             <span className="font-medium">
-              {newRole === "admin" ? "Administrador" : newRole === "usuario" ? "Usuário" : "Leitura"}
+              {isAdminRole ? "Administrador" : "Usuário"}
             </span>
             <span className="text-muted-foreground">Máx. usos:</span>
             <span className="font-medium">{parseInt(maxUses) === 0 ? "Ilimitado" : maxUses}</span>
@@ -498,7 +492,7 @@ const InviteCodesCard = () => {
             )}
           </div>
 
-          {newRole !== "admin" && (
+          {!isAdminRole && (
             <div className="space-y-2">
               <p className="font-medium text-muted-foreground">Permissões de acesso por tela:</p>
               {(() => {
@@ -533,7 +527,7 @@ const InviteCodesCard = () => {
               })()}
             </div>
           )}
-          {newRole === "admin" && (
+          {isAdminRole && (
             <p className="text-muted-foreground italic">Administradores possuem acesso total a todas as funcionalidades.</p>
           )}
         </div>
