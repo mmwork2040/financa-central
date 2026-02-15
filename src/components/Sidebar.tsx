@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -51,6 +51,20 @@ export const Sidebar = () => {
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [joiningLoading, setJoiningLoading] = useState(false);
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!empresaId) return;
+    const fetchLogo = async () => {
+      const { data } = await supabase
+        .from("empresas")
+        .select("logo_url")
+        .eq("id", empresaId)
+        .single();
+      setCompanyLogo(data?.logo_url || null);
+    };
+    fetchLogo();
+  }, [empresaId]);
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -109,12 +123,17 @@ export const Sidebar = () => {
       >
         {/* Header com logo */}
         <div className="flex h-16 items-center justify-between px-4 py-4">
-          {isExpanded && (
-            <h1 className="text-lg font-bold text-sidebar-foreground">Fluxo de Contas</h1>
-          )}
+          <div className="flex items-center gap-2 min-w-0">
+            {companyLogo ? (
+              <img src={companyLogo} alt="Logo" className="h-8 w-8 rounded object-contain shrink-0" />
+            ) : null}
+            {isExpanded && (
+              <h1 className="text-lg font-bold text-sidebar-foreground truncate">Fluxo de Contas</h1>
+            )}
+          </div>
           <button
             onClick={toggle}
-            className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all"
+            className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all shrink-0"
             aria-label={isExpanded ? "Recolher menu" : "Expandir menu"}
           >
             {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
