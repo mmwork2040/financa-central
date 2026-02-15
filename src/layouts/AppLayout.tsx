@@ -5,10 +5,11 @@ import { useSidebar } from "@/contexts/SidebarContext";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, empresaId, userProfile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,7 +27,12 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!isAuthenticated) {
-    return null; // Will redirect in useEffect
+    return null;
+  }
+
+  // Show onboarding if user has no empresa
+  if (!empresaId) {
+    return <OnboardingScreen userName={userProfile?.nome || "Usuário"} />;
   }
 
   return (
