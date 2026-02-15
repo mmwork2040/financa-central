@@ -9,8 +9,14 @@ import ClientesTable from "@/components/clientes/ClientesTable";
 import { useClientes, initialCliente, type Cliente } from "@/hooks/useClientes";
 import { formatCPFOrCNPJ, formatPhone } from "@/utils/format";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Clientes = () => {
+  const { canPerformAction } = useAuth();
+  const canIncluir = canPerformAction("clientes", "pode_incluir");
+  const canAlterar = canPerformAction("clientes", "pode_alterar");
+  const canExcluir = canPerformAction("clientes", "pode_excluir");
+
   const { clientes, loading, isSaving, fetchClientes, saveCliente, deleteCliente } = useClientes();
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,7 +69,6 @@ const Clientes = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Atualizar dados com os valores formatados
     const clienteData = {
       ...currentCliente,
       cpf_cnpj: cpfCnpjInput.getRawValue() ? cpfCnpjInput.displayValue : null,
@@ -93,7 +98,6 @@ const Clientes = () => {
 
   const exportToCSV = () => {
     try {
-      // Preparar dados para CSV
       const headers = "Nome,CPF/CNPJ,E-mail,Telefone,Endereço,Status\n";
       let csvContent = "data:text/csv;charset=utf-8," + headers;
       
@@ -110,7 +114,6 @@ const Clientes = () => {
         csvContent += row + "\n";
       });
       
-      // Criar e simular clique no link de download
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
@@ -128,14 +131,12 @@ const Clientes = () => {
 
   const exportToPDF = () => {
     try {
-      // Abrir nova janela para o PDF
       const printWindow = window.open('', '_blank');
       
       if (!printWindow) {
         throw new Error("Não foi possível abrir uma nova janela para o PDF.");
       }
       
-      // Estilo para o PDF
       const style = `
         <style>
           body { font-family: Arial, sans-serif; margin: 20px; }
@@ -149,7 +150,6 @@ const Clientes = () => {
         </style>
       `;
       
-      // Gerar conteúdo da tabela
       let tableRows = "";
       
       filteredClientes.forEach(cliente => {
@@ -165,7 +165,6 @@ const Clientes = () => {
         `;
       });
       
-      // Construir documento HTML para impressão/PDF
       const html = `
         <!DOCTYPE html>
         <html>
@@ -204,7 +203,6 @@ const Clientes = () => {
       printWindow.document.write(html);
       printWindow.document.close();
       
-      // Dar tempo para os estilos carregarem antes de imprimir
       setTimeout(() => {
         printWindow.print();
       }, 500);
@@ -222,6 +220,7 @@ const Clientes = () => {
         description="Gerencie os clientes do sistema."
         buttonLabel="Novo Cliente"
         onButtonClick={() => openModal()}
+        showButton={canIncluir}
       />
 
       <ClientesSearch 
@@ -243,6 +242,8 @@ const Clientes = () => {
           clientes={filteredClientes}
           onEdit={openModal}
           onDelete={confirmDelete}
+          canEdit={canAlterar}
+          canDelete={canExcluir}
         />
       )}
 

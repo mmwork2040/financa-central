@@ -8,13 +8,15 @@ interface PageHeaderProps {
   description: string;
   buttonLabel: string;
   onButtonClick: () => void;
+  showButton?: boolean;
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({ 
   title, 
   description, 
   buttonLabel, 
-  onButtonClick 
+  onButtonClick,
+  showButton = true,
 }) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -22,10 +24,12 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         <h1 className="text-2xl font-bold">{title}</h1>
         <p className="text-muted-foreground">{description}</p>
       </div>
-      <Button onClick={onButtonClick}>
-        <Plus className="mr-2 h-4 w-4" />
-        {buttonLabel}
-      </Button>
+      {showButton && (
+        <Button onClick={onButtonClick}>
+          <Plus className="mr-2 h-4 w-4" />
+          {buttonLabel}
+        </Button>
+      )}
     </div>
   );
 };

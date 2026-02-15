@@ -6,8 +6,14 @@ import ContaBancariaForm from "@/components/contas-bancarias/ContaBancariaForm";
 import ContaBancariaDeleteDialog from "@/components/contas-bancarias/ContaBancariaDeleteDialog";
 import ContasBancariasSearch from "@/components/contas-bancarias/ContasBancariasSearch";
 import PageHeader from "@/components/common/PageHeader";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ContasBancarias = () => {
+  const { canPerformAction } = useAuth();
+  const canIncluir = canPerformAction("contas_bancarias", "pode_incluir");
+  const canAlterar = canPerformAction("contas_bancarias", "pode_alterar");
+  const canExcluir = canPerformAction("contas_bancarias", "pode_excluir");
+
   const {
     contasBancarias,
     loading,
@@ -35,6 +41,7 @@ const ContasBancarias = () => {
         description="Gerencie as contas bancárias do sistema."
         buttonLabel="Nova Conta Bancária"
         onButtonClick={() => handleOpenModal()}
+        showButton={canIncluir}
       />
       
       <ContasBancariasSearch
@@ -57,6 +64,8 @@ const ContasBancarias = () => {
           contasBancarias={contasBancarias}
           onEdit={handleOpenModal}
           onDelete={handleOpenDeleteModal}
+          canEdit={canAlterar}
+          canDelete={canExcluir}
         />
       )}
       

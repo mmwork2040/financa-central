@@ -17,13 +17,19 @@ interface ClientesTableProps {
   clientes: Cliente[];
   onEdit: (cliente: Cliente) => void;
   onDelete: (cliente: Cliente) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 const ClientesTable: React.FC<ClientesTableProps> = ({
   clientes,
   onEdit,
   onDelete,
+  canEdit = true,
+  canDelete = true,
 }) => {
+  const showActions = canEdit || canDelete;
+
   return (
     <div className="border rounded-md overflow-hidden">
       <div className="overflow-x-auto">
@@ -35,7 +41,7 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
               <TableHead>Telefone</TableHead>
               <TableHead>E-mail</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-20 text-right">Ações</TableHead>
+              {showActions && <TableHead className="w-20 text-right">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -52,27 +58,33 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                     {cliente.ativo ? 'Ativo' : 'Inativo'}
                   </span>
                 </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end items-center gap-2">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 text-blue-500 hover:text-blue-600"
-                      onClick={() => onEdit(cliente)}
-                    >
-                      <span className="sr-only">Editar</span>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 text-red-500 hover:text-red-600"
-                      onClick={() => onDelete(cliente)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+                {showActions && (
+                  <TableCell className="text-right">
+                    <div className="flex justify-end items-center gap-2">
+                      {canEdit && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-blue-500 hover:text-blue-600"
+                          onClick={() => onEdit(cliente)}
+                        >
+                          <span className="sr-only">Editar</span>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-red-500 hover:text-red-600"
+                          onClick={() => onDelete(cliente)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>

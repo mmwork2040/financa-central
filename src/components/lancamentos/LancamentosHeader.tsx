@@ -4,8 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Filter, Plus } from "lucide-react";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import ExportDropdown from "@/components/common/ExportDropdown";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const LancamentosHeader = () => {
+  const { canPerformAction } = useAuth();
+  const canIncluir = canPerformAction("lancamentos", "pode_incluir");
+
   const { 
     handleOpenModal, 
     setOpenFilterModal, 
@@ -30,10 +34,12 @@ export const LancamentosHeader = () => {
           Filtros
         </Button>
         <ExportDropdown onExport={handleExport} />
-        <Button onClick={() => handleOpenModal()}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Lançamento
-        </Button>
+        {canIncluir && (
+          <Button onClick={() => handleOpenModal()}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Lançamento
+          </Button>
+        )}
       </div>
     </div>
   );
