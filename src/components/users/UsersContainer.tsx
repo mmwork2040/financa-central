@@ -7,8 +7,11 @@ import { User } from "@/types/user.types";
 import { useUsersContext } from "@/contexts/UsersContext";
 import { UsersSearch } from "@/components/users/UsersSearch";
 import { exportToCSV, exportToPDF } from "@/components/users/UsersExport";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const UsersContainer = () => {
+  const { user: authUser } = useAuth();
+  const currentUserId = authUser?.id;
   const { 
     filteredUsers, 
     loading, 
@@ -120,6 +123,7 @@ export const UsersContainer = () => {
           onDelete={handleOpenDeleteModal}
           onRevoke={handleOpenRevokeModal}
           isSuperAdmin={isSuperAdmin}
+          currentUserId={currentUserId}
         />
       )}
       

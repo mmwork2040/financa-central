@@ -20,6 +20,7 @@ interface User {
   created_at: string;
   empresa_id?: string | null;
   empresa_nome?: string | null;
+  is_super_admin?: boolean;
 }
 
 interface UsersListProps {
@@ -28,9 +29,10 @@ interface UsersListProps {
   onDelete: (id: string) => void;
   onRevoke?: (userId: string, empresaId: string) => void;
   isSuperAdmin?: boolean;
+  currentUserId?: string;
 }
 
-export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin }: UsersListProps) => {
+export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, currentUserId }: UsersListProps) => {
   const getPermissaoLabel = (permissao: string): string => {
     switch (permissao) {
       case "admin":
@@ -71,7 +73,12 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin }: U
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map((user) => (
+          {users.map((user) => {
+            const isTargetSuperAdmin = user.is_super_admin === true;
+            const isSelf = user.id === currentUserId;
+            const canModify = !isTargetSuperAdmin || isSelf;
+
+            return (
             <TableRow key={user.id}>
               <TableCell className="font-medium">{user.nome}</TableCell>
               <TableCell>{user.email}</TableCell>
@@ -82,25 +89,27 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin }: U
                   </Badge>
                 </TableCell>
               )}
-              <TableCell>
+               <TableCell>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPermissaoClass(user.permissao)}`}>
-                  {getPermissaoLabel(user.permissao)}
+                  {isTargetSuperAdmin ? "Super Admin" : getPermissaoLabel(user.permissao)}
                 </span>
               </TableCell>
               <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
               <TableCell>
                 <div className="flex justify-center space-x-1">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => onEdit(user)}
-                    className="h-8 w-8 text-blue-500 hover:text-blue-600"
-                    title="Editar"
-                  >
-                    <span className="sr-only">Editar</span>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  {onRevoke && user.empresa_id && (
+                  {canModify && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => onEdit(user)}
+                      className="h-8 w-8 text-blue-500 hover:text-blue-600"
+                      title="Editar"
+                    >
+                      <span className="sr-only">Editar</span>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {canModify && onRevoke && user.empresa_id && (
                     <Button
                       size="icon"
                       variant="ghost"
@@ -112,20 +121,26 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin }: U
                       <UserX className="h-4 w-4" />
                     </Button>
                   )}
-                  <Button 
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => onDelete(user.id)} 
-                    className="h-8 w-8 text-red-500 hover:text-red-600"
-                    title="Excluir"
-                  >
-                    <span className="sr-only">Excluir</span>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {canModify && !isSelf && (
+                    <Button 
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => onDelete(user.id)} 
+                      className="h-8 w-8 text-red-500 hover:text-red-600"
+                      title="Excluir"
+                    >
+                      <span className="sr-only">Excluir</span>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {!canModify && (
+                    <span className="text-xs text-muted-foreground italic">Protegido</span>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
     </div>
