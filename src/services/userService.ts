@@ -2,14 +2,30 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, FormData } from "@/types/user.types";
 
-export const fetchUsersData = async () => {
-  const { data, error } = await supabase
+export const fetchUsersData = async (isSuperAdmin: boolean = false) => {
+  // Super admin: fetch all users; regular admin: RLS handles filtering by empresa
+  const { data: perfisData, error } = await supabase
     .from('perfis')
     .select('*')
     .order('nome');
 
   if (error) throw error;
-  return data || [];
+  
+  if (isSuperAdmin && perfisData) {
+    // For super admin, also fetch empresa names for each user
+    const empresaIds = [...new Set(perfisData.filter(p => p.empresa_id).map(p => p.empresa_id!))];
+    const { data: empresas } = await supabase
+      .from('empresas')
+      .select('id, nome')
+      .in('id', empresaIds);
+    
+    return perfisData.map(p => ({
+      ...p,
+      empresa_nome: empresas?.find(e => e.id === p.empresa_id)?.nome || null,
+    }));
+  }
+
+  return perfisData || [];
 };
 
 export const updateUser = async (userId: string, userData: { nome: string; permissao: string }) => {
@@ -90,6 +106,44 @@ export const deleteUserAccount = async (userId: string) => {
     return true;
   } catch (error) {
     console.error("Error deleting user:", error);
+    throw error;
+  }
+};
+
+export const revokeUserAccess = async (userId: string, empresaId: string) => {
+  try {
+    // Remove user_role for this empresa
+    const { error: roleError } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId)
+      .eq('empresa_id', empresaId);
+
+    if (roleError) throw roleError;
+
+    // Check if user has any remaining roles
+    const { data: remainingRoles } = await supabase
+      .from('user_roles')
+      .select('empresa_id')
+      .eq('user_id', userId);
+
+    if (remainingRoles && remainingRoles.length > 0) {
+      // Switch user to first remaining empresa
+      await supabase
+        .from('perfis')
+        .update({ empresa_id: remainingRoles[0].empresa_id })
+        .eq('id', userId);
+    } else {
+      // No more roles, clear empresa_id
+      await supabase
+        .from('perfis')
+        .update({ empresa_id: null })
+        .eq('id', userId);
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error revoking user access:", error);
     throw error;
   }
 };

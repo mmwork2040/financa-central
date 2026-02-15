@@ -16,14 +16,18 @@ export const UsersContainer = () => {
     deleting, 
     saveUser, 
     deleteUser,
+    revokeUser,
+    isSuperAdmin,
     getPermissaoLabel,
     getPermissaoClass
   } = useUsersContext();
   
   const [openModal, setOpenModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [openRevokeModal, setOpenRevokeModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedEmpresaId, setSelectedEmpresaId] = useState<string | null>(null);
 
   useEffect(() => {
     const handleOpenNewUserModal = () => {
@@ -53,6 +57,12 @@ export const UsersContainer = () => {
     setOpenDeleteModal(true);
   };
 
+  const handleOpenRevokeModal = (userId: string, empresaId: string) => {
+    setSelectedId(userId);
+    setSelectedEmpresaId(empresaId);
+    setOpenRevokeModal(true);
+  };
+
   const handleSave = async (formData: any) => {
     const success = await saveUser(formData, selectedId);
     if (success) {
@@ -69,6 +79,17 @@ export const UsersContainer = () => {
     if (success) {
       setOpenDeleteModal(false);
       setSelectedId(null);
+    }
+  };
+
+  const handleRevoke = async () => {
+    if (!selectedId || !selectedEmpresaId) return;
+    
+    const success = await revokeUser(selectedId, selectedEmpresaId);
+    if (success) {
+      setOpenRevokeModal(false);
+      setSelectedId(null);
+      setSelectedEmpresaId(null);
     }
   };
 
@@ -97,6 +118,8 @@ export const UsersContainer = () => {
           users={filteredUsers} 
           onEdit={handleOpenModal} 
           onDelete={handleOpenDeleteModal}
+          onRevoke={handleOpenRevokeModal}
+          isSuperAdmin={isSuperAdmin}
         />
       )}
       
@@ -121,6 +144,17 @@ export const UsersContainer = () => {
         onClose={() => setOpenDeleteModal(false)}
         onConfirm={handleDelete}
         loading={deleting}
+      />
+
+      {/* Revoke Access Confirmation Modal */}
+      <DeleteUserDialog
+        isOpen={openRevokeModal}
+        onClose={() => setOpenRevokeModal(false)}
+        onConfirm={handleRevoke}
+        loading={deleting}
+        title="Revogar Acesso"
+        description="Tem certeza que deseja revogar o acesso deste usuário à empresa? Ele perderá acesso a todos os dados desta empresa."
+        confirmLabel="Revogar"
       />
     </>
   );
