@@ -172,6 +172,43 @@ serve(async (req) => {
       })
       .eq("id", invite.id);
 
+    // Auto-create personal empresa if user doesn't have one
+    const { data: userRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("empresa_id")
+      .eq("user_id", userId);
+
+    const userEmpresaIds = userRoles?.map((r: any) => r.empresa_id) || [];
+
+    if (userEmpresaIds.length > 0) {
+      const { data: existingPersonal } = await supabaseAdmin
+        .from("empresas")
+        .select("id")
+        .eq("pessoal", true)
+        .in("id", userEmpresaIds)
+        .maybeSingle();
+
+      if (!existingPersonal) {
+        // Create personal empresa
+        const redeemerName = redeemerProfile?.nome || redeemerProfile?.email || "Usuário";
+        const { data: personalEmpresa } = await supabaseAdmin
+          .from("empresas")
+          .insert({
+            nome: `Pessoal - ${redeemerName}`,
+            email: redeemerProfile?.email || null,
+            pessoal: true,
+          })
+          .select("id")
+          .single();
+
+        if (personalEmpresa) {
+          await supabaseAdmin
+            .from("user_roles")
+            .insert({ user_id: userId, empresa_id: personalEmpresa.id, role: "admin" });
+        }
+      }
+    }
+
     // Get empresa name
     const { data: empresa } = await supabaseAdmin
       .from("empresas")
