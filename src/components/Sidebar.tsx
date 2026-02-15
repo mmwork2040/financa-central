@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,17 +17,44 @@ import {
   Files, 
   PieChart,
   LogOut,
-  Settings
+  Settings,
+  ChevronsUpDown,
+  UserPlus,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const Sidebar = () => {
   const { isExpanded, toggle } = useSidebar();
   const location = useLocation();
-  const { userProfile, logout, isSuperAdmin } = useAuth();
+  const { userProfile, logout, isSuperAdmin, empresaId, empresas, switchEmpresa } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [joiningLoading, setJoiningLoading] = useState(false);
   
   const isActive = (path: string) => location.pathname === path;
+
+  const activeEmpresa = empresas.find(e => e.empresa_id === empresaId);
   
   const menuItems = [
     { name: "Página Inicial", icon: Home, path: "/dashboard" },
@@ -48,77 +75,197 @@ export const Sidebar = () => {
     await logout();
   };
 
+  const handleJoinCompany = async () => {
+    if (!inviteCode.trim()) return;
+    setJoiningLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("redeem-invite-code", {
+        body: { code: inviteCode.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: "Bem-vindo!",
+        description: `Você entrou na empresa "${data.empresaNome}".`,
+      });
+      setJoinDialogOpen(false);
+      setInviteCode("");
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error: any) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } finally {
+      setJoiningLoading(false);
+    }
+  };
+
   return (
-    <aside
-      className={cn(
-        "fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar border-r border-sidebar-border shadow-lg transition-all duration-300 ease-in-out",
-        isExpanded ? "w-64" : "w-16"
-      )}
-    >
-      {/* Header com logo */}
-      <div className="flex h-16 items-center justify-between px-4 py-4">
-        {isExpanded && (
-          <h1 className="text-lg font-bold text-sidebar-foreground">Fluxo de Contas</h1>
+    <>
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar border-r border-sidebar-border shadow-lg transition-all duration-300 ease-in-out",
+          isExpanded ? "w-64" : "w-16"
         )}
-        <button
-          onClick={toggle}
-          className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all"
-          aria-label={isExpanded ? "Recolher menu" : "Expandir menu"}
-        >
-          {isExpanded ? (
-            <ChevronLeft size={20} />
-          ) : (
-            <ChevronRight size={20} />
+      >
+        {/* Header com logo */}
+        <div className="flex h-16 items-center justify-between px-4 py-4">
+          {isExpanded && (
+            <h1 className="text-lg font-bold text-sidebar-foreground">Fluxo de Contas</h1>
           )}
-        </button>
-      </div>
-      
-      {/* Informações do usuário */}
-      {isExpanded && (
-        <div className="border-t border-b border-sidebar-border p-4">
-          <div className="text-sidebar-foreground text-sm font-medium">{userProfile?.nome || "Usuário"}</div>
-          <div className="text-sidebar-foreground/80 text-xs">{userProfile?.email || ""}</div>
-          {isSuperAdmin && (
-            <div className="mt-1 inline-block rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
-              Super Admin
+          <button
+            onClick={toggle}
+            className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all"
+            aria-label={isExpanded ? "Recolher menu" : "Expandir menu"}
+          >
+            {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          </button>
+        </div>
+        
+        {/* User info + Company switcher */}
+        <div className="border-t border-b border-sidebar-border p-3">
+          {isExpanded ? (
+            <div className="space-y-2">
+              <div>
+                <div className="text-sidebar-foreground text-sm font-medium">{userProfile?.nome || "Usuário"}</div>
+                <div className="text-sidebar-foreground/60 text-xs">{userProfile?.email || ""}</div>
+                {isSuperAdmin && (
+                  <div className="mt-1 inline-block rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                    Super Admin
+                  </div>
+                )}
+              </div>
+
+              {/* Company switcher */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex w-full items-center justify-between rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2.5 py-1.5 text-xs text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Building2 size={14} />
+                      <span className="truncate">{activeEmpresa?.empresa_nome || "Sem empresa"}</span>
+                    </div>
+                    <ChevronsUpDown size={14} className="shrink-0 opacity-50" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  {empresas.map(emp => (
+                    <DropdownMenuItem
+                      key={emp.empresa_id}
+                      onClick={() => {
+                        if (emp.empresa_id !== empresaId) {
+                          switchEmpresa(emp.empresa_id);
+                        }
+                      }}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="truncate">
+                        <div className="text-sm">{emp.empresa_nome}</div>
+                        <div className="text-xs text-muted-foreground">{emp.role}</div>
+                      </div>
+                      {emp.empresa_id === empresaId && <Check size={14} className="shrink-0 text-primary" />}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setJoinDialogOpen(true)}>
+                    <UserPlus size={14} className="mr-2" />
+                    Entrar com código de convite
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="rounded-md p-1.5 text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
+                    <Building2 size={18} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  {empresas.map(emp => (
+                    <DropdownMenuItem
+                      key={emp.empresa_id}
+                      onClick={() => {
+                        if (emp.empresa_id !== empresaId) {
+                          switchEmpresa(emp.empresa_id);
+                        }
+                      }}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="truncate">
+                        <div className="text-sm">{emp.empresa_nome}</div>
+                        <div className="text-xs text-muted-foreground">{emp.role}</div>
+                      </div>
+                      {emp.empresa_id === empresaId && <Check size={14} className="shrink-0 text-primary" />}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setJoinDialogOpen(true)}>
+                    <UserPlus size={14} className="mr-2" />
+                    Entrar com código
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
         </div>
-      )}
-      
-      {/* Menu de navegação */}
-      <nav className="flex-1 overflow-y-auto py-4">
-        <ul className="space-y-1 px-2">
-          {menuItems.map((item) => (
-            <li key={item.path}>
-              <Link
-                to={item.path}
-                className={cn(
-                  "sidebar-link",
-                  isActive(item.path) && "active"
-                )}
-              >
-                <item.icon size={20} />
-                {isExpanded && <span>{item.name}</span>}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      
-      {/* Logout button */}
-      <div className="px-2 py-4 border-t border-sidebar-border">
-        <button 
-          onClick={handleLogout}
-          className={cn(
-            "sidebar-link",
-            !isExpanded && "justify-center"
-          )}
-        >
-          <LogOut size={20} />
-          {isExpanded && <span>Sair</span>}
-        </button>
-      </div>
-    </aside>
+        
+        {/* Menu de navegação */}
+        <nav className="flex-1 overflow-y-auto py-4">
+          <ul className="space-y-1 px-2">
+            {menuItems.map((item) => (
+              <li key={item.path}>
+                <Link
+                  to={item.path}
+                  className={cn(
+                    "sidebar-link",
+                    isActive(item.path) && "active"
+                  )}
+                >
+                  <item.icon size={20} />
+                  {isExpanded && <span>{item.name}</span>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        
+        {/* Logout button */}
+        <div className="px-2 py-4 border-t border-sidebar-border">
+          <button 
+            onClick={handleLogout}
+            className={cn(
+              "sidebar-link",
+              !isExpanded && "justify-center"
+            )}
+          >
+            <LogOut size={20} />
+            {isExpanded && <span>Sair</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* Join Company Dialog */}
+      <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Entrar em uma Empresa</DialogTitle>
+            <DialogDescription>Insira o código de convite recebido para participar de outra empresa.</DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Ex: A1B2C3D4"
+              value={inviteCode}
+              onChange={e => setInviteCode(e.target.value.toUpperCase())}
+              className="font-mono tracking-wider uppercase"
+              maxLength={8}
+              onKeyDown={e => e.key === 'Enter' && handleJoinCompany()}
+            />
+            <Button onClick={handleJoinCompany} disabled={joiningLoading || !inviteCode.trim()}>
+              {joiningLoading ? "Entrando..." : "Entrar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

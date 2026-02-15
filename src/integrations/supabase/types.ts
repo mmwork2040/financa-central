@@ -261,6 +261,53 @@ export type Database = {
           },
         ]
       }
+      invite_codes: {
+        Row: {
+          active: boolean | null
+          code: string
+          created_at: string | null
+          created_by: string
+          empresa_id: string
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          role: Database["public"]["Enums"]["app_role"]
+          uses: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          code: string
+          created_at?: string | null
+          created_by: string
+          empresa_id: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          role?: Database["public"]["Enums"]["app_role"]
+          uses?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          code?: string
+          created_at?: string | null
+          created_by?: string
+          empresa_id?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          role?: Database["public"]["Enums"]["app_role"]
+          uses?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invite_codes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lancamentos: {
         Row: {
           categoria_id: string | null
