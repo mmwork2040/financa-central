@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Upload, Loader2 } from "lucide-react";
+import { Building2, Upload, Loader2, User, ArrowRight } from "lucide-react";
 import InviteCodesCard from "@/components/convites/InviteCodesCard";
 
 const ConfiguracoesEmpresa = () => {
@@ -15,6 +15,7 @@ const ConfiguracoesEmpresa = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [isPessoal, setIsPessoal] = useState(false);
   const [empresa, setEmpresa] = useState({
     nome: "",
     cnpj: "",
@@ -42,6 +43,7 @@ const ConfiguracoesEmpresa = () => {
 
       if (error) throw error;
       if (data) {
+        setIsPessoal((data as any).pessoal === true);
         setEmpresa({
           nome: data.nome || "",
           cnpj: data.cnpj || "",
@@ -148,9 +150,20 @@ const ConfiguracoesEmpresa = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Building2 className="h-7 w-7 text-primary" />
-        <h1 className="text-2xl font-bold">Configurações da Empresa</h1>
+        {isPessoal ? <User className="h-7 w-7 text-primary" /> : <Building2 className="h-7 w-7 text-primary" />}
+        <h1 className="text-2xl font-bold">{isPessoal ? "Configurações Pessoais" : "Configurações da Empresa"}</h1>
       </div>
+
+      {isPessoal && (
+        <Card className="border-dashed">
+          <CardHeader>
+            <CardTitle className="text-base">Você está no modo individual</CardTitle>
+            <CardDescription>
+              Suas finanças estão sendo gerenciadas no modo pessoal. Se quiser criar ou entrar em uma empresa, use o seletor de empresas na barra lateral.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Dados Gerais */}
@@ -288,8 +301,8 @@ const ConfiguracoesEmpresa = () => {
         </div>
       )}
 
-      {/* Invite Codes */}
-      <InviteCodesCard />
+      {/* Invite Codes - only for company mode */}
+      {!isPessoal && <InviteCodesCard />}
     </div>
   );
 };

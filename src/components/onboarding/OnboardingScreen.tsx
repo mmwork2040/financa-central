@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Ticket, Loader2, ArrowRight, LogOut } from "lucide-react";
+import { Building2, Ticket, Loader2, ArrowRight, LogOut, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface OnboardingScreenProps {
@@ -77,6 +77,22 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
     }
   };
 
+  const handleUseIndividual = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-personal-empresa");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: "Conta pessoal criada!", description: "Você pode começar a usar o sistema." });
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error: any) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-lg space-y-6">
@@ -127,6 +143,26 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
               <CardContent className="pt-0">
                 <div className="flex justify-end">
                   <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="cursor-pointer transition-all hover:border-primary hover:shadow-md"
+              onClick={handleUseIndividual}
+            >
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <User className="h-5 w-5 text-primary" />
+                  Usar individualmente
+                </CardTitle>
+                <CardDescription>
+                  Gerencie suas finanças pessoais sem precisar de uma empresa.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex justify-end">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <ArrowRight className="h-4 w-4 text-muted-foreground" />}
                 </div>
               </CardContent>
             </Card>
