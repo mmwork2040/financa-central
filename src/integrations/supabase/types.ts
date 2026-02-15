@@ -271,6 +271,10 @@ export type Database = {
           expires_at: string | null
           id: string
           max_uses: number | null
+          redeemed_at: string | null
+          redeemed_by: string | null
+          redeemed_by_email: string | null
+          redeemed_by_name: string | null
           role: Database["public"]["Enums"]["app_role"]
           uses: number | null
         }
@@ -283,6 +287,10 @@ export type Database = {
           expires_at?: string | null
           id?: string
           max_uses?: number | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          redeemed_by_email?: string | null
+          redeemed_by_name?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           uses?: number | null
         }
@@ -295,6 +303,10 @@ export type Database = {
           expires_at?: string | null
           id?: string
           max_uses?: number | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          redeemed_by_email?: string | null
+          redeemed_by_name?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           uses?: number | null
         }
