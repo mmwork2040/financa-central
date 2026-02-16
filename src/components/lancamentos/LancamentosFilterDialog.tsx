@@ -46,6 +46,7 @@ export const LancamentosFilterDialog = () => {
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="receita">Receitas</SelectItem>
                   <SelectItem value="despesa">Despesas</SelectItem>
+                  <SelectItem value="investimento">Investimentos</SelectItem>
                 </SelectContent>
               </Select>
             </div>
