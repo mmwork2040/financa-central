@@ -1,12 +1,13 @@
 
 import React from "react";
-import { ArrowUpRight, ArrowDownRight, CreditCard, AlertCircle } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, CreditCard, AlertCircle, TrendingUp } from "lucide-react";
 import SummaryCard from "./SummaryCard";
 
 interface DashboardSummaryProps {
   summary: {
     totalReceitas: number;
     totalDespesas: number;
+    totalInvestimentos: number;
     vencendoHoje: number;
     emAtraso: number;
   };
@@ -15,7 +16,7 @@ interface DashboardSummaryProps {
 
 export const DashboardSummary = ({ summary, formatCurrency }: DashboardSummaryProps) => {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
       <SummaryCard 
         title="Total de Receitas"
         value={formatCurrency(summary.totalReceitas)}
@@ -30,6 +31,14 @@ export const DashboardSummary = ({ summary, formatCurrency }: DashboardSummaryPr
         description="+4.5% em relação ao mês anterior"
         icon={ArrowDownRight}
         iconColor="text-red-500"
+      />
+
+      <SummaryCard 
+        title="Investimentos"
+        value={formatCurrency(summary.totalInvestimentos)}
+        description="Total investido"
+        icon={TrendingUp}
+        iconColor="text-blue-500"
       />
       
       <SummaryCard 

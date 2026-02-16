@@ -53,7 +53,7 @@ const Categorias = () => {
       let csvContent = "data:text/csv;charset=utf-8," + headers;
       
       filteredCategorias.forEach(categoria => {
-        const tipoFormatado = categoria.tipo === "receita" ? "Receita" : "Despesa";
+        const tipoFormatado = categoria.tipo === "receita" ? "Receita" : categoria.tipo === "investimento" ? "Investimento" : "Despesa";
         const row = [
           categoria.nome,
           tipoFormatado
@@ -100,12 +100,13 @@ const Categorias = () => {
       
       const totalReceitas = filteredCategorias.filter(cat => cat.tipo === "receita").length;
       const totalDespesas = filteredCategorias.filter(cat => cat.tipo === "despesa").length;
+      const totalInvestimentos = filteredCategorias.filter(cat => cat.tipo === "investimento").length;
       
       let tableRows = "";
       
       filteredCategorias.forEach(categoria => {
-        const tipoClass = categoria.tipo === "receita" ? "receita" : "despesa";
-        const tipoFormatado = categoria.tipo === "receita" ? "Receita" : "Despesa";
+        const tipoClass = categoria.tipo === "receita" ? "receita" : categoria.tipo === "investimento" ? "investimento" : "despesa";
+        const tipoFormatado = categoria.tipo === "receita" ? "Receita" : categoria.tipo === "investimento" ? "Investimento" : "Despesa";
         
         tableRows += `
           <tr>
@@ -130,6 +131,7 @@ const Categorias = () => {
             <p><strong>Total de categorias:</strong> ${filteredCategorias.length}</p>
             <p><strong>Categorias de receita:</strong> <span class="receita">${totalReceitas}</span></p>
             <p><strong>Categorias de despesa:</strong> <span class="despesa">${totalDespesas}</span></p>
+            <p><strong>Categorias de investimento:</strong> <span style="color: blue;">${totalInvestimentos}</span></p>
           </div>
           
           <table>

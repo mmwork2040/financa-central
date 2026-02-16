@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface DashboardSummary {
   totalReceitas: number;
   totalDespesas: number;
+  totalInvestimentos: number;
   vencendoHoje: number;
   emAtraso: number;
 }
@@ -13,7 +14,7 @@ interface DashboardSummary {
 interface LancamentoRecente {
   id: string;
   descricao: string;
-  tipo: 'receita' | 'despesa';
+  tipo: 'receita' | 'despesa' | 'investimento';
   valor: number;
   data_vencimento: string;
   status: string;
@@ -40,6 +41,7 @@ export const useDashboardData = () => {
   const [summary, setSummary] = useState<DashboardSummary>({
     totalReceitas: 0,
     totalDespesas: 0,
+    totalInvestimentos: 0,
     vencendoHoje: 0,
     emAtraso: 0
   });
@@ -111,7 +113,7 @@ export const useDashboardData = () => {
       const typedLancamentos = lancamentos?.map(l => ({
         id: l.id,
         descricao: l.descricao,
-        tipo: l.tipo as 'receita' | 'despesa',
+        tipo: l.tipo as 'receita' | 'despesa' | 'investimento',
         valor: l.valor,
         data_vencimento: l.data_vencimento,
         status: l.status,
@@ -145,6 +147,10 @@ export const useDashboardData = () => {
       const totalDespesas = todosLancamentos
         ?.filter(l => l.tipo === 'despesa')
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+
+      const totalInvestimentos = todosLancamentos
+        ?.filter(l => l.tipo === 'investimento')
+        .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
       
       const vencendoHoje = todosLancamentos
         ?.filter(l => new Date(l.data_vencimento).toDateString() === hoje.toDateString() && l.status === 'aberto')
@@ -159,6 +165,7 @@ export const useDashboardData = () => {
       setSummary({
         totalReceitas,
         totalDespesas,
+        totalInvestimentos,
         vencendoHoje,
         emAtraso
       });

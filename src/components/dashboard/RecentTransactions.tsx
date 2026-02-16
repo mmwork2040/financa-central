@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 interface Lancamento {
   id: string;
   descricao: string;
-  tipo: 'receita' | 'despesa';
+  tipo: 'receita' | 'despesa' | 'investimento';
   valor: number;
   data_vencimento: string;
   status: string;
@@ -56,6 +56,8 @@ export const RecentTransactions = ({
                         <p className="text-xs text-muted-foreground">
                           {lancamento.tipo === 'receita' 
                             ? `Cliente: ${lancamento.cliente?.nome || '-'}` 
+                            : lancamento.tipo === 'investimento'
+                            ? `Investimento`
                             : `Fornecedor: ${lancamento.fornecedor?.nome || '-'}`}
                         </p>
                         {lancamento.categoria && (
@@ -69,7 +71,7 @@ export const RecentTransactions = ({
                       <div>
                         <p className="text-right">
                           <span className={`font-medium ${
-                            lancamento.tipo === 'receita' ? 'text-green-600' : 'text-red-600'
+                            lancamento.tipo === 'receita' ? 'text-green-600' : lancamento.tipo === 'investimento' ? 'text-blue-600' : 'text-red-600'
                           }`}>
                             {formatCurrency(lancamento.valor)}
                           </span>

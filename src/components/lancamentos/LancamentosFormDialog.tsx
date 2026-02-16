@@ -35,7 +35,7 @@ export const LancamentosFormDialog = () => {
     refreshContasBancarias,
   } = useLancamentosContext();
 
-  const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita">(formData.tipo || "despesa");
+  const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita" | "investimento">(formData.tipo || "despesa");
   const [selectedStatus, setSelectedStatus] = useState<"pendente" | "pago" | "recebido" | "cancelado">(formData.status || "pendente");
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export const LancamentosFormDialog = () => {
   }, [formData]);
 
   const handleTipoChange = (value: string) => {
-    const tipoValue = value as "despesa" | "receita";
+    const tipoValue = value as "despesa" | "receita" | "investimento";
     setSelectedTipo(tipoValue);
     handleSelectChange('tipo', value);
   };
