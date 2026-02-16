@@ -46,9 +46,9 @@ const CategoriasTable: React.FC<CategoriasTableProps> = ({
                 <TableCell className="font-medium">{categoria.nome}</TableCell>
                 <TableCell>
                   <span className={`inline-block rounded-full px-2 py-1 text-xs ${
-                    categoria.tipo === 'receita' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    categoria.tipo === 'receita' ? 'bg-green-100 text-green-800' : categoria.tipo === 'investimento' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
                   }`}>
-                    {categoria.tipo === 'receita' ? 'Receita' : 'Despesa'}
+                    {categoria.tipo === 'receita' ? 'Receita' : categoria.tipo === 'investimento' ? 'Investimento' : 'Despesa'}
                   </span>
                 </TableCell>
                 {showActions && (

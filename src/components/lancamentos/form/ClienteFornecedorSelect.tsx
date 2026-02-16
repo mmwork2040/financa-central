@@ -3,7 +3,7 @@ import { Cliente, Fornecedor } from "@/contexts/LancamentosContext";
 import { GenericSelect } from "./GenericSelect";
 
 interface ClienteFornecedorSelectProps {
-  tipo: "despesa" | "receita";
+  tipo: "despesa" | "receita" | "investimento";
   clienteId: string | null;
   fornecedorId: string | null;
   onClienteChange: (value: string) => void;

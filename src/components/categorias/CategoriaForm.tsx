@@ -18,7 +18,7 @@ interface CategoriaFormProps {
   onSubmit: (e: React.FormEvent) => Promise<void>;
   currentCategoria: Categoria;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSelectChange: (value: "receita" | "despesa") => void;
+  handleSelectChange: (value: "receita" | "despesa" | "investimento") => void;
   isSaving: boolean;
 }
 
@@ -55,7 +55,7 @@ const CategoriaForm: React.FC<CategoriaFormProps> = ({
           <Label htmlFor="tipo">Tipo *</Label>
           <Select 
             value={currentCategoria.tipo}
-            onValueChange={(value) => handleSelectChange(value as "receita" | "despesa")}
+            onValueChange={(value) => handleSelectChange(value as "receita" | "despesa" | "investimento")}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione o tipo" />
@@ -63,6 +63,7 @@ const CategoriaForm: React.FC<CategoriaFormProps> = ({
             <SelectContent>
               <SelectItem value="receita">Receita</SelectItem>
               <SelectItem value="despesa">Despesa</SelectItem>
+              <SelectItem value="investimento">Investimento</SelectItem>
             </SelectContent>
           </Select>
         </div>

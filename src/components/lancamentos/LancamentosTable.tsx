@@ -69,13 +69,13 @@ export const LancamentosTable = () => {
               </TableCell>
               <TableCell>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTipoBadgeClass(lancamento.tipo)}`}>
-                  {lancamento.tipo === "receita" ? "Receita" : "Despesa"}
+                  {lancamento.tipo === "receita" ? "Receita" : lancamento.tipo === "investimento" ? "Investimento" : "Despesa"}
                 </span>
               </TableCell>
               <TableCell>
                 {lancamento.categoria?.nome || '-'}
               </TableCell>
-              <TableCell className={`font-medium ${lancamento.tipo === "receita" ? "text-green-600" : "text-red-600"}`}>
+              <TableCell className={`font-medium ${lancamento.tipo === "receita" ? "text-green-600" : lancamento.tipo === "investimento" ? "text-blue-600" : "text-red-600"}`}>
                 {formatCurrency(lancamento.valor)}
               </TableCell>
               <TableCell>

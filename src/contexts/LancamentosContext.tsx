@@ -16,7 +16,7 @@ export type Lancamento = {
   descricao: string;
   valor: number;
   data_vencimento: string;
-  tipo: "receita" | "despesa";
+  tipo: "receita" | "despesa" | "investimento";
   status: "pendente" | "pago" | "recebido" | "cancelado";
   categoria_id: string | null;
   fornecedor_id: string | null;
@@ -65,7 +65,7 @@ export type ContaBancaria = {
 };
 
 type FiltrosType = {
-  tipo?: "receita" | "despesa" | null;
+  tipo?: "receita" | "despesa" | "investimento" | null;
   status?: string | null;
   data_inicio?: string | null;
   data_fim?: string | null;
@@ -471,7 +471,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       // Ensure proper typing
       const dataToSave: LancamentoFormData = {
         ...formData,
-        tipo: formData.tipo as "receita" | "despesa",
+        tipo: formData.tipo as "receita" | "despesa" | "investimento",
         status: formData.status as "pendente" | "pago" | "recebido" | "cancelado"
       };
 
@@ -592,7 +592,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const getStatusLabel = (status: string, tipo: string): string => {
     if (status === 'recebido' && tipo === 'receita') {
       return 'Recebido';
-    } else if (status === 'pago' && tipo === 'despesa') {
+    } else if (status === 'pago' && (tipo === 'despesa' || tipo === 'investimento')) {
       return 'Pago';
     } else {
       return status.charAt(0).toUpperCase() + status.slice(1);
@@ -600,7 +600,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   };
 
   const getTipoBadgeClass = (tipo: string): string => {
-    return tipo === 'receita' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+    if (tipo === 'receita') return 'bg-green-100 text-green-800';
+    if (tipo === 'investimento') return 'bg-blue-100 text-blue-800';
+    return 'bg-red-100 text-red-800';
   };
 
   const handleSort = (field: string) => {

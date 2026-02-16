@@ -8,7 +8,7 @@ interface CategoriaSelectProps {
   value: string | null;
   onChange: (value: string) => void;
   categorias: Categoria[];
-  tipo: "despesa" | "receita";
+  tipo: "despesa" | "receita" | "investimento";
   onRefresh?: () => void;
 }
 
@@ -42,6 +42,7 @@ export const CategoriaSelect = ({ value, onChange, categorias, tipo, onRefresh }
               { name: "tipo", label: "Tipo", type: "select", required: true, defaultValue: tipo, options: [
                 { value: "despesa", label: "Despesa" },
                 { value: "receita", label: "Receita" },
+                { value: "investimento", label: "Investimento" },
               ]},
             ]}
             onSuccess={onRefresh}

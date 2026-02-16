@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export interface Categoria {
   id: string;
   nome: string;
-  tipo: "receita" | "despesa";
+  tipo: "receita" | "despesa" | "investimento";
 }
 
 export const initialCategoria: Categoria = {
@@ -40,7 +40,7 @@ export function useCategorias() {
       if (error) throw error;
 
       const validatedCategorias = data?.map(item => {
-        const tipo = item.tipo === "receita" ? "receita" : "despesa";
+        const tipo = item.tipo === "receita" ? "receita" : item.tipo === "investimento" ? "investimento" : "despesa";
         return { ...item, tipo } as Categoria;
       }) || [];
 
@@ -71,7 +71,7 @@ export function useCategorias() {
     setCurrentCategoria(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (value: "receita" | "despesa") => {
+  const handleSelectChange = (value: "receita" | "despesa" | "investimento") => {
     setCurrentCategoria(prev => ({ ...prev, tipo: value }));
   };
 
