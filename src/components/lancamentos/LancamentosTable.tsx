@@ -9,12 +9,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import MobilePagination, { usePagination } from "@/components/common/MobilePagination";
+import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 
 export const LancamentosTable = () => {
   const { canPerformAction } = useAuth();
   const canAlterar = canPerformAction("lancamentos", "pode_alterar");
   const canExcluir = canPerformAction("lancamentos", "pode_excluir");
   const isMobile = useIsMobile();
+  const { visible } = useValuesVisibility();
+  const displayCurrency = (val: number) => visible ? formatCurrency(val) : "••••••";
 
   const { 
     lancamentos, handleSort, handleOpenModal, handleOpenDeleteModal, handleUpdateStatus,
@@ -53,7 +56,7 @@ export const LancamentosTable = () => {
                 </div>
                 <div className="flex flex-col items-end gap-1 ml-2">
                   <p className={`text-sm font-semibold ${l.tipo === "receita" ? "text-primary" : l.tipo === "investimento" ? "text-accent-foreground" : "text-destructive"}`}>
-                    {formatCurrency(l.valor)}
+                    {displayCurrency(l.valor)}
                   </p>
                   {showActions && (
                     <div className="flex gap-0.5">
@@ -129,7 +132,7 @@ export const LancamentosTable = () => {
               </TableCell>
               <TableCell>{lancamento.categoria?.nome || '-'}</TableCell>
               <TableCell className={`font-medium ${lancamento.tipo === "receita" ? "text-primary" : lancamento.tipo === "investimento" ? "text-accent-foreground" : "text-destructive"}`}>
-                {formatCurrency(lancamento.valor)}
+                {displayCurrency(lancamento.valor)}
               </TableCell>
               <TableCell>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(lancamento.status)}`}>
