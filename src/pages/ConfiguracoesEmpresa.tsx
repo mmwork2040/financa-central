@@ -339,7 +339,7 @@ const ConfiguracoesEmpresa = () => {
             {/* Cor Primária */}
             <div className="space-y-3">
               <Label htmlFor="cor_primaria">Cor Primária</Label>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <input
                   type="color"
                   id="cor_primaria"
@@ -351,12 +351,12 @@ const ConfiguracoesEmpresa = () => {
                 <Input
                   value={empresa.cor_primaria}
                   onChange={(e) => handleColorChange(e.target.value)}
-                  className="w-32"
+                  className="w-28"
                   placeholder={SYSTEM_PRIMARY_COLOR}
                   disabled={!isAdmin}
                 />
                 <div
-                  className="h-10 flex-1 rounded-md border"
+                  className="h-10 w-full sm:flex-1 rounded-md border"
                   style={{ backgroundColor: empresa.cor_primaria }}
                 />
               </div>

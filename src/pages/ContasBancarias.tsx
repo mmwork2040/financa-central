@@ -35,14 +35,14 @@ const ContasBancariasContent = () => {
         showButton={canIncluir}
       />
       
-      <div className="flex items-center justify-between gap-2 flex-wrap">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <ContasBancariasSearch
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           onExportCSV={handleExportCSV}
           onExportPDF={handleExportPDF}
         />
-        <Button variant="ghost" size="sm" onClick={toggle} className="gap-2 text-muted-foreground">
+        <Button variant="ghost" size="sm" onClick={toggle} className="gap-2 text-muted-foreground self-end sm:self-auto">
           {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           {visible ? "Ocultar" : "Exibir"}
         </Button>
