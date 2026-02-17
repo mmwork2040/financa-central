@@ -7,11 +7,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
 import { useCompanyTheme } from "@/hooks/useCompanyTheme";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
   const { isAuthenticated, loading, empresaId, userProfile } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   useCompanyTheme();
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-gray-500">Carregando...</p>
+        <p className="text-muted-foreground">Carregando...</p>
       </div>
     );
   }
@@ -43,10 +45,10 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       <main
         className={cn(
           "flex-1 transition-all duration-300 ease-in-out",
-          isExpanded ? "ml-64" : "ml-16"
+          isMobile ? "ml-0 pt-14" : isExpanded ? "ml-64" : "ml-16"
         )}
       >
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-3 py-4 md:px-4 md:py-6">
           {children}
         </div>
       </main>
