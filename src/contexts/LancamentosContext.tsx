@@ -6,7 +6,7 @@ import React, {
   useCallback,
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Define the types for the data
@@ -148,7 +148,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [formasPagamento, setFormasPagamento] = useState<FormaPagamento[]>([]);
   const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
-  const { toast } = useToast();
   const { empresaId } = useAuth();
 
   // Add sort state
@@ -231,15 +230,11 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       // Cast results to ensure type safety
       setLancamentos(data as unknown as Lancamento[]);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar lançamentos",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao carregar lançamentos");
     } finally {
       setLoading(false);
     }
-  }, [filtros, toast, sortField, sortDirection]);
+  }, [filtros, sortField, sortDirection]);
 
   const fetchCategorias = useCallback(async () => {
     try {
@@ -254,13 +249,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       setCategorias(data || []);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar categorias",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao carregar categorias");
     }
-  }, [toast]);
+  }, []);
 
   const fetchFornecedores = useCallback(async () => {
     try {
@@ -275,13 +266,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       setFornecedores(data || []);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar fornecedores",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao carregar fornecedores");
     }
-  }, [toast]);
+  }, []);
 
   const fetchClientes = useCallback(async () => {
     try {
@@ -296,13 +283,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       setClientes(data || []);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar clientes",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao carregar clientes");
     }
-  }, [toast]);
+  }, []);
 
   const fetchFormasPagamento = useCallback(async () => {
     try {
@@ -317,13 +300,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       setFormasPagamento(data || []);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar formas de pagamento",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao carregar formas de pagamento");
     }
-  }, [toast]);
+  }, []);
 
   const fetchContasBancarias = useCallback(async () => {
     try {
@@ -338,13 +317,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       setContasBancarias(data || []);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar contas bancárias",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao carregar contas bancárias");
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchLancamentos();
@@ -406,17 +381,10 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
 
       setLancamentos(lancamentos.filter((lancamento) => lancamento.id !== selectedId));
-      toast({
-        title: "Lançamento excluído",
-        description: "O lançamento foi excluído com sucesso.",
-      });
+      toast.success("O lançamento foi excluído com sucesso.");
       setOpenDeleteModal(false);
     } catch (error: any) {
-      toast({
-        title: "Erro ao excluir lançamento",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao excluir lançamento");
     }
   };
 
@@ -491,10 +459,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
             lancamento.id === selectedId ? { ...lancamento, ...dataToSave } : lancamento
           )
         );
-        toast({
-          title: "Lançamento atualizado",
-          description: "O lançamento foi atualizado com sucesso.",
-        });
+        toast.success("O lançamento foi atualizado com sucesso.");
       } else {
         // Create new lancamento
         const { data, error } = await supabase
@@ -508,10 +473,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
         // Cast data to ensure type safety
         setLancamentos([...lancamentos, ...(data as unknown as Lancamento[])]);
-        toast({
-          title: "Lançamento criado",
-          description: "O lançamento foi criado com sucesso.",
-        });
+        toast.success("O lançamento foi criado com sucesso.");
       }
 
       setOpenModal(false);
@@ -534,11 +496,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setSelectedId(null);
       fetchLancamentos();
     } catch (error: any) {
-      toast({
-        title: "Erro ao salvar lançamento",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao salvar lançamento");
     }
   };
 
@@ -558,16 +516,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           lancamento.id === id ? { ...lancamento, status } : lancamento
         )
       );
-      toast({
-        title: "Status atualizado",
-        description: "O status do lançamento foi atualizado com sucesso.",
-      });
+      toast.success("O status do lançamento foi atualizado com sucesso.");
     } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar status",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao atualizar status");
     }
   };
 
@@ -577,26 +528,17 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const getStatusBadgeClass = (status: string): string => {
     switch (status) {
-      case 'pendente':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'pago':
-      case 'recebido':
-        return 'bg-green-100 text-green-800';
-      case 'cancelado':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'pendente': return 'bg-yellow-100 text-yellow-800';
+      case 'pago': case 'recebido': return 'bg-green-100 text-green-800';
+      case 'cancelado': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusLabel = (status: string, tipo: string): string => {
-    if (status === 'recebido' && tipo === 'receita') {
-      return 'Recebido';
-    } else if (status === 'pago' && (tipo === 'despesa' || tipo === 'investimento')) {
-      return 'Pago';
-    } else {
-      return status.charAt(0).toUpperCase() + status.slice(1);
-    }
+    if (status === 'recebido' && tipo === 'receita') return 'Recebido';
+    else if (status === 'pago' && (tipo === 'despesa' || tipo === 'investimento')) return 'Pago';
+    else return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   const getTipoBadgeClass = (tipo: string): string => {
@@ -616,19 +558,11 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   };
 
   const exportToCSV = () => {
-    // Placeholder for CSV export functionality
-    toast({
-      title: "Exportar para CSV",
-      description: "Função em desenvolvimento.",
-    });
+    toast.success("Função em desenvolvimento.");
   };
 
   const exportToPDF = () => {
-    // Placeholder for PDF export functionality
-    toast({
-      title: "Exportar para PDF",
-      description: "Função em desenvolvimento.",
-    });
+    toast.success("Função em desenvolvimento.");
   };
 
   const aplicarFiltros = () => {

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Session, User } from "@supabase/supabase-js";
 import { usePermissoes } from "@/hooks/usePermissoes";
 
@@ -59,7 +59,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isSuperAdmin = userRole === 'super_admin';
   const isPessoal = empresas.find(e => e.empresa_id === empresaId)?.pessoal === true;
   const { canAccessRoute, canAccessScreen, canPerformAction } = usePermissoes(user?.id || null, userRole, isSuperAdmin);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const fetchUserProfile = async (userId: string) => {
@@ -89,11 +88,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUserRoles = async (userId: string) => {
     try {
-      // Check if super admin first
       const { data: isSuperAdminResult } = await supabase.rpc('is_super_admin', { _user_id: userId });
       const superAdmin = isSuperAdminResult === true;
 
-      // Fetch all roles for this user
       const { data: roles, error } = await supabase
         .from('user_roles')
         .select('empresa_id, role')
@@ -106,7 +103,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       let empresasList: EmpresaInfo[] = [];
 
       if (superAdmin) {
-        // Super admin sees ALL empresas
         const { data: allEmpresas } = await supabase
           .from('empresas')
           .select('id, nome, pessoal')
@@ -121,7 +117,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         if (!roles || roles.length === 0) return null;
 
-        // Fetch empresa names for user's roles
         const empresaIds = roles.map(r => r.empresa_id);
         const { data: empresasData } = await supabase
           .from('empresas')
@@ -138,7 +133,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       setEmpresas(empresasList);
 
-      // Get profile to determine active empresa
       const { data: profile } = await supabase
         .from('perfis')
         .select('empresa_id')
@@ -207,17 +201,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
-        toast({
-          title: "Erro de login",
-          description: error.message,
-          variant: "destructive",
-        });
+        toast.error(error.message || "Erro de login");
         throw error;
       }
 
@@ -227,10 +214,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           fetchUserRoles(data.user.id),
         ]);
         navigate("/dashboard");
-        toast({
-          title: "Login realizado com sucesso",
-          description: `Bem-vindo ${profile?.nome || email}!`,
-        });
+        toast.success(`Bem-vindo ${profile?.nome || email}!`);
       }
     } catch (error: any) {
       console.error("Erro ao fazer login:", error);
@@ -247,16 +231,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserRole(null);
       setEmpresas([]);
       navigate("/login");
-      toast({
-        title: "Logout realizado com sucesso",
-        description: "Você foi desconectado do sistema.",
-      });
+      toast.success("Você foi desconectado do sistema.");
     } catch (error: any) {
-      toast({
-        title: "Erro ao fazer logout",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao fazer logout");
     } finally {
       setLoading(false);
     }
@@ -272,29 +249,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data?.error) throw new Error(data.error);
 
       setEmpresaId(targetEmpresaId);
-      // Keep super_admin role if applicable
       if (data.role === 'super_admin') {
         setUserRole('super_admin');
       } else {
         setUserRole(data.role);
       }
 
-      // Update profile empresa_id locally
       setUserProfile((prev: any) => prev ? { ...prev, empresa_id: targetEmpresaId } : prev);
 
-      toast({
-        title: "Empresa alterada",
-        description: `Você está agora na empresa selecionada.`,
-      });
-
-      // Reload to refresh all data
+      toast.success("Você está agora na empresa selecionada.");
       window.location.reload();
     } catch (error: any) {
-      toast({
-        title: "Erro ao trocar empresa",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao trocar empresa");
     }
   };
 

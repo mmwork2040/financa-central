@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Copy, Plus, Trash2, Loader2, Ticket, ChevronDown, ChevronUp } from "lucide-react";
 import {
   Dialog,
@@ -63,7 +63,6 @@ const screens = [
 
 const InviteCodesCard = () => {
   const { empresaId, userRole, isSuperAdmin } = useAuth();
-  const { toast } = useToast();
   const [codes, setCodes] = useState<InviteCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -95,11 +94,7 @@ const InviteCodesCard = () => {
 
   const fetchAllEmpresas = async () => {
     try {
-      const { data, error } = await supabase
-        .from("empresas")
-        .select("id, nome")
-        .eq("pessoal", false)
-        .order("nome");
+      const { data, error } = await supabase.from("empresas").select("id, nome").eq("pessoal", false).order("nome");
       if (error) throw error;
       setAllEmpresas(data || []);
     } catch (error: any) {
@@ -110,15 +105,8 @@ const InviteCodesCard = () => {
   const fetchCodes = async () => {
     try {
       setLoading(true);
-      let query = (supabase as any)
-        .from("invite_codes")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (!isSuperAdmin && empresaId) {
-        query = query.eq("empresa_id", empresaId);
-      }
-
+      let query = (supabase as any).from("invite_codes").select("*").order("created_at", { ascending: false });
+      if (!isSuperAdmin && empresaId) query = query.eq("empresa_id", empresaId);
       const { data, error } = await query;
       if (error) throw error;
       setCodes(data || []);
@@ -130,51 +118,29 @@ const InviteCodesCard = () => {
   };
 
   const handlePermissionChange = (tela: string, field: 'pode_incluir' | 'pode_alterar' | 'pode_excluir', value: boolean) => {
-    setScreenPermissions(prev => prev.map(p =>
-      p.tela === tela ? { ...p, [field]: value } : p
-    ));
+    setScreenPermissions(prev => prev.map(p => p.tela === tela ? { ...p, [field]: value } : p));
   };
 
   const handleGenerate = async () => {
     setGenerating(true);
     try {
       const role = isAdminRole ? "admin" : "usuario";
-      const body: any = {
-        role,
-        maxUses: parseInt(maxUses),
-        expiresInDays: parseInt(expiresInDays),
-      };
-
-      if (isSuperAdmin && selectedEmpresaId) {
-        body.empresaId = selectedEmpresaId;
-      }
-
-      // Include permissions if not admin
+      const body: any = { role, maxUses: parseInt(maxUses), expiresInDays: parseInt(expiresInDays) };
+      if (isSuperAdmin && selectedEmpresaId) body.empresaId = selectedEmpresaId;
       if (!isAdminRole) {
         const activePerms = screenPermissions.filter(p => p.pode_incluir || p.pode_alterar || p.pode_excluir);
-        body.permissoes = activePerms.map(p => ({
-          tela: p.tela,
-          pode_incluir: p.pode_incluir,
-          pode_alterar: p.pode_alterar,
-          pode_excluir: p.pode_excluir,
-        }));
+        body.permissoes = activePerms.map(p => ({ tela: p.tela, pode_incluir: p.pode_incluir, pode_alterar: p.pode_alterar, pode_excluir: p.pode_excluir }));
       }
-
-      const { data, error } = await supabase.functions.invoke("generate-invite-code", {
-        body,
-      });
-
+      const { data, error } = await supabase.functions.invoke("generate-invite-code", { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      toast({ title: "Código gerado!", description: `Código: ${data.invite.code}` });
+      toast.success(`Código gerado: ${data.invite.code}`);
       fetchCodes();
-      // Reset permissions
       setScreenPermissions(screens.map(s => ({ tela: s.value, nome: s.name, pode_incluir: false, pode_alterar: false, pode_excluir: false })));
       setShowPermissions(false);
       setIsAdminRole(false);
     } catch (error: any) {
-      toast({ title: "Erro ao gerar código", description: error.message, variant: "destructive" });
+      toast.error(error.message || "Erro ao gerar código");
     } finally {
       setGenerating(false);
     }
@@ -182,7 +148,7 @@ const InviteCodesCard = () => {
 
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast({ title: "Copiado!", description: "Código copiado para a área de transferência." });
+    toast.success("Código copiado para a área de transferência.");
   };
 
   const handleDeleteConfirm = async () => {
@@ -190,50 +156,22 @@ const InviteCodesCard = () => {
     setDeletingCode(true);
     try {
       if (deleteTarget.redeemed_by && deleteTarget.empresa_id) {
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", deleteTarget.redeemed_by)
-          .eq("empresa_id", deleteTarget.empresa_id);
+        const { error: roleError } = await supabase.from("user_roles").delete().eq("user_id", deleteTarget.redeemed_by).eq("empresa_id", deleteTarget.empresa_id);
         if (roleError) throw roleError;
-
-        // Also remove permissions for this user
-        await (supabase as any)
-          .from("permissoes")
-          .delete()
-          .eq("perfis_id", deleteTarget.redeemed_by);
-
-        const { data: remainingRoles } = await supabase
-          .from("user_roles")
-          .select("empresa_id")
-          .eq("user_id", deleteTarget.redeemed_by);
-
+        await (supabase as any).from("permissoes").delete().eq("perfis_id", deleteTarget.redeemed_by);
+        const { data: remainingRoles } = await supabase.from("user_roles").select("empresa_id").eq("user_id", deleteTarget.redeemed_by);
         if (remainingRoles && remainingRoles.length > 0) {
-          await supabase
-            .from("perfis")
-            .update({ empresa_id: remainingRoles[0].empresa_id })
-            .eq("id", deleteTarget.redeemed_by);
+          await supabase.from("perfis").update({ empresa_id: remainingRoles[0].empresa_id }).eq("id", deleteTarget.redeemed_by);
         } else {
-          await supabase
-            .from("perfis")
-            .update({ empresa_id: null })
-            .eq("id", deleteTarget.redeemed_by);
+          await supabase.from("perfis").update({ empresa_id: null }).eq("id", deleteTarget.redeemed_by);
         }
       }
-
-      const { error } = await (supabase as any)
-        .from("invite_codes")
-        .delete()
-        .eq("id", deleteTarget.id);
-
+      const { error } = await (supabase as any).from("invite_codes").delete().eq("id", deleteTarget.id);
       if (error) throw error;
       setCodes(prev => prev.filter(c => c.id !== deleteTarget.id));
-      toast({
-        title: "Código removido",
-        description: deleteTarget.redeemed_by ? "O acesso do usuário à empresa também foi revogado." : undefined
-      });
+      toast.success(deleteTarget.redeemed_by ? "Código removido. O acesso do usuário à empresa também foi revogado." : "Código removido");
     } catch (error: any) {
-      toast({ title: "Erro ao remover", description: error.message, variant: "destructive" });
+      toast.error(error.message || "Erro ao remover");
     } finally {
       setDeletingCode(false);
       setDeleteTarget(null);
@@ -257,20 +195,15 @@ const InviteCodesCard = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Generate form */}
         <div className="space-y-4">
           <div className="flex flex-wrap items-end gap-3">
             {isSuperAdmin && (
               <div className="space-y-1">
                 <Label className="text-xs">Empresa</Label>
                 <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Selecione a empresa" />
-                  </SelectTrigger>
+                  <SelectTrigger className="w-48"><SelectValue placeholder="Selecione a empresa" /></SelectTrigger>
                   <SelectContent>
-                    {allEmpresas.map(e => (
-                      <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
-                    ))}
+                    {allEmpresas.map(e => (<SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
@@ -288,20 +221,13 @@ const InviteCodesCard = () => {
               <Input className="w-24" type="number" min="0" value={expiresInDays} onChange={e => setExpiresInDays(e.target.value)} />
             </div>
             <Button onClick={() => setShowConfirmGenerate(true)} disabled={generating} size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              Gerar Código
+              <Plus className="h-4 w-4 mr-1" /> Gerar Código
             </Button>
           </div>
 
-          {/* Permissions section - only show for non-admin roles */}
           {!isAdminRole && (
             <div className="space-y-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPermissions(!showPermissions)}
-                className="w-full justify-between"
-              >
+              <Button variant="outline" size="sm" onClick={() => setShowPermissions(!showPermissions)} className="w-full justify-between">
                 <span>Configurar Permissões de Acesso</span>
                 {showPermissions ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </Button>
@@ -309,20 +235,10 @@ const InviteCodesCard = () => {
               {showPermissions && (
                 <div className="rounded-md border">
                   <div className="flex items-center gap-2 p-2 border-b bg-muted/30">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs h-7"
-                      onClick={() => {
-                        const allChecked = screenPermissions.every(p => p.pode_incluir && p.pode_alterar && p.pode_excluir);
-                        setScreenPermissions(prev => prev.map(p => ({
-                          ...p,
-                          pode_incluir: !allChecked,
-                          pode_alterar: !allChecked,
-                          pode_excluir: !allChecked,
-                        })));
-                      }}
-                    >
+                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => {
+                      const allChecked = screenPermissions.every(p => p.pode_incluir && p.pode_alterar && p.pode_excluir);
+                      setScreenPermissions(prev => prev.map(p => ({ ...p, pode_incluir: !allChecked, pode_alterar: !allChecked, pode_excluir: !allChecked })));
+                    }}>
                       {screenPermissions.every(p => p.pode_incluir && p.pode_alterar && p.pode_excluir) ? "Desmarcar Tudo" : "Selecionar Tudo"}
                     </Button>
                   </div>
@@ -342,42 +258,16 @@ const InviteCodesCard = () => {
                         <tr key={perm.tela} className="border-t hover:bg-muted/50">
                           <td className="px-3 py-2">
                             <div className="flex items-center gap-2">
-                              <Checkbox
-                                checked={allRowChecked}
-                                onCheckedChange={(checked) => {
-                                  const val = !!checked;
-                                  setScreenPermissions(prev => prev.map(p =>
-                                    p.tela === perm.tela ? { ...p, pode_incluir: val, pode_alterar: val, pode_excluir: val } : p
-                                  ));
-                                }}
-                              />
+                              <Checkbox checked={allRowChecked} onCheckedChange={(checked) => {
+                                const val = !!checked;
+                                setScreenPermissions(prev => prev.map(p => p.tela === perm.tela ? { ...p, pode_incluir: val, pode_alterar: val, pode_excluir: val } : p));
+                              }} />
                               <span className="font-medium">{perm.nome}</span>
                             </div>
                           </td>
-                          <td className="px-3 py-2 text-center">
-                            <div className="flex justify-center">
-                              <Checkbox
-                                checked={perm.pode_incluir}
-                                onCheckedChange={(checked) => handlePermissionChange(perm.tela, 'pode_incluir', !!checked)}
-                              />
-                            </div>
-                          </td>
-                          <td className="px-3 py-2 text-center">
-                            <div className="flex justify-center">
-                              <Checkbox
-                                checked={perm.pode_alterar}
-                                onCheckedChange={(checked) => handlePermissionChange(perm.tela, 'pode_alterar', !!checked)}
-                              />
-                            </div>
-                          </td>
-                          <td className="px-3 py-2 text-center">
-                            <div className="flex justify-center">
-                              <Checkbox
-                                checked={perm.pode_excluir}
-                                onCheckedChange={(checked) => handlePermissionChange(perm.tela, 'pode_excluir', !!checked)}
-                              />
-                            </div>
-                          </td>
+                          <td className="px-3 py-2 text-center"><div className="flex justify-center"><Checkbox checked={perm.pode_incluir} onCheckedChange={(checked) => handlePermissionChange(perm.tela, 'pode_incluir', !!checked)} /></div></td>
+                          <td className="px-3 py-2 text-center"><div className="flex justify-center"><Checkbox checked={perm.pode_alterar} onCheckedChange={(checked) => handlePermissionChange(perm.tela, 'pode_alterar', !!checked)} /></div></td>
+                          <td className="px-3 py-2 text-center"><div className="flex justify-center"><Checkbox checked={perm.pode_excluir} onCheckedChange={(checked) => handlePermissionChange(perm.tela, 'pode_excluir', !!checked)} /></div></td>
                         </tr>
                         );
                       })}
@@ -389,11 +279,8 @@ const InviteCodesCard = () => {
           )}
         </div>
 
-        {/* Codes list */}
         {loading ? (
-          <div className="flex justify-center py-4">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
+          <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
         ) : codes.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">Nenhum código gerado ainda.</p>
         ) : (
@@ -407,9 +294,7 @@ const InviteCodesCard = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <code className="font-mono text-lg font-bold tracking-wider">{code.code}</code>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(code.code)}>
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(code.code)}><Copy className="h-3.5 w-3.5" /></Button>
                     </div>
                     <div className="flex items-center gap-2">
                       {isSuperAdmin && code.empresa_id && (
@@ -418,24 +303,18 @@ const InviteCodesCard = () => {
                         </Badge>
                       )}
                       <Badge variant="outline" className="text-xs">{code.role}</Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {code.uses}/{code.max_uses === 0 ? "∞" : code.max_uses} usos
-                      </span>
+                      <span className="text-xs text-muted-foreground">{code.uses}/{code.max_uses === 0 ? "∞" : code.max_uses} usos</span>
                       {isInactive && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
                       {isExpired && <Badge variant="destructive" className="text-xs">Expirado</Badge>}
                       {isUsedUp && !isInactive && <Badge variant="secondary" className="text-xs">Esgotado</Badge>}
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(code)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(code)}><Trash2 className="h-3.5 w-3.5" /></Button>
                     </div>
                   </div>
                   {code.redeemed_by_name && (
                     <div className="text-xs text-muted-foreground pl-1">
                       Usado por <span className="font-medium text-foreground">{code.redeemed_by_name}</span>
                       {code.redeemed_by_email && <span> ({code.redeemed_by_email})</span>}
-                      {code.redeemed_at && (
-                        <span> em {new Date(code.redeemed_at).toLocaleDateString("pt-BR")} às {new Date(code.redeemed_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-                      )}
+                      {code.redeemed_at && <span> em {new Date(code.redeemed_at).toLocaleDateString()}</span>}
                     </div>
                   )}
                 </div>
@@ -446,97 +325,41 @@ const InviteCodesCard = () => {
       </CardContent>
     </Card>
 
-    {/* Delete confirmation dialog */}
-    <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+    <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Confirmar Exclusão</DialogTitle>
           <DialogDescription>
             {deleteTarget?.redeemed_by
-              ? `Este código foi utilizado por ${deleteTarget.redeemed_by_name || "um usuário"}. Ao excluí-lo, o acesso deste usuário à empresa será revogado. Deseja continuar?`
-              : "Tem certeza que deseja excluir este código de convite? Esta ação não pode ser desfeita."}
+              ? "Este código já foi resgatado. Excluí-lo também revogará o acesso do usuário à empresa. Deseja continuar?"
+              : "Deseja realmente excluir este código de convite?"}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deletingCode}>Cancelar</Button>
+          <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
           <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deletingCode}>
-            {deletingCode ? "Processando..." : deleteTarget?.redeemed_by ? "Excluir e Revogar Acesso" : "Excluir"}
+            {deletingCode ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+            Excluir
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
 
-    {/* Generate confirmation dialog */}
     <Dialog open={showConfirmGenerate} onOpenChange={setShowConfirmGenerate}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Confirmar Geração de Código</DialogTitle>
+          <DialogTitle>Gerar Código de Convite</DialogTitle>
           <DialogDescription>
-            Revise as configurações antes de gerar o código de convite.
+            Será gerado um código com perfil <strong>{isAdminRole ? "Administrador" : "Usuário"}</strong>,
+            máximo de <strong>{maxUses === "0" ? "ilimitados" : maxUses}</strong> usos
+            {expiresInDays !== "0" && <>, expirando em <strong>{expiresInDays} dias</strong></>}.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3 text-sm">
-          <div className="grid grid-cols-2 gap-2">
-            <span className="text-muted-foreground">Permissão:</span>
-            <span className="font-medium">
-              {isAdminRole ? "Administrador" : "Usuário"}
-            </span>
-            <span className="text-muted-foreground">Máx. usos:</span>
-            <span className="font-medium">{parseInt(maxUses) === 0 ? "Ilimitado" : maxUses}</span>
-            <span className="text-muted-foreground">Expiração:</span>
-            <span className="font-medium">{parseInt(expiresInDays) === 0 ? "Nunca" : `${expiresInDays} dias`}</span>
-            {isSuperAdmin && selectedEmpresaId && (
-              <>
-                <span className="text-muted-foreground">Empresa:</span>
-                <span className="font-medium">{allEmpresas.find(e => e.id === selectedEmpresaId)?.nome || "—"}</span>
-              </>
-            )}
-          </div>
-
-          {!isAdminRole && (
-            <div className="space-y-2">
-              <p className="font-medium text-muted-foreground">Permissões de acesso por tela:</p>
-              {(() => {
-                const activePerms = screenPermissions.filter(p => p.pode_incluir || p.pode_alterar || p.pode_excluir);
-                if (activePerms.length === 0) {
-                  return <p className="text-muted-foreground italic">Nenhuma permissão específica definida — o usuário terá apenas acesso de visualização.</p>;
-                }
-                return (
-                  <div className="rounded-md border text-xs">
-                    <table className="w-full">
-                      <thead className="bg-muted/50">
-                        <tr>
-                          <th className="px-3 py-1.5 text-left font-medium">Tela</th>
-                          <th className="px-3 py-1.5 text-center font-medium">Incluir</th>
-                          <th className="px-3 py-1.5 text-center font-medium">Alterar</th>
-                          <th className="px-3 py-1.5 text-center font-medium">Excluir</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activePerms.map(p => (
-                          <tr key={p.tela} className="border-t">
-                            <td className="px-3 py-1.5 font-medium">{p.nome}</td>
-                            <td className="px-3 py-1.5 text-center">{p.pode_incluir ? "✓" : "—"}</td>
-                            <td className="px-3 py-1.5 text-center">{p.pode_alterar ? "✓" : "—"}</td>
-                            <td className="px-3 py-1.5 text-center">{p.pode_excluir ? "✓" : "—"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-          {isAdminRole && (
-            <p className="text-muted-foreground italic">Administradores possuem acesso total a todas as funcionalidades.</p>
-          )}
-        </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setShowConfirmGenerate(false)} disabled={generating}>Cancelar</Button>
+          <Button variant="outline" onClick={() => setShowConfirmGenerate(false)}>Cancelar</Button>
           <Button onClick={() => { setShowConfirmGenerate(false); handleGenerate(); }} disabled={generating}>
-            {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-            Confirmar e Gerar
+            {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+            Confirmar
           </Button>
         </DialogFooter>
       </DialogContent>

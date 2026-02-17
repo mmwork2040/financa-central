@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardSummary {
@@ -36,7 +35,6 @@ interface FluxoCaixaData {
 }
 
 export const useDashboardData = () => {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<DashboardSummary>({
     totalReceitas: 0,
@@ -90,7 +88,6 @@ export const useDashboardData = () => {
       console.log("Fetching dashboard data...");
       setLoading(true);
       
-      // Fetch recent transactions from database
       const { data: lancamentos, error: lancamentosError } = await supabase
         .from('lancamentos')
         .select(`
@@ -109,7 +106,6 @@ export const useDashboardData = () => {
       
       console.log("Recent transactions loaded:", lancamentos);
       
-      // Fix: Type casting to ensure the data matches the LancamentoRecente type
       const typedLancamentos = lancamentos?.map(l => ({
         id: l.id,
         descricao: l.descricao,
@@ -124,11 +120,9 @@ export const useDashboardData = () => {
       
       setLancamentosRecentes(typedLancamentos);
 
-      // Calculate summary data based on actual data
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
       
-      // Fetch all transactions for total calculations
       const { data: todosLancamentos, error: todosError } = await supabase
         .from('lancamentos')
         .select('*');
@@ -170,18 +164,13 @@ export const useDashboardData = () => {
         emAtraso
       });
 
-      // Calculate cash flow data
       const dadosCalculados = obterDadosFluxoCaixa(todosLancamentos || []);
       console.log("Cash flow data calculated:", dadosCalculados);
       setDataFluxo(dadosCalculados);
       
     } catch (error: any) {
       console.error("Error loading dashboard data:", error);
-      toast({
-        title: "Erro ao carregar dados",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao carregar dados");
     } finally {
       setLoading(false);
     }
