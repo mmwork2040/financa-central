@@ -9,17 +9,11 @@ interface ValorInputProps {
 
 export const ValorInput = ({ valor, onValorChange }: ValorInputProps) => {
   const handleValueChange = (value: string | undefined) => {
-    const numericValue = value ? Number(value.replace(/\D/g, "")) / 100 : 0;
-    onValorChange(numericValue);
+    const cents = parseInt(value || "0", 10);
+    onValorChange(cents / 100);
   };
 
-  // Format initial value for currency display
-  const formatInitialValue = () => {
-    if (typeof valor === 'number') {
-      return valor.toFixed(2);
-    }
-    return typeof valor === 'string' ? valor : '0';
-  };
+  const numericValue = typeof valor === "number" ? valor : parseFloat(valor) || 0;
 
   return (
     <div className="grid grid-cols-4 items-center gap-4">
@@ -28,12 +22,9 @@ export const ValorInput = ({ valor, onValorChange }: ValorInputProps) => {
         <CurrencyInput
           id="valor"
           name="valor"
-          defaultValue={formatInitialValue()}
+          value={numericValue}
           decimalsLimit={2}
           onValueChange={handleValueChange}
-          prefix="R$ "
-          groupSeparator="."
-          decimalSeparator=","
           placeholder="R$ 0,00"
         />
       </div>

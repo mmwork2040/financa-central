@@ -1,12 +1,7 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,34 +26,14 @@ interface ContaBancariaFormProps {
 }
 
 const ContaBancariaForm: React.FC<ContaBancariaFormProps> = ({
-  open,
-  onClose,
-  onSave,
-  formData,
-  handleInputChange,
-  isEditing,
+  open, onClose, onSave, formData, handleInputChange, isEditing,
 }) => {
-  // Handle saldo_inicial changes
   const handleSaldoChange = (value: string | undefined) => {
-    const numericValue = value ? Number(value.replace(/\D/g, "")) / 100 : 0;
-    // We cast to unknown first, then to React.ChangeEvent<HTMLInputElement>
-    // to satisfy TypeScript
+    const cents = parseInt(value || "0", 10);
     const syntheticEvent = {
-      target: {
-        name: 'saldo_inicial',
-        value: numericValue
-      }
+      target: { name: "saldo_inicial", value: cents / 100 },
     } as unknown as React.ChangeEvent<HTMLInputElement>;
-    
     handleInputChange(syntheticEvent);
-  };
-
-  // Format initial saldo value for display
-  const formatSaldoInicial = () => {
-    if (typeof formData.saldo_inicial === 'number') {
-      return formData.saldo_inicial.toFixed(2);
-    }
-    return '0';
   };
 
   return (
@@ -67,79 +42,39 @@ const ContaBancariaForm: React.FC<ContaBancariaFormProps> = ({
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar" : "Nova"} Conta Bancária</DialogTitle>
           <DialogDescription>
-            {isEditing 
-              ? "Edite os detalhes da conta bancária." 
+            {isEditing
+              ? "Edite os detalhes da conta bancária."
               : "Preencha os dados para cadastrar uma nova conta bancária."}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="nome" className="text-right">
-              Nome <span className="text-red-500">*</span>
+              Nome <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="nome"
-              name="nome"
-              value={formData.nome}
-              onChange={handleInputChange}
-              className="col-span-3"
-              required
-              placeholder="Ex: Conta Principal"
-            />
+            <Input id="nome" name="nome" value={formData.nome} onChange={handleInputChange} className="col-span-3" required placeholder="Ex: Conta Principal" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="banco" className="text-right">
-              Banco
-            </Label>
-            <Input
-              id="banco"
-              name="banco"
-              value={formData.banco || ""}
-              onChange={handleInputChange}
-              className="col-span-3"
-              placeholder="Ex: Itaú, Bradesco, Nubank"
-            />
+            <Label htmlFor="banco" className="text-right">Banco</Label>
+            <Input id="banco" name="banco" value={formData.banco || ""} onChange={handleInputChange} className="col-span-3" placeholder="Ex: Itaú, Bradesco, Nubank" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="agencia" className="text-right">
-              Agência
-            </Label>
-            <Input
-              id="agencia"
-              name="agencia"
-              value={formData.agencia || ""}
-              onChange={handleInputChange}
-              className="col-span-3"
-              placeholder="Ex: 0001"
-            />
+            <Label htmlFor="agencia" className="text-right">Agência</Label>
+            <Input id="agencia" name="agencia" value={formData.agencia || ""} onChange={handleInputChange} className="col-span-3" placeholder="Ex: 0001" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="conta" className="text-right">
-              Conta
-            </Label>
-            <Input
-              id="conta"
-              name="conta"
-              value={formData.conta || ""}
-              onChange={handleInputChange}
-              className="col-span-3"
-              placeholder="Ex: 12345-6"
-            />
+            <Label htmlFor="conta" className="text-right">Conta</Label>
+            <Input id="conta" name="conta" value={formData.conta || ""} onChange={handleInputChange} className="col-span-3" placeholder="Ex: 12345-6" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="saldo_inicial" className="text-right">
-              Saldo Inicial
-            </Label>
+            <Label htmlFor="saldo_inicial" className="text-right">Saldo Inicial</Label>
             <div className="col-span-3">
               <CurrencyInput
                 id="saldo_inicial"
                 name="saldo_inicial"
-                defaultValue={formatSaldoInicial()}
+                value={formData.saldo_inicial}
                 decimalsLimit={2}
                 onValueChange={handleSaldoChange}
-                prefix="R$ "
-                groupSeparator="."
-                decimalSeparator=","
                 placeholder="R$ 0,00"
               />
             </div>
