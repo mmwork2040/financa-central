@@ -45,7 +45,7 @@ export const RecentTransactions = ({
             <p className="text-muted-foreground">Nenhum lançamento encontrado</p>
           </div>
         ) : (
-          <div className="-mx-4 -my-2 max-h-[260px] overflow-y-auto">
+          <div className="-mx-2 sm:-mx-4 -my-2 max-h-[260px] overflow-y-auto">
             <table className="w-full table-auto">
               <tbody>
                 {lancamentos.map((lancamento) => (

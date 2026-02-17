@@ -21,7 +21,7 @@ export const CashFlowChart = ({ data, formatCurrency }: CashFlowChartProps) => {
           Receitas e despesas dos últimos 6 meses
         </CardDescription>
       </CardHeader>
-      <CardContent className="h-[300px]">
+      <CardContent className="h-[250px] sm:h-[300px] px-2 sm:px-6">
         {data.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <p className="text-muted-foreground">Não há dados disponíveis</p>
@@ -30,7 +30,7 @@ export const CashFlowChart = ({ data, formatCurrency }: CashFlowChartProps) => {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
             >
               <XAxis dataKey="name" />
               <YAxis />
