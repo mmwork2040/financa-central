@@ -4,13 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/utils/format";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Card, CardContent } from "@/components/ui/card";
+import MobilePagination, { usePagination } from "@/components/common/MobilePagination";
 
 export interface ContaBancaria {
   id: string;
@@ -33,13 +31,61 @@ interface ContasBancariasTableProps {
 }
 
 const ContasBancariasTable: React.FC<ContasBancariasTableProps> = ({
-  contasBancarias,
-  onEdit,
-  onDelete,
-  canEdit = true,
-  canDelete = true,
+  contasBancarias, onEdit, onDelete, canEdit = true, canDelete = true,
 }) => {
   const showActions = canEdit || canDelete;
+  const isMobile = useIsMobile();
+  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(contasBancarias);
+
+  if (isMobile) {
+    return (
+      <div className="space-y-3">
+        {paginatedItems.map((conta) => (
+          <Card key={conta.id}>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1 flex-1 min-w-0">
+                  <p className="font-medium text-foreground truncate">{conta.nome}</p>
+                  {conta.banco && <p className="text-xs text-muted-foreground">{conta.banco}</p>}
+                  <div className="flex gap-3 text-xs text-muted-foreground">
+                    {conta.agencia && <span>Ag: {conta.agencia}</span>}
+                    {conta.conta && <span>Cc: {conta.conta}</span>}
+                  </div>
+                  <div className="flex gap-4 pt-1">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Saldo Inicial</p>
+                      <p className="text-xs font-medium">{formatCurrency(conta.saldo_inicial || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Saldo Atual</p>
+                      <p className={`text-xs font-medium ${(conta.saldo_atual || 0) < 0 ? 'text-destructive' : 'text-primary'}`}>
+                        {formatCurrency(conta.saldo_atual || 0)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                {showActions && (
+                  <div className="flex gap-1 ml-2">
+                    {canEdit && (
+                      <Button variant="ghost" size="icon" onClick={() => onEdit(conta)} className="h-8 w-8">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {canDelete && (
+                      <Button variant="ghost" size="icon" onClick={() => onDelete(conta.id)} className="h-8 w-8 text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        <MobilePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-md border overflow-hidden">
@@ -63,31 +109,19 @@ const ContasBancariasTable: React.FC<ContasBancariasTableProps> = ({
               <TableCell>{conta.agencia || '-'}</TableCell>
               <TableCell>{conta.conta || '-'}</TableCell>
               <TableCell className="text-right">{formatCurrency(conta.saldo_inicial || 0)}</TableCell>
-              <TableCell className={`text-right font-medium ${(conta.saldo_atual || 0) < 0 ? 'text-red-600' : 'text-green-600'}`}>
+              <TableCell className={`text-right font-medium ${(conta.saldo_atual || 0) < 0 ? 'text-destructive' : 'text-primary'}`}>
                 {formatCurrency(conta.saldo_atual || 0)}
               </TableCell>
               {showActions && (
                 <TableCell>
                   <div className="flex justify-center space-x-2">
                     {canEdit && (
-                      <Button
-                        variant="ghost"
-                        size="sm" 
-                        onClick={() => onEdit(conta)} 
-                        className="h-8 w-8 p-0 text-blue-500 hover:text-blue-600"
-                      >
-                        <span className="sr-only">Editar</span>
+                      <Button variant="ghost" size="sm" onClick={() => onEdit(conta)} className="h-8 w-8 p-0">
                         <Pencil className="h-4 w-4" />
                       </Button>
                     )}
                     {canDelete && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => onDelete(conta.id)} 
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                      >
-                        <span className="sr-only">Excluir</span>
+                      <Button variant="ghost" size="sm" onClick={() => onDelete(conta.id)} className="h-8 w-8 p-0 text-destructive">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
