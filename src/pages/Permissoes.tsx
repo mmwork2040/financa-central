@@ -221,10 +221,10 @@ const Permissoes = () => {
                 <SelectTrigger id="user-select" className="w-full">
                   <SelectValue placeholder="Selecione um usuário" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-w-[calc(100vw-3rem)]">
                   {users.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
-                      {user.nome} ({user.email}) - {user.permissao === 'admin' ? 'Administrador' : user.permissao === 'financeiro' ? 'Financeiro' : 'Leitura'}
+                      <span className="block truncate">{user.nome} <span className="hidden sm:inline">({user.email})</span> - {user.permissao === 'admin' ? 'Admin' : user.permissao === 'financeiro' ? 'Financeiro' : 'Leitura'}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -234,8 +234,8 @@ const Permissoes = () => {
             {selectedUser && (
               <>
                 {isAdmin ? (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
-                    <p className="text-amber-800">
+                  <div className="rounded-md border border-border bg-muted/30 p-4">
+                    <p className="text-sm text-muted-foreground">
                       Este usuário é um Administrador e possui todas as permissões do sistema automaticamente.
                     </p>
                   </div>

@@ -291,8 +291,8 @@ const ConfiguracoesEmpresa = () => {
             {/* Logo */}
             <div className="space-y-3">
               <Label>Logo da Empresa</Label>
-              <div className="flex items-center gap-4">
-                <div className="h-20 w-20 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden bg-muted">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="h-20 w-20 shrink-0 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden bg-muted">
                   {empresa.logo_url ? (
                     <img src={empresa.logo_url} alt="Logo" className="h-full w-full object-contain" />
                   ) : (
@@ -301,7 +301,7 @@ const ConfiguracoesEmpresa = () => {
                 </div>
                 {isAdmin && (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Label
                         htmlFor="logo-upload"
                         className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"

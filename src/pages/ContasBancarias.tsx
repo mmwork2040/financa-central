@@ -42,9 +42,8 @@ const ContasBancariasContent = () => {
           onExportCSV={handleExportCSV}
           onExportPDF={handleExportPDF}
         />
-        <Button variant="ghost" size="sm" onClick={toggle} className="gap-2 text-muted-foreground self-end sm:self-auto">
+        <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground self-end sm:self-auto" title={visible ? "Ocultar valores" : "Exibir valores"}>
           {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          {visible ? "Ocultar" : "Exibir"}
         </Button>
       </div>
       
