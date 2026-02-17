@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Importando componentes refatorados
 import FluxoCaixaChart from "@/components/relatorios/FluxoCaixaChart";
@@ -20,8 +22,10 @@ import ExportDropdown from "@/components/common/ExportDropdown";
 
 // Importando o hook personalizado
 import { useRelatoriosData } from "@/hooks/useRelatoriosData";
+import { ValuesVisibilityProvider, useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 
-const Relatorios = () => {
+const RelatoriosContent = () => {
+  const { visible, toggle } = useValuesVisibility();
   const [periodo, setPeriodo] = useState("mes");
   
   // Utilizando o hook para gerenciar os dados
@@ -343,7 +347,10 @@ const Relatorios = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Relatórios</h1>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 md:space-x-4 flex-wrap gap-y-2">
+          <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground" title={visible ? "Ocultar valores" : "Exibir valores"}>
+            {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </Button>
           <Select value={periodo} onValueChange={handlePeriodoChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Selecione o período" />
@@ -424,5 +431,11 @@ const Relatorios = () => {
     </div>
   );
 };
+
+const Relatorios = () => (
+  <ValuesVisibilityProvider>
+    <RelatoriosContent />
+  </ValuesVisibilityProvider>
+);
 
 export default Relatorios;
