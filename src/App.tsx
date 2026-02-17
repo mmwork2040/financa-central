@@ -25,6 +25,7 @@ import Relatorios from "./pages/Relatorios";
 import Permissoes from "./pages/Permissoes";
 import ConfiguracoesEmpresa from "./pages/ConfiguracoesEmpresa";
 import NotFoundPage from "./pages/NotFoundPage";
+import Install from "./pages/Install";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/install" element={<Install />} />
 
                 {/* Protected routes */}
                 <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
