@@ -241,7 +241,7 @@ const Permissoes = () => {
                   </div>
                 ) : (
                   <>
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                       <div className="flex items-center gap-2 p-2 border-b bg-muted/30">
                         <Button
                           variant="ghost"
@@ -260,13 +260,13 @@ const Permissoes = () => {
                           {permissions.every(p => p.pode_incluir && p.pode_alterar && p.pode_excluir) ? "Desmarcar Tudo" : "Selecionar Tudo"}
                         </Button>
                       </div>
-                      <table className="w-full table-auto">
+                      <table className="w-full table-auto min-w-[400px]">
                         <thead className="bg-muted/50">
                           <tr>
-                            <th className="px-4 py-2 text-left">Tela</th>
-                            <th className="px-4 py-2 text-center">Incluir</th>
-                            <th className="px-4 py-2 text-center">Alterar</th>
-                            <th className="px-4 py-2 text-center">Excluir</th>
+                            <th className="px-3 py-2 text-left text-sm">Tela</th>
+                            <th className="px-2 py-2 text-center text-sm">Incluir</th>
+                            <th className="px-2 py-2 text-center text-sm">Alterar</th>
+                            <th className="px-2 py-2 text-center text-sm">Excluir</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -281,7 +281,7 @@ const Permissoes = () => {
                             
                             return (
                               <tr key={screen.value} className="border-t hover:bg-muted/50">
-                                <td className="px-4 py-2">
+                                <td className="px-3 py-2">
                                   <div className="flex items-center gap-2">
                                     <Checkbox
                                       checked={allRowChecked}
@@ -295,12 +295,12 @@ const Permissoes = () => {
                                       }}
                                     />
                                     <div>
-                                      <p className="font-medium">{screen.name}</p>
-                                      <p className="text-xs text-muted-foreground">{screen.description}</p>
+                                      <p className="font-medium text-sm">{screen.name}</p>
+                                      <p className="text-xs text-muted-foreground hidden sm:block">{screen.description}</p>
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-4 py-2 text-center">
+                                <td className="px-2 py-2 text-center">
                                   <div className="flex justify-center">
                                     <Checkbox
                                       checked={permission.pode_incluir}
@@ -308,7 +308,7 @@ const Permissoes = () => {
                                     />
                                   </div>
                                 </td>
-                                <td className="px-4 py-2 text-center">
+                                <td className="px-2 py-2 text-center">
                                   <div className="flex justify-center">
                                     <Checkbox
                                       checked={permission.pode_alterar}
@@ -316,7 +316,7 @@ const Permissoes = () => {
                                     />
                                   </div>
                                 </td>
-                                <td className="px-4 py-2 text-center">
+                                <td className="px-2 py-2 text-center">
                                   <div className="flex justify-center">
                                     <Checkbox
                                       checked={permission.pode_excluir}

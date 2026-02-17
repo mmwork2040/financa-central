@@ -28,9 +28,9 @@ export const LancamentosHeader = () => {
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <h1 className="text-2xl font-bold">Lançamentos</h1>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground" title={visible ? "Ocultar valores" : "Exibir valores"}>
           {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </Button>
@@ -42,7 +42,8 @@ export const LancamentosHeader = () => {
         {canIncluir && (
           <Button onClick={() => handleOpenModal()}>
             <Plus className="mr-2 h-4 w-4" />
-            Novo Lançamento
+            <span className="hidden sm:inline">Novo Lançamento</span>
+            <span className="sm:hidden">Novo</span>
           </Button>
         )}
       </div>
