@@ -10,6 +10,7 @@ import { LancamentosFormDialog } from "@/components/lancamentos/LancamentosFormD
 import { LancamentosProvider, useLancamentosContext } from "@/contexts/LancamentosContext";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { formatCurrency, formatDate } from "@/utils/formatters";
+import { ValuesVisibilityProvider } from "@/contexts/ValuesVisibilityContext";
 
 const DashboardContent = () => {
   const { isAuthenticated, userProfile } = useAuth();
@@ -28,7 +29,6 @@ const DashboardContent = () => {
         icon={Plus}
       />
 
-      
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <p className="text-lg">Carregando dados...</p>
@@ -63,7 +63,9 @@ const DashboardContent = () => {
 const Dashboard = () => {
   return (
     <LancamentosProvider>
-      <DashboardContent />
+      <ValuesVisibilityProvider>
+        <DashboardContent />
+      </ValuesVisibilityProvider>
     </LancamentosProvider>
   );
 };
