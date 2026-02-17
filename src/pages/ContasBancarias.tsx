@@ -7,31 +7,22 @@ import ContaBancariaDeleteDialog from "@/components/contas-bancarias/ContaBancar
 import ContasBancariasSearch from "@/components/contas-bancarias/ContasBancariasSearch";
 import PageHeader from "@/components/common/PageHeader";
 import { useAuth } from "@/contexts/AuthContext";
+import { ValuesVisibilityProvider } from "@/contexts/ValuesVisibilityContext";
+import { Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 
-const ContasBancarias = () => {
+const ContasBancariasContent = () => {
   const { canPerformAction } = useAuth();
   const canIncluir = canPerformAction("contas_bancarias", "pode_incluir");
   const canAlterar = canPerformAction("contas_bancarias", "pode_alterar");
   const canExcluir = canPerformAction("contas_bancarias", "pode_excluir");
+  const { visible, toggle } = useValuesVisibility();
 
   const {
-    contasBancarias,
-    loading,
-    formData,
-    openModal,
-    openDeleteModal,
-    selectedId,
-    searchQuery,
-    handleInputChange,
-    handleOpenModal,
-    handleCloseModal,
-    handleOpenDeleteModal,
-    handleCloseDeleteModal,
-    handleSave,
-    handleDelete,
-    handleExportCSV,
-    handleExportPDF,
-    handleSearchChange,
+    contasBancarias, loading, formData, openModal, openDeleteModal, selectedId, searchQuery,
+    handleInputChange, handleOpenModal, handleCloseModal, handleOpenDeleteModal, handleCloseDeleteModal,
+    handleSave, handleDelete, handleExportCSV, handleExportPDF, handleSearchChange,
   } = useContasBancarias();
 
   return (
@@ -44,12 +35,18 @@ const ContasBancarias = () => {
         showButton={canIncluir}
       />
       
-      <ContasBancariasSearch
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        onExportCSV={handleExportCSV}
-        onExportPDF={handleExportPDF}
-      />
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <ContasBancariasSearch
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          onExportCSV={handleExportCSV}
+          onExportPDF={handleExportPDF}
+        />
+        <Button variant="ghost" size="sm" onClick={toggle} className="gap-2 text-muted-foreground">
+          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {visible ? "Ocultar" : "Exibir"}
+        </Button>
+      </div>
       
       {loading ? (
         <div className="flex h-40 items-center justify-center">
@@ -90,6 +87,14 @@ const ContasBancarias = () => {
         onDelete={handleDelete}
       />
     </div>
+  );
+};
+
+const ContasBancarias = () => {
+  return (
+    <ValuesVisibilityProvider>
+      <ContasBancariasContent />
+    </ValuesVisibilityProvider>
   );
 };
 

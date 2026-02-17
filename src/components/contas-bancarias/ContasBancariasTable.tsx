@@ -9,6 +9,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import MobilePagination, { usePagination } from "@/components/common/MobilePagination";
+import { useValuesVisibility, maskValue } from "@/contexts/ValuesVisibilityContext";
 
 export interface ContaBancaria {
   id: string;
@@ -35,7 +36,9 @@ const ContasBancariasTable: React.FC<ContasBancariasTableProps> = ({
 }) => {
   const showActions = canEdit || canDelete;
   const isMobile = useIsMobile();
+  const { visible } = useValuesVisibility();
   const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(contasBancarias);
+  const displayCurrency = (val: number) => visible ? formatCurrency(val) : "••••••";
 
   if (isMobile) {
     return (
@@ -54,12 +57,12 @@ const ContasBancariasTable: React.FC<ContasBancariasTableProps> = ({
                   <div className="flex gap-4 pt-1">
                     <div>
                       <p className="text-[10px] text-muted-foreground">Saldo Inicial</p>
-                      <p className="text-xs font-medium">{formatCurrency(conta.saldo_inicial || 0)}</p>
+                      <p className="text-xs font-medium">{displayCurrency(conta.saldo_inicial || 0)}</p>
                     </div>
                     <div>
                       <p className="text-[10px] text-muted-foreground">Saldo Atual</p>
                       <p className={`text-xs font-medium ${(conta.saldo_atual || 0) < 0 ? 'text-destructive' : 'text-primary'}`}>
-                        {formatCurrency(conta.saldo_atual || 0)}
+                        {displayCurrency(conta.saldo_atual || 0)}
                       </p>
                     </div>
                   </div>
@@ -108,9 +111,9 @@ const ContasBancariasTable: React.FC<ContasBancariasTableProps> = ({
               <TableCell>{conta.banco || '-'}</TableCell>
               <TableCell>{conta.agencia || '-'}</TableCell>
               <TableCell>{conta.conta || '-'}</TableCell>
-              <TableCell className="text-right">{formatCurrency(conta.saldo_inicial || 0)}</TableCell>
+              <TableCell className="text-right">{displayCurrency(conta.saldo_inicial || 0)}</TableCell>
               <TableCell className={`text-right font-medium ${(conta.saldo_atual || 0) < 0 ? 'text-destructive' : 'text-primary'}`}>
-                {formatCurrency(conta.saldo_atual || 0)}
+                {displayCurrency(conta.saldo_atual || 0)}
               </TableCell>
               {showActions && (
                 <TableCell>
