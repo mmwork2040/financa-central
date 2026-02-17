@@ -4,18 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2, UserPlus } from "lucide-react";
 
 const JoinCompanyCard = () => {
-  const { toast } = useToast();
   const { user } = useAuth();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleRedeem = async () => {
     if (!code.trim()) {
-      toast({ title: "Erro", description: "Insira o código de convite.", variant: "destructive" });
+      toast.error("Insira o código de convite.");
       return;
     }
 
@@ -24,19 +23,13 @@ const JoinCompanyCard = () => {
       const { data, error } = await supabase.functions.invoke("redeem-invite-code", {
         body: { code: code.trim() },
       });
-
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({
-        title: "Bem-vindo!",
-        description: `Você entrou na empresa "${data.empresaNome}". Recarregando...`,
-      });
-
-      // Reload to refresh auth context with new empresa
+      toast.success(`Você entrou na empresa "${data.empresaNome}". Recarregando...`);
       setTimeout(() => window.location.reload(), 1500);
     } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -28,7 +28,6 @@ export const useClientes = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
   const { empresaId } = useAuth();
 
   const fetchClientes = async () => {
@@ -39,17 +38,10 @@ export const useClientes = () => {
         .select('*')
         .order('nome');
 
-      if (error) {
-        throw error;
-      }
-
+      if (error) throw error;
       setClientes(data || []);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar clientes",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao carregar clientes");
     } finally {
       setLoading(false);
     }
@@ -61,14 +53,10 @@ export const useClientes = () => {
 
   const saveCliente = async (cliente: Cliente) => {
     setIsSaving(true);
-    
     try {
-      if (!cliente.nome) {
-        throw new Error("Nome do cliente é obrigatório");
-      }
+      if (!cliente.nome) throw new Error("Nome do cliente é obrigatório");
 
       if (cliente.id) {
-        // Update
         const { error } = await supabase
           .from('clientes')
           .update({
@@ -80,11 +68,9 @@ export const useClientes = () => {
             ativo: cliente.ativo,
           })
           .eq('id', cliente.id);
-
         if (error) throw error;
-        toast({ title: "Cliente atualizado com sucesso!" });
+        toast.success("Cliente atualizado com sucesso!");
       } else {
-        // Insert
         const { error } = await supabase
           .from('clientes')
           .insert({
@@ -96,19 +82,14 @@ export const useClientes = () => {
             ativo: cliente.ativo,
             empresa_id: empresaId,
           });
-
         if (error) throw error;
-        toast({ title: "Cliente cadastrado com sucesso!" });
+        toast.success("Cliente cadastrado com sucesso!");
       }
       
       await fetchClientes();
       return true;
     } catch (error: any) {
-      toast({
-        title: "Erro ao salvar cliente",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao salvar cliente");
       return false;
     } finally {
       setIsSaving(false);
@@ -121,18 +102,12 @@ export const useClientes = () => {
         .from('clientes')
         .delete()
         .eq('id', clienteId);
-
       if (error) throw error;
-      
-      toast({ title: "Cliente excluído com sucesso!" });
+      toast.success("Cliente excluído com sucesso!");
       await fetchClientes();
       return true;
     } catch (error: any) {
-      toast({
-        title: "Erro ao excluir cliente",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao excluir cliente");
       return false;
     }
   };

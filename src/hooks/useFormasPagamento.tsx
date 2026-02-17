@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -15,7 +14,6 @@ export const useFormasPagamento = () => {
   const [formasPagamento, setFormasPagamento] = useState<FormaPagamento[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const { toast: toastOld } = useToast();
   const { empresaId } = useAuth();
 
   const fetchFormasPagamento = async () => {
@@ -26,16 +24,10 @@ export const useFormasPagamento = () => {
         .select('*')
         .order('descricao');
 
-      if (error) {
-        throw error;
-      }
-
+      if (error) throw error;
       setFormasPagamento(data || []);
     } catch (error: any) {
-      toastOld({
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -52,45 +44,29 @@ export const useFormasPagamento = () => {
   const saveFormaPagamento = async (descricao: string, id?: string) => {
     try {
       if (!descricao) {
-        toastOld({
-          description: "Descrição é obrigatória",
-          variant: "destructive",
-        });
+        toast.error("Descrição é obrigatória");
         return false;
       }
 
       if (id) {
-        // Update
         const { error } = await supabase
           .from('formas_pagamento')
           .update({ descricao })
           .eq('id', id);
-
         if (error) throw error;
-
-        toastOld({
-          description: "Forma de pagamento atualizada com sucesso",
-        });
+        toast.success("Forma de pagamento atualizada com sucesso");
       } else {
-        // Insert
         const { error } = await supabase
           .from('formas_pagamento')
           .insert([{ descricao, empresa_id: empresaId }]);
-
         if (error) throw error;
-
-        toastOld({
-          description: "Forma de pagamento cadastrada com sucesso",
-        });
+        toast.success("Forma de pagamento cadastrada com sucesso");
       }
 
       await fetchFormasPagamento();
       return true;
     } catch (error: any) {
-      toastOld({
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
       return false;
     }
   };
@@ -101,27 +77,18 @@ export const useFormasPagamento = () => {
         .from('formas_pagamento')
         .delete()
         .eq('id', id);
-
       if (error) throw error;
-
-      toastOld({
-        description: "Forma de pagamento excluída com sucesso",
-      });
-
+      toast.success("Forma de pagamento excluída com sucesso");
       await fetchFormasPagamento();
       return true;
     } catch (error: any) {
-      toastOld({
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
       return false;
     }
   };
 
   const exportToCSV = () => {
     try {
-      // Preparar dados para CSV
       const headers = "Descrição,Data de Criação,Última Atualização\n";
       let csvContent = "data:text/csv;charset=utf-8," + headers;
       
@@ -131,20 +98,16 @@ export const useFormasPagamento = () => {
           new Date(forma.created_at).toLocaleDateString(),
           new Date(forma.updated_at).toLocaleDateString()
         ].map(value => `"${value}"`).join(",");
-        
         csvContent += row + "\n";
       });
       
-      // Criar e simular clique no link de download
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
       link.setAttribute("download", `formas_pagamento_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
-      
       link.click();
       document.body.removeChild(link);
-      
       toast.success("Formas de pagamento exportadas com sucesso");
     } catch (error: any) {
       toast.error(`Erro ao exportar: ${error.message}`);
@@ -153,14 +116,9 @@ export const useFormasPagamento = () => {
 
   const exportToPDF = () => {
     try {
-      // Abrir nova janela para o PDF
       const printWindow = window.open('', '_blank');
+      if (!printWindow) throw new Error("Não foi possível abrir uma nova janela para o PDF.");
       
-      if (!printWindow) {
-        throw new Error("Não foi possível abrir uma nova janela para o PDF.");
-      }
-      
-      // Estilo para o PDF
       const style = `
         <style>
           body { font-family: Arial, sans-serif; margin: 20px; }
@@ -172,9 +130,7 @@ export const useFormasPagamento = () => {
         </style>
       `;
       
-      // Gerar conteúdo da tabela
       let tableRows = "";
-      
       filteredFormasPagamento.forEach(forma => {
         tableRows += `
           <tr>
@@ -185,7 +141,6 @@ export const useFormasPagamento = () => {
         `;
       });
       
-      // Construir documento HTML para impressão/PDF
       const html = `
         <!DOCTYPE html>
         <html>
@@ -196,7 +151,6 @@ export const useFormasPagamento = () => {
         <body>
           <h1>Relatório de Formas de Pagamento</h1>
           <p>Data de geração: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-          
           <table>
             <thead>
               <tr>
@@ -205,11 +159,8 @@ export const useFormasPagamento = () => {
                 <th>Última Atualização</th>
               </tr>
             </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
+            <tbody>${tableRows}</tbody>
           </table>
-          
           <div class="footer">
             <p>Sistema Financeiro - Relatório gerado automaticamente</p>
           </div>
@@ -220,12 +171,7 @@ export const useFormasPagamento = () => {
       printWindow.document.open();
       printWindow.document.write(html);
       printWindow.document.close();
-      
-      // Dar tempo para os estilos carregarem antes de imprimir
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
-      
+      setTimeout(() => { printWindow.print(); }, 500);
       toast.success("Visualização PDF gerada com sucesso");
     } catch (error: any) {
       toast.error(`Erro ao gerar PDF: ${error.message}`);
@@ -233,11 +179,8 @@ export const useFormasPagamento = () => {
   };
 
   const exportData = (format: 'csv' | 'pdf') => {
-    if (format === 'csv') {
-      exportToCSV();
-    } else {
-      exportToPDF();
-    }
+    if (format === 'csv') exportToCSV();
+    else exportToPDF();
   };
 
   useEffect(() => {

@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
 import { Separator } from "@/components/ui/separator";
@@ -17,19 +17,13 @@ export const LoginForm = ({ onLogin, isLoading }: LoginFormProps) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      toast({
-        title: "Erro",
-        description: "Preencha todos os campos obrigatórios.",
-        variant: "destructive",
-      });
+      toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
-
     try {
       await onLogin(email, password);
     } catch (error) {
@@ -44,18 +38,10 @@ export const LoginForm = ({ onLogin, isLoading }: LoginFormProps) => {
         redirect_uri: window.location.origin,
       });
       if (error) {
-        toast({
-          title: "Erro ao entrar com Google",
-          description: error.message || "Tente novamente.",
-          variant: "destructive",
-        });
+        toast.error(error.message || "Erro ao entrar com Google");
       }
     } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || "Não foi possível conectar ao Google.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Não foi possível conectar ao Google.");
     } finally {
       setGoogleLoading(false);
     }

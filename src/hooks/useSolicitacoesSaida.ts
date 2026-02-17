@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export interface SolicitacaoSaida {
   id: string;
@@ -20,12 +20,10 @@ export interface SolicitacaoSaida {
   empresa_nome?: string;
 }
 
-// Helper to query the solicitacoes_saida table (not in generated types)
 const queryTable = () => (supabase as any).from("solicitacoes_saida");
 
 export const useSolicitacoesSaida = () => {
   const { user, empresaId, isSuperAdmin, userRole } = useAuth();
-  const { toast } = useToast();
   const [myRequests, setMyRequests] = useState<SolicitacaoSaida[]>([]);
   const [pendingRequests, setPendingRequests] = useState<SolicitacaoSaida[]>([]);
   const [loading, setLoading] = useState(false);
@@ -98,11 +96,8 @@ export const useSolicitacoesSaida = () => {
     if (user) fetchAll();
   }, [user, empresaId]);
 
-  // Listen for cross-instance sync events
   useEffect(() => {
-    const handler = () => {
-      if (user) fetchAll();
-    };
+    const handler = () => { if (user) fetchAll(); };
     window.addEventListener("exit-requests-changed", handler);
     return () => window.removeEventListener("exit-requests-changed", handler);
   }, [user, fetchAll]);
@@ -115,13 +110,12 @@ export const useSolicitacoesSaida = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      toast({ title: "Solicitação enviada", description: "Seu pedido de saída foi enviado aos administradores." });
+      toast.success("Seu pedido de saída foi enviado aos administradores.");
       await fetchAll();
       window.dispatchEvent(new Event("exit-requests-changed"));
       return true;
     } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      toast.error(error.message);
       return false;
     } finally {
       setActionLoading(false);
@@ -136,13 +130,12 @@ export const useSolicitacoesSaida = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      toast({ title: "Solicitação cancelada" });
+      toast.success("Solicitação cancelada");
       await fetchAll();
       window.dispatchEvent(new Event("exit-requests-changed"));
       return true;
     } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      toast.error(error.message);
       return false;
     } finally {
       setActionLoading(false);
@@ -157,13 +150,12 @@ export const useSolicitacoesSaida = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      toast({ title: "Solicitação aprovada", description: "O usuário foi removido da empresa." });
+      toast.success("O usuário foi removido da empresa.");
       await fetchAll();
       window.dispatchEvent(new Event("exit-requests-changed"));
       return true;
     } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      toast.error(error.message);
       return false;
     } finally {
       setActionLoading(false);
@@ -178,13 +170,12 @@ export const useSolicitacoesSaida = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      toast({ title: "Solicitação rejeitada" });
+      toast.success("Solicitação rejeitada");
       await fetchAll();
       window.dispatchEvent(new Event("exit-requests-changed"));
       return true;
     } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      toast.error(error.message);
       return false;
     } finally {
       setActionLoading(false);

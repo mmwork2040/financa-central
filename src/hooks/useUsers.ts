@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { User, FormData } from "@/types/user.types";
 import { fetchUsersData, updateUser, createUser, deleteUserAccount, revokeUserAccess } from "@/services/userService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +12,6 @@ export const useUsers = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
-  const { toast } = useToast();
   const { user: authUser, empresaId, isSuperAdmin } = useAuth();
 
   const fetchUsers = async () => {
@@ -21,20 +20,14 @@ export const useUsers = () => {
       const data = await fetchUsersData(isSuperAdmin);
       setUsers(data);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar usuários",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao carregar usuários");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (authUser) {
-      fetchUsers();
-    }
+    if (authUser) fetchUsers();
   }, [authUser, empresaId, isSuperAdmin]);
 
   const saveUser = async (formData: FormData, selectedId: string | null) => {
@@ -42,41 +35,23 @@ export const useUsers = () => {
       setSaving(true);
       
       if (!formData.nome || !formData.email || (!selectedId && !formData.senha)) {
-        toast({
-          title: "Erro",
-          description: "Preencha todos os campos obrigatórios",
-          variant: "destructive",
-        });
+        toast.error("Preencha todos os campos obrigatórios");
         return false;
       }
 
       if (selectedId) {
-        // Update existing user
         await updateUser(selectedId, {
           nome: formData.nome,
           permissao: formData.permissao,
         });
-
-        toast({
-          title: "Sucesso",
-          description: "Usuário atualizado com sucesso",
-        });
+        toast.success("Usuário atualizado com sucesso");
       } else {
-        // Create new user
         try {
           await createUser(formData, empresaId);
-          toast({
-            title: "Sucesso",
-            description: "Usuário cadastrado com sucesso. Ele receberá um email de confirmação.",
-          });
+          toast.success("Usuário cadastrado com sucesso. Ele receberá um email de confirmação.");
         } catch (error: any) {
           console.error("Error creating user:", error);
-          const errorMessage = error.message || "Ocorreu um erro ao criar o usuário";
-          toast({
-            title: "Erro ao criar usuário",
-            description: errorMessage,
-            variant: "destructive",
-          });
+          toast.error(error.message || "Ocorreu um erro ao criar o usuário");
           return false;
         }
       }
@@ -85,12 +60,7 @@ export const useUsers = () => {
       return true;
     } catch (error: any) {
       console.error("Error saving user:", error);
-      const errorMessage = error.message || "Ocorreu um erro ao salvar o usuário";
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Ocorreu um erro ao salvar o usuário");
       return false;
     } finally {
       setSaving(false);
@@ -100,22 +70,12 @@ export const useUsers = () => {
   const deleteUser = async (userId: string) => {
     try {
       setDeleting(true);
-      
       await deleteUserAccount(userId);
-
-      toast({
-        title: "Sucesso",
-        description: "Usuário excluído com sucesso",
-      });
-      
+      toast.success("Usuário excluído com sucesso");
       await fetchUsers();
       return true;
     } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao excluir usuário");
       return false;
     } finally {
       setDeleting(false);
@@ -125,22 +85,12 @@ export const useUsers = () => {
   const revokeUser = async (userId: string, targetEmpresaId: string) => {
     try {
       setDeleting(true);
-      
       await revokeUserAccess(userId, targetEmpresaId);
-
-      toast({
-        title: "Acesso revogado",
-        description: "O usuário perdeu acesso a esta empresa.",
-      });
-      
+      toast.success("O usuário perdeu acesso a esta empresa.");
       await fetchUsers();
       return true;
     } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao revogar acesso");
       return false;
     } finally {
       setDeleting(false);

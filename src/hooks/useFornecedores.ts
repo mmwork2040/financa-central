@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { Fornecedor, initialFornecedor } from "@/types/fornecedor.types";
 import { fetchFornecedores, saveFornecedor, deleteFornecedor } from "@/services/fornecedorService";
-import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { useFormatInput } from "@/hooks/use-format-input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,10 +14,8 @@ export const useFornecedores = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { toast: toastOld } = useToast();
   const { empresaId } = useAuth();
   
-  // Hooks para formatação dos inputs
   const cpfCnpjInput = useFormatInput(currentFornecedor.cpf_cnpj || "", "document");
   const telefoneInput = useFormatInput(currentFornecedor.telefone || "", "phone");
 
@@ -28,10 +25,7 @@ export const useFornecedores = () => {
       const data = await fetchFornecedores();
       setFornecedores(data);
     } catch (error: any) {
-      toastOld({
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -67,17 +61,11 @@ export const useFornecedores = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setCurrentFornecedor(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setCurrentFornecedor(prev => ({ ...prev, [name]: value }));
   };
 
   const handleCheckboxChange = (checked: boolean) => {
-    setCurrentFornecedor(prev => ({
-      ...prev,
-      ativo: checked
-    }));
+    setCurrentFornecedor(prev => ({ ...prev, ativo: checked }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,7 +73,6 @@ export const useFornecedores = () => {
     setIsSaving(true);
     
     try {
-      // Atualizar dados com os valores formatados
       const fornecedorData = {
         ...currentFornecedor,
         cpf_cnpj: cpfCnpjInput.getRawValue() ? cpfCnpjInput.displayValue : null,
@@ -93,14 +80,11 @@ export const useFornecedores = () => {
       };
       
       const result = await saveFornecedor(fornecedorData, empresaId);
-      toastOld({ description: result.message });
+      toast.success(result.message);
       setIsModalOpen(false);
       loadFornecedores();
     } catch (error: any) {
-      toastOld({
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     } finally {
       setIsSaving(false);
     }
@@ -109,20 +93,16 @@ export const useFornecedores = () => {
   const handleDelete = async () => {
     try {
       const result = await deleteFornecedor(currentFornecedor.id);
-      toastOld({ description: result.message });
+      toast.success(result.message);
       setIsDeleteDialogOpen(false);
       loadFornecedores();
     } catch (error: any) {
-      toastOld({
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     }
   };
 
   const handleExportCSV = () => {
     try {
-      // Preparar dados para CSV
       const headers = "Nome,CPF/CNPJ,Email,Telefone,Endereço,Status\n";
       let csvContent = "data:text/csv;charset=utf-8," + headers;
       
@@ -136,20 +116,16 @@ export const useFornecedores = () => {
           fornecedor.endereco || "",
           status
         ].map(value => `"${value}"`).join(",");
-        
         csvContent += row + "\n";
       });
       
-      // Criar e simular clique no link de download
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
       link.setAttribute("download", `fornecedores_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
-      
       link.click();
       document.body.removeChild(link);
-      
       toast.success("Fornecedores exportados com sucesso");
     } catch (error: any) {
       toast.error(`Erro ao exportar: ${error.message}`);
@@ -158,14 +134,9 @@ export const useFornecedores = () => {
 
   const handleExportPDF = () => {
     try {
-      // Abrir nova janela para o PDF
       const printWindow = window.open('', '_blank');
+      if (!printWindow) throw new Error("Não foi possível abrir uma nova janela para o PDF.");
       
-      if (!printWindow) {
-        throw new Error("Não foi possível abrir uma nova janela para o PDF.");
-      }
-      
-      // Estilo para o PDF
       const style = `
         <style>
           body { font-family: Arial, sans-serif; margin: 20px; }
@@ -179,14 +150,11 @@ export const useFornecedores = () => {
         </style>
       `;
       
-      // Gerar conteúdo da tabela
       let tableRows = "";
-      
       filteredFornecedores.forEach(fornecedor => {
         const status = fornecedor.ativo ? 
           '<span class="ativo">Ativo</span>' : 
           '<span class="inativo">Inativo</span>';
-        
         tableRows += `
           <tr>
             <td>${fornecedor.nome || ""}</td>
@@ -199,7 +167,6 @@ export const useFornecedores = () => {
         `;
       });
       
-      // Construir documento HTML para impressão/PDF
       const html = `
         <!DOCTYPE html>
         <html>
@@ -210,7 +177,6 @@ export const useFornecedores = () => {
         <body>
           <h1>Relatório de Fornecedores</h1>
           <p>Data de geração: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-          
           <table>
             <thead>
               <tr>
@@ -222,11 +188,8 @@ export const useFornecedores = () => {
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
+            <tbody>${tableRows}</tbody>
           </table>
-          
           <div class="footer">
             <p>Sistema Financeiro - Relatório gerado automaticamente</p>
           </div>
@@ -237,12 +200,7 @@ export const useFornecedores = () => {
       printWindow.document.open();
       printWindow.document.write(html);
       printWindow.document.close();
-      
-      // Dar tempo para os estilos carregarem antes de imprimir
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
-      
+      setTimeout(() => { printWindow.print(); }, 500);
       toast.success("Visualização PDF gerada com sucesso");
     } catch (error: any) {
       toast.error(`Erro ao gerar PDF: ${error.message}`);

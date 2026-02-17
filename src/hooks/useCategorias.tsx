@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface Categoria {
@@ -22,7 +22,6 @@ export function useCategorias() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
   const { empresaId } = useAuth();
 
   useEffect(() => {
@@ -46,7 +45,7 @@ export function useCategorias() {
 
       setCategorias(validatedCategorias);
     } catch (error: any) {
-      toast({ title: "Erro ao carregar categorias", description: error.message, variant: "destructive" });
+      toast.error(error.message || "Erro ao carregar categorias");
     } finally {
       setLoading(false);
     }
@@ -88,19 +87,19 @@ export function useCategorias() {
           .update({ nome: currentCategoria.nome, tipo: currentCategoria.tipo })
           .eq('id', currentCategoria.id);
         if (error) throw error;
-        toast({ title: "Categoria atualizada com sucesso!" });
+        toast.success("Categoria atualizada com sucesso!");
       } else {
         const { error } = await supabase
           .from('categorias')
           .insert({ nome: currentCategoria.nome, tipo: currentCategoria.tipo, empresa_id: empresaId });
         if (error) throw error;
-        toast({ title: "Categoria cadastrada com sucesso!" });
+        toast.success("Categoria cadastrada com sucesso!");
       }
       
       setIsModalOpen(false);
       fetchCategorias();
     } catch (error: any) {
-      toast({ title: "Erro ao salvar categoria", description: error.message, variant: "destructive" });
+      toast.error(error.message || "Erro ao salvar categoria");
     } finally {
       setIsSaving(false);
     }
@@ -110,11 +109,11 @@ export function useCategorias() {
     try {
       const { error } = await supabase.from('categorias').delete().eq('id', currentCategoria.id);
       if (error) throw error;
-      toast({ title: "Categoria excluída com sucesso!" });
+      toast.success("Categoria excluída com sucesso!");
       setIsDeleteDialogOpen(false);
       fetchCategorias();
     } catch (error: any) {
-      toast({ title: "Erro ao excluir categoria", description: error.message, variant: "destructive" });
+      toast.error(error.message || "Erro ao excluir categoria");
     }
   };
 
