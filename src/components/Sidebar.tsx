@@ -45,7 +45,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Sidebar = () => {
@@ -53,7 +53,7 @@ export const Sidebar = () => {
   const location = useLocation();
   const { userProfile, logout, isSuperAdmin, isPessoal, empresaId, empresas, switchEmpresa, canAccessRoute } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [joiningLoading, setJoiningLoading] = useState(false);
@@ -123,15 +123,12 @@ export const Sidebar = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({
-        title: "Bem-vindo!",
-        description: `Você entrou na empresa "${data.empresaNome}".`,
-      });
+      toast.success(`Bem-vindo! Você entrou na empresa "${data.empresaNome}".`);
       setJoinDialogOpen(false);
       setInviteCode("");
       setTimeout(() => window.location.reload(), 1000);
     } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      toast.error(error.message || "Erro ao entrar na empresa");
     } finally {
       setJoiningLoading(false);
     }

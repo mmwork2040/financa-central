@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 type User = {
   id: string;
@@ -59,7 +59,7 @@ const Permissoes = () => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const { toast } = useToast();
+  
 
   useEffect(() => {
     fetchUsers();
@@ -87,11 +87,7 @@ const Permissoes = () => {
 
       setUsers(data || []);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar usuários",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao carregar usuários");
     } finally {
       setLoading(false);
     }
@@ -128,11 +124,7 @@ const Permissoes = () => {
       
       setPermissions(allPermissions);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar permissões",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao carregar permissões");
     } finally {
       setLoading(false);
     }
@@ -180,19 +172,12 @@ const Permissoes = () => {
         }
       }
       
-      toast({
-        title: "Permissões salvas",
-        description: "As permissões foram atualizadas com sucesso.",
-      });
+      toast.success("Permissões atualizadas com sucesso.");
       
       // Recarregar permissões
       fetchPermissions(selectedUser);
     } catch (error: any) {
-      toast({
-        title: "Erro ao salvar permissões",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Erro ao salvar permissões");
     } finally {
       setIsSaving(false);
     }

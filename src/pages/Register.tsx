@@ -4,12 +4,11 @@ import AuthContainer from "@/components/auth/AuthContainer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const Register = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     nome: "",
@@ -24,17 +23,17 @@ const Register = () => {
     e.preventDefault();
 
     if (!form.nome || !form.email || !form.password) {
-      toast({ title: "Erro", description: "Preencha todos os campos obrigatórios.", variant: "destructive" });
+      toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
 
     if (form.password !== form.confirmPassword) {
-      toast({ title: "Erro", description: "As senhas não coincidem.", variant: "destructive" });
+      toast.error("As senhas não coincidem.");
       return;
     }
 
     if (form.password.length < 6) {
-      toast({ title: "Erro", description: "A senha deve ter no mínimo 6 caracteres.", variant: "destructive" });
+      toast.error("A senha deve ter no mínimo 6 caracteres.");
       return;
     }
 
@@ -52,18 +51,11 @@ const Register = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Faça login para acessar o sistema.",
-      });
+      toast.success("Conta criada com sucesso! Faça login para acessar o sistema.");
 
       navigate("/login");
     } catch (error: any) {
-      toast({
-        title: "Erro ao criar conta",
-        description: error.message || "Ocorreu um erro inesperado.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Ocorreu um erro inesperado.");
     } finally {
       setLoading(false);
     }
