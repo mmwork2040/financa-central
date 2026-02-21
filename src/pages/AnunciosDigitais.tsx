@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { Megaphone, TrendingUp, DollarSign, MousePointer, Target, RefreshCw, AlertTriangle } from "lucide-react";
+import { Megaphone, TrendingUp, DollarSign, MousePointer, Target, RefreshCw, AlertTriangle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,12 +31,15 @@ interface AdData {
   campanhas: CampaignData[];
 }
 
+const MASK = "••••••";
+
 const AnunciosDigitais = () => {
   const [periodo, setPeriodo] = useState("30");
   const [adSummary, setAdSummary] = useState<AdData[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [hasIntegrations, setHasIntegrations] = useState(false);
+  const [valoresVisiveis, setValoresVisiveis] = useState(false);
   const { empresaId } = useAuth();
 
   useEffect(() => {
@@ -48,7 +50,6 @@ const AnunciosDigitais = () => {
     if (!empresaId) return;
     setLoading(true);
     try {
-      // Check if there are active ad integrations
       const { data: integracoes } = await supabase
         .from("integracoes")
         .select("plataforma, ativo")
@@ -64,7 +65,6 @@ const AnunciosDigitais = () => {
         return;
       }
 
-      // Call the edge function to get real data
       const { data, error } = await supabase.functions.invoke("sync-ads-data", {
         body: { empresa_id: empresaId, periodo: parseInt(periodo) },
       });
@@ -91,6 +91,9 @@ const AnunciosDigitais = () => {
     toast.success("Dados sincronizados!");
   };
 
+  const displayValue = (value: string | number) => valoresVisiveis ? String(value) : MASK;
+  const displayCurrency = (value: number) => valoresVisiveis ? formatCurrency(value) : MASK;
+
   const totalGasto = adSummary.reduce((s, a) => s + a.totalGasto, 0);
   const totalReceita = adSummary.reduce((s, a) => s + a.totalReceita, 0);
   const roasGeral = totalGasto > 0 ? totalReceita / totalGasto : 0;
@@ -112,6 +115,14 @@ const AnunciosDigitais = () => {
           <p className="text-sm text-muted-foreground">Acompanhe o desempenho dos seus anúncios</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setValoresVisiveis(v => !v)}
+            title={valoresVisiveis ? "Ocultar valores" : "Exibir valores"}
+          >
+            {valoresVisiveis ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -135,8 +146,9 @@ const AnunciosDigitais = () => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <p className="text-muted-foreground">Carregando dados reais...</p>
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Carregando dados...</p>
         </div>
       ) : !hasIntegrations ? (
         <Card className="border-dashed">
@@ -155,10 +167,10 @@ const AnunciosDigitais = () => {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="rounded-full bg-red-100 p-1.5"><DollarSign className="h-4 w-4 text-red-600" /></div>
+                  <div className="rounded-full bg-destructive/10 p-1.5"><DollarSign className="h-4 w-4 text-destructive" /></div>
                   <span className="text-xs text-muted-foreground">Investido</span>
                 </div>
-                <p className="text-lg font-bold text-red-600">{formatCurrency(totalGasto)}</p>
+                <p className="text-lg font-bold text-destructive">{displayCurrency(totalGasto)}</p>
               </CardContent>
             </Card>
             <Card>
@@ -167,7 +179,7 @@ const AnunciosDigitais = () => {
                   <div className="rounded-full bg-green-100 p-1.5"><TrendingUp className="h-4 w-4 text-green-600" /></div>
                   <span className="text-xs text-muted-foreground">Receita gerada</span>
                 </div>
-                <p className="text-lg font-bold text-green-600">{formatCurrency(totalReceita)}</p>
+                <p className="text-lg font-bold text-green-600">{displayCurrency(totalReceita)}</p>
               </CardContent>
             </Card>
             <Card>
@@ -176,8 +188,8 @@ const AnunciosDigitais = () => {
                   <div className="rounded-full bg-blue-100 p-1.5"><Target className="h-4 w-4 text-blue-600" /></div>
                   <span className="text-xs text-muted-foreground">ROAS</span>
                 </div>
-                <p className={cn("text-lg font-bold", roasGeral >= 2 ? "text-green-600" : roasGeral >= 1 ? "text-amber-600" : "text-red-600")}>
-                  {roasGeral.toFixed(1)}x
+                <p className={cn("text-lg font-bold", roasGeral >= 2 ? "text-green-600" : roasGeral >= 1 ? "text-amber-600" : "text-destructive")}>
+                  {valoresVisiveis ? `${roasGeral.toFixed(1)}x` : MASK}
                 </p>
               </CardContent>
             </Card>
@@ -187,13 +199,15 @@ const AnunciosDigitais = () => {
                   <div className="rounded-full bg-purple-100 p-1.5"><MousePointer className="h-4 w-4 text-purple-600" /></div>
                   <span className="text-xs text-muted-foreground">Conversões</span>
                 </div>
-                <p className="text-lg font-bold">{adSummary.reduce((s, a) => s + a.totalConversoes, 0)}</p>
+                <p className="text-lg font-bold">
+                  {valoresVisiveis ? adSummary.reduce((s, a) => s + a.totalConversoes, 0) : MASK}
+                </p>
               </CardContent>
             </Card>
           </div>
 
           {/* Chart */}
-          {chartData.length > 0 && (totalGasto > 0 || totalReceita > 0) && (
+          {chartData.length > 0 && (totalGasto > 0 || totalReceita > 0) && valoresVisiveis && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">Investido vs Receita por Plataforma</CardTitle>
@@ -214,7 +228,7 @@ const AnunciosDigitais = () => {
             </Card>
           )}
 
-          {/* Platform Details with Campaigns */}
+          {/* Platform Details */}
           <div className="grid gap-4 sm:grid-cols-2">
             {adSummary.map(ad => (
               <Card key={ad.plataforma}>
@@ -222,30 +236,29 @@ const AnunciosDigitais = () => {
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold">{ad.plataforma}</h3>
                     <Badge className={cn("text-[10px]", ad.roas >= 2 ? "bg-green-100 text-green-700" : ad.roas >= 1 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700")}>
-                      ROAS {ad.roas.toFixed(1)}x
+                      ROAS {valoresVisiveis ? `${ad.roas.toFixed(1)}x` : MASK}
                     </Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-y-2 text-sm">
                     <div>
                       <p className="text-xs text-muted-foreground">Investido</p>
-                      <p className="font-medium text-red-600">{formatCurrency(ad.totalGasto)}</p>
+                      <p className="font-medium text-destructive">{displayCurrency(ad.totalGasto)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Receita</p>
-                      <p className="font-medium text-green-600">{formatCurrency(ad.totalReceita)}</p>
+                      <p className="font-medium text-green-600">{displayCurrency(ad.totalReceita)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Cliques</p>
-                      <p className="font-medium">{ad.totalCliques.toLocaleString()}</p>
+                      <p className="font-medium">{valoresVisiveis ? ad.totalCliques.toLocaleString() : MASK}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Impressões</p>
-                      <p className="font-medium">{ad.totalImpressoes.toLocaleString()}</p>
+                      <p className="font-medium">{valoresVisiveis ? ad.totalImpressoes.toLocaleString() : MASK}</p>
                     </div>
                   </div>
 
-                  {/* Campaign breakdown */}
-                  {ad.campanhas && ad.campanhas.length > 0 && (
+                  {ad.campanhas && ad.campanhas.length > 0 && valoresVisiveis && (
                     <div className="mt-3 pt-3 border-t">
                       <p className="text-xs font-semibold mb-2">Campanhas ({ad.campanhas.length})</p>
                       <div className="space-y-2 max-h-40 overflow-y-auto">
