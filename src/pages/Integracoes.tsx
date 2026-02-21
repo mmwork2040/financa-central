@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Plug, Loader2 } from "lucide-react";
+import { Plug, Loader2, ExternalLink, BookOpen } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,14 +13,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 const PLATAFORMAS = [
-  { id: "hotmart", name: "Hotmart", description: "Plataforma de produtos digitais" },
-  { id: "eduzz", name: "Eduzz", description: "Venda de infoprodutos" },
-  { id: "monetizze", name: "Monetizze", description: "Afiliados e produtos digitais" },
-  { id: "stripe", name: "Stripe", description: "Pagamentos internacionais" },
-  { id: "paypal", name: "PayPal", description: "Pagamentos globais" },
-  { id: "asaas", name: "Asaas", description: "Cobranças e pagamentos" },
-  { id: "meta_ads", name: "Meta Ads", description: "Facebook & Instagram Ads" },
-  { id: "google_ads", name: "Google Ads", description: "Anúncios no Google" },
+  { id: "hotmart", name: "Hotmart", description: "Plataforma de produtos digitais", site: "https://app.hotmart.com/tools/credentials", doc: "https://developers.hotmart.com/docs/pt-BR/" },
+  { id: "eduzz", name: "Eduzz", description: "Venda de infoprodutos", site: "https://orbita.eduzz.com/producer/config-api", doc: "https://developer.eduzz.com/" },
+  { id: "monetizze", name: "Monetizze", description: "Afiliados e produtos digitais", site: "https://app.monetizze.com.br/developer/api", doc: "https://docs.monetizze.com.br/" },
+  { id: "stripe", name: "Stripe", description: "Pagamentos internacionais", site: "https://dashboard.stripe.com/apikeys", doc: "https://docs.stripe.com/api" },
+  { id: "paypal", name: "PayPal", description: "Pagamentos globais", site: "https://developer.paypal.com/dashboard/applications", doc: "https://developer.paypal.com/docs/api/overview/" },
+  { id: "asaas", name: "Asaas", description: "Cobranças e pagamentos", site: "https://www.asaas.com/config/api", doc: "https://docs.asaas.com/" },
+  { id: "meta_ads", name: "Meta Ads", description: "Facebook & Instagram Ads", site: "https://business.facebook.com/settings", doc: "https://developers.facebook.com/docs/marketing-apis/" },
+  { id: "google_ads", name: "Google Ads", description: "Anúncios no Google", site: "https://console.cloud.google.com/apis/credentials", doc: "https://developers.google.com/google-ads/api/docs/start" },
 ];
 
 const Integracoes = () => {
@@ -124,6 +124,16 @@ const Integracoes = () => {
                       {status === 'disconnected' && <Badge className="bg-red-100 text-red-700 text-[10px]">🔴 Desconectado</Badge>}
                     </div>
                     <p className="text-xs text-muted-foreground">{plat.description}</p>
+                    <div className="flex gap-2 mt-1">
+                      <a href={plat.site} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline">
+                        <ExternalLink className="h-3 w-3" /> Acessar painel
+                      </a>
+                      {plat.doc && (
+                        <a href={plat.doc} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary hover:underline">
+                          <BookOpen className="h-3 w-3" /> Documentação
+                        </a>
+                      )}
+                    </div>
                   </div>
                   <div className="shrink-0 ml-3">
                     {status === 'connected' ? (
@@ -148,6 +158,21 @@ const Integracoes = () => {
           <DialogHeader>
             <DialogTitle>Conectar {PLATAFORMAS.find(p => p.id === connectDialog)?.name}</DialogTitle>
             <DialogDescription>Insira suas credenciais da API para conectar a plataforma.</DialogDescription>
+            {connectDialog && (() => {
+              const plat = PLATAFORMAS.find(p => p.id === connectDialog);
+              return plat ? (
+                <div className="flex gap-3 pt-1">
+                  <a href={plat.site} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                    <ExternalLink className="h-3 w-3" /> Obter credenciais
+                  </a>
+                  {plat.doc && (
+                    <a href={plat.doc} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary hover:underline">
+                      <BookOpen className="h-3 w-3" /> Ver documentação
+                    </a>
+                  )}
+                </div>
+              ) : null;
+            })()}
           </DialogHeader>
           <div className="space-y-4">
             <div>
