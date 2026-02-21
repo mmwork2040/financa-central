@@ -186,7 +186,7 @@ export const Sidebar = () => {
                   <ChevronsUpDown size={14} className="shrink-0 opacity-50" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuContent align="start" className="w-56 z-[60]">
                 {empresas.map(emp => (
                   <DropdownMenuItem
                     key={emp.empresa_id}
@@ -234,7 +234,7 @@ export const Sidebar = () => {
                   <Building2 size={18} />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuContent align="start" className="w-56 z-[60]">
                 {empresas.map(emp => (
                   <DropdownMenuItem
                     key={emp.empresa_id}
