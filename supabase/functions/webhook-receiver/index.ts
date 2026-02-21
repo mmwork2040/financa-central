@@ -2,29 +2,138 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PLATFORM_EVENTS: Record<string, string[]> = {
-  hotmart: ["purchase_approved", "purchase_refunded", "purchase_canceled", "purchase_delayed", "purchase_expired", "subscription_cancellation"],
-  eduzz: ["sale_approved", "sale_refunded", "sale_canceled", "sale_waiting_payment"],
-  monetizze: ["sale_completed", "sale_refunded", "sale_canceled", "sale_awaiting"],
-  stripe: ["payment_intent.succeeded", "payment_intent.payment_failed", "charge.refunded", "invoice.paid", "invoice.payment_failed"],
-  paypal: ["PAYMENT.CAPTURE.COMPLETED", "PAYMENT.CAPTURE.REFUNDED", "PAYMENT.CAPTURE.DENIED"],
-  asaas: ["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED", "PAYMENT_REFUNDED", "PAYMENT_OVERDUE"],
-  meta_ads: ["ad_spend_update", "campaign_status_change"],
-  google_ads: ["ad_spend_update", "campaign_status_change"],
-};
+interface SaleData {
+  plataforma: string;
+  evento: string;
+  status: string;
+  valor_bruto: number;
+  taxa: number;
+  valor_liquido: number;
+  cliente: string | null;
+  produto: string | null;
+  data_venda: string;
+  data_prevista_recebimento: string | null;
+}
+
+// ─── Hotmart ───
+function parseHotmart(body: any): SaleData | null {
+  const purchase = body?.data?.purchase || body?.data || {};
+  const buyer = body?.data?.buyer || {};
+  const product = body?.data?.product || {};
+  const event = body?.event || body?.hottok ? "purchase_event" : "unknown";
+
+  const statusMap: Record<string, string> = {
+    approved: "aprovada",
+    completed: "aprovada",
+    refunded: "reembolsada",
+    canceled: "cancelada",
+    expired: "expirada",
+    delayed: "pendente",
+    waiting_payment: "pendente",
+    dispute: "disputa",
+    chargedback: "chargeback",
+  };
+
+  const rawStatus = purchase?.status?.toLowerCase?.() || 
+    purchase?.transaction?.status?.toLowerCase?.() || "approved";
+
+  return {
+    plataforma: "hotmart",
+    evento: event,
+    status: statusMap[rawStatus] || "pendente",
+    valor_bruto: Number(purchase?.price?.value || purchase?.original_offer_price?.value || purchase?.full_price?.value || 0) / 100 || Number(purchase?.price || 0),
+    taxa: Number(purchase?.commission?.value || purchase?.fee?.value || 0) / 100 || 0,
+    valor_liquido: Number(purchase?.price?.value || 0) / 100 - Number(purchase?.commission?.value || 0) / 100 || Number(purchase?.price || 0),
+    cliente: buyer?.name || buyer?.email || null,
+    produto: product?.name || null,
+    data_venda: purchase?.approved_date || purchase?.order_date || new Date().toISOString(),
+    data_prevista_recebimento: null,
+  };
+}
+
+// ─── Eduzz ───
+function parseEduzz(body: any): SaleData | null {
+  const statusMap: Record<string, string> = {
+    "1": "pendente",
+    "3": "aprovada",
+    "4": "cancelada",
+    "6": "reembolsada",
+    "7": "pendente",
+    open: "pendente",
+    paid: "aprovada",
+    canceled: "cancelada",
+    refunded: "reembolsada",
+    waiting_payment: "pendente",
+  };
+
+  const rawStatus = String(body?.trans_status || body?.sale_status || body?.status || "3");
+  const valorBruto = Number(body?.trans_value || body?.sale_amount_win || body?.amount || 0);
+  const taxa = Number(body?.trans_fee || body?.fee || 0);
+
+  return {
+    plataforma: "eduzz",
+    evento: body?.event_type || body?.trans_nature || "sale",
+    status: statusMap[rawStatus.toLowerCase()] || statusMap[rawStatus] || "pendente",
+    valor_bruto: valorBruto,
+    taxa,
+    valor_liquido: valorBruto - taxa,
+    cliente: body?.cus_name || body?.client_name || body?.cus_email || null,
+    produto: body?.product_name || body?.pro_name || null,
+    data_venda: body?.trans_createdate || body?.sale_date || new Date().toISOString(),
+    data_prevista_recebimento: body?.trans_duedate || null,
+  };
+}
+
+// ─── Monetizze ───
+function parseMonetizze(body: any): SaleData | null {
+  const evento = body?.evento || body?.venda || {};
+  const produto = body?.produto || evento?.produto || {};
+  const comprador = body?.comprador || evento?.comprador || {};
+
+  const statusMap: Record<string, string> = {
+    "1": "pendente",
+    "2": "aprovada",
+    "3": "cancelada",
+    "5": "reembolsada",
+    "6": "pendente",
+    finalizada: "aprovada",
+    completa: "aprovada",
+    cancelada: "cancelada",
+    reembolsada: "reembolsada",
+    aguardando: "pendente",
+  };
+
+  const rawStatus = String(
+    evento?.tipo_evento || evento?.venda?.status || body?.status || "2"
+  );
+  const valorBruto = Number(evento?.venda?.valor || body?.valor || 0);
+  const taxa = Number(evento?.venda?.comissao || body?.comissao || 0);
+
+  return {
+    plataforma: "monetizze",
+    evento: evento?.tipo_evento || "sale",
+    status: statusMap[rawStatus.toLowerCase()] || statusMap[rawStatus] || "pendente",
+    valor_bruto: valorBruto,
+    taxa,
+    valor_liquido: valorBruto - taxa,
+    cliente: comprador?.nome || comprador?.email || null,
+    produto: produto?.nome || produto?.name || null,
+    data_venda: evento?.venda?.data || body?.data_venda || new Date().toISOString(),
+    data_prevista_recebimento: evento?.venda?.data_prevista || null,
+  };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
     const url = new URL(req.url);
     const pathParts = url.pathname.split("/").filter(Boolean);
-    // Expected path: /webhook-receiver/<platform>
     const platform = pathParts[pathParts.length - 1];
     const empresaId = url.searchParams.get("empresa_id");
 
@@ -46,7 +155,7 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Verify the integration exists and is active
+    // Verify integration exists and is active
     const { data: integration, error: integError } = await supabase
       .from("integracoes")
       .select("*")
@@ -62,45 +171,115 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Parse body
     let body: any = {};
     try {
-      body = await req.json();
+      const text = await req.text();
+      try {
+        body = JSON.parse(text);
+      } catch {
+        // Try URL-encoded (some platforms send form data)
+        const params = new URLSearchParams(text);
+        body = Object.fromEntries(params);
+      }
     } catch {
-      body = { raw: await req.text() };
+      body = {};
     }
 
-    // Detect event type based on platform
-    let evento = "unknown";
+    // Parse platform-specific data
+    let saleData: SaleData | null = null;
     if (platform === "hotmart") {
-      evento = body?.event || body?.data?.purchase?.status || "hotmart_webhook";
+      saleData = parseHotmart(body);
     } else if (platform === "eduzz") {
-      evento = body?.event_type || body?.trans_status || "eduzz_webhook";
+      saleData = parseEduzz(body);
     } else if (platform === "monetizze") {
-      evento = body?.evento?.tipo_evento || "monetizze_webhook";
-    } else if (platform === "stripe") {
-      evento = body?.type || "stripe_webhook";
-    } else if (platform === "paypal") {
-      evento = body?.event_type || "paypal_webhook";
-    } else if (platform === "asaas") {
-      evento = body?.event || "asaas_webhook";
-    } else {
-      evento = body?.event || body?.type || `${platform}_webhook`;
+      saleData = parseMonetizze(body);
+    }
+
+    let vendaId: string | null = null;
+    let lancamentoId: string | null = null;
+
+    if (saleData && saleData.valor_bruto > 0) {
+      // Insert venda_digital
+      const { data: venda, error: vendaError } = await supabase
+        .from("vendas_digitais")
+        .insert({
+          empresa_id: empresaId,
+          plataforma: saleData.plataforma,
+          data_venda: saleData.data_venda,
+          valor_bruto: saleData.valor_bruto,
+          taxa: saleData.taxa,
+          valor_liquido: saleData.valor_liquido,
+          cliente: saleData.cliente,
+          produto: saleData.produto,
+          status: saleData.status,
+          data_prevista_recebimento: saleData.data_prevista_recebimento,
+        })
+        .select("id")
+        .single();
+
+      if (vendaError) {
+        console.error("Erro ao inserir venda:", vendaError);
+      } else {
+        vendaId = venda.id;
+      }
+
+      // Create lancamento (receita) automatically if approved
+      if (saleData.status === "aprovada") {
+        const dataVenda = saleData.data_venda.split("T")[0] || new Date().toISOString().split("T")[0];
+        const { data: lancamento, error: lancError } = await supabase
+          .from("lancamentos")
+          .insert({
+            empresa_id: empresaId,
+            descricao: `${saleData.plataforma.charAt(0).toUpperCase() + saleData.plataforma.slice(1)} - ${saleData.produto || "Venda digital"}${saleData.cliente ? ` (${saleData.cliente})` : ""}`,
+            tipo: "receita",
+            valor: saleData.valor_liquido,
+            data_vencimento: dataVenda,
+            data_pagamento: dataVenda,
+            status: "pago",
+          })
+          .select("id")
+          .single();
+
+        if (lancError) {
+          console.error("Erro ao inserir lançamento:", lancError);
+        } else {
+          lancamentoId = lancamento.id;
+        }
+      }
     }
 
     // Log the webhook
     await supabase.from("logs_integracoes").insert({
       empresa_id: empresaId,
       plataforma: platform,
-      evento,
+      evento: saleData?.evento || "unknown",
       status: "success",
-      payload: { source: "webhook_receiver", body, headers: Object.fromEntries(req.headers) },
+      payload: {
+        source: "webhook_receiver",
+        sale_data: saleData,
+        venda_id: vendaId,
+        lancamento_id: lancamentoId,
+        raw_body: body,
+      },
     });
 
     return new Response(
-      JSON.stringify({ success: true, platform, evento, message: "Webhook received and logged" }),
+      JSON.stringify({
+        success: true,
+        platform,
+        evento: saleData?.evento,
+        status: saleData?.status,
+        venda_id: vendaId,
+        lancamento_id: lancamentoId,
+        message: vendaId
+          ? "Venda registrada com sucesso"
+          : "Webhook recebido e registrado nos logs",
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
+    console.error("Webhook receiver error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
