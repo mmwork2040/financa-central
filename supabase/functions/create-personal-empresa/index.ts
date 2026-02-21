@@ -40,21 +40,51 @@ serve(async (req) => {
     const userId = callerData.user.id;
     const userEmail = callerData.user.email || "";
 
-    // Check if user already has a personal empresa
-    const { data: existing } = await supabaseAdmin
-      .from("empresas")
-      .select("id")
-      .eq("pessoal", true)
-      .in("id", 
-        (await supabaseAdmin.from("user_roles").select("empresa_id").eq("user_id", userId))
-          .data?.map((r: any) => r.empresa_id) || []
-      )
-      .maybeSingle();
+    // Check if user already has a personal empresa via user_roles
+    const { data: userRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("empresa_id")
+      .eq("user_id", userId);
+
+    const roleEmpresaIds = userRoles?.map((r: any) => r.empresa_id) || [];
+
+    let existing: { id: string; nome: string } | null = null;
+
+    if (roleEmpresaIds.length > 0) {
+      const { data: byRole } = await supabaseAdmin
+        .from("empresas")
+        .select("id, nome")
+        .eq("pessoal", true)
+        .in("id", roleEmpresaIds)
+        .limit(1)
+        .maybeSingle();
+      if (byRole) existing = byRole;
+    }
+
+    // Also check for orphaned personal empresas by email (no user_role link)
+    if (!existing) {
+      const { data: byEmail } = await supabaseAdmin
+        .from("empresas")
+        .select("id, nome")
+        .eq("pessoal", true)
+        .eq("email", userEmail)
+        .limit(1)
+        .maybeSingle();
+
+      if (byEmail) {
+        existing = byEmail;
+        // Fix: create missing user_role for this orphaned empresa
+        await supabaseAdmin
+          .from("user_roles")
+          .upsert({ user_id: userId, empresa_id: byEmail.id, role: "admin" }, { onConflict: "user_id,empresa_id" })
+          .select();
+      }
+    }
 
     if (existing) {
       // Already has personal empresa, just activate it
       await supabaseAdmin.from("perfis").update({ empresa_id: existing.id, permissao: "admin" }).eq("id", userId);
-      return new Response(JSON.stringify({ success: true, empresaId: existing.id, empresaNome: "Pessoal" }), {
+      return new Response(JSON.stringify({ success: true, empresaId: existing.id, empresaNome: existing.nome }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
