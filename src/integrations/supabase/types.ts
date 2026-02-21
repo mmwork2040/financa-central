@@ -418,6 +418,7 @@ export type Database = {
           forma_pagamento_id: string | null
           fornecedor_id: string | null
           id: string
+          origem: string
           parcela_atual: number | null
           recorrencia_fim: string | null
           recorrencia_tipo: string | null
@@ -440,6 +441,7 @@ export type Database = {
           forma_pagamento_id?: string | null
           fornecedor_id?: string | null
           id?: string
+          origem?: string
           parcela_atual?: number | null
           recorrencia_fim?: string | null
           recorrencia_tipo?: string | null
@@ -462,6 +464,7 @@ export type Database = {
           forma_pagamento_id?: string | null
           fornecedor_id?: string | null
           id?: string
+          origem?: string
           parcela_atual?: number | null
           recorrencia_fim?: string | null
           recorrencia_tipo?: string | null
