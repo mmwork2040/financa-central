@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil } from "lucide-react";
+import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -17,6 +18,7 @@ const PLATAFORMAS = [
     id: "hotmart", name: "Hotmart", description: "Plataforma de produtos digitais",
     icon: ShoppingCart, color: "bg-orange-100 text-orange-600",
     site: "https://app.hotmart.com/tools/credentials", doc: "https://developers.hotmart.com/docs/pt-BR/",
+    events: ["purchase_approved", "purchase_refunded", "purchase_canceled", "purchase_delayed", "purchase_expired", "subscription_cancellation"],
     steps: [
       "Acesse o painel Hotmart e vá em Ferramentas → Credenciais",
       "Clique em 'Gerar credenciais' para criar um novo Client",
@@ -30,6 +32,7 @@ const PLATAFORMAS = [
     id: "eduzz", name: "Eduzz", description: "Venda de infoprodutos",
     icon: Zap, color: "bg-blue-100 text-blue-600",
     site: "https://orbita.eduzz.com/producer/config-api", doc: "https://developer.eduzz.com/",
+    events: ["sale_approved", "sale_refunded", "sale_canceled", "sale_waiting_payment"],
     steps: [
       "Acesse o Órbita Eduzz e vá em Configurações → API",
       "Gere uma nova chave de API",
@@ -43,6 +46,7 @@ const PLATAFORMAS = [
     id: "monetizze", name: "Monetizze", description: "Afiliados e produtos digitais",
     icon: DollarSign, color: "bg-green-100 text-green-600",
     site: "https://app.monetizze.com.br/developer/api", doc: "https://docs.monetizze.com.br/",
+    events: ["sale_completed", "sale_refunded", "sale_canceled", "sale_awaiting"],
     steps: [
       "Acesse o painel Monetizze → Desenvolvedor → API",
       "Gere uma nova chave de API",
@@ -56,6 +60,7 @@ const PLATAFORMAS = [
     id: "stripe", name: "Stripe", description: "Pagamentos internacionais",
     icon: CreditCard, color: "bg-purple-100 text-purple-600",
     site: "https://dashboard.stripe.com/apikeys", doc: "https://docs.stripe.com/api",
+    events: ["payment_intent.succeeded", "payment_intent.payment_failed", "charge.refunded", "invoice.paid", "invoice.payment_failed"],
     steps: [
       "Acesse o Dashboard Stripe → Developers → API Keys",
       "Copie a Secret Key (começa com sk_live_ ou sk_test_)",
@@ -69,6 +74,7 @@ const PLATAFORMAS = [
     id: "paypal", name: "PayPal", description: "Pagamentos globais",
     icon: Globe, color: "bg-sky-100 text-sky-600",
     site: "https://developer.paypal.com/dashboard/applications", doc: "https://developer.paypal.com/docs/api/overview/",
+    events: ["PAYMENT.CAPTURE.COMPLETED", "PAYMENT.CAPTURE.REFUNDED", "PAYMENT.CAPTURE.DENIED"],
     steps: [
       "Acesse o PayPal Developer → Dashboard → Apps & Credentials",
       "Crie um novo App ou selecione um existente",
@@ -82,6 +88,7 @@ const PLATAFORMAS = [
     id: "asaas", name: "Asaas", description: "Cobranças e pagamentos",
     icon: DollarSign, color: "bg-emerald-100 text-emerald-600",
     site: "https://www.asaas.com/config/api", doc: "https://docs.asaas.com/",
+    events: ["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED", "PAYMENT_REFUNDED", "PAYMENT_OVERDUE"],
     steps: [
       "Acesse o painel Asaas → Configurações → Integrações → API",
       "Gere uma nova chave de API",
@@ -95,6 +102,7 @@ const PLATAFORMAS = [
     id: "meta_ads", name: "Meta Ads", description: "Facebook & Instagram Ads",
     icon: Megaphone, color: "bg-blue-100 text-blue-700",
     site: "https://business.facebook.com/settings", doc: "https://developers.facebook.com/docs/marketing-apis/",
+    events: ["ad_spend_update", "campaign_status_change"],
     steps: [
       "Acesse o Meta Business Suite → Configurações → Integrações",
       "Vá em developers.facebook.com e crie um App",
@@ -108,6 +116,7 @@ const PLATAFORMAS = [
     id: "google_ads", name: "Google Ads", description: "Anúncios no Google",
     icon: Target, color: "bg-red-100 text-red-600",
     site: "https://console.cloud.google.com/apis/credentials", doc: "https://developers.google.com/google-ads/api/docs/start",
+    events: ["ad_spend_update", "campaign_status_change"],
     steps: [
       "Acesse o Google Cloud Console → APIs & Services → Credentials",
       "Crie uma nova API Key ou OAuth Client",
@@ -133,6 +142,18 @@ const Integracoes = () => {
   const [keyError, setKeyError] = useState("");
   const [testing, setTesting] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ plataforma: string; status: string; message: string } | null>(null);
+  const [webhookExpanded, setWebhookExpanded] = useState<string | null>(null);
+
+  const getWebhookUrl = (platformId: string) => {
+    if (!empresaId) return "";
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    return `${supabaseUrl}/functions/v1/webhook-receiver/${platformId}?empresa_id=${empresaId}`;
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("URL copiada para a área de transferência!");
+  };
 
   useEffect(() => {
     fetchIntegracoes();
@@ -335,6 +356,55 @@ const Integracoes = () => {
                       <Button size="sm" className="w-full" onClick={() => openWizard(plat.id)}>Conectar</Button>
                     )}
                   </div>
+                  {/* Webhook URL section for connected integrations */}
+                  {status === 'connected' && (
+                    <div className="mt-2">
+                      <button
+                        onClick={() => setWebhookExpanded(webhookExpanded === plat.id ? null : plat.id)}
+                        className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors w-full"
+                      >
+                        <Webhook className="h-3 w-3" />
+                        <span className="font-medium">Webhook URL</span>
+                        <ChevronRight className={`h-3 w-3 ml-auto transition-transform ${webhookExpanded === plat.id ? 'rotate-90' : ''}`} />
+                      </button>
+                      {webhookExpanded === plat.id && (
+                        <div className="mt-2 space-y-2">
+                          <div className="flex items-center gap-1">
+                            <Input
+                              readOnly
+                              value={getWebhookUrl(plat.id)}
+                              className="text-[10px] h-7 font-mono bg-muted"
+                            />
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0" onClick={() => copyToClipboard(getWebhookUrl(plat.id))}>
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Copiar URL</p></TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
+                              <Info className="h-3 w-3" /> Eventos suportados:
+                            </p>
+                            <div className="flex flex-wrap gap-1">
+                              {plat.events?.map(ev => (
+                                <Badge key={ev} variant="secondary" className="text-[9px] px-1.5 py-0 font-mono">
+                                  {ev}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">
+                            Cole esta URL no painel da {plat.name} como Webhook/Postback URL.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {testResult && testResult.plataforma === plat.id && (
                     <div className={`mt-2 flex items-center gap-2 text-xs rounded-md p-2 ${
                       testResult.status === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400' :
