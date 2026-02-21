@@ -23,6 +23,9 @@ import Lancamentos from "./pages/Lancamentos";
 import Relatorios from "./pages/Relatorios";
 import Permissoes from "./pages/Permissoes";
 import ConfiguracoesEmpresa from "./pages/ConfiguracoesEmpresa";
+import VendasDigitais from "./pages/VendasDigitais";
+import Integracoes from "./pages/Integracoes";
+import WebhooksConfig from "./pages/WebhooksConfig";
 import NotFoundPage from "./pages/NotFoundPage";
 import Install from "./pages/Install";
 
@@ -46,6 +49,9 @@ const App = () => {
                 {/* Protected routes */}
                 <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
                 <Route path="/settings" element={<AppLayout><ConfiguracoesEmpresa /></AppLayout>} />
+                <Route path="/settings/integracoes" element={<AppLayout><Integracoes /></AppLayout>} />
+                <Route path="/settings/webhooks" element={<AppLayout><WebhooksConfig /></AppLayout>} />
+                <Route path="/vendas-digitais" element={<AppLayout><VendasDigitais /></AppLayout>} />
                 
                 {/* Permission-protected routes */}
                 <Route path="/users" element={<ProtectedRoute path="/users"><AppLayout><Users /></AppLayout></ProtectedRoute>} />

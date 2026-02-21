@@ -24,6 +24,11 @@ import {
   DoorOpen,
   Menu,
   X,
+  ChevronDown,
+  ShoppingCart,
+  FolderOpen,
+  Plug,
+  Webhook,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
@@ -42,6 +47,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,8 +74,17 @@ export const Sidebar = () => {
   const { pendingCount, createRequest, hasPendingRequest, actionLoading } = useSolicitacoesSaida();
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cadastrosOpen, setCadastrosOpen] = useState(false);
+  const [configOpen, setConfigOpen] = useState(false);
 
-  // Close mobile sidebar on route change
+  // Auto-open submenus when on their routes
+  useEffect(() => {
+    const cadastrosPaths = ["/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods"];
+    const configPaths = ["/settings", "/settings/integracoes", "/settings/webhooks"];
+    if (cadastrosPaths.some(p => location.pathname.startsWith(p))) setCadastrosOpen(true);
+    if (configPaths.some(p => location.pathname.startsWith(p))) setConfigOpen(true);
+  }, [location.pathname]);
+
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
@@ -91,21 +110,38 @@ export const Sidebar = () => {
   }, [empresaId]);
   
   const isActive = (path: string) => location.pathname === path;
-
   const activeEmpresa = empresas.find(e => e.empresa_id === empresaId);
+
+  const showExpanded = isExpanded || isMobile;
   
-  const menuItems = [
-    { name: "Página Inicial", icon: Home, path: "/dashboard" },
-    { name: "Fornecedores", icon: Truck, path: "/fornecedores" },
-    { name: "Clientes", icon: UsersRound, path: "/clientes" },
-    { name: "Categorias", icon: Tags, path: "/categorias" },
-    { name: "Formas de Pagamento", icon: CreditCard, path: "/payment-methods" },
-    { name: "Contas Bancárias", icon: Building2, path: "/bank-accounts" },
+  // Simplified menu structure
+  const mainItems = [
+    { name: "Dashboard", icon: Home, path: "/dashboard" },
     { name: "Lançamentos", icon: Files, path: "/transactions" },
+    { name: "Vendas Digitais", icon: ShoppingCart, path: "/vendas-digitais" },
+  ];
+
+  const cadastrosItems = [
+    { name: "Clientes", icon: UsersRound, path: "/clientes" },
+    { name: "Fornecedores", icon: Truck, path: "/fornecedores" },
+    { name: "Categorias", icon: Tags, path: "/categorias" },
+    { name: "Contas Bancárias", icon: Building2, path: "/bank-accounts" },
+    { name: "Formas de Pagamento", icon: CreditCard, path: "/payment-methods" },
+  ];
+
+  const bottomItems = [
     { name: "Relatórios", icon: PieChart, path: "/reports" },
+  ];
+
+  const configItems = [
+    { name: "Empresa", icon: Settings, path: "/settings" },
+    { name: "Integrações", icon: Plug, path: "/settings/integracoes" },
+    { name: "Webhooks", icon: Webhook, path: "/settings/webhooks" },
+  ];
+
+  const adminItems = [
     { name: "Usuários", icon: Users, path: "/users" },
     { name: "Permissões", icon: ShieldCheck, path: "/permissions" },
-    { name: "Configurações", icon: Settings, path: "/settings" },
   ];
 
   const handleLogout = async (e: React.MouseEvent) => {
@@ -134,21 +170,45 @@ export const Sidebar = () => {
     }
   };
 
+  const renderMenuItem = (item: { name: string; icon: any; path: string }, indent = false) => {
+    if (!canAccessRoute(item.path)) return null;
+    return (
+      <li key={item.path}>
+        <Link
+          to={item.path}
+          className={cn(
+            "sidebar-link relative",
+            indent && showExpanded && "pl-8",
+            isActive(item.path) && "active"
+          )}
+        >
+          <item.icon size={18} />
+          {showExpanded && <span className="text-sm">{item.name}</span>}
+          {item.path === "/users" && pendingCount > 0 && (
+            <span className="absolute top-1 right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1">
+              {pendingCount}
+            </span>
+          )}
+        </Link>
+      </li>
+    );
+  };
+
   const sidebarContent = (
     <>
-      {/* Header com logo */}
-      <div className="flex h-16 items-center justify-between px-4 py-4">
+      {/* Header */}
+      <div className="flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-2 min-w-0">
           {companyLogo ? (
-            <img src={companyLogo} alt="Logo" className="h-8 w-8 rounded object-contain shrink-0" />
+            <img src={companyLogo} alt="Logo" className="h-7 w-7 rounded object-contain shrink-0" />
           ) : null}
-          {(isExpanded || isMobile) && (
-            <h1 className="text-lg font-bold text-sidebar-foreground truncate">Fluxo de Contas</h1>
+          {showExpanded && (
+            <h1 className="text-base font-bold text-sidebar-foreground truncate">Finança Central</h1>
           )}
         </div>
         {isMobile ? (
           <button onClick={() => setMobileOpen(false)} className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all shrink-0">
-            <X size={20} />
+            <X size={18} />
           </button>
         ) : (
           <button
@@ -156,34 +216,24 @@ export const Sidebar = () => {
             className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all shrink-0"
             aria-label={isExpanded ? "Recolher menu" : "Expandir menu"}
           >
-            {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+            {isExpanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
           </button>
         )}
       </div>
       
-      {/* User info + Company switcher */}
-      <div className="border-t border-b border-sidebar-border p-3">
-        {(isExpanded || isMobile) ? (
-          <div className="space-y-2">
-            <div>
-              <div className="text-sidebar-foreground text-sm font-medium">{userProfile?.nome || "Usuário"}</div>
-              <div className="text-sidebar-foreground/60 text-xs">{userProfile?.email || ""}</div>
-              {isSuperAdmin && (
-                <div className="mt-1 inline-block rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
-                  Super Admin
-                </div>
-              )}
-            </div>
-
-            {/* Company switcher */}
+      {/* Company switcher */}
+      <div className="border-t border-b border-sidebar-border px-3 py-2.5">
+        {showExpanded ? (
+          <div className="space-y-1.5">
+            <div className="text-sidebar-foreground text-sm font-medium truncate">{userProfile?.nome || "Usuário"}</div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex w-full items-center justify-between rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2.5 py-1.5 text-xs text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
                   <div className="flex items-center gap-1.5 truncate">
-                    <Building2 size={14} />
+                    <Building2 size={13} />
                     <span className="truncate">{activeEmpresa?.empresa_nome || "Sem empresa"}</span>
                   </div>
-                  <ChevronsUpDown size={14} className="shrink-0 opacity-50" />
+                  <ChevronsUpDown size={13} className="shrink-0 opacity-50" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56 z-[60]">
@@ -191,16 +241,12 @@ export const Sidebar = () => {
                   <DropdownMenuItem
                     key={emp.empresa_id}
                     onClick={() => {
-                      if (emp.empresa_id !== empresaId) {
-                        switchEmpresa(emp.empresa_id);
-                      }
+                      if (emp.empresa_id !== empresaId) switchEmpresa(emp.empresa_id);
                     }}
                     className="flex items-center justify-between"
                   >
                     <div className="truncate">
-                      <div className="text-sm flex items-center gap-1.5">
-                        {emp.empresa_nome}
-                      </div>
+                      <div className="text-sm">{emp.empresa_nome}</div>
                       <div className="text-xs text-muted-foreground">{emp.role}</div>
                     </div>
                     {emp.empresa_id === empresaId && <Check size={14} className="shrink-0 text-primary" />}
@@ -212,20 +258,18 @@ export const Sidebar = () => {
                   Entrar com código de convite
                 </DropdownMenuItem>
                 {activeEmpresa && !activeEmpresa.pessoal && !hasPendingRequest(activeEmpresa.empresa_id) && (
-                  <>
-                    <DropdownMenuItem onSelect={() => {
-                      const id = activeEmpresa.empresa_id;
-                      const nome = activeEmpresa.empresa_nome || "";
-                      setTimeout(() => {
-                        setExitEmpresaId(id);
-                        setExitEmpresaNome(nome);
-                        setExitDialogOpen(true);
-                      }, 150);
-                    }}>
-                      <DoorOpen size={14} className="mr-2" />
-                      Solicitar saída da empresa
-                    </DropdownMenuItem>
-                  </>
+                  <DropdownMenuItem onSelect={() => {
+                    const id = activeEmpresa.empresa_id;
+                    const nome = activeEmpresa.empresa_nome || "";
+                    setTimeout(() => {
+                      setExitEmpresaId(id);
+                      setExitEmpresaNome(nome);
+                      setExitDialogOpen(true);
+                    }, 150);
+                  }}>
+                    <DoorOpen size={14} className="mr-2" />
+                    Solicitar saída da empresa
+                  </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -243,9 +287,7 @@ export const Sidebar = () => {
                   <DropdownMenuItem
                     key={emp.empresa_id}
                     onClick={() => {
-                      if (emp.empresa_id !== empresaId) {
-                        switchEmpresa(emp.empresa_id);
-                      }
+                      if (emp.empresa_id !== empresaId) switchEmpresa(emp.empresa_id);
                     }}
                     className="flex items-center justify-between"
                   >
@@ -281,45 +323,72 @@ export const Sidebar = () => {
         )}
       </div>
       
-      {/* Menu de navegação */}
-      <nav className="flex-1 overflow-y-auto py-4">
-        <ul className="space-y-1 px-2">
-          {menuItems.filter(item => {
-            if (isPessoal && (item.path === '/users' || item.path === '/permissions')) return false;
-            return canAccessRoute(item.path);
-          }).map((item) => (
-            <li key={item.path}>
-              <Link
-                to={item.path}
-                className={cn(
-                  "sidebar-link relative",
-                  isActive(item.path) && "active"
-                )}
-              >
-                <item.icon size={20} />
-                {(isExpanded || isMobile) && <span>{item.name}</span>}
-                {item.path === "/users" && pendingCount > 0 && (
-                  <span className="absolute top-1 right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1">
-                    {pendingCount}
-                  </span>
-                )}
-              </Link>
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-3">
+        <ul className="space-y-0.5 px-2">
+          {/* Main items */}
+          {mainItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
+          
+          {/* Cadastros collapsible */}
+          {showExpanded ? (
+            <li>
+              <Collapsible open={cadastrosOpen} onOpenChange={setCadastrosOpen}>
+                <CollapsibleTrigger className="sidebar-link w-full justify-between">
+                  <div className="flex items-center gap-3">
+                    <FolderOpen size={18} />
+                    <span className="text-sm">Cadastros</span>
+                  </div>
+                  <ChevronDown size={14} className={cn("transition-transform", cadastrosOpen && "rotate-180")} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <ul className="space-y-0.5 mt-0.5">
+                    {cadastrosItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item, true))}
+                  </ul>
+                </CollapsibleContent>
+              </Collapsible>
             </li>
-          ))}
+          ) : (
+            cadastrosItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))
+          )}
+
+          {/* Bottom items */}
+          {bottomItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
+
+          {/* Configurações collapsible */}
+          {showExpanded ? (
+            <li>
+              <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
+                <CollapsibleTrigger className="sidebar-link w-full justify-between">
+                  <div className="flex items-center gap-3">
+                    <Settings size={18} />
+                    <span className="text-sm">Configurações</span>
+                  </div>
+                  <ChevronDown size={14} className={cn("transition-transform", configOpen && "rotate-180")} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <ul className="space-y-0.5 mt-0.5">
+                    {configItems.map(item => renderMenuItem(item, true))}
+                  </ul>
+                </CollapsibleContent>
+              </Collapsible>
+            </li>
+          ) : (
+            <>{renderMenuItem({ name: "Configurações", icon: Settings, path: "/settings" })}</>
+          )}
+          
+          {/* Admin items */}
+          {!isPessoal && adminItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
         </ul>
       </nav>
       
-      {/* Logout button */}
-      <div className="px-2 py-4 border-t border-sidebar-border">
+      {/* Logout */}
+      <div className="px-2 py-3 border-t border-sidebar-border">
         <button 
           onClick={handleLogout}
-          className={cn(
-            "sidebar-link",
-            !isExpanded && !isMobile && "justify-center"
-          )}
+          className={cn("sidebar-link w-full", !showExpanded && "justify-center")}
         >
-          <LogOut size={20} />
-          {(isExpanded || isMobile) && <span>Sair</span>}
+          <LogOut size={18} />
+          {showExpanded && <span className="text-sm">Sair</span>}
         </button>
       </div>
     </>
@@ -327,7 +396,6 @@ export const Sidebar = () => {
 
   return (
     <>
-      {/* Mobile hamburger button */}
       {isMobile && (
         <button
           onClick={() => setMobileOpen(true)}
@@ -338,7 +406,6 @@ export const Sidebar = () => {
         </button>
       )}
 
-      {/* Mobile overlay */}
       {isMobile && mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
@@ -346,13 +413,12 @@ export const Sidebar = () => {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar border-r border-sidebar-border shadow-lg transition-all duration-300 ease-in-out",
           isMobile
             ? cn("w-72", mobileOpen ? "translate-x-0" : "-translate-x-full")
-            : isExpanded ? "w-64" : "w-16"
+            : isExpanded ? "w-60" : "w-14"
         )}
       >
         {sidebarContent}
@@ -381,7 +447,6 @@ export const Sidebar = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Exit Request Dialog - conditionally rendered to ensure clean unmount */}
       {exitDialogOpen && (
         <ExitRequestDialog
           isOpen={exitDialogOpen}

@@ -45,7 +45,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       <main
         className={cn(
           "flex-1 transition-all duration-300 ease-in-out",
-          isMobile ? "ml-0 pt-14" : isExpanded ? "ml-64" : "ml-16"
+          isMobile ? "ml-0 pt-14" : isExpanded ? "ml-60" : "ml-14"
         )}
       >
         <div className="container mx-auto px-3 py-4 md:px-4 md:py-6">

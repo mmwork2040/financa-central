@@ -1,0 +1,183 @@
+
+import React, { useState, useEffect } from "react";
+import { Plug, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+
+const PLATAFORMAS = [
+  { id: "hotmart", name: "Hotmart", description: "Plataforma de produtos digitais" },
+  { id: "eduzz", name: "Eduzz", description: "Venda de infoprodutos" },
+  { id: "monetizze", name: "Monetizze", description: "Afiliados e produtos digitais" },
+  { id: "stripe", name: "Stripe", description: "Pagamentos internacionais" },
+  { id: "paypal", name: "PayPal", description: "Pagamentos globais" },
+  { id: "asaas", name: "Asaas", description: "Cobranças e pagamentos" },
+  { id: "meta", name: "Meta Platforms", description: "Dados de anúncios (em breve)" },
+];
+
+const Integracoes = () => {
+  const { empresaId } = useAuth();
+  const [integracoes, setIntegracoes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [connectDialog, setConnectDialog] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState("");
+  const [apiSecret, setApiSecret] = useState("");
+  const [ambiente, setAmbiente] = useState("producao");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchIntegracoes();
+  }, []);
+
+  const fetchIntegracoes = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('integracoes')
+        .select('plataforma, ativo, ambiente, created_at');
+      if (error) throw error;
+      setIntegracoes(data || []);
+    } catch (error) {
+      console.error("Erro:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatus = (plataformaId: string) => {
+    const integ = integracoes.find((i: any) => i.plataforma === plataformaId);
+    return integ?.ativo ? 'connected' : integ ? 'disconnected' : 'none';
+  };
+
+  const handleConnect = async () => {
+    if (!connectDialog || !apiKey.trim() || !empresaId) return;
+    setSaving(true);
+    try {
+      const { error } = await (supabase as any)
+        .from('integracoes')
+        .upsert({
+          empresa_id: empresaId,
+          plataforma: connectDialog,
+          api_key_encrypted: apiKey.trim(),
+          api_secret_encrypted: apiSecret.trim() || null,
+          ambiente,
+          ativo: true,
+        }, { onConflict: 'empresa_id,plataforma' });
+
+      if (error) throw error;
+      toast.success("Integração conectada com sucesso!");
+      setConnectDialog(null);
+      setApiKey("");
+      setApiSecret("");
+      fetchIntegracoes();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao conectar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDisconnect = async (plataforma: string) => {
+    try {
+      const { error } = await (supabase as any)
+        .from('integracoes')
+        .update({ ativo: false })
+        .eq('plataforma', plataforma);
+      if (error) throw error;
+      toast.success("Integração desconectada.");
+      fetchIntegracoes();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao desconectar");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <Plug className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold">Integrações</h1>
+        </div>
+        <p className="text-sm text-muted-foreground">Conecte suas plataformas de vendas digitais</p>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {PLATAFORMAS.map(plat => {
+            const status = getStatus(plat.id);
+            const isDisabled = plat.id === 'meta';
+            return (
+              <Card key={plat.id} className={isDisabled ? "opacity-60" : ""}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-sm">{plat.name}</h3>
+                      {status === 'connected' && <Badge className="bg-green-100 text-green-700 text-[10px]">🟢 Conectado</Badge>}
+                      {status === 'disconnected' && <Badge className="bg-red-100 text-red-700 text-[10px]">🔴 Desconectado</Badge>}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{plat.description}</p>
+                  </div>
+                  <div className="shrink-0 ml-3">
+                    {isDisabled ? (
+                      <Badge variant="outline" className="text-[10px]">Em breve</Badge>
+                    ) : status === 'connected' ? (
+                      <Button variant="outline" size="sm" onClick={() => handleDisconnect(plat.id)}>
+                        Desconectar
+                      </Button>
+                    ) : (
+                      <Button size="sm" onClick={() => setConnectDialog(plat.id)}>
+                        Conectar
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <Dialog open={!!connectDialog} onOpenChange={(o) => !o && setConnectDialog(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Conectar {PLATAFORMAS.find(p => p.id === connectDialog)?.name}</DialogTitle>
+            <DialogDescription>Insira suas credenciais da API para conectar a plataforma.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>API Key *</Label>
+              <Input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Cole sua API Key aqui" />
+            </div>
+            <div>
+              <Label>API Secret (opcional)</Label>
+              <Input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="Cole o secret se necessário" />
+            </div>
+            <div>
+              <Label>Ambiente</Label>
+              <Select value={ambiente} onValueChange={setAmbiente}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="producao">Produção</SelectItem>
+                  <SelectItem value="sandbox">Sandbox</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleConnect} disabled={saving || !apiKey.trim()} className="w-full">
+              {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Conectando...</> : "Conectar plataforma"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default Integracoes;
