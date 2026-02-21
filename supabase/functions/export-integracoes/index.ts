@@ -89,8 +89,40 @@ Deno.serve(async (req) => {
 
     if (insertError) throw insertError;
 
+    // Also copy webhooks_empresa and update URLs with target empresa_id
+    const { data: sourceWebhooks } = await supabase
+      .from("webhooks_empresa")
+      .select("*")
+      .eq("empresa_id", sourceEmpresaId);
+
+    if (sourceWebhooks && sourceWebhooks.length > 0) {
+      // Delete existing webhooks in target
+      await supabase
+        .from("webhooks_empresa")
+        .delete()
+        .eq("empresa_id", targetEmpresaId);
+
+      // Copy webhooks replacing empresa_id in URLs
+      const newWebhooks = sourceWebhooks.map((wh: any) => ({
+        empresa_id: targetEmpresaId,
+        evento: wh.evento,
+        url: wh.url.replace(sourceEmpresaId, targetEmpresaId),
+        ativo: wh.ativo,
+      }));
+
+      await supabase.from("webhooks_empresa").insert(newWebhooks);
+    }
+
+    // Build webhook URLs info for the response
+    const webhookBaseUrl = `${supabaseUrl}/functions/v1/webhook-receiver`;
+    const platforms = newIntegracoes.map((i: any) => i.plataforma);
+    const webhookUrls = platforms.map((p: string) => ({
+      plataforma: p,
+      url: `${webhookBaseUrl}/${p}?empresa_id=${targetEmpresaId}`,
+    }));
+
     return new Response(
-      JSON.stringify({ success: true, count: newIntegracoes.length }),
+      JSON.stringify({ success: true, count: newIntegracoes.length, webhookUrls }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
