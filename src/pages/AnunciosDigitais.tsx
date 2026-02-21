@@ -106,15 +106,15 @@ const AnunciosDigitais = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Megaphone className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Anúncios</h1>
+            <Megaphone className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <h1 className="text-xl sm:text-2xl font-bold">Anúncios</h1>
           </div>
-          <p className="text-sm text-muted-foreground">Acompanhe o desempenho dos seus anúncios</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Acompanhe o desempenho dos seus anúncios</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start">
           <Button
             variant="ghost"
             size="icon"
@@ -163,7 +163,7 @@ const AnunciosDigitais = () => {
       ) : (
         <>
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -229,12 +229,12 @@ const AnunciosDigitais = () => {
           )}
 
           {/* Platform Details */}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             {adSummary.map(ad => (
               <Card key={ad.plataforma}>
-                <CardContent className="p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold">{ad.plataforma}</h3>
+                    <h3 className="font-semibold text-sm sm:text-base">{ad.plataforma}</h3>
                     <Badge className={cn("text-[10px]", ad.roas >= 2 ? "bg-green-100 text-green-700" : ad.roas >= 1 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700")}>
                       ROAS {valoresVisiveis ? `${ad.roas.toFixed(1)}x` : MASK}
                     </Badge>
@@ -242,19 +242,19 @@ const AnunciosDigitais = () => {
                   <div className="grid grid-cols-2 gap-y-2 text-sm">
                     <div>
                       <p className="text-xs text-muted-foreground">Investido</p>
-                      <p className="font-medium text-destructive">{displayCurrency(ad.totalGasto)}</p>
+                      <p className="font-medium text-destructive text-xs sm:text-sm">{displayCurrency(ad.totalGasto)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Receita</p>
-                      <p className="font-medium text-green-600">{displayCurrency(ad.totalReceita)}</p>
+                      <p className="font-medium text-green-600 text-xs sm:text-sm">{displayCurrency(ad.totalReceita)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Cliques</p>
-                      <p className="font-medium">{valoresVisiveis ? ad.totalCliques.toLocaleString() : MASK}</p>
+                      <p className="font-medium text-xs sm:text-sm">{valoresVisiveis ? ad.totalCliques.toLocaleString() : MASK}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Impressões</p>
-                      <p className="font-medium">{valoresVisiveis ? ad.totalImpressoes.toLocaleString() : MASK}</p>
+                      <p className="font-medium text-xs sm:text-sm">{valoresVisiveis ? ad.totalImpressoes.toLocaleString() : MASK}</p>
                     </div>
                   </div>
 
@@ -263,9 +263,9 @@ const AnunciosDigitais = () => {
                       <p className="text-xs font-semibold mb-2">Campanhas ({ad.campanhas.length})</p>
                       <div className="space-y-2 max-h-40 overflow-y-auto">
                         {ad.campanhas.map((c, i) => (
-                          <div key={i} className="text-xs flex justify-between items-center">
+                          <div key={i} className="text-xs flex justify-between items-center gap-2">
                             <span className="truncate max-w-[60%]">{c.nome}</span>
-                            <span className="text-muted-foreground">{formatCurrency(c.gasto)}</span>
+                            <span className="text-muted-foreground whitespace-nowrap">{formatCurrency(c.gasto)}</span>
                           </div>
                         ))}
                       </div>
