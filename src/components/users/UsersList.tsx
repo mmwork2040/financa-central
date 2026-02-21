@@ -1,11 +1,10 @@
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, UserX } from "lucide-react";
+import { Pencil, Trash2, UserX, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import MobilePagination, { usePagination } from "@/components/common/MobilePagination";
@@ -20,6 +19,9 @@ interface User {
   empresa_nome?: string | null;
   is_super_admin?: boolean;
 }
+
+type SortKey = "nome" | "email" | "empresa_nome" | "permissao" | "created_at";
+type SortDir = "asc" | "desc";
 
 interface UsersListProps {
   users: User[];
@@ -50,7 +52,41 @@ const getPermissaoClass = (permissao: string): string => {
 
 export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, currentUserId }: UsersListProps) => {
   const isMobile = useIsMobile();
-  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(users);
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const sortedUsers = useMemo(() => {
+    if (!sortKey) return users;
+    return [...users].sort((a, b) => {
+      if (sortKey === "created_at") {
+        return sortDir === "asc"
+          ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          : new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      const aVal = ((a as any)[sortKey] ?? "").toString().toLowerCase();
+      const bVal = ((b as any)[sortKey] ?? "").toString().toLowerCase();
+      const cmp = aVal.localeCompare(bVal);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [users, sortKey, sortDir]);
+
+  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(sortedUsers);
+
+  const SortIcon = ({ column }: { column: SortKey }) => {
+    if (sortKey !== column) return <ArrowUpDown className="ml-1 h-3 w-3 inline opacity-40" />;
+    return sortDir === "asc"
+      ? <ArrowUp className="ml-1 h-3 w-3 inline" />
+      : <ArrowDown className="ml-1 h-3 w-3 inline" />;
+  };
 
   if (isMobile) {
     return (
@@ -68,7 +104,7 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                     <p className="font-medium text-foreground truncate">{user.nome}</p>
                     <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     {isSuperAdmin && (
-                      <Badge variant="outline" className="text-[10px]">{user.empresa_nome || "Sem empresa"}</Badge>
+                      <span className="text-[10px] text-muted-foreground">{user.empresa_nome || "Sem empresa"}</span>
                     )}
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getPermissaoClass(user.permissao)}`}>
                       {isTargetSuperAdmin ? "Super Admin" : getPermissaoLabel(user.permissao)}
@@ -109,16 +145,16 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Email</TableHead>
-            {isSuperAdmin && <TableHead>Empresa</TableHead>}
-            <TableHead>Permissão</TableHead>
-            <TableHead>Data de Cadastro</TableHead>
+            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("nome")}>Nome <SortIcon column="nome" /></TableHead>
+            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("email")}>Email <SortIcon column="email" /></TableHead>
+            {isSuperAdmin && <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("empresa_nome")}>Empresa <SortIcon column="empresa_nome" /></TableHead>}
+            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("permissao")}>Permissão <SortIcon column="permissao" /></TableHead>
+            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("created_at")}>Data de Cadastro <SortIcon column="created_at" /></TableHead>
             <TableHead className="w-[140px] text-center">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map((user) => {
+          {paginatedItems.map((user) => {
             const isTargetSuperAdmin = user.is_super_admin === true;
             const isSelf = user.id === currentUserId;
             const canModify = !isTargetSuperAdmin || isSelf;
@@ -129,7 +165,7 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                 <TableCell>{user.email}</TableCell>
                 {isSuperAdmin && (
                   <TableCell>
-                    <Badge variant="outline" className="text-xs">{user.empresa_nome || "Sem empresa"}</Badge>
+                    <span className="text-xs text-muted-foreground">{user.empresa_nome || "Sem empresa"}</span>
                   </TableCell>
                 )}
                 <TableCell>
