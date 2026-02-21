@@ -18,6 +18,22 @@ interface SaleData {
   data_prevista_recebimento: string | null;
 }
 
+function normalizeDate(value: any): string {
+  if (!value) return new Date().toISOString();
+  if (typeof value === "number") {
+    // If it looks like milliseconds (> year 2000 in seconds)
+    if (value > 1e12) return new Date(value).toISOString();
+    // Otherwise treat as seconds
+    return new Date(value * 1000).toISOString();
+  }
+  if (typeof value === "string") {
+    // Already ISO string or similar
+    const d = new Date(value);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+  return new Date().toISOString();
+}
+
 // ─── Hotmart ───
 function parseHotmart(body: any): SaleData | null {
   const purchase = body?.data?.purchase || body?.data || {};
@@ -49,7 +65,7 @@ function parseHotmart(body: any): SaleData | null {
     valor_liquido: Number(purchase?.price?.value || 0) / 100 - Number(purchase?.commission?.value || 0) / 100 || Number(purchase?.price || 0),
     cliente: buyer?.name || buyer?.email || null,
     produto: product?.name || null,
-    data_venda: purchase?.approved_date || purchase?.order_date || new Date().toISOString(),
+    data_venda: normalizeDate(purchase?.approved_date || purchase?.order_date),
     data_prevista_recebimento: null,
   };
 }
@@ -82,8 +98,8 @@ function parseEduzz(body: any): SaleData | null {
     valor_liquido: valorBruto - taxa,
     cliente: body?.cus_name || body?.client_name || body?.cus_email || null,
     produto: body?.product_name || body?.pro_name || null,
-    data_venda: body?.trans_createdate || body?.sale_date || new Date().toISOString(),
-    data_prevista_recebimento: body?.trans_duedate || null,
+    data_venda: normalizeDate(body?.trans_createdate || body?.sale_date),
+    data_prevista_recebimento: body?.trans_duedate ? normalizeDate(body.trans_duedate) : null,
   };
 }
 
@@ -121,8 +137,8 @@ function parseMonetizze(body: any): SaleData | null {
     valor_liquido: valorBruto - taxa,
     cliente: comprador?.nome || comprador?.email || null,
     produto: produto?.nome || produto?.name || null,
-    data_venda: evento?.venda?.data || body?.data_venda || new Date().toISOString(),
-    data_prevista_recebimento: evento?.venda?.data_prevista || null,
+    data_venda: normalizeDate(evento?.venda?.data || body?.data_venda),
+    data_prevista_recebimento: evento?.venda?.data_prevista ? normalizeDate(evento.venda.data_prevista) : null,
   };
 }
 
@@ -226,7 +242,7 @@ Deno.serve(async (req) => {
 
       // Create lancamento (receita) automatically if approved
       if (saleData.status === "aprovada") {
-        const dataVenda = saleData.data_venda.split("T")[0] || new Date().toISOString().split("T")[0];
+        const dataVenda = String(saleData.data_venda).split("T")[0] || new Date().toISOString().split("T")[0];
         const { data: lancamento, error: lancError } = await supabase
           .from("lancamentos")
           .insert({
