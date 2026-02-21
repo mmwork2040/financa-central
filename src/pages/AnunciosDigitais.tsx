@@ -1,13 +1,25 @@
 
 import React, { useState, useEffect } from "react";
-import { Megaphone, TrendingUp, TrendingDown, DollarSign, Eye, MousePointer, Target } from "lucide-react";
+import { Megaphone, TrendingUp, DollarSign, MousePointer, Target, RefreshCw, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+
+interface CampaignData {
+  nome: string;
+  gasto: number;
+  impressoes: number;
+  cliques: number;
+  conversoes: number;
+  receita: number;
+}
 
 interface AdData {
   plataforma: string;
@@ -17,63 +29,66 @@ interface AdData {
   totalImpressoes: number;
   totalConversoes: number;
   roas: number;
+  campanhas: CampaignData[];
 }
 
 const AnunciosDigitais = () => {
   const [periodo, setPeriodo] = useState("30");
   const [adSummary, setAdSummary] = useState<AdData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [hasIntegrations, setHasIntegrations] = useState(false);
+  const { empresaId } = useAuth();
 
   useEffect(() => {
-    fetchAdData();
-  }, [periodo]);
+    if (empresaId) fetchAdData();
+  }, [periodo, empresaId]);
 
   const fetchAdData = async () => {
+    if (!empresaId) return;
     setLoading(true);
     try {
-      // Get vendas_digitais as revenue proxy for connected platforms
-      const dataInicio = new Date();
-      dataInicio.setDate(dataInicio.getDate() - parseInt(periodo));
-      const dataInicioStr = dataInicio.toISOString().split("T")[0];
-
-      const { data: vendas } = await supabase
-        .from("vendas_digitais")
-        .select("*")
-        .gte("data_venda", dataInicioStr);
-
-      // Get integrations to know which platforms are connected
+      // Check if there are active ad integrations
       const { data: integracoes } = await supabase
         .from("integracoes")
         .select("plataforma, ativo")
-        .eq("ativo", true);
+        .eq("ativo", true)
+        .in("plataforma", ["meta_ads", "google_ads"]);
 
-      const platforms = ["meta_ads", "google_ads"];
-      const summary: AdData[] = platforms.map(plat => {
-        const platVendas = vendas?.filter(v => 
-          v.plataforma?.toLowerCase().includes(plat.replace("_ads", ""))
-        ) || [];
-        
-        const totalReceita = platVendas.reduce((s, v) => s + (v.valor_liquido || 0), 0);
-        // Estimate ad spend as 30% of revenue (placeholder until real API integration)
-        const totalGasto = totalReceita * 0.3;
-        
-        return {
-          plataforma: plat === "meta_ads" ? "Meta Ads" : "Google Ads",
-          totalGasto,
-          totalReceita,
-          totalCliques: Math.floor(totalReceita / 2.5), // Placeholder metrics
-          totalImpressoes: Math.floor(totalReceita / 0.05),
-          totalConversoes: platVendas.length,
-          roas: totalGasto > 0 ? totalReceita / totalGasto : 0,
-        };
+      const activeIntegrations = integracoes?.length || 0;
+      setHasIntegrations(activeIntegrations > 0);
+
+      if (activeIntegrations === 0) {
+        setAdSummary([]);
+        setLoading(false);
+        return;
+      }
+
+      // Call the edge function to get real data
+      const { data, error } = await supabase.functions.invoke("sync-ads-data", {
+        body: { empresa_id: empresaId, periodo: parseInt(periodo) },
       });
 
-      setAdSummary(summary);
-    } catch (error) {
+      if (error) throw error;
+
+      if (data?.success && data?.data) {
+        setAdSummary(data.data);
+      } else {
+        throw new Error(data?.error || "Erro ao buscar dados");
+      }
+    } catch (error: any) {
       console.error("Erro ao carregar dados de anúncios:", error);
+      toast.error("Erro ao carregar dados de anúncios: " + (error.message || ""));
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    await fetchAdData();
+    setSyncing(false);
+    toast.success("Dados sincronizados!");
   };
 
   const totalGasto = adSummary.reduce((s, a) => s + a.totalGasto, 0);
@@ -96,22 +111,43 @@ const AnunciosDigitais = () => {
           </div>
           <p className="text-sm text-muted-foreground">Acompanhe o desempenho dos seus anúncios</p>
         </div>
-        <Select value={periodo} onValueChange={setPeriodo}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7">7 dias</SelectItem>
-            <SelectItem value="30">30 dias</SelectItem>
-            <SelectItem value="90">90 dias</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSync}
+            disabled={syncing || !hasIntegrations}
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-1", syncing && "animate-spin")} />
+            Sincronizar
+          </Button>
+          <Select value={periodo} onValueChange={setPeriodo}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">7 dias</SelectItem>
+              <SelectItem value="30">30 dias</SelectItem>
+              <SelectItem value="90">90 dias</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <p className="text-muted-foreground">Carregando...</p>
+          <p className="text-muted-foreground">Carregando dados reais...</p>
         </div>
+      ) : !hasIntegrations ? (
+        <Card className="border-dashed">
+          <CardContent className="p-8 text-center">
+            <AlertTriangle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <h3 className="font-semibold mb-2">Nenhuma integração de anúncios ativa</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Conecte suas contas Meta Ads ou Google Ads em <strong>Configurações → Integrações</strong> para ver dados reais.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <>
           {/* Summary Cards */}
@@ -178,7 +214,7 @@ const AnunciosDigitais = () => {
             </Card>
           )}
 
-          {/* Platform Details */}
+          {/* Platform Details with Campaigns */}
           <div className="grid gap-4 sm:grid-cols-2">
             {adSummary.map(ad => (
               <Card key={ad.plataforma}>
@@ -203,13 +239,29 @@ const AnunciosDigitais = () => {
                       <p className="font-medium">{ad.totalCliques.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Conversões</p>
-                      <p className="font-medium">{ad.totalConversoes}</p>
+                      <p className="text-xs text-muted-foreground">Impressões</p>
+                      <p className="font-medium">{ad.totalImpressoes.toLocaleString()}</p>
                     </div>
                   </div>
+
+                  {/* Campaign breakdown */}
+                  {ad.campanhas && ad.campanhas.length > 0 && (
+                    <div className="mt-3 pt-3 border-t">
+                      <p className="text-xs font-semibold mb-2">Campanhas ({ad.campanhas.length})</p>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {ad.campanhas.map((c, i) => (
+                          <div key={i} className="text-xs flex justify-between items-center">
+                            <span className="truncate max-w-[60%]">{c.nome}</span>
+                            <span className="text-muted-foreground">{formatCurrency(c.gasto)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {ad.totalGasto === 0 && ad.totalReceita === 0 && (
                     <p className="text-xs text-muted-foreground mt-3 text-center">
-                      Conecte via Integrações para ver dados reais
+                      Sem dados para o período selecionado
                     </p>
                   )}
                 </CardContent>
@@ -222,8 +274,8 @@ const AnunciosDigitais = () => {
             <CardContent className="p-4">
               <h4 className="text-sm font-semibold mb-2">💡 Como funciona</h4>
               <ul className="text-xs text-muted-foreground space-y-1">
-                <li>• Conecte suas contas Meta Ads e Google Ads em <strong>Configurações → Integrações</strong></li>
-                <li>• Os dados de gastos e resultados são importados automaticamente</li>
+                <li>• Os dados são buscados diretamente da API das plataformas conectadas</li>
+                <li>• Use o botão <strong>Sincronizar</strong> para atualizar os dados</li>
                 <li>• O ROAS (Return on Ad Spend) mostra quanto você recebe por cada real investido</li>
                 <li>• ROAS &gt; 2x = 🟢 Bom | ROAS 1-2x = 🟡 Atenção | ROAS &lt; 1x = 🔴 Prejuízo</li>
               </ul>
