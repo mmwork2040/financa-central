@@ -213,11 +213,12 @@ export const Sidebar = () => {
                 </DropdownMenuItem>
                 {activeEmpresa && !activeEmpresa.pessoal && !hasPendingRequest(activeEmpresa.empresa_id) && (
                   <>
-                    <DropdownMenuItem onSelect={(e) => {
-                      e.preventDefault();
+                    <DropdownMenuItem onSelect={() => {
+                      const id = activeEmpresa.empresa_id;
+                      const nome = activeEmpresa.empresa_nome || "";
                       setTimeout(() => {
-                        setExitEmpresaId(activeEmpresa.empresa_id);
-                        setExitEmpresaNome(activeEmpresa.empresa_nome || "");
+                        setExitEmpresaId(id);
+                        setExitEmpresaNome(nome);
                         setExitDialogOpen(true);
                       }, 150);
                     }}>
@@ -261,11 +262,12 @@ export const Sidebar = () => {
                   Entrar com código
                 </DropdownMenuItem>
                 {activeEmpresa && !activeEmpresa.pessoal && !hasPendingRequest(activeEmpresa.empresa_id) && (
-                  <DropdownMenuItem onSelect={(e) => {
-                    e.preventDefault();
+                  <DropdownMenuItem onSelect={() => {
+                    const id = activeEmpresa.empresa_id;
+                    const nome = activeEmpresa.empresa_nome || "";
                     setTimeout(() => {
-                      setExitEmpresaId(activeEmpresa.empresa_id);
-                      setExitEmpresaNome(activeEmpresa.empresa_nome || "");
+                      setExitEmpresaId(id);
+                      setExitEmpresaNome(nome);
                       setExitDialogOpen(true);
                     }, 150);
                   }}>
