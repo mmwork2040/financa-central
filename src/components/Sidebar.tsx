@@ -373,17 +373,19 @@ export const Sidebar = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Exit Request Dialog */}
-      <ExitRequestDialog
-        isOpen={exitDialogOpen}
-        onClose={() => setExitDialogOpen(false)}
-        empresaNome={exitEmpresaNome}
-        onConfirm={async (motivo) => {
-          if (!exitEmpresaId) return false;
-          return await createRequest(exitEmpresaId, motivo);
-        }}
-        loading={actionLoading}
-      />
+      {/* Exit Request Dialog - conditionally rendered to ensure clean unmount */}
+      {exitDialogOpen && (
+        <ExitRequestDialog
+          isOpen={exitDialogOpen}
+          onClose={() => setExitDialogOpen(false)}
+          empresaNome={exitEmpresaNome}
+          onConfirm={async (motivo) => {
+            if (!exitEmpresaId) return false;
+            return await createRequest(exitEmpresaId, motivo);
+          }}
+          loading={actionLoading}
+        />
+      )}
     </>
   );
 };
