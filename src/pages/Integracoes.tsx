@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, Share2 } from "lucide-react";
+import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, Share2, MessageCircle, Send } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,38 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-const PLATAFORMAS = [
+type PlataformaCategoria = "vendas" | "pagamentos" | "anuncios" | "comunicacao";
+
+interface Plataforma {
+  id: string;
+  name: string;
+  description: string;
+  icon: any;
+  color: string;
+  site: string;
+  doc?: string;
+  events?: string[];
+  steps: string[];
+  needsSecret: boolean;
+  webhookOnly?: boolean;
+  keyValidation?: { prefix?: string; hint: string };
+  categoria: PlataformaCategoria;
+}
+
+const CATEGORIAS_INFO: Record<PlataformaCategoria, { label: string; icon: any }> = {
+  vendas: { label: "Vendas Digitais", icon: ShoppingCart },
+  pagamentos: { label: "Pagamentos", icon: CreditCard },
+  anuncios: { label: "Anúncios", icon: Megaphone },
+  comunicacao: { label: "Comunicação", icon: MessageCircle },
+};
+
+const PLATAFORMAS: Plataforma[] = [
+  // --- Vendas Digitais ---
   {
     id: "hotmart", name: "Hotmart", description: "Plataforma de produtos digitais",
     icon: ShoppingCart, color: "bg-orange-100 text-orange-600",
@@ -26,9 +53,8 @@ const PLATAFORMAS = [
       "Selecione os eventos que deseja receber (ex: compra aprovada, reembolso)",
       "Salve e pronto! O sistema passará a escutar os eventos automaticamente",
     ],
-    needsSecret: false,
-    webhookOnly: true,
-    keyValidation: { hint: "" },
+    needsSecret: false, webhookOnly: true, keyValidation: { hint: "" },
+    categoria: "vendas",
   },
   {
     id: "eduzz", name: "Eduzz", description: "Venda de infoprodutos",
@@ -41,8 +67,8 @@ const PLATAFORMAS = [
       "Copie o Token gerado (API Key)",
       "Cole o token no campo abaixo",
     ],
-    needsSecret: false,
-    keyValidation: { hint: "Token alfanumérico" },
+    needsSecret: false, keyValidation: { hint: "Token alfanumérico" },
+    categoria: "vendas",
   },
   {
     id: "monetizze", name: "Monetizze", description: "Afiliados e produtos digitais",
@@ -55,9 +81,10 @@ const PLATAFORMAS = [
       "Copie a chave gerada",
       "Cole no campo API Key abaixo",
     ],
-    needsSecret: false,
-    keyValidation: { hint: "Chave alfanumérica" },
+    needsSecret: false, keyValidation: { hint: "Chave alfanumérica" },
+    categoria: "vendas",
   },
+  // --- Pagamentos ---
   {
     id: "stripe", name: "Stripe", description: "Pagamentos internacionais",
     icon: CreditCard, color: "bg-purple-100 text-purple-600",
@@ -69,8 +96,8 @@ const PLATAFORMAS = [
       "Cole como API Key no campo abaixo",
       "O Publishable Key pode ser usado como Secret (opcional)",
     ],
-    needsSecret: true,
-    keyValidation: { prefix: "sk_", hint: "Deve começar com sk_live_ ou sk_test_" },
+    needsSecret: true, keyValidation: { prefix: "sk_", hint: "Deve começar com sk_live_ ou sk_test_" },
+    categoria: "pagamentos",
   },
   {
     id: "paypal", name: "PayPal", description: "Pagamentos globais",
@@ -83,8 +110,8 @@ const PLATAFORMAS = [
       "Copie o Client ID (API Key) e o Secret",
       "Cole os valores nos campos abaixo",
     ],
-    needsSecret: true,
-    keyValidation: { hint: "Client ID alfanumérico" },
+    needsSecret: true, keyValidation: { hint: "Client ID alfanumérico" },
+    categoria: "pagamentos",
   },
   {
     id: "asaas", name: "Asaas", description: "Cobranças e pagamentos",
@@ -97,9 +124,10 @@ const PLATAFORMAS = [
       "Copie a chave (começa com $aact_...)",
       "Cole no campo API Key abaixo",
     ],
-    needsSecret: false,
-    keyValidation: { prefix: "$aact_", hint: "Deve começar com $aact_" },
+    needsSecret: false, keyValidation: { prefix: "$aact_", hint: "Deve começar com $aact_" },
+    categoria: "pagamentos",
   },
+  // --- Anúncios ---
   {
     id: "meta_ads", name: "Meta Ads", description: "Facebook & Instagram Ads",
     icon: Megaphone, color: "bg-blue-100 text-blue-700",
@@ -111,8 +139,8 @@ const PLATAFORMAS = [
       "Gere um Access Token com permissão ads_read",
       "Cole o Access Token como API Key abaixo",
     ],
-    needsSecret: false,
-    keyValidation: { hint: "Access Token alfanumérico" },
+    needsSecret: false, keyValidation: { hint: "Access Token alfanumérico" },
+    categoria: "anuncios",
   },
   {
     id: "google_ads", name: "Google Ads", description: "Anúncios no Google",
@@ -125,8 +153,37 @@ const PLATAFORMAS = [
       "Ative a Google Ads API no projeto",
       "Cole a API Key no campo abaixo",
     ],
-    needsSecret: true,
-    keyValidation: { prefix: "AIza", hint: "Deve começar com AIza" },
+    needsSecret: true, keyValidation: { prefix: "AIza", hint: "Deve começar com AIza" },
+    categoria: "anuncios",
+  },
+  // --- Comunicação ---
+  {
+    id: "whatsapp", name: "WhatsApp API", description: "API Oficial do WhatsApp Business",
+    icon: MessageCircle, color: "bg-green-100 text-green-700",
+    site: "https://business.facebook.com/settings/whatsapp-business", doc: "https://developers.facebook.com/docs/whatsapp/cloud-api/get-started",
+    events: ["message_received", "message_delivered", "message_read"],
+    steps: [
+      "Acesse o Meta Business Suite → WhatsApp → Configurações da API",
+      "Crie um App no developers.facebook.com com produto WhatsApp",
+      "Gere um Access Token permanente para a API",
+      "Cole o Access Token no campo API Key abaixo",
+    ],
+    needsSecret: false, keyValidation: { hint: "Access Token do WhatsApp Cloud API" },
+    categoria: "comunicacao",
+  },
+  {
+    id: "telegram", name: "Telegram Bot", description: "Bot API do Telegram",
+    icon: Send, color: "bg-sky-100 text-sky-600",
+    site: "https://t.me/BotFather", doc: "https://core.telegram.org/bots/api",
+    events: ["message", "callback_query", "command"],
+    steps: [
+      "Abra o Telegram e converse com o @BotFather",
+      "Envie /newbot e siga as instruções para criar seu bot",
+      "Copie o Token do bot gerado pelo BotFather",
+      "Cole o token no campo API Key abaixo",
+    ],
+    needsSecret: false, keyValidation: { hint: "Token no formato 123456:ABC-DEF..." },
+    categoria: "comunicacao",
   },
 ];
 
@@ -385,7 +442,7 @@ const Integracoes = () => {
           </div>
           <h1 className="text-xl sm:text-2xl font-bold">Integrações</h1>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground">Conecte suas plataformas de vendas digitais</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">Conecte plataformas de vendas, pagamentos, anúncios e comunicação</p>
         {isSuperAdmin && (
           <Button variant="outline" size="sm" className="mt-2" onClick={() => setExportDialogOpen(true)}>
             <Share2 className="mr-2 h-4 w-4" />
@@ -397,8 +454,29 @@ const Integracoes = () => {
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PLATAFORMAS.map(plat => {
+        <Tabs defaultValue="vendas" className="w-full">
+          <TabsList className="mb-4 flex-wrap h-auto">
+            {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => {
+              const info = CATEGORIAS_INFO[cat];
+              const CatIcon = info.icon;
+              const count = PLATAFORMAS.filter(p => p.categoria === cat).length;
+              const connectedCount = PLATAFORMAS.filter(p => p.categoria === cat && getStatus(p.id) === 'connected').length;
+              return (
+                <TabsTrigger key={cat} value={cat} className="gap-1.5 text-xs sm:text-sm">
+                  <CatIcon className="h-3.5 w-3.5" />
+                  {info.label}
+                  {connectedCount > 0 && (
+                    <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">{connectedCount}/{count}</Badge>
+                  )}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+
+          {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => (
+            <TabsContent key={cat} value={cat}>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {PLATAFORMAS.filter(p => p.categoria === cat).map(plat => {
             const status = getStatus(plat.id);
             const Icon = plat.icon;
             return (
@@ -545,8 +623,11 @@ const Integracoes = () => {
                 </CardContent>
               </Card>
             );
-          })}
-        </div>
+                })}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
       )}
 
       {/* Wizard Dialog */}
