@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Megaphone, TrendingUp, DollarSign, MousePointer, Target, RefreshCw, AlertTriangle, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Megaphone, TrendingUp, DollarSign, MousePointer, Target, RefreshCw, AlertTriangle, Eye, EyeOff, Loader2, ChevronDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -261,12 +262,45 @@ const AnunciosDigitais = () => {
                   {ad.campanhas && ad.campanhas.length > 0 && valoresVisiveis && (
                     <div className="mt-3 pt-3 border-t">
                       <p className="text-xs font-semibold mb-2">Campanhas ({ad.campanhas.length})</p>
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                      <div className="space-y-1 max-h-60 overflow-y-auto">
                         {ad.campanhas.map((c, i) => (
-                          <div key={i} className="text-xs flex justify-between items-center gap-2">
-                            <span className="truncate max-w-[60%]">{c.nome}</span>
-                            <span className="text-muted-foreground whitespace-nowrap">{formatCurrency(c.gasto)}</span>
-                          </div>
+                          <Collapsible key={i}>
+                            <CollapsibleTrigger className="w-full text-xs flex justify-between items-center gap-2 p-1.5 rounded hover:bg-muted/60 cursor-pointer transition-colors group">
+                              <span className="truncate max-w-[55%] text-left font-medium">{c.nome}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-muted-foreground whitespace-nowrap">{formatCurrency(c.gasto)}</span>
+                                <ChevronDown className="h-3 w-3 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+                              </div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] p-2 ml-1 border-l-2 border-primary/20 bg-muted/30 rounded-r">
+                                <div>
+                                  <span className="text-muted-foreground">Impressões: </span>
+                                  <span className="font-medium">{c.impressoes?.toLocaleString() ?? "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Cliques: </span>
+                                  <span className="font-medium">{c.cliques?.toLocaleString() ?? "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Conversões: </span>
+                                  <span className="font-medium">{c.conversoes?.toLocaleString() ?? "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Receita: </span>
+                                  <span className="font-medium text-green-600">{formatCurrency(c.receita ?? 0)}</span>
+                                </div>
+                                {c.gasto > 0 && (
+                                  <div className="col-span-2">
+                                    <span className="text-muted-foreground">ROAS: </span>
+                                    <span className={cn("font-medium", (c.receita / c.gasto) >= 2 ? "text-green-600" : (c.receita / c.gasto) >= 1 ? "text-amber-600" : "text-destructive")}>
+                                      {(c.receita / c.gasto).toFixed(1)}x
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
                         ))}
                       </div>
                     </div>
