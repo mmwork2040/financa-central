@@ -63,6 +63,18 @@ const TEST_ENDPOINTS: Record<string, { url: string; method: string; headers: (ke
     method: "GET",
     headers: (key) => ({}),
   },
+  whatsapp: {
+    url: "https://graph.facebook.com/v19.0/me",
+    method: "GET",
+    headers: (key) => ({
+      "Authorization": `Bearer ${key}`,
+    }),
+  },
+  telegram: {
+    url: "",  // built dynamically
+    method: "GET",
+    headers: () => ({}),
+  },
 };
 
 Deno.serve(async (req) => {
@@ -134,6 +146,10 @@ Deno.serve(async (req) => {
     let testUrl = testConfig.url;
     if (plataforma === "google_ads") {
       testUrl = `${testConfig.url}?key=${apiKey}`;
+    }
+    // For Telegram, build URL dynamically with bot token
+    if (plataforma === "telegram") {
+      testUrl = `https://api.telegram.org/bot${apiKey}/getMe`;
     }
 
     const fetchOptions: RequestInit = {
