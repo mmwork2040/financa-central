@@ -67,13 +67,36 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Delete existing integrations in target
-    await supabase
-      .from("integracoes")
-      .delete()
-      .eq("empresa_id", targetEmpresaId);
+    // ── Clean ALL existing data in target empresa ──
 
-    // Copy integrations to target
+    // 1. Delete recebimentos_digitais (depends on vendas_digitais)
+    const { data: targetVendas } = await supabase
+      .from("vendas_digitais")
+      .select("id")
+      .eq("empresa_id", targetEmpresaId);
+    if (targetVendas && targetVendas.length > 0) {
+      await supabase
+        .from("recebimentos_digitais")
+        .delete()
+        .in("venda_id", targetVendas.map((v: any) => v.id));
+    }
+
+    // 2. Delete vendas_digitais
+    await supabase.from("vendas_digitais").delete().eq("empresa_id", targetEmpresaId);
+
+    // 3. Delete lancamentos with origem='integracao'
+    await supabase.from("lancamentos").delete().eq("empresa_id", targetEmpresaId).eq("origem", "integracao");
+
+    // 4. Delete logs_integracoes
+    await supabase.from("logs_integracoes").delete().eq("empresa_id", targetEmpresaId);
+
+    // 5. Delete webhooks_empresa
+    await supabase.from("webhooks_empresa").delete().eq("empresa_id", targetEmpresaId);
+
+    // 6. Delete integracoes
+    await supabase.from("integracoes").delete().eq("empresa_id", targetEmpresaId);
+
+    // ── Copy integrations ──
     const newIntegracoes = sourceIntegracoes.map((integ: any) => ({
       empresa_id: targetEmpresaId,
       plataforma: integ.plataforma,
@@ -84,20 +107,16 @@ Deno.serve(async (req) => {
       webhook_secret: integ.webhook_secret,
     }));
 
-    const { error: insertError } = await supabase
-      .from("integracoes")
-      .insert(newIntegracoes);
-
+    const { error: insertError } = await supabase.from("integracoes").insert(newIntegracoes);
     if (insertError) throw insertError;
 
-    // Also copy webhooks_empresa and update URLs with target empresa_id
+    // ── Copy webhooks with updated empresa_id in URLs ──
     const { data: sourceWebhooks } = await supabase
       .from("webhooks_empresa")
       .select("*")
       .eq("empresa_id", sourceEmpresaId);
 
     if (sourceWebhooks && sourceWebhooks.length > 0) {
-      await supabase.from("webhooks_empresa").delete().eq("empresa_id", targetEmpresaId);
       const newWebhooks = sourceWebhooks.map((wh: any) => ({
         empresa_id: targetEmpresaId,
         evento: wh.evento,
