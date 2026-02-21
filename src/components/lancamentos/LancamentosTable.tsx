@@ -110,6 +110,11 @@ export const LancamentosTable = () => {
         <TableHeader>
           <TableRow>
             <TableHead>
+              <div className="flex items-center cursor-pointer" onClick={() => handleSort('created_at')}>
+                Registro <ArrowUpDown className="ml-2 h-3 w-3" />
+              </div>
+            </TableHead>
+            <TableHead>
               <div className="flex items-center cursor-pointer" onClick={() => handleSort('data_vencimento')}>
                 Vencimento <ArrowUpDown className="ml-2 h-3 w-3" />
               </div>
@@ -133,6 +138,7 @@ export const LancamentosTable = () => {
         <TableBody>
           {lancamentos.map((lancamento) => (
             <TableRow key={lancamento.id}>
+              <TableCell>{new Date(lancamento.created_at).toLocaleDateString()}</TableCell>
               <TableCell>{new Date(lancamento.data_vencimento).toLocaleDateString()}</TableCell>
               <TableCell className="font-medium">
                 {lancamento.descricao}
