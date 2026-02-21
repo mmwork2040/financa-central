@@ -142,6 +142,7 @@ const Integracoes = () => {
   const [saving, setSaving] = useState(false);
   const [keyError, setKeyError] = useState("");
   const [testing, setTesting] = useState<string | null>(null);
+  const [testingWebhook, setTestingWebhook] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ plataforma: string; status: string; message: string } | null>(null);
   const [webhookExpanded, setWebhookExpanded] = useState<string | null>(null);
 
@@ -292,6 +293,63 @@ const Integracoes = () => {
     }
   };
 
+  const MOCK_WEBHOOKS: Record<string, any> = {
+    hotmart: {
+      event: "PURCHASE_APPROVED",
+      data: {
+        purchase: { status: "approved", price: { value: 9900 }, order_date: new Date().toISOString() },
+        buyer: { name: "Cliente Teste", email: "teste@exemplo.com" },
+        product: { name: "Produto de Teste" },
+      },
+    },
+    eduzz: {
+      event_type: "sale",
+      trans_status: "3",
+      trans_value: 99.0,
+      trans_fee: 9.9,
+      cus_name: "Cliente Teste",
+      product_name: "Produto de Teste",
+      trans_createdate: new Date().toISOString(),
+    },
+    monetizze: {
+      evento: { tipo_evento: "2", venda: { valor: 99.0, comissao: 9.9, data: new Date().toISOString() } },
+      comprador: { nome: "Cliente Teste" },
+      produto: { nome: "Produto de Teste" },
+    },
+  };
+
+  const handleTestWebhook = async (plataforma: string) => {
+    if (!empresaId) return;
+    setTestingWebhook(plataforma);
+    setTestResult(null);
+    try {
+      const webhookUrl = getWebhookUrl(plataforma);
+      const mockData = MOCK_WEBHOOKS[plataforma];
+      if (!mockData) {
+        toast.info("Teste de webhook não disponível para esta plataforma.");
+        return;
+      }
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(mockData),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setTestResult({ plataforma, status: "success", message: `Webhook simulado! Venda registrada (ID: ${result.venda_id?.slice(0, 8)}...)` });
+        toast.success("Webhook de teste processado com sucesso! Venda registrada.");
+      } else {
+        setTestResult({ plataforma, status: "error", message: result.error || "Erro ao processar webhook" });
+        toast.error(result.error || "Erro ao processar webhook de teste");
+      }
+    } catch (error: any) {
+      setTestResult({ plataforma, status: "error", message: error.message });
+      toast.error("Erro ao enviar webhook de teste: " + error.message);
+    } finally {
+      setTestingWebhook(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -350,6 +408,18 @@ const Integracoes = () => {
                           {testing === plat.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Activity className="h-3.5 w-3.5 mr-1" />}
                           Testar
                         </Button>
+                        {MOCK_WEBHOOKS[plat.id] && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 min-w-[80px]"
+                            onClick={() => handleTestWebhook(plat.id)}
+                            disabled={testingWebhook === plat.id}
+                          >
+                            {testingWebhook === plat.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Zap className="h-3.5 w-3.5 mr-1" />}
+                            Simular Venda
+                          </Button>
+                        )}
                         <Button variant="outline" size="sm" className="flex-1 min-w-[80px]" onClick={() => openWizard(plat.id, true)}>
                           <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
                         </Button>
