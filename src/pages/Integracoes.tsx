@@ -17,16 +17,17 @@ const PLATAFORMAS = [
   {
     id: "hotmart", name: "Hotmart", description: "Plataforma de produtos digitais",
     icon: ShoppingCart, color: "bg-orange-100 text-orange-600",
-    site: "https://app.hotmart.com/tools/credentials", doc: "https://developers.hotmart.com/docs/pt-BR/",
+    site: "https://app.hotmart.com/tools/webhook", doc: "https://developers.hotmart.com/docs/pt-BR/",
     events: ["purchase_approved", "purchase_refunded", "purchase_canceled", "purchase_delayed", "purchase_expired", "subscription_cancellation"],
     steps: [
-      "Acesse o painel Hotmart e vá em Ferramentas → Credenciais",
-      "Clique em 'Gerar credenciais' para criar um novo Client",
-      "Copie o Client ID (API Key) e o Client Secret",
-      "Cole os valores nos campos abaixo",
+      "Acesse o painel Hotmart e vá em Ferramentas → Webhooks",
+      "Clique em 'Adicionar Webhook' e cole a URL abaixo",
+      "Selecione os eventos que deseja receber (ex: compra aprovada, reembolso)",
+      "Salve e pronto! O sistema passará a escutar os eventos automaticamente",
     ],
-    needsSecret: true,
-    keyValidation: { hint: "Client ID alfanumérico" },
+    needsSecret: false,
+    webhookOnly: true,
+    keyValidation: { hint: "" },
   },
   {
     id: "eduzz", name: "Eduzz", description: "Venda de infoprodutos",
@@ -210,11 +211,15 @@ const Integracoes = () => {
   };
 
   const handleConnect = async () => {
-    if (!connectDialog || !apiKey.trim() || !empresaId || !currentPlat) return;
-    const validationError = validateApiKey(apiKey, currentPlat);
-    if (validationError) {
-      setKeyError(validationError);
-      return;
+    if (!connectDialog || !empresaId || !currentPlat) return;
+    const isWebhookOnly = !!(currentPlat as any).webhookOnly;
+    if (!isWebhookOnly && !apiKey.trim()) return;
+    if (!isWebhookOnly) {
+      const validationError = validateApiKey(apiKey, currentPlat);
+      if (validationError) {
+        setKeyError(validationError);
+        return;
+      }
     }
     setSaving(true);
     try {
@@ -223,7 +228,7 @@ const Integracoes = () => {
         .upsert({
           empresa_id: empresaId,
           plataforma: connectDialog,
-          api_key_encrypted: apiKey.trim(),
+          api_key_encrypted: isWebhookOnly ? 'webhook_only' : apiKey.trim(),
           api_secret_encrypted: apiSecret.trim() || null,
           ambiente,
           ativo: true,
@@ -517,9 +522,15 @@ const Integracoes = () => {
                   </a>
                 )}
               </div>
-              <Button onClick={() => setWizardStep(1)} className="w-full">
-                Já tenho as credenciais <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+              {(currentPlat as any).webhookOnly ? (
+                <Button onClick={handleConnect} disabled={saving} className="w-full">
+                  {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Salvando...</> : <><Check className="h-4 w-4 mr-1" /> Ativar integração</>}
+                </Button>
+              ) : (
+                <Button onClick={() => setWizardStep(1)} className="w-full">
+                  Já tenho as credenciais <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              )}
             </div>
           )}
 
