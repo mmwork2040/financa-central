@@ -150,6 +150,7 @@ const Integracoes = () => {
   const [exportTargetEmpresa, setExportTargetEmpresa] = useState("");
   const [exporting, setExporting] = useState(false);
   const [exportResult, setExportResult] = useState<{ count: number; webhookUrls: { plataforma: string; url: string }[] } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'disconnect' | 'edit'; plataforma: string } | null>(null);
 
   const getWebhookUrl = (platformId: string) => {
     if (!empresaId) return "";
@@ -461,7 +462,7 @@ const Integracoes = () => {
                         )}
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => openWizard(plat.id, true)}>
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setConfirmAction({ type: 'edit', plataforma: plat.id })}>
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
                           </TooltipTrigger>
@@ -469,7 +470,7 @@ const Integracoes = () => {
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDisconnect(plat.id)}>
+                            <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setConfirmAction({ type: 'disconnect', plataforma: plat.id })}>
                               <XCircle className="h-3.5 w-3.5" />
                             </Button>
                           </TooltipTrigger>
@@ -771,6 +772,39 @@ const Integracoes = () => {
               </AlertDialogFooter>
             </>
           )}
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmation Dialog for Edit/Disconnect */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction?.type === 'disconnect' ? 'Desconectar Integração' : 'Editar Integração'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.type === 'disconnect'
+                ? `Tem certeza que deseja desconectar a integração "${PLATAFORMAS.find(p => p.id === confirmAction?.plataforma)?.name}"? A integração ficará inativa até ser reconectada.`
+                : `Deseja editar as credenciais da integração "${PLATAFORMAS.find(p => p.id === confirmAction?.plataforma)?.name}"?`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className={confirmAction?.type === 'disconnect' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+              onClick={() => {
+                if (confirmAction?.type === 'disconnect') {
+                  handleDisconnect(confirmAction.plataforma);
+                } else if (confirmAction?.type === 'edit') {
+                  openWizard(confirmAction.plataforma, true);
+                }
+                setConfirmAction(null);
+              }}
+            >
+              {confirmAction?.type === 'disconnect' ? 'Desconectar' : 'Editar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
