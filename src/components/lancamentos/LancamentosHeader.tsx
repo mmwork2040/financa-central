@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Filter, Plus } from "lucide-react";
+import { Eye, EyeOff, Filter, Plus, Receipt } from "lucide-react";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import ExportDropdown from "@/components/common/ExportDropdown";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,7 +29,13 @@ export const LancamentosHeader = () => {
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <h1 className="text-2xl font-bold">Lançamentos</h1>
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <Receipt className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+          <h1 className="text-xl sm:text-2xl font-bold">Lançamentos</h1>
+        </div>
+        <p className="text-xs sm:text-sm text-muted-foreground">Gerencie suas receitas e despesas</p>
+      </div>
       <div className="flex items-center gap-2 flex-wrap">
         <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground" title={visible ? "Ocultar valores" : "Exibir valores"}>
           {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

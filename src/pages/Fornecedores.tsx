@@ -1,6 +1,7 @@
 
 import React from "react";
 import { useFornecedores } from "@/hooks/useFornecedores";
+import { Truck } from "lucide-react";
 import { FormModal } from "@/components/modals/FormModal";
 import PageHeader from "@/components/common/PageHeader";
 import FornecedorForm from "@/components/fornecedores/FornecedorForm";
@@ -46,6 +47,7 @@ const Fornecedores = () => {
         buttonLabel="Novo Fornecedor"
         onButtonClick={() => openModal()}
         showButton={canIncluir}
+        icon={Truck}
       />
 
       <FornecedoresActions 

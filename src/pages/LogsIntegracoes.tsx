@@ -112,10 +112,10 @@ const LogsIntegracoes = () => {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <ScrollText className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Logs de Integrações</h1>
+            <ScrollText className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <h1 className="text-xl sm:text-2xl font-bold">Logs de Integrações</h1>
           </div>
-          <p className="text-sm text-muted-foreground">Histórico de eventos enviados e recebidos</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Histórico de eventos enviados e recebidos</p>
         </div>
         {isAdmin && logs.length > 0 && (
           <AlertDialog>

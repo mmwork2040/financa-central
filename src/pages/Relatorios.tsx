@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Importando componentes refatorados
@@ -348,7 +348,13 @@ const RelatoriosContent = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Relatórios</h1>
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <h1 className="text-xl sm:text-2xl font-bold">Relatórios</h1>
+          </div>
+          <p className="text-xs sm:text-sm text-muted-foreground">Análise detalhada das suas finanças</p>
+        </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground" title={visible ? "Ocultar valores" : "Exibir valores"}>
             {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

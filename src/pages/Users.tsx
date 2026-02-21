@@ -1,6 +1,7 @@
 
 import React from "react";
 import PageHeader from "@/components/common/PageHeader";
+import { UserCog } from "lucide-react";
 import { UsersProvider } from "@/contexts/UsersContext";
 import { UsersContainer } from "@/components/users/UsersContainer";
 
@@ -13,6 +14,7 @@ const Users = () => {
           description="Gerencie os usuários do sistema."
           buttonLabel="Novo Usuário"
           onButtonClick={() => document.dispatchEvent(new CustomEvent('open-user-modal'))}
+          icon={UserCog}
         />
         <UsersContainer />
       </UsersProvider>

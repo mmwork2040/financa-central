@@ -1,6 +1,7 @@
 
 import React, { useState } from "react";
 import { useCategorias } from "@/hooks/useCategorias";
+import { Tags } from "lucide-react";
 import PageHeader from "@/components/common/PageHeader";
 import CategoriasSearch from "@/components/categorias/CategoriasSearch";
 import CategoriasTable from "@/components/categorias/CategoriasTable";
@@ -175,6 +176,7 @@ const Categorias = () => {
         buttonLabel="Nova Categoria"
         onButtonClick={() => openModal()}
         showButton={canIncluir}
+        icon={Tags}
       />
 
       <CategoriasSearch 

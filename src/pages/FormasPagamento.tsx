@@ -1,6 +1,7 @@
 
 import React, { useState } from "react";
 import { useFormasPagamento, FormaPagamento } from "@/hooks/useFormasPagamento";
+import { CreditCard } from "lucide-react";
 import FormasPagamentoSearch from "@/components/formas-pagamento/FormasPagamentoSearch";
 import FormasPagamentoTable from "@/components/formas-pagamento/FormasPagamentoTable";
 import FormaPagamentoForm from "@/components/formas-pagamento/FormaPagamentoForm";
@@ -79,6 +80,7 @@ const FormasPagamento = () => {
         buttonLabel="Nova Forma de Pagamento" 
         onButtonClick={() => handleOpenModal()}
         showButton={canIncluir}
+        icon={CreditCard}
       />
       
       <FormasPagamentoSearch 

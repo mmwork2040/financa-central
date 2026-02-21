@@ -165,9 +165,12 @@ const ConfiguracoesEmpresa = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        {isPessoal ? <User className="h-7 w-7 text-primary" /> : <Building2 className="h-7 w-7 text-primary" />}
-        <h1 className="text-2xl font-bold">{isPessoal ? "Configurações Pessoais" : "Configurações da Empresa"}</h1>
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          {isPessoal ? <User className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> : <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />}
+          <h1 className="text-xl sm:text-2xl font-bold">{isPessoal ? "Configurações Pessoais" : "Configurações da Empresa"}</h1>
+        </div>
+        <p className="text-xs sm:text-sm text-muted-foreground">Gerencie os dados e personalização</p>
       </div>
 
       {isPessoal && (
