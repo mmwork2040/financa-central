@@ -169,7 +169,10 @@ const DashboardContent = () => {
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{l.descricao}</p>
                     <p className="text-xs text-muted-foreground">
-                      {l.categoria?.nome || l.tipo} • {formatDate(l.data_vencimento)}
+                      {l.categoria?.nome || l.tipo} • Venc: {formatDate(l.data_vencimento)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Registro: {new Date(l.created_at).toLocaleDateString('pt-BR')} {new Date(l.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                   <div className="text-right shrink-0 ml-3">

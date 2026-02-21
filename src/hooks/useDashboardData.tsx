@@ -16,6 +16,7 @@ interface LancamentoRecente {
   tipo: 'receita' | 'despesa' | 'investimento';
   valor: number;
   data_vencimento: string;
+  created_at: string;
   status: string;
   cliente?: { nome: string };
   fornecedor?: { nome: string };
@@ -58,7 +59,7 @@ export const useDashboardData = () => {
         .from('lancamentos')
         .select(`*, categoria:categoria_id(nome), fornecedor:fornecedor_id(nome), cliente:cliente_id(nome)`)
         .order('created_at', { ascending: false })
-        .limit(8);
+        .limit(10);
 
       if (lancamentosError) throw lancamentosError;
       
@@ -68,6 +69,7 @@ export const useDashboardData = () => {
         tipo: l.tipo as 'receita' | 'despesa' | 'investimento',
         valor: l.valor,
         data_vencimento: l.data_vencimento,
+        created_at: l.created_at,
         status: l.status,
         cliente: l.cliente,
         fornecedor: l.fornecedor,
