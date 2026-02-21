@@ -31,6 +31,7 @@ export type Lancamento = {
   fornecedor?: { id: string; nome: string };
   cliente?: { id: string; nome: string };
   categoria?: { id: string; nome: string; tipo: string };
+  origem?: string;
 };
 
 export type Categoria = {
@@ -76,7 +77,7 @@ type FiltrosType = {
   cliente_id?: string | null;
 };
 
-type LancamentoFormData = Omit<Lancamento, 'id' | 'created_at' | 'fornecedor' | 'cliente' | 'categoria'>;
+type LancamentoFormData = Omit<Lancamento, 'id' | 'created_at' | 'fornecedor' | 'cliente' | 'categoria' | 'origem'>;
 
 interface LancamentosContextType {
   lancamentos: Lancamento[];

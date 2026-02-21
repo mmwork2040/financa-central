@@ -253,6 +253,7 @@ Deno.serve(async (req) => {
             data_vencimento: dataVenda,
             data_pagamento: dataVenda,
             status: "pago",
+            origem: "integracao",
           })
           .select("id")
           .single();

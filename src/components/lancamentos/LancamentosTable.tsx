@@ -2,7 +2,8 @@
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Check, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, Check, Lock, Pencil, Trash2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import { formatCurrency } from "@/utils/format";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,21 +61,36 @@ export const LancamentosTable = () => {
                   </p>
                   {showActions && (
                     <div className="flex gap-0.5">
-                      {canAlterar && l.status === "pendente" && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary"
-                          onClick={() => handleUpdateStatus(l.id!, l.tipo === "receita" ? "recebido" : "pago")}>
-                          <Check className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                      {canAlterar && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenModal(l)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                      {canExcluir && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleOpenDeleteModal(l.id!)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                      {l.origem === 'integracao' ? (
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center h-7 px-1.5 text-muted-foreground">
+                                <Lock className="h-3.5 w-3.5" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Lançamento automático (integração)</p></TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <>
+                          {canAlterar && l.status === "pendente" && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary"
+                              onClick={() => handleUpdateStatus(l.id!, l.tipo === "receita" ? "recebido" : "pago")}>
+                              <Check className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {canAlterar && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenModal(l)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {canExcluir && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleOpenDeleteModal(l.id!)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -142,20 +158,35 @@ export const LancamentosTable = () => {
               {showActions && (
                 <TableCell>
                   <div className="flex justify-center space-x-1">
-                    {canAlterar && lancamento.status === "pendente" && (
-                      <Button variant="ghost" size="sm" onClick={() => handleUpdateStatus(lancamento.id!, lancamento.tipo === "receita" ? "recebido" : "pago")} className="h-8 w-8 p-0 text-primary">
-                        <Check className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {canAlterar && (
-                      <Button variant="ghost" size="sm" onClick={() => handleOpenModal(lancamento)} className="h-8 w-8 p-0">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {canExcluir && (
-                      <Button variant="ghost" size="sm" onClick={() => handleOpenDeleteModal(lancamento.id!)} className="h-8 w-8 p-0 text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    {lancamento.origem === 'integracao' ? (
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center h-8 px-2 text-muted-foreground">
+                              <Lock className="h-4 w-4" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Lançamento automático (integração)</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <>
+                        {canAlterar && lancamento.status === "pendente" && (
+                          <Button variant="ghost" size="sm" onClick={() => handleUpdateStatus(lancamento.id!, lancamento.tipo === "receita" ? "recebido" : "pago")} className="h-8 w-8 p-0 text-primary">
+                            <Check className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canAlterar && (
+                          <Button variant="ghost" size="sm" onClick={() => handleOpenModal(lancamento)} className="h-8 w-8 p-0">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canExcluir && (
+                          <Button variant="ghost" size="sm" onClick={() => handleOpenDeleteModal(lancamento.id!)} className="h-8 w-8 p-0 text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </>
                     )}
                   </div>
                 </TableCell>
