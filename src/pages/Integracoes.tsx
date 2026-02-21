@@ -149,6 +149,7 @@ const Integracoes = () => {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportTargetEmpresa, setExportTargetEmpresa] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [exportResult, setExportResult] = useState<{ count: number; webhookUrls: { plataforma: string; url: string }[] } | null>(null);
 
   const getWebhookUrl = (platformId: string) => {
     if (!empresaId) return "";
@@ -364,14 +365,9 @@ const Integracoes = () => {
       if (res.error) throw res.error;
       if (res.data?.error) throw new Error(res.data.error);
       
+      setExportResult({ count: res.data.count, webhookUrls: res.data.webhookUrls || [] });
       const targetNome = empresas.find(e => e.empresa_id === exportTargetEmpresa)?.empresa_nome || 'empresa';
-      let msg = `${res.data.count} integrações exportadas para ${targetNome}!`;
-      if (res.data.webhookUrls?.length > 0) {
-        msg += ` As webhook URLs foram atualizadas com o ID da empresa destino.`;
-      }
-      toast.success(msg);
-      setExportDialogOpen(false);
-      setExportTargetEmpresa("");
+      toast.success(`${res.data.count} integrações exportadas para ${targetNome}!`);
     } catch (error: any) {
       toast.error(error.message || "Erro ao exportar integrações");
     } finally {
@@ -705,42 +701,76 @@ const Integracoes = () => {
       </Dialog>
 
       {/* Export Dialog */}
-      <AlertDialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
-        <AlertDialogContent>
+      <AlertDialog open={exportDialogOpen} onOpenChange={(open) => {
+        setExportDialogOpen(open);
+        if (!open) { setExportResult(null); setExportTargetEmpresa(""); }
+      }}>
+        <AlertDialogContent className="max-w-lg">
           <AlertDialogHeader>
-            <AlertDialogTitle>Exportar Integrações</AlertDialogTitle>
+            <AlertDialogTitle>
+              {exportResult ? "Exportação Concluída" : "Exportar Integrações"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação irá <strong>substituir todas as integrações</strong> da empresa selecionada
-              pelas integrações da empresa atual. Esta ação não pode ser desfeita.
+              {exportResult
+                ? `${exportResult.count} integrações conectadas foram copiadas com sucesso. As webhook URLs abaixo já estão atualizadas com o ID da empresa destino.`
+                : <>Esta ação irá <strong>substituir todas as integrações</strong> da empresa selecionada pelas integrações <strong>conectadas</strong> da empresa atual (incluindo credenciais e webhooks). Esta ação não pode ser desfeita.</>
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="space-y-2 py-2">
-            <Label>Empresa de destino</Label>
-            <Select value={exportTargetEmpresa} onValueChange={setExportTargetEmpresa}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a empresa..." />
-              </SelectTrigger>
-              <SelectContent>
-                {empresas
-                  .filter(e => e.empresa_id !== empresaId)
-                  .map(e => (
-                    <SelectItem key={e.empresa_id} value={e.empresa_id}>
-                      {e.empresa_nome || 'Empresa'}
-                    </SelectItem>
+
+          {!exportResult ? (
+            <>
+              <div className="space-y-2 py-2">
+                <Label>Empresa de destino</Label>
+                <Select value={exportTargetEmpresa} onValueChange={setExportTargetEmpresa}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a empresa..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {empresas
+                      .filter(e => e.empresa_id !== empresaId)
+                      .map(e => (
+                        <SelectItem key={e.empresa_id} value={e.empresa_id}>
+                          {e.empresa_nome || 'Empresa'}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={exporting}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => { e.preventDefault(); handleExportIntegracoes(); }}
+                  disabled={!exportTargetEmpresa || exporting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {exporting ? "Exportando..." : "Confirmar Exportação"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          ) : (
+            <>
+              {exportResult.webhookUrls.length > 0 && (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  <p className="text-xs font-medium text-muted-foreground">Novas Webhook URLs (já com empresa destino):</p>
+                  {exportResult.webhookUrls.map((wh) => (
+                    <div key={wh.plataforma} className="space-y-1">
+                      <p className="text-xs font-semibold capitalize">{wh.plataforma}</p>
+                      <div className="flex items-center gap-1">
+                        <Input readOnly value={wh.url} className="text-[10px] h-7 font-mono bg-muted" />
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0" onClick={() => { navigator.clipboard.writeText(wh.url); toast.success("URL copiada!"); }}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
                   ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={exporting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleExportIntegracoes}
-              disabled={!exportTargetEmpresa || exporting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {exporting ? "Exportando..." : "Confirmar Exportação"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
+                </div>
+              )}
+              <AlertDialogFooter>
+                <AlertDialogCancel>Fechar</AlertDialogCancel>
+              </AlertDialogFooter>
+            </>
+          )}
         </AlertDialogContent>
       </AlertDialog>
     </div>

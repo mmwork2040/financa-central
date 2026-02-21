@@ -52,16 +52,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch source integrations
+    // Fetch only ACTIVE source integrations
     const { data: sourceIntegracoes, error: fetchError } = await supabase
       .from("integracoes")
       .select("*")
-      .eq("empresa_id", sourceEmpresaId);
+      .eq("empresa_id", sourceEmpresaId)
+      .eq("ativo", true);
 
     if (fetchError) throw fetchError;
     if (!sourceIntegracoes || sourceIntegracoes.length === 0) {
       return new Response(
-        JSON.stringify({ error: "Nenhuma integração encontrada na empresa de origem" }),
+        JSON.stringify({ error: "Nenhuma integração conectada na empresa de origem" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
