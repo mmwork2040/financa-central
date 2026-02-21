@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { ScrollText, Loader2, CheckCircle2, XCircle, AlertTriangle, RefreshCw, Search } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollText, Loader2, CheckCircle2, XCircle, AlertTriangle, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+import MobilePagination, { usePagination } from "@/components/common/MobilePagination";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LogEntry {
   id: string;
@@ -20,11 +25,15 @@ interface LogEntry {
 }
 
 const LogsIntegracoes = () => {
+  const { empresaId, userRole, isSuperAdmin } = useAuth();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clearing, setClearing] = useState(false);
   const [filtroPlataforma, setFiltroPlataforma] = useState("todas");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [busca, setBusca] = useState("");
+  const isMobile = useIsMobile();
+  const isAdmin = userRole === "admin" || isSuperAdmin;
 
   useEffect(() => {
     fetchLogs();
@@ -37,13 +46,31 @@ const LogsIntegracoes = () => {
         .from("logs_integracoes")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(500);
       if (error) throw error;
       setLogs((data as LogEntry[]) || []);
     } catch (error) {
       console.error("Erro ao carregar logs:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClearLogs = async () => {
+    if (!empresaId) return;
+    setClearing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("clear-logs", {
+        body: { empresa_id: empresaId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setLogs([]);
+      toast.success("Logs limpos com sucesso!");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao limpar logs");
+    } finally {
+      setClearing(false);
     }
   };
 
@@ -63,36 +90,64 @@ const LogsIntegracoes = () => {
     return true;
   });
 
+  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(filteredLogs, 10);
+
   const successCount = logs.filter(l => l.status === "success").length;
   const errorCount = logs.filter(l => l.status === "error").length;
 
   const StatusIcon = ({ status }: { status: string }) => {
     if (status === "success") return <CheckCircle2 className="h-4 w-4 text-green-600" />;
-    if (status === "error") return <XCircle className="h-4 w-4 text-red-600" />;
+    if (status === "error") return <XCircle className="h-4 w-4 text-destructive" />;
     return <AlertTriangle className="h-4 w-4 text-amber-600" />;
   };
 
   const StatusBadge = ({ status }: { status: string }) => {
     if (status === "success") return <Badge variant="outline" className="border-green-300 text-green-700 text-[10px]">Sucesso</Badge>;
-    if (status === "error") return <Badge variant="outline" className="border-red-300 text-red-600 text-[10px]">Erro</Badge>;
+    if (status === "error") return <Badge variant="outline" className="border-destructive/30 text-destructive text-[10px]">Erro</Badge>;
     return <Badge variant="outline" className="border-amber-300 text-amber-600 text-[10px]">{status}</Badge>;
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <ScrollText className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">Logs de Integrações</h1>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <ScrollText className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold">Logs de Integrações</h1>
+          </div>
+          <p className="text-sm text-muted-foreground">Histórico de eventos enviados e recebidos</p>
         </div>
-        <p className="text-sm text-muted-foreground">Histórico de eventos enviados e recebidos pelas integrações</p>
+        {isAdmin && logs.length > 0 && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive self-start">
+                <Trash2 className="h-4 w-4 mr-1" />
+                Limpar Logs
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Limpar todos os logs?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação irá remover todos os {logs.length} registros de log. Essa ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleClearLogs} disabled={clearing} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  {clearing ? "Limpando..." : "Limpar Tudo"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-3">
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <ScrollText className="h-5 w-5 text-muted-foreground" />
+          <CardContent className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <ScrollText className="h-5 w-5 text-muted-foreground shrink-0" />
             <div>
               <p className="text-xs text-muted-foreground">Total</p>
               <p className="text-lg font-bold">{logs.length}</p>
@@ -100,8 +155,8 @@ const LogsIntegracoes = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
+          <CardContent className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
             <div>
               <p className="text-xs text-muted-foreground">Sucesso</p>
               <p className="text-lg font-bold text-green-600">{successCount}</p>
@@ -109,19 +164,19 @@ const LogsIntegracoes = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <XCircle className="h-5 w-5 text-red-600" />
+          <CardContent className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <XCircle className="h-5 w-5 text-destructive shrink-0" />
             <div>
               <p className="text-xs text-muted-foreground">Erro</p>
-              <p className="text-lg font-bold text-red-600">{errorCount}</p>
+              <p className="text-lg font-bold text-destructive">{errorCount}</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar nos logs..."
@@ -130,34 +185,35 @@ const LogsIntegracoes = () => {
             className="pl-9"
           />
         </div>
-        <Select value={filtroPlataforma} onValueChange={setFiltroPlataforma}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Plataforma" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todas">Todas</SelectItem>
-            {plataformas.map(p => (
-              <SelectItem key={p} value={p}>{p}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-          <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos</SelectItem>
-            <SelectItem value="success">Sucesso</SelectItem>
-            <SelectItem value="error">Erro</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button variant="outline" size="sm" onClick={fetchLogs} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />
-          Atualizar
-        </Button>
+        <div className="flex gap-2">
+          <Select value={filtroPlataforma} onValueChange={setFiltroPlataforma}>
+            <SelectTrigger className="w-[130px] sm:w-[160px]">
+              <SelectValue placeholder="Plataforma" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas</SelectItem>
+              {plataformas.map(p => (
+                <SelectItem key={p} value={p}>{p}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+            <SelectTrigger className="w-[110px] sm:w-[130px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="success">Sucesso</SelectItem>
+              <SelectItem value="error">Erro</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="icon" onClick={fetchLogs} disabled={loading} title="Atualizar">
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          </Button>
+        </div>
       </div>
 
-      {/* Logs Table */}
+      {/* Logs */}
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -170,7 +226,39 @@ const LogsIntegracoes = () => {
             <p className="text-xs text-muted-foreground mt-1">Os logs aparecerão aqui quando as integrações forem utilizadas</p>
           </CardContent>
         </Card>
+      ) : isMobile ? (
+        /* Mobile: Card layout */
+        <div className="space-y-3">
+          {paginatedItems.map(log => (
+            <Card key={log.id}>
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <StatusIcon status={log.status} />
+                    <span className="font-medium text-sm capitalize">{log.plataforma}</span>
+                  </div>
+                  <StatusBadge status={log.status} />
+                </div>
+                <p className="text-sm mb-1">{log.evento}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}
+                </p>
+                {log.payload && (
+                  <details className="text-xs mt-2">
+                    <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                      {log.payload?.message || log.payload?.url || "Ver detalhes"}
+                    </summary>
+                    <pre className="mt-1 p-2 bg-muted rounded text-[10px] overflow-auto max-h-32 whitespace-pre-wrap">
+                      {JSON.stringify(log.payload, null, 2)}
+                    </pre>
+                  </details>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       ) : (
+        /* Desktop: Table layout */
         <Card>
           <div className="overflow-x-auto">
             <Table>
@@ -184,7 +272,7 @@ const LogsIntegracoes = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLogs.map(log => (
+                {paginatedItems.map(log => (
                   <TableRow key={log.id}>
                     <TableCell>
                       <StatusIcon status={log.status} />
@@ -220,6 +308,18 @@ const LogsIntegracoes = () => {
           </div>
         </Card>
       )}
+
+      {/* Pagination */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          Mostrando {paginatedItems.length} de {filteredLogs.length} registros
+        </p>
+        <MobilePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      </div>
     </div>
   );
 };
