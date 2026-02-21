@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from "react";
-import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info } from "lucide-react";
+import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, Share2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,7 +131,7 @@ const PLATAFORMAS = [
 ];
 
 const Integracoes = () => {
-  const { empresaId } = useAuth();
+  const { empresaId, isSuperAdmin, empresas } = useAuth();
   const [integracoes, setIntegracoes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectDialog, setConnectDialog] = useState<string | null>(null);
@@ -145,6 +146,9 @@ const Integracoes = () => {
   const [testingWebhook, setTestingWebhook] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ plataforma: string; status: string; message: string } | null>(null);
   const [webhookExpanded, setWebhookExpanded] = useState<string | null>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportTargetEmpresa, setExportTargetEmpresa] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   const getWebhookUrl = (platformId: string) => {
     if (!empresaId) return "";
@@ -350,6 +354,25 @@ const Integracoes = () => {
     }
   };
 
+  const handleExportIntegracoes = async () => {
+    if (!empresaId || !exportTargetEmpresa) return;
+    setExporting(true);
+    try {
+      const res = await supabase.functions.invoke("export-integracoes", {
+        body: { sourceEmpresaId: empresaId, targetEmpresaId: exportTargetEmpresa },
+      });
+      if (res.error) throw res.error;
+      if (res.data?.error) throw new Error(res.data.error);
+      toast.success(`${res.data.count} integrações exportadas com sucesso!`);
+      setExportDialogOpen(false);
+      setExportTargetEmpresa("");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao exportar integrações");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -360,6 +383,12 @@ const Integracoes = () => {
           <h1 className="text-xl sm:text-2xl font-bold">Integrações</h1>
         </div>
         <p className="text-xs sm:text-sm text-muted-foreground">Conecte suas plataformas de vendas digitais</p>
+        {isSuperAdmin && (
+          <Button variant="outline" size="sm" className="mt-2" onClick={() => setExportDialogOpen(true)}>
+            <Share2 className="mr-2 h-4 w-4" />
+            Exportar integrações para outra empresa
+          </Button>
+        )}
       </div>
 
       {loading ? (
@@ -668,6 +697,46 @@ const Integracoes = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Export Dialog */}
+      <AlertDialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exportar Integrações</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá <strong>substituir todas as integrações</strong> da empresa selecionada
+              pelas integrações da empresa atual. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <Label>Empresa de destino</Label>
+            <Select value={exportTargetEmpresa} onValueChange={setExportTargetEmpresa}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a empresa..." />
+              </SelectTrigger>
+              <SelectContent>
+                {empresas
+                  .filter(e => e.empresa_id !== empresaId)
+                  .map(e => (
+                    <SelectItem key={e.empresa_id} value={e.empresa_id}>
+                      {e.empresa_nome || 'Empresa'}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={exporting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleExportIntegracoes}
+              disabled={!exportTargetEmpresa || exporting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {exporting ? "Exportando..." : "Confirmar Exportação"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
