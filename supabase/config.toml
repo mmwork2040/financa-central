@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.sync-ads-data]
 verify_jwt = false
+
+[functions.clear-logs]
+verify_jwt = false

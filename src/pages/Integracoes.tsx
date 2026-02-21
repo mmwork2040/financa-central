@@ -282,7 +282,7 @@ const Integracoes = () => {
             return (
               <Card key={plat.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
+                  <div className="flex flex-col sm:flex-row items-start gap-3">
                     <div className={`shrink-0 rounded-lg p-2.5 ${plat.color}`}>
                       <Icon className="h-5 w-5" />
                     </div>
@@ -304,7 +304,7 @@ const Integracoes = () => {
                         )}
                       </div>
                     </div>
-                    <div className="shrink-0 flex flex-col gap-1.5">
+                    <div className="shrink-0 flex flex-col gap-1.5 mt-2 sm:mt-0">
                       {status === 'connected' ? (
                         <>
                           <Button
