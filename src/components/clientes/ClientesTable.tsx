@@ -10,6 +10,8 @@ import { type Cliente } from "@/hooks/useClientes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import MobilePagination, { usePagination } from "@/components/common/MobilePagination";
+import { useTableSort } from "@/hooks/useTableSort";
+import SortableTableHead from "@/components/common/SortableTableHead";
 
 interface ClientesTableProps {
   clientes: Cliente[];
@@ -24,7 +26,8 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
 }) => {
   const showActions = canEdit || canDelete;
   const isMobile = useIsMobile();
-  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(clientes);
+  const { sortedItems, sortKey, sortDir, toggleSort } = useTableSort(clientes);
+  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(sortedItems);
 
   if (isMobile) {
     return (
@@ -75,16 +78,16 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>CPF/CNPJ</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>E-mail</TableHead>
-              <TableHead>Status</TableHead>
+              <SortableTableHead label="Nome" sortKey="nome" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+              <SortableTableHead label="CPF/CNPJ" sortKey="cpf_cnpj" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+              <SortableTableHead label="Telefone" sortKey="telefone" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+              <SortableTableHead label="E-mail" sortKey="email" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+              <SortableTableHead label="Status" sortKey="ativo" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
               {showActions && <TableHead className="w-20 text-right">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {clientes.map((cliente) => (
+            {paginatedItems.map((cliente) => (
               <TableRow key={cliente.id}>
                 <TableCell className="font-medium">{cliente.nome}</TableCell>
                 <TableCell>{cliente.cpf_cnpj ? formatCPFOrCNPJ(cliente.cpf_cnpj) : '-'}</TableCell>

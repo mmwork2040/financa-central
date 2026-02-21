@@ -10,6 +10,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import MobilePagination, { usePagination } from "@/components/common/MobilePagination";
 import { useValuesVisibility, maskValue } from "@/contexts/ValuesVisibilityContext";
+import { useTableSort } from "@/hooks/useTableSort";
+import SortableTableHead from "@/components/common/SortableTableHead";
 
 export interface ContaBancaria {
   id: string;
@@ -37,7 +39,8 @@ const ContasBancariasTable: React.FC<ContasBancariasTableProps> = ({
   const showActions = canEdit || canDelete;
   const isMobile = useIsMobile();
   const { visible } = useValuesVisibility();
-  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(contasBancarias);
+  const { sortedItems, sortKey, sortDir, toggleSort } = useTableSort(contasBancarias);
+  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(sortedItems);
   const displayCurrency = (val: number) => visible ? formatCurrency(val) : "••••••";
 
   if (isMobile) {
@@ -95,17 +98,17 @@ const ContasBancariasTable: React.FC<ContasBancariasTableProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Banco</TableHead>
-            <TableHead>Agência</TableHead>
-            <TableHead>Conta</TableHead>
-            <TableHead className="text-right">Saldo Inicial</TableHead>
-            <TableHead className="text-right">Saldo Atual</TableHead>
+            <SortableTableHead label="Nome" sortKey="nome" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+            <SortableTableHead label="Banco" sortKey="banco" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+            <SortableTableHead label="Agência" sortKey="agencia" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+            <SortableTableHead label="Conta" sortKey="conta" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+            <SortableTableHead label="Saldo Inicial" sortKey="saldo_inicial" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} className="text-right" />
+            <SortableTableHead label="Saldo Atual" sortKey="saldo_atual" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} className="text-right" />
             {showActions && <TableHead className="w-[100px] text-center">Ações</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {contasBancarias.map((conta) => (
+          {paginatedItems.map((conta) => (
             <TableRow key={conta.id}>
               <TableCell className="font-medium">{conta.nome}</TableCell>
               <TableCell>{conta.banco || '-'}</TableCell>
