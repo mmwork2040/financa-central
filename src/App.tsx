@@ -27,6 +27,7 @@ import VendasDigitais from "./pages/VendasDigitais";
 import Integracoes from "./pages/Integracoes";
 import WebhooksConfig from "./pages/WebhooksConfig";
 import AnunciosDigitais from "./pages/AnunciosDigitais";
+import LogsIntegracoes from "./pages/LogsIntegracoes";
 import NotFoundPage from "./pages/NotFoundPage";
 import Install from "./pages/Install";
 
@@ -52,6 +53,7 @@ const App = () => {
                 <Route path="/settings" element={<AppLayout><ConfiguracoesEmpresa /></AppLayout>} />
                 <Route path="/settings/integracoes" element={<AppLayout><Integracoes /></AppLayout>} />
                 <Route path="/settings/webhooks" element={<AppLayout><WebhooksConfig /></AppLayout>} />
+                <Route path="/settings/logs" element={<AppLayout><LogsIntegracoes /></AppLayout>} />
                 <Route path="/vendas-digitais" element={<AppLayout><VendasDigitais /></AppLayout>} />
                 <Route path="/anuncios" element={<AppLayout><AnunciosDigitais /></AppLayout>} />
                 
