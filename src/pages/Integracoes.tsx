@@ -363,7 +363,13 @@ const Integracoes = () => {
       });
       if (res.error) throw res.error;
       if (res.data?.error) throw new Error(res.data.error);
-      toast.success(`${res.data.count} integrações exportadas com sucesso!`);
+      
+      const targetNome = empresas.find(e => e.empresa_id === exportTargetEmpresa)?.empresa_nome || 'empresa';
+      let msg = `${res.data.count} integrações exportadas para ${targetNome}!`;
+      if (res.data.webhookUrls?.length > 0) {
+        msg += ` As webhook URLs foram atualizadas com o ID da empresa destino.`;
+      }
+      toast.success(msg);
       setExportDialogOpen(false);
       setExportTargetEmpresa("");
     } catch (error: any) {
