@@ -24,6 +24,7 @@ const PLATAFORMAS = [
       "Cole os valores nos campos abaixo",
     ],
     needsSecret: true,
+    keyValidation: { hint: "Client ID alfanumérico" },
   },
   {
     id: "eduzz", name: "Eduzz", description: "Venda de infoprodutos",
@@ -36,6 +37,7 @@ const PLATAFORMAS = [
       "Cole o token no campo abaixo",
     ],
     needsSecret: false,
+    keyValidation: { hint: "Token alfanumérico" },
   },
   {
     id: "monetizze", name: "Monetizze", description: "Afiliados e produtos digitais",
@@ -48,6 +50,7 @@ const PLATAFORMAS = [
       "Cole no campo API Key abaixo",
     ],
     needsSecret: false,
+    keyValidation: { hint: "Chave alfanumérica" },
   },
   {
     id: "stripe", name: "Stripe", description: "Pagamentos internacionais",
@@ -60,6 +63,7 @@ const PLATAFORMAS = [
       "O Publishable Key pode ser usado como Secret (opcional)",
     ],
     needsSecret: true,
+    keyValidation: { prefix: "sk_", hint: "Deve começar com sk_live_ ou sk_test_" },
   },
   {
     id: "paypal", name: "PayPal", description: "Pagamentos globais",
@@ -72,6 +76,7 @@ const PLATAFORMAS = [
       "Cole os valores nos campos abaixo",
     ],
     needsSecret: true,
+    keyValidation: { hint: "Client ID alfanumérico" },
   },
   {
     id: "asaas", name: "Asaas", description: "Cobranças e pagamentos",
@@ -84,6 +89,7 @@ const PLATAFORMAS = [
       "Cole no campo API Key abaixo",
     ],
     needsSecret: false,
+    keyValidation: { prefix: "$aact_", hint: "Deve começar com $aact_" },
   },
   {
     id: "meta_ads", name: "Meta Ads", description: "Facebook & Instagram Ads",
@@ -96,6 +102,7 @@ const PLATAFORMAS = [
       "Cole o Access Token como API Key abaixo",
     ],
     needsSecret: false,
+    keyValidation: { hint: "Access Token alfanumérico" },
   },
   {
     id: "google_ads", name: "Google Ads", description: "Anúncios no Google",
@@ -108,6 +115,7 @@ const PLATAFORMAS = [
       "Cole a API Key no campo abaixo",
     ],
     needsSecret: true,
+    keyValidation: { prefix: "AIza", hint: "Deve começar com AIza" },
   },
 ];
 
@@ -121,6 +129,7 @@ const Integracoes = () => {
   const [apiSecret, setApiSecret] = useState("");
   const [ambiente, setAmbiente] = useState("producao");
   const [saving, setSaving] = useState(false);
+  const [keyError, setKeyError] = useState("");
 
   useEffect(() => {
     fetchIntegracoes();
@@ -128,12 +137,22 @@ const Integracoes = () => {
 
   const currentPlat = PLATAFORMAS.find(p => p.id === connectDialog);
 
+  const validateApiKey = (key: string, plat: typeof PLATAFORMAS[0]): string => {
+    if (!key.trim()) return "API Key é obrigatória";
+    if (key.trim().length < 5) return "API Key parece ser muito curta";
+    if (plat.keyValidation?.prefix && !key.trim().startsWith(plat.keyValidation.prefix)) {
+      return plat.keyValidation.hint || `Formato inválido`;
+    }
+    return "";
+  };
+
   const openWizard = (platId: string) => {
     setConnectDialog(platId);
     setWizardStep(0);
     setApiKey("");
     setApiSecret("");
     setAmbiente("producao");
+    setKeyError("");
   };
 
   const closeWizard = () => {
@@ -141,6 +160,7 @@ const Integracoes = () => {
     setWizardStep(0);
     setApiKey("");
     setApiSecret("");
+    setKeyError("");
   };
 
   const fetchIntegracoes = async () => {
@@ -163,7 +183,12 @@ const Integracoes = () => {
   };
 
   const handleConnect = async () => {
-    if (!connectDialog || !apiKey.trim() || !empresaId) return;
+    if (!connectDialog || !apiKey.trim() || !empresaId || !currentPlat) return;
+    const validationError = validateApiKey(apiKey, currentPlat);
+    if (validationError) {
+      setKeyError(validationError);
+      return;
+    }
     setSaving(true);
     try {
       const { error } = await (supabase as any)
@@ -324,7 +349,17 @@ const Integracoes = () => {
             <div className="space-y-4">
               <div>
                 <Label>API Key *</Label>
-                <Input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Cole sua API Key aqui" autoFocus />
+                <Input
+                  value={apiKey}
+                  onChange={e => { setApiKey(e.target.value); setKeyError(""); }}
+                  placeholder={currentPlat.keyValidation?.hint || "Cole sua API Key aqui"}
+                  autoFocus
+                  className={keyError ? "border-destructive" : ""}
+                />
+                {keyError && <p className="text-xs text-destructive mt-1">{keyError}</p>}
+                {!keyError && currentPlat.keyValidation?.hint && (
+                  <p className="text-xs text-muted-foreground mt-1">{currentPlat.keyValidation.hint}</p>
+                )}
               </div>
               {currentPlat.needsSecret && (
                 <div>
