@@ -40,15 +40,15 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background overflow-x-hidden">
       <Sidebar />
       <main
         className={cn(
-          "flex-1 transition-all duration-300 ease-in-out",
+          "flex-1 transition-all duration-300 ease-in-out min-w-0",
           isMobile ? "ml-0 pt-14" : isExpanded ? "ml-60" : "ml-14"
         )}
       >
-        <div className="container mx-auto px-3 py-4 md:px-4 md:py-6">
+        <div className="w-full px-3 py-4 md:px-4 md:py-6 max-w-full">
           {children}
         </div>
       </main>

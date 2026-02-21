@@ -30,7 +30,7 @@ export const LancamentosTable = () => {
 
   if (isMobile) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 overflow-hidden">
         {paginatedItems.map((l) => (
           <Card key={l.id}>
             <CardContent className="p-4">
