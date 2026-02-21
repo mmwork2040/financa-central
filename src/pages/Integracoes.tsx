@@ -29,6 +29,7 @@ interface Plataforma {
   steps: string[];
   needsSecret: boolean;
   webhookOnly?: boolean;
+  usesWebhook?: boolean;
   keyValidation?: { prefix?: string; hint: string };
   categoria: PlataformaCategoria;
 }
@@ -53,7 +54,7 @@ const PLATAFORMAS: Plataforma[] = [
       "Selecione os eventos que deseja receber (ex: compra aprovada, reembolso)",
       "Salve e pronto! O sistema passará a escutar os eventos automaticamente",
     ],
-    needsSecret: false, webhookOnly: true, keyValidation: { hint: "" },
+    needsSecret: false, webhookOnly: true, usesWebhook: true, keyValidation: { hint: "" },
     categoria: "vendas",
   },
   {
@@ -67,7 +68,7 @@ const PLATAFORMAS: Plataforma[] = [
       "Copie o Token gerado (API Key)",
       "Cole o token no campo abaixo",
     ],
-    needsSecret: false, keyValidation: { hint: "Token alfanumérico" },
+    needsSecret: false, usesWebhook: true, keyValidation: { hint: "Token alfanumérico" },
     categoria: "vendas",
   },
   {
@@ -81,7 +82,7 @@ const PLATAFORMAS: Plataforma[] = [
       "Copie a chave gerada",
       "Cole no campo API Key abaixo",
     ],
-    needsSecret: false, keyValidation: { hint: "Chave alfanumérica" },
+    needsSecret: false, usesWebhook: true, keyValidation: { hint: "Chave alfanumérica" },
     categoria: "vendas",
   },
   // --- Pagamentos ---
@@ -96,7 +97,7 @@ const PLATAFORMAS: Plataforma[] = [
       "Cole como API Key no campo abaixo",
       "O Publishable Key pode ser usado como Secret (opcional)",
     ],
-    needsSecret: true, keyValidation: { prefix: "sk_", hint: "Deve começar com sk_live_ ou sk_test_" },
+    needsSecret: true, usesWebhook: true, keyValidation: { prefix: "sk_", hint: "Deve começar com sk_live_ ou sk_test_" },
     categoria: "pagamentos",
   },
   {
@@ -110,7 +111,7 @@ const PLATAFORMAS: Plataforma[] = [
       "Copie o Client ID (API Key) e o Secret",
       "Cole os valores nos campos abaixo",
     ],
-    needsSecret: true, keyValidation: { hint: "Client ID alfanumérico" },
+    needsSecret: true, usesWebhook: true, keyValidation: { hint: "Client ID alfanumérico" },
     categoria: "pagamentos",
   },
   {
@@ -124,7 +125,7 @@ const PLATAFORMAS: Plataforma[] = [
       "Copie a chave (começa com $aact_...)",
       "Cole no campo API Key abaixo",
     ],
-    needsSecret: false, keyValidation: { prefix: "$aact_", hint: "Deve começar com $aact_" },
+    needsSecret: false, usesWebhook: true, keyValidation: { prefix: "$aact_", hint: "Deve começar com $aact_" },
     categoria: "pagamentos",
   },
   // --- Anúncios ---
@@ -139,7 +140,7 @@ const PLATAFORMAS: Plataforma[] = [
       "Gere um Access Token com permissão ads_read",
       "Cole o Access Token como API Key abaixo",
     ],
-    needsSecret: false, keyValidation: { hint: "Access Token alfanumérico" },
+    needsSecret: false, usesWebhook: false, keyValidation: { hint: "Access Token alfanumérico" },
     categoria: "anuncios",
   },
   {
@@ -153,7 +154,7 @@ const PLATAFORMAS: Plataforma[] = [
       "Ative a Google Ads API no projeto",
       "Cole a API Key no campo abaixo",
     ],
-    needsSecret: true, keyValidation: { prefix: "AIza", hint: "Deve começar com AIza" },
+    needsSecret: true, usesWebhook: false, keyValidation: { prefix: "AIza", hint: "Deve começar com AIza" },
     categoria: "anuncios",
   },
   // --- Comunicação ---
@@ -168,7 +169,7 @@ const PLATAFORMAS: Plataforma[] = [
       "Gere um Access Token permanente para a API",
       "Cole o Access Token no campo API Key abaixo",
     ],
-    needsSecret: false, keyValidation: { hint: "Access Token do WhatsApp Cloud API" },
+    needsSecret: false, usesWebhook: false, keyValidation: { hint: "Access Token do WhatsApp Cloud API" },
     categoria: "comunicacao",
   },
   {
@@ -182,7 +183,7 @@ const PLATAFORMAS: Plataforma[] = [
       "Copie o Token do bot gerado pelo BotFather",
       "Cole o token no campo API Key abaixo",
     ],
-    needsSecret: false, keyValidation: { hint: "Token no formato 123456:ABC-DEF..." },
+    needsSecret: false, usesWebhook: false, keyValidation: { hint: "Token no formato 123456:ABC-DEF..." },
     categoria: "comunicacao",
   },
 ];
@@ -300,8 +301,13 @@ const Integracoes = () => {
 
       if (error) throw error;
       toast.success("Integração conectada com sucesso!");
+      const savedPlataforma = connectDialog;
       closeWizard();
       fetchIntegracoes();
+      // Auto-test connection after saving (only for non-webhook-only platforms)
+      if (!isWebhookOnly) {
+        setTimeout(() => handleTestConnection(savedPlataforma), 500);
+      }
     } catch (error: any) {
       toast.error(error.message || "Erro ao conectar");
     } finally {
@@ -560,7 +566,7 @@ const Integracoes = () => {
                     )}
                   </div>
                   {/* Webhook URL section for connected integrations */}
-                  {status === 'connected' && (
+                  {status === 'connected' && plat.usesWebhook && (
                     <div className="mt-2">
                       <button
                         onClick={() => setWebhookExpanded(webhookExpanded === plat.id ? null : plat.id)}
@@ -666,7 +672,7 @@ const Integracoes = () => {
           {wizardStep === 0 && currentPlat && (
             <div className="space-y-4">
               {/* Webhook URL - show first so user can configure it in the platform */}
-              {empresaId && currentPlat.events && currentPlat.events.length > 0 && (
+              {empresaId && currentPlat.usesWebhook && currentPlat.events && currentPlat.events.length > 0 && (
                 <div className="rounded-lg border bg-muted/50 p-3 space-y-2">
                   <div className="flex items-center gap-1.5">
                     <Webhook className="h-3.5 w-3.5 text-primary" />
