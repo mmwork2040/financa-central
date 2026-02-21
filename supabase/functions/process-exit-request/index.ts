@@ -16,6 +16,39 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
+    // Helper: create personal empresa for a user who has no remaining companies
+    async function createPersonalEmpresa(admin: any, userId: string): Promise<string> {
+      // Check if user already has a personal empresa
+      const { data: userRoles } = await admin.from("user_roles").select("empresa_id").eq("user_id", userId);
+      const empresaIds = userRoles?.map((r: any) => r.empresa_id) || [];
+      
+      if (empresaIds.length > 0) {
+        const { data: existing } = await admin
+          .from("empresas")
+          .select("id")
+          .eq("pessoal", true)
+          .in("id", empresaIds)
+          .maybeSingle();
+        if (existing) {
+          return existing.id;
+        }
+      }
+
+      const { data: perfil } = await admin.from("perfis").select("nome, email").eq("id", userId).single();
+      const userName = perfil?.nome || perfil?.email || "Usuário";
+      const userEmail = perfil?.email || "";
+
+      const { data: empresa } = await admin
+        .from("empresas")
+        .insert({ nome: `Pessoal - ${userName}`, email: userEmail, pessoal: true })
+        .select("id")
+        .single();
+
+      const newId = empresa!.id;
+      await admin.from("user_roles").insert({ user_id: userId, empresa_id: newId, role: "admin" });
+      return newId;
+    }
+
     const { action, requestId, motivo, empresaId } = await req.json();
 
     // check-expired doesn't require auth
@@ -39,15 +72,17 @@ Deno.serve(async (req) => {
             .select("empresa_id")
             .eq("user_id", request.user_id);
 
-          if (remaining && remaining.length > 0) {
+      if (remaining && remaining.length > 0) {
             await supabaseAdmin
               .from("perfis")
               .update({ empresa_id: remaining[0].empresa_id })
               .eq("id", request.user_id);
           } else {
+            // Create personal empresa for user with no remaining companies
+            const newEmpresaId = await createPersonalEmpresa(supabaseAdmin, request.user_id);
             await supabaseAdmin
               .from("perfis")
-              .update({ empresa_id: null })
+              .update({ empresa_id: newEmpresaId, permissao: "admin" })
               .eq("id", request.user_id);
           }
 
@@ -93,14 +128,15 @@ Deno.serve(async (req) => {
     if (action === "create") {
       if (!empresaId) throw new Error("empresaId é obrigatório");
 
-      // Cannot leave if only one empresa
-      const { data: roles } = await supabaseAdmin
-        .from("user_roles")
-        .select("empresa_id")
-        .eq("user_id", userId);
+      // Check if trying to leave a personal empresa (not allowed)
+      const { data: empresa } = await supabaseAdmin
+        .from("empresas")
+        .select("pessoal")
+        .eq("id", empresaId)
+        .single();
 
-      if (!roles || roles.length <= 1) {
-        throw new Error("Você não pode sair da única empresa que pertence. Entre em outra empresa primeiro.");
+      if (empresa?.pessoal) {
+        throw new Error("Não é possível sair da sua conta pessoal.");
       }
 
       // Check for existing pending request
@@ -215,9 +251,11 @@ Deno.serve(async (req) => {
           .update({ empresa_id: remaining[0].empresa_id })
           .eq("id", request.user_id);
       } else {
+        // Create personal empresa for user with no remaining companies
+        const newEmpresaId = await createPersonalEmpresa(supabaseAdmin, request.user_id);
         await supabaseAdmin
           .from("perfis")
-          .update({ empresa_id: null })
+          .update({ empresa_id: newEmpresaId, permissao: "admin" })
           .eq("id", request.user_id);
       }
 
