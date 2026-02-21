@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target } from "lucide-react";
+import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -130,6 +130,8 @@ const Integracoes = () => {
   const [ambiente, setAmbiente] = useState("producao");
   const [saving, setSaving] = useState(false);
   const [keyError, setKeyError] = useState("");
+  const [testing, setTesting] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{ plataforma: string; status: string; message: string } | null>(null);
 
   useEffect(() => {
     fetchIntegracoes();
@@ -221,9 +223,42 @@ const Integracoes = () => {
         .eq('plataforma', plataforma);
       if (error) throw error;
       toast.success("Integração desconectada.");
+      setTestResult(null);
       fetchIntegracoes();
     } catch (error: any) {
       toast.error(error.message || "Erro ao desconectar");
+    }
+  };
+
+  const handleTestConnection = async (plataforma: string) => {
+    if (!empresaId) return;
+    setTesting(plataforma);
+    setTestResult(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Não autenticado");
+      
+      const res = await supabase.functions.invoke("test-integration", {
+        body: { plataforma, empresa_id: empresaId },
+      });
+      
+      if (res.error) throw res.error;
+      const result = res.data;
+      setTestResult({ plataforma, status: result.status, message: result.message });
+      
+      if (result.status === "success") {
+        toast.success(result.message);
+      } else if (result.status === "warning") {
+        toast.warning(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error: any) {
+      const msg = error.message || "Erro ao testar conexão";
+      setTestResult({ plataforma, status: "error", message: msg });
+      toast.error(msg);
+    } finally {
+      setTesting(null);
     }
   };
 
@@ -269,14 +304,37 @@ const Integracoes = () => {
                         )}
                       </div>
                     </div>
-                    <div className="shrink-0">
+                    <div className="shrink-0 flex flex-col gap-1.5">
                       {status === 'connected' ? (
-                        <Button variant="outline" size="sm" onClick={() => handleDisconnect(plat.id)}>Desconectar</Button>
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleTestConnection(plat.id)}
+                            disabled={testing === plat.id}
+                          >
+                            {testing === plat.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Activity className="h-3.5 w-3.5 mr-1" />}
+                            Testar
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDisconnect(plat.id)}>Desconectar</Button>
+                        </>
                       ) : (
                         <Button size="sm" onClick={() => openWizard(plat.id)}>Conectar</Button>
                       )}
                     </div>
                   </div>
+                  {testResult && testResult.plataforma === plat.id && (
+                    <div className={`mt-2 flex items-center gap-2 text-xs rounded-md p-2 ${
+                      testResult.status === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400' :
+                      testResult.status === 'warning' ? 'bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400' :
+                      'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400'
+                    }`}>
+                      {testResult.status === 'success' ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> :
+                       testResult.status === 'warning' ? <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> :
+                       <XCircle className="h-3.5 w-3.5 shrink-0" />}
+                      <span>{testResult.message}</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
