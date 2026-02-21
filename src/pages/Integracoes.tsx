@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,6 +124,7 @@ const Integracoes = () => {
   const [integracoes, setIntegracoes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectDialog, setConnectDialog] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState(false);
   const [wizardStep, setWizardStep] = useState(0);
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
@@ -148,17 +149,20 @@ const Integracoes = () => {
     return "";
   };
 
-  const openWizard = (platId: string) => {
+  const openWizard = (platId: string, isEdit = false) => {
     setConnectDialog(platId);
-    setWizardStep(0);
+    setEditMode(isEdit);
+    setWizardStep(isEdit ? 1 : 0);
     setApiKey("");
     setApiSecret("");
-    setAmbiente("producao");
+    const integ = integracoes.find((i: any) => i.plataforma === platId);
+    setAmbiente(integ?.ambiente || "producao");
     setKeyError("");
   };
 
   const closeWizard = () => {
     setConnectDialog(null);
+    setEditMode(false);
     setWizardStep(0);
     setApiKey("");
     setApiSecret("");
@@ -284,7 +288,7 @@ const Integracoes = () => {
             return (
               <Card key={plat.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <div className="flex flex-col sm:flex-row items-start gap-3">
+                  <div className="flex items-start gap-3">
                     <div className={`shrink-0 rounded-lg p-2.5 ${plat.color}`}>
                       <Icon className="h-5 w-5" />
                     </div>
@@ -306,24 +310,30 @@ const Integracoes = () => {
                         )}
                       </div>
                     </div>
-                    <div className="shrink-0 flex flex-col gap-1.5 mt-2 sm:mt-0">
-                      {status === 'connected' ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleTestConnection(plat.id)}
-                            disabled={testing === plat.id}
-                          >
-                            {testing === plat.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Activity className="h-3.5 w-3.5 mr-1" />}
-                            Testar
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDisconnect(plat.id)}>Desconectar</Button>
-                        </>
-                      ) : (
-                        <Button size="sm" onClick={() => openWizard(plat.id)}>Conectar</Button>
-                      )}
-                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {status === 'connected' ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 min-w-[80px]"
+                          onClick={() => handleTestConnection(plat.id)}
+                          disabled={testing === plat.id}
+                        >
+                          {testing === plat.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Activity className="h-3.5 w-3.5 mr-1" />}
+                          Testar
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 min-w-[80px]" onClick={() => openWizard(plat.id, true)}>
+                          <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 min-w-[80px]" onClick={() => handleDisconnect(plat.id)}>
+                          Desconectar
+                        </Button>
+                      </>
+                    ) : (
+                      <Button size="sm" className="w-full" onClick={() => openWizard(plat.id)}>Conectar</Button>
+                    )}
                   </div>
                   {testResult && testResult.plataforma === plat.id && (
                     <div className={`mt-2 flex items-center gap-2 text-xs rounded-md p-2 ${
@@ -358,9 +368,9 @@ const Integracoes = () => {
                 );
               })()}
               <div>
-                <DialogTitle className="text-left">Conectar {currentPlat?.name}</DialogTitle>
+                <DialogTitle className="text-left">{editMode ? 'Editar' : 'Conectar'} {currentPlat?.name}</DialogTitle>
                 <DialogDescription className="text-left">
-                  {wizardStep === 0 ? "Siga o passo a passo para obter suas credenciais" : "Insira suas credenciais para finalizar"}
+                  {editMode ? "Atualize suas credenciais" : wizardStep === 0 ? "Siga o passo a passo para obter suas credenciais" : "Insira suas credenciais para finalizar"}
                 </DialogDescription>
               </div>
             </div>
@@ -438,11 +448,13 @@ const Integracoes = () => {
                 </Select>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setWizardStep(0)} className="flex-1">
-                  <ChevronLeft className="h-4 w-4 mr-1" /> Voltar
-                </Button>
+                {!editMode && (
+                  <Button variant="outline" onClick={() => setWizardStep(0)} className="flex-1">
+                    <ChevronLeft className="h-4 w-4 mr-1" /> Voltar
+                  </Button>
+                )}
                 <Button onClick={handleConnect} disabled={saving || !apiKey.trim()} className="flex-1">
-                  {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Conectando...</> : <><Check className="h-4 w-4 mr-1" /> Conectar</>}
+                  {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Salvando...</> : <><Check className="h-4 w-4 mr-1" /> {editMode ? 'Salvar' : 'Conectar'}</>}
                 </Button>
               </div>
             </div>
