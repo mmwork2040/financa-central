@@ -19,6 +19,8 @@ import TrendAnalysis from "@/components/relatorios/TrendAnalysis";
 import CategoryPieChart from "@/components/relatorios/CategoryPieChart";
 import CategoryDataTable from "@/components/relatorios/CategoryDataTable";
 import ExportDropdown from "@/components/common/ExportDropdown";
+import PredictiveAnalysis from "@/components/relatorios/PredictiveAnalysis";
+import ReconciliationView from "@/components/relatorios/ReconciliationView";
 
 // Importando o hook personalizado
 import { useRelatoriosData } from "@/hooks/useRelatoriosData";
@@ -372,10 +374,12 @@ const RelatoriosContent = () => {
         </div>
       ) : (
         <Tabs defaultValue="fluxo" className="space-y-4">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="fluxo">Fluxo de Caixa</TabsTrigger>
             <TabsTrigger value="receitas">Receitas</TabsTrigger>
             <TabsTrigger value="despesas">Despesas</TabsTrigger>
+            <TabsTrigger value="preditivo">Preditivo</TabsTrigger>
+            <TabsTrigger value="conciliacao">Conciliação</TabsTrigger>
           </TabsList>
           
           <TabsContent value="fluxo" className="space-y-4" data-orientation="fluxo">
@@ -424,6 +428,18 @@ const RelatoriosContent = () => {
               data={dataDespesas} 
               colors={COLORS_DESPESAS} 
             />
+          </TabsContent>
+          <TabsContent value="preditivo" className="space-y-4">
+            <PredictiveAnalysis
+              historicalData={dataFluxo}
+              pendingReceitas={0}
+              pendingDespesas={0}
+              saldoAtual={totalReceitas - totalDespesas}
+            />
+          </TabsContent>
+
+          <TabsContent value="conciliacao" className="space-y-4">
+            <ReconciliationView />
           </TabsContent>
         </Tabs>
       )}

@@ -89,8 +89,9 @@ export const useDashboardData = () => {
       const em7Dias = new Date(hoje);
       em7Dias.setDate(em7Dias.getDate() + 7);
       
+      // Only count paid/received transactions for totals
       const totalReceitas = todosLancamentos
-        ?.filter(l => l.tipo === 'receita' && l.status === 'pago')
+        ?.filter(l => l.tipo === 'receita' && (l.status === 'pago' || l.status === 'recebido'))
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
         
       const totalDespesas = todosLancamentos
@@ -127,17 +128,37 @@ export const useDashboardData = () => {
         emAtraso,
       });
 
-      // Health indicator
+      // Refined Health Indicator
       const compromissosFuturos = todosLancamentos
         ?.filter(l => l.tipo === 'despesa' && (l.status === 'pendente' || l.status === 'aberto'))
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
 
-      if (saldoAtual < 0 || emAtraso > 3) {
-        setHealthStatus('risco');
-      } else if (saldoAtual < compromissosFuturos * 0.5 || emAtraso > 0) {
+      const receitasPendentes = todosLancamentos
+        ?.filter(l => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto'))
+        .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+
+      // Calculate average monthly revenue (last 3 months)
+      const tressMesesAtras = new Date(hoje);
+      tressMesesAtras.setMonth(tressMesesAtras.getMonth() - 3);
+      const receitasRecentes = todosLancamentos
+        ?.filter(l => l.tipo === 'receita' && (l.status === 'pago' || l.status === 'recebido') && new Date(l.data_vencimento) >= tressMesesAtras)
+        .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+      const mediaReceitaMensal = receitasRecentes / 3;
+
+      // Scoring system for health
+      let score = 100;
+      if (saldoAtual < 0) score -= 40;
+      if (emAtraso > 0) score -= emAtraso * 10;
+      if (compromissosFuturos > saldoAtual + receitasPendentes) score -= 20;
+      if (mediaReceitaMensal > 0 && compromissosFuturos > mediaReceitaMensal * 2) score -= 15;
+      if (saldoAtual > 0 && saldoAtual < compromissosFuturos * 0.3) score -= 10;
+
+      if (score >= 70) {
+        setHealthStatus('saudavel');
+      } else if (score >= 40) {
         setHealthStatus('atencao');
       } else {
-        setHealthStatus('saudavel');
+        setHealthStatus('risco');
       }
       
     } catch (error: any) {

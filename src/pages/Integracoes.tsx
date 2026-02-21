@@ -19,7 +19,8 @@ const PLATAFORMAS = [
   { id: "stripe", name: "Stripe", description: "Pagamentos internacionais" },
   { id: "paypal", name: "PayPal", description: "Pagamentos globais" },
   { id: "asaas", name: "Asaas", description: "Cobranças e pagamentos" },
-  { id: "meta", name: "Meta Platforms", description: "Dados de anúncios (em breve)" },
+  { id: "meta_ads", name: "Meta Ads", description: "Facebook & Instagram Ads" },
+  { id: "google_ads", name: "Google Ads", description: "Anúncios no Google" },
 ];
 
 const Integracoes = () => {
@@ -113,9 +114,8 @@ const Integracoes = () => {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PLATAFORMAS.map(plat => {
             const status = getStatus(plat.id);
-            const isDisabled = plat.id === 'meta';
             return (
-              <Card key={plat.id} className={isDisabled ? "opacity-60" : ""}>
+              <Card key={plat.id}>
                 <CardContent className="p-4 flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -126,9 +126,7 @@ const Integracoes = () => {
                     <p className="text-xs text-muted-foreground">{plat.description}</p>
                   </div>
                   <div className="shrink-0 ml-3">
-                    {isDisabled ? (
-                      <Badge variant="outline" className="text-[10px]">Em breve</Badge>
-                    ) : status === 'connected' ? (
+                    {status === 'connected' ? (
                       <Button variant="outline" size="sm" onClick={() => handleDisconnect(plat.id)}>
                         Desconectar
                       </Button>
