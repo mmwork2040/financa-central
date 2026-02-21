@@ -46,7 +46,8 @@ export const LancamentosTable = () => {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(l.data_vencimento).toLocaleDateString()}
+                    Registro: {new Date(l.created_at).toLocaleDateString()}
+                    {' · '}Venc: {new Date(l.data_vencimento).toLocaleDateString()}
                     {l.categoria?.nome ? ` · ${l.categoria.nome}` : ''}
                   </p>
                   {(l.fornecedor || l.cliente) && (
