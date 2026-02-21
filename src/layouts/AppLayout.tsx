@@ -14,7 +14,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, loading, empresaId, userProfile } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  useCompanyTheme();
+  const themeReady = useCompanyTheme();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -22,7 +22,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     }
   }, [isAuthenticated, loading, navigate]);
 
-  if (loading) {
+  if (loading || !themeReady) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p className="text-muted-foreground">Carregando...</p>

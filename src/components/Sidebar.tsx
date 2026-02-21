@@ -214,7 +214,7 @@ export const Sidebar = () => {
                   <UserPlus size={14} className="mr-2" />
                   Entrar com código de convite
                 </DropdownMenuItem>
-                {empresas.length > 1 && activeEmpresa && !hasPendingRequest(activeEmpresa.empresa_id) && (
+                {activeEmpresa && !activeEmpresa.pessoal && !hasPendingRequest(activeEmpresa.empresa_id) && (
                   <>
                     <DropdownMenuItem onClick={() => {
                       setExitEmpresaId(activeEmpresa.empresa_id);
@@ -260,7 +260,7 @@ export const Sidebar = () => {
                   <UserPlus size={14} className="mr-2" />
                   Entrar com código
                 </DropdownMenuItem>
-                {empresas.length > 1 && activeEmpresa && !hasPendingRequest(activeEmpresa.empresa_id) && (
+                {activeEmpresa && !activeEmpresa.pessoal && !hasPendingRequest(activeEmpresa.empresa_id) && (
                   <DropdownMenuItem onClick={() => {
                     setExitEmpresaId(activeEmpresa.empresa_id);
                     setExitEmpresaNome(activeEmpresa.empresa_nome || "");

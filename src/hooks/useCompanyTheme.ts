@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -66,9 +66,15 @@ function applyHex(hex: string) {
 
 export function useCompanyTheme() {
   const { empresaId } = useAuth();
+  const [themeReady, setThemeReady] = useState(false);
 
   useEffect(() => {
-    if (!empresaId) return;
+    if (!empresaId) {
+      setThemeReady(true);
+      return;
+    }
+
+    setThemeReady(false);
 
     const fetchAndApply = async () => {
       const { data } = await supabase
@@ -78,6 +84,7 @@ export function useCompanyTheme() {
         .single();
 
       applyHex(data?.cor_primaria || SYSTEM_PRIMARY_COLOR);
+      setThemeReady(true);
     };
 
     fetchAndApply();
@@ -93,4 +100,6 @@ export function useCompanyTheme() {
     window.addEventListener("company-theme-changed", handler);
     return () => window.removeEventListener("company-theme-changed", handler);
   }, [empresaId]);
+
+  return themeReady;
 }
