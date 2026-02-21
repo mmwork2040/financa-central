@@ -459,6 +459,44 @@ const Integracoes = () => {
 
           {wizardStep === 0 && currentPlat && (
             <div className="space-y-4">
+              {/* Webhook URL - show first so user can configure it in the platform */}
+              {empresaId && currentPlat.events && currentPlat.events.length > 0 && (
+                <div className="rounded-lg border bg-muted/50 p-3 space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <Webhook className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-xs font-semibold">Sua Webhook URL (cole na {currentPlat.name}):</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      readOnly
+                      value={getWebhookUrl(currentPlat.id)}
+                      className="text-[10px] h-7 font-mono bg-background"
+                    />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-7 w-7 p-0 shrink-0" onClick={() => copyToClipboard(getWebhookUrl(currentPlat.id))}>
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Copiar URL</p></TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Configure esta URL como Webhook/Postback na {currentPlat.name} antes de gerar as credenciais.
+                  </p>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground mb-1">Eventos suportados:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {currentPlat.events.map(ev => (
+                        <Badge key={ev} variant="secondary" className="text-[9px] px-1.5 py-0 font-mono">{ev}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-3">
                 {currentPlat.steps.map((step, i) => (
                   <div key={i} className="flex gap-3 items-start">
