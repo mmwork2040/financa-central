@@ -395,38 +395,56 @@ const Integracoes = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-3 flex items-center gap-1.5">
                     {status === 'connected' ? (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 min-w-[80px]"
-                          onClick={() => handleTestConnection(plat.id)}
-                          disabled={testing === plat.id}
-                        >
-                          {testing === plat.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Activity className="h-3.5 w-3.5 mr-1" />}
-                          Testar
-                        </Button>
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleTestConnection(plat.id)}
+                              disabled={testing === plat.id}
+                            >
+                              {testing === plat.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Activity className="h-3.5 w-3.5" />}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Testar Conexão</p></TooltipContent>
+                        </Tooltip>
                         {MOCK_WEBHOOKS[plat.id] && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 min-w-[80px]"
-                            onClick={() => handleTestWebhook(plat.id)}
-                            disabled={testingWebhook === plat.id}
-                          >
-                            {testingWebhook === plat.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Zap className="h-3.5 w-3.5 mr-1" />}
-                            Simular Venda
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleTestWebhook(plat.id)}
+                                disabled={testingWebhook === plat.id}
+                              >
+                                {testingWebhook === plat.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Simular Venda</p></TooltipContent>
+                          </Tooltip>
                         )}
-                        <Button variant="outline" size="sm" className="flex-1 min-w-[80px]" onClick={() => openWizard(plat.id, true)}>
-                          <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
-                        </Button>
-                        <Button variant="outline" size="sm" className="flex-1 min-w-[80px]" onClick={() => handleDisconnect(plat.id)}>
-                          Desconectar
-                        </Button>
-                      </>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => openWizard(plat.id, true)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Editar</p></TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDisconnect(plat.id)}>
+                              <XCircle className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Desconectar</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     ) : (
                       <Button size="sm" className="w-full" onClick={() => openWizard(plat.id)}>Conectar</Button>
                     )}
