@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from "react";
-import { ShoppingCart, Search } from "lucide-react";
+import { ShoppingCart, Search, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDate } from "@/utils/formatters";
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
 const VendasDigitais = () => {
   const [vendas, setVendas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -57,14 +59,25 @@ const VendasDigitais = () => {
         <p className="text-xs sm:text-sm text-muted-foreground">Vendas recebidas das plataformas conectadas</p>
       </div>
 
-      <div className="relative w-full sm:max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por produto, cliente ou plataforma..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por produto, cliente ou plataforma..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={async () => { setRefreshing(true); await fetchVendas(); setRefreshing(false); }}
+          disabled={refreshing}
+        >
+          <RefreshCw className={`h-4 w-4 mr-1 ${refreshing ? "animate-spin" : ""}`} />
+          Atualizar
+        </Button>
       </div>
 
       {loading ? (
