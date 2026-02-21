@@ -213,10 +213,13 @@ export const Sidebar = () => {
                 </DropdownMenuItem>
                 {activeEmpresa && !activeEmpresa.pessoal && !hasPendingRequest(activeEmpresa.empresa_id) && (
                   <>
-                    <DropdownMenuItem onClick={() => {
-                      setExitEmpresaId(activeEmpresa.empresa_id);
-                      setExitEmpresaNome(activeEmpresa.empresa_nome || "");
-                      setExitDialogOpen(true);
+                    <DropdownMenuItem onSelect={(e) => {
+                      e.preventDefault();
+                      setTimeout(() => {
+                        setExitEmpresaId(activeEmpresa.empresa_id);
+                        setExitEmpresaNome(activeEmpresa.empresa_nome || "");
+                        setExitDialogOpen(true);
+                      }, 150);
                     }}>
                       <DoorOpen size={14} className="mr-2" />
                       Solicitar saída da empresa
@@ -258,10 +261,13 @@ export const Sidebar = () => {
                   Entrar com código
                 </DropdownMenuItem>
                 {activeEmpresa && !activeEmpresa.pessoal && !hasPendingRequest(activeEmpresa.empresa_id) && (
-                  <DropdownMenuItem onClick={() => {
-                    setExitEmpresaId(activeEmpresa.empresa_id);
-                    setExitEmpresaNome(activeEmpresa.empresa_nome || "");
-                    setExitDialogOpen(true);
+                  <DropdownMenuItem onSelect={(e) => {
+                    e.preventDefault();
+                    setTimeout(() => {
+                      setExitEmpresaId(activeEmpresa.empresa_id);
+                      setExitEmpresaNome(activeEmpresa.empresa_nome || "");
+                      setExitDialogOpen(true);
+                    }, 150);
                   }}>
                     <DoorOpen size={14} className="mr-2" />
                     Sair da empresa
