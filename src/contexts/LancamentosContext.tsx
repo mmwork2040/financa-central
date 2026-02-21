@@ -187,7 +187,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const fetchLancamentos = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase.from("lancamentos").select(`
+      let query = (supabase as any).from("lancamentos").select(`
         *,
         categoria:categorias(*),
         fornecedor:fornecedores(*),
