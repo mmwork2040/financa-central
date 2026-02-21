@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Plug, Loader2, ExternalLink, BookOpen } from "lucide-react";
+import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,14 +13,102 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 const PLATAFORMAS = [
-  { id: "hotmart", name: "Hotmart", description: "Plataforma de produtos digitais", site: "https://app.hotmart.com/tools/credentials", doc: "https://developers.hotmart.com/docs/pt-BR/" },
-  { id: "eduzz", name: "Eduzz", description: "Venda de infoprodutos", site: "https://orbita.eduzz.com/producer/config-api", doc: "https://developer.eduzz.com/" },
-  { id: "monetizze", name: "Monetizze", description: "Afiliados e produtos digitais", site: "https://app.monetizze.com.br/developer/api", doc: "https://docs.monetizze.com.br/" },
-  { id: "stripe", name: "Stripe", description: "Pagamentos internacionais", site: "https://dashboard.stripe.com/apikeys", doc: "https://docs.stripe.com/api" },
-  { id: "paypal", name: "PayPal", description: "Pagamentos globais", site: "https://developer.paypal.com/dashboard/applications", doc: "https://developer.paypal.com/docs/api/overview/" },
-  { id: "asaas", name: "Asaas", description: "Cobranças e pagamentos", site: "https://www.asaas.com/config/api", doc: "https://docs.asaas.com/" },
-  { id: "meta_ads", name: "Meta Ads", description: "Facebook & Instagram Ads", site: "https://business.facebook.com/settings", doc: "https://developers.facebook.com/docs/marketing-apis/" },
-  { id: "google_ads", name: "Google Ads", description: "Anúncios no Google", site: "https://console.cloud.google.com/apis/credentials", doc: "https://developers.google.com/google-ads/api/docs/start" },
+  {
+    id: "hotmart", name: "Hotmart", description: "Plataforma de produtos digitais",
+    icon: ShoppingCart, color: "bg-orange-100 text-orange-600",
+    site: "https://app.hotmart.com/tools/credentials", doc: "https://developers.hotmart.com/docs/pt-BR/",
+    steps: [
+      "Acesse o painel Hotmart e vá em Ferramentas → Credenciais",
+      "Clique em 'Gerar credenciais' para criar um novo Client",
+      "Copie o Client ID (API Key) e o Client Secret",
+      "Cole os valores nos campos abaixo",
+    ],
+    needsSecret: true,
+  },
+  {
+    id: "eduzz", name: "Eduzz", description: "Venda de infoprodutos",
+    icon: Zap, color: "bg-blue-100 text-blue-600",
+    site: "https://orbita.eduzz.com/producer/config-api", doc: "https://developer.eduzz.com/",
+    steps: [
+      "Acesse o Órbita Eduzz e vá em Configurações → API",
+      "Gere uma nova chave de API",
+      "Copie o Token gerado (API Key)",
+      "Cole o token no campo abaixo",
+    ],
+    needsSecret: false,
+  },
+  {
+    id: "monetizze", name: "Monetizze", description: "Afiliados e produtos digitais",
+    icon: DollarSign, color: "bg-green-100 text-green-600",
+    site: "https://app.monetizze.com.br/developer/api", doc: "https://docs.monetizze.com.br/",
+    steps: [
+      "Acesse o painel Monetizze → Desenvolvedor → API",
+      "Gere uma nova chave de API",
+      "Copie a chave gerada",
+      "Cole no campo API Key abaixo",
+    ],
+    needsSecret: false,
+  },
+  {
+    id: "stripe", name: "Stripe", description: "Pagamentos internacionais",
+    icon: CreditCard, color: "bg-purple-100 text-purple-600",
+    site: "https://dashboard.stripe.com/apikeys", doc: "https://docs.stripe.com/api",
+    steps: [
+      "Acesse o Dashboard Stripe → Developers → API Keys",
+      "Copie a Secret Key (começa com sk_live_ ou sk_test_)",
+      "Cole como API Key no campo abaixo",
+      "O Publishable Key pode ser usado como Secret (opcional)",
+    ],
+    needsSecret: true,
+  },
+  {
+    id: "paypal", name: "PayPal", description: "Pagamentos globais",
+    icon: Globe, color: "bg-sky-100 text-sky-600",
+    site: "https://developer.paypal.com/dashboard/applications", doc: "https://developer.paypal.com/docs/api/overview/",
+    steps: [
+      "Acesse o PayPal Developer → Dashboard → Apps & Credentials",
+      "Crie um novo App ou selecione um existente",
+      "Copie o Client ID (API Key) e o Secret",
+      "Cole os valores nos campos abaixo",
+    ],
+    needsSecret: true,
+  },
+  {
+    id: "asaas", name: "Asaas", description: "Cobranças e pagamentos",
+    icon: DollarSign, color: "bg-emerald-100 text-emerald-600",
+    site: "https://www.asaas.com/config/api", doc: "https://docs.asaas.com/",
+    steps: [
+      "Acesse o painel Asaas → Configurações → Integrações → API",
+      "Gere uma nova chave de API",
+      "Copie a chave (começa com $aact_...)",
+      "Cole no campo API Key abaixo",
+    ],
+    needsSecret: false,
+  },
+  {
+    id: "meta_ads", name: "Meta Ads", description: "Facebook & Instagram Ads",
+    icon: Megaphone, color: "bg-blue-100 text-blue-700",
+    site: "https://business.facebook.com/settings", doc: "https://developers.facebook.com/docs/marketing-apis/",
+    steps: [
+      "Acesse o Meta Business Suite → Configurações → Integrações",
+      "Vá em developers.facebook.com e crie um App",
+      "Gere um Access Token com permissão ads_read",
+      "Cole o Access Token como API Key abaixo",
+    ],
+    needsSecret: false,
+  },
+  {
+    id: "google_ads", name: "Google Ads", description: "Anúncios no Google",
+    icon: Target, color: "bg-red-100 text-red-600",
+    site: "https://console.cloud.google.com/apis/credentials", doc: "https://developers.google.com/google-ads/api/docs/start",
+    steps: [
+      "Acesse o Google Cloud Console → APIs & Services → Credentials",
+      "Crie uma nova API Key ou OAuth Client",
+      "Ative a Google Ads API no projeto",
+      "Cole a API Key no campo abaixo",
+    ],
+    needsSecret: true,
+  },
 ];
 
 const Integracoes = () => {
@@ -28,6 +116,7 @@ const Integracoes = () => {
   const [integracoes, setIntegracoes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectDialog, setConnectDialog] = useState<string | null>(null);
+  const [wizardStep, setWizardStep] = useState(0);
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [ambiente, setAmbiente] = useState("producao");
@@ -36,6 +125,23 @@ const Integracoes = () => {
   useEffect(() => {
     fetchIntegracoes();
   }, []);
+
+  const currentPlat = PLATAFORMAS.find(p => p.id === connectDialog);
+
+  const openWizard = (platId: string) => {
+    setConnectDialog(platId);
+    setWizardStep(0);
+    setApiKey("");
+    setApiSecret("");
+    setAmbiente("producao");
+  };
+
+  const closeWizard = () => {
+    setConnectDialog(null);
+    setWizardStep(0);
+    setApiKey("");
+    setApiSecret("");
+  };
 
   const fetchIntegracoes = async () => {
     try {
@@ -73,9 +179,7 @@ const Integracoes = () => {
 
       if (error) throw error;
       toast.success("Integração conectada com sucesso!");
-      setConnectDialog(null);
-      setApiKey("");
-      setApiSecret("");
+      closeWizard();
       fetchIntegracoes();
     } catch (error: any) {
       toast.error(error.message || "Erro ao conectar");
@@ -114,37 +218,39 @@ const Integracoes = () => {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PLATAFORMAS.map(plat => {
             const status = getStatus(plat.id);
+            const Icon = plat.icon;
             return (
-              <Card key={plat.id}>
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-sm">{plat.name}</h3>
-                      {status === 'connected' && <Badge className="bg-green-100 text-green-700 text-[10px]">🟢 Conectado</Badge>}
-                      {status === 'disconnected' && <Badge className="bg-red-100 text-red-700 text-[10px]">🔴 Desconectado</Badge>}
+              <Card key={plat.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className={`shrink-0 rounded-lg p-2.5 ${plat.color}`}>
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <p className="text-xs text-muted-foreground">{plat.description}</p>
-                    <div className="flex gap-2 mt-1">
-                      <a href={plat.site} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline">
-                        <ExternalLink className="h-3 w-3" /> Acessar painel
-                      </a>
-                      {plat.doc && (
-                        <a href={plat.doc} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary hover:underline">
-                          <BookOpen className="h-3 w-3" /> Documentação
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h3 className="font-semibold text-sm">{plat.name}</h3>
+                        {status === 'connected' && <Badge variant="outline" className="border-green-300 text-green-700 text-[10px] px-1.5">Conectado</Badge>}
+                        {status === 'disconnected' && <Badge variant="outline" className="border-red-300 text-red-600 text-[10px] px-1.5">Desconectado</Badge>}
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-2">{plat.description}</p>
+                      <div className="flex items-center gap-3">
+                        <a href={plat.site} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline">
+                          <ExternalLink className="h-3 w-3" /> Painel
                         </a>
+                        {plat.doc && (
+                          <a href={plat.doc} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary hover:underline">
+                            <BookOpen className="h-3 w-3" /> Docs
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <div className="shrink-0">
+                      {status === 'connected' ? (
+                        <Button variant="outline" size="sm" onClick={() => handleDisconnect(plat.id)}>Desconectar</Button>
+                      ) : (
+                        <Button size="sm" onClick={() => openWizard(plat.id)}>Conectar</Button>
                       )}
                     </div>
-                  </div>
-                  <div className="shrink-0 ml-3">
-                    {status === 'connected' ? (
-                      <Button variant="outline" size="sm" onClick={() => handleDisconnect(plat.id)}>
-                        Desconectar
-                      </Button>
-                    ) : (
-                      <Button size="sm" onClick={() => setConnectDialog(plat.id)}>
-                        Conectar
-                      </Button>
-                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -153,50 +259,99 @@ const Integracoes = () => {
         </div>
       )}
 
-      <Dialog open={!!connectDialog} onOpenChange={(o) => !o && setConnectDialog(null)}>
-        <DialogContent className="sm:max-w-md">
+      {/* Wizard Dialog */}
+      <Dialog open={!!connectDialog} onOpenChange={(o) => !o && closeWizard()}>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Conectar {PLATAFORMAS.find(p => p.id === connectDialog)?.name}</DialogTitle>
-            <DialogDescription>Insira suas credenciais da API para conectar a plataforma.</DialogDescription>
-            {connectDialog && (() => {
-              const plat = PLATAFORMAS.find(p => p.id === connectDialog);
-              return plat ? (
-                <div className="flex gap-3 pt-1">
-                  <a href={plat.site} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                    <ExternalLink className="h-3 w-3" /> Obter credenciais
-                  </a>
-                  {plat.doc && (
-                    <a href={plat.doc} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary hover:underline">
-                      <BookOpen className="h-3 w-3" /> Ver documentação
-                    </a>
-                  )}
-                </div>
-              ) : null;
-            })()}
+            <div className="flex items-center gap-3">
+              {currentPlat && (() => {
+                const Icon = currentPlat.icon;
+                return (
+                  <div className={`shrink-0 rounded-lg p-2 ${currentPlat.color}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                );
+              })()}
+              <div>
+                <DialogTitle className="text-left">Conectar {currentPlat?.name}</DialogTitle>
+                <DialogDescription className="text-left">
+                  {wizardStep === 0 ? "Siga o passo a passo para obter suas credenciais" : "Insira suas credenciais para finalizar"}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>API Key *</Label>
-              <Input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Cole sua API Key aqui" />
+
+          {/* Step indicator */}
+          <div className="flex items-center gap-2 py-2">
+            <div className={`flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold ${wizardStep === 0 ? 'bg-primary text-primary-foreground' : 'bg-primary/20 text-primary'}`}>
+              {wizardStep > 0 ? <Check className="h-3.5 w-3.5" /> : "1"}
             </div>
-            <div>
-              <Label>API Secret (opcional)</Label>
-              <Input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="Cole o secret se necessário" />
+            <div className="h-0.5 flex-1 bg-border rounded" />
+            <div className={`flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold ${wizardStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+              2
             </div>
-            <div>
-              <Label>Ambiente</Label>
-              <Select value={ambiente} onValueChange={setAmbiente}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="producao">Produção</SelectItem>
-                  <SelectItem value="sandbox">Sandbox</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={handleConnect} disabled={saving || !apiKey.trim()} className="w-full">
-              {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Conectando...</> : "Conectar plataforma"}
-            </Button>
           </div>
+
+          {wizardStep === 0 && currentPlat && (
+            <div className="space-y-4">
+              <div className="space-y-3">
+                {currentPlat.steps.map((step, i) => (
+                  <div key={i} className="flex gap-3 items-start">
+                    <span className="shrink-0 flex items-center justify-center h-5 w-5 rounded-full bg-muted text-muted-foreground text-[10px] font-bold mt-0.5">
+                      {i + 1}
+                    </span>
+                    <p className="text-sm text-foreground">{step}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 pt-1">
+                <a href={currentPlat.site} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium">
+                  <ExternalLink className="h-3.5 w-3.5" /> Abrir painel da plataforma
+                </a>
+                {currentPlat.doc && (
+                  <a href={currentPlat.doc} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary hover:underline">
+                    <BookOpen className="h-3.5 w-3.5" /> Ver documentação
+                  </a>
+                )}
+              </div>
+              <Button onClick={() => setWizardStep(1)} className="w-full">
+                Já tenho as credenciais <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          )}
+
+          {wizardStep === 1 && currentPlat && (
+            <div className="space-y-4">
+              <div>
+                <Label>API Key *</Label>
+                <Input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Cole sua API Key aqui" autoFocus />
+              </div>
+              {currentPlat.needsSecret && (
+                <div>
+                  <Label>API Secret</Label>
+                  <Input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="Cole o secret aqui" />
+                </div>
+              )}
+              <div>
+                <Label>Ambiente</Label>
+                <Select value={ambiente} onValueChange={setAmbiente}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="producao">Produção</SelectItem>
+                    <SelectItem value="sandbox">Sandbox / Teste</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setWizardStep(0)} className="flex-1">
+                  <ChevronLeft className="h-4 w-4 mr-1" /> Voltar
+                </Button>
+                <Button onClick={handleConnect} disabled={saving || !apiKey.trim()} className="flex-1">
+                  {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Conectando...</> : <><Check className="h-4 w-4 mr-1" /> Conectar</>}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
