@@ -9,6 +9,8 @@ import { FormaPagamento } from "@/hooks/useFormasPagamento";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import MobilePagination, { usePagination } from "@/components/common/MobilePagination";
+import { useTableSort } from "@/hooks/useTableSort";
+import SortableTableHead from "@/components/common/SortableTableHead";
 
 interface FormasPagamentoTableProps {
   formasPagamento: FormaPagamento[];
@@ -23,7 +25,8 @@ const FormasPagamentoTable: React.FC<FormasPagamentoTableProps> = ({
 }) => {
   const showActions = canEdit || canDelete;
   const isMobile = useIsMobile();
-  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(formasPagamento);
+  const { sortedItems, sortKey, sortDir, toggleSort } = useTableSort(formasPagamento);
+  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(sortedItems);
 
   if (isMobile) {
     return (
@@ -59,12 +62,12 @@ const FormasPagamentoTable: React.FC<FormasPagamentoTableProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Descrição</TableHead>
+            <SortableTableHead label="Descrição" sortKey="descricao" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
             {showActions && <TableHead className="w-[100px] text-center">Ações</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {formasPagamento.map((forma) => (
+          {paginatedItems.map((forma) => (
             <TableRow key={forma.id}>
               <TableCell>{forma.descricao}</TableCell>
               {showActions && (

@@ -9,6 +9,8 @@ import { type Categoria } from "@/hooks/useCategorias";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import MobilePagination, { usePagination } from "@/components/common/MobilePagination";
+import { useTableSort } from "@/hooks/useTableSort";
+import SortableTableHead from "@/components/common/SortableTableHead";
 
 interface CategoriasTableProps {
   categorias: Categoria[];
@@ -32,7 +34,8 @@ const CategoriasTable: React.FC<CategoriasTableProps> = ({
 }) => {
   const showActions = canEdit || canDelete;
   const isMobile = useIsMobile();
-  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(categorias);
+  const { sortedItems, sortKey, sortDir, toggleSort } = useTableSort(categorias);
+  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(sortedItems);
 
   if (isMobile) {
     return (
@@ -75,13 +78,13 @@ const CategoriasTable: React.FC<CategoriasTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Tipo</TableHead>
+              <SortableTableHead label="Nome" sortKey="nome" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+              <SortableTableHead label="Tipo" sortKey="tipo" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
               {showActions && <TableHead className="w-20 text-right">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categorias.map((categoria) => {
+            {paginatedItems.map((categoria) => {
               const badge = getTipoBadge(categoria.tipo);
               return (
                 <TableRow key={categoria.id}>

@@ -1,13 +1,16 @@
 
-import React, { useState, useMemo } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, UserX, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Pencil, Trash2, UserX, User as UserIcon } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import MobilePagination, { usePagination } from "@/components/common/MobilePagination";
+import { useTableSort } from "@/hooks/useTableSort";
+import SortableTableHead from "@/components/common/SortableTableHead";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface User {
   id: string;
@@ -19,9 +22,6 @@ interface User {
   empresa_nome?: string | null;
   is_super_admin?: boolean;
 }
-
-type SortKey = "nome" | "email" | "empresa_nome" | "permissao" | "created_at";
-type SortDir = "asc" | "desc";
 
 interface UsersListProps {
   users: User[];
@@ -50,43 +50,20 @@ const getPermissaoClass = (permissao: string): string => {
   }
 };
 
+const getInitials = (nome: string) => {
+  return nome
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(n => n[0])
+    .join("")
+    .toUpperCase();
+};
+
 export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, currentUserId }: UsersListProps) => {
   const isMobile = useIsMobile();
-  const [sortKey, setSortKey] = useState<SortKey | null>(null);
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
-
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir(d => d === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
-  };
-
-  const sortedUsers = useMemo(() => {
-    if (!sortKey) return users;
-    return [...users].sort((a, b) => {
-      if (sortKey === "created_at") {
-        return sortDir === "asc"
-          ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-          : new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      }
-      const aVal = ((a as any)[sortKey] ?? "").toString().toLowerCase();
-      const bVal = ((b as any)[sortKey] ?? "").toString().toLowerCase();
-      const cmp = aVal.localeCompare(bVal);
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-  }, [users, sortKey, sortDir]);
-
-  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(sortedUsers);
-
-  const SortIcon = ({ column }: { column: SortKey }) => {
-    if (sortKey !== column) return <ArrowUpDown className="ml-1 h-3 w-3 inline opacity-40" />;
-    return sortDir === "asc"
-      ? <ArrowUp className="ml-1 h-3 w-3 inline" />
-      : <ArrowDown className="ml-1 h-3 w-3 inline" />;
-  };
+  const { sortedItems, sortKey, sortDir, toggleSort } = useTableSort(users);
+  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(sortedItems);
 
   if (isMobile) {
     return (
@@ -100,15 +77,20 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
             <Card key={user.id}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">{user.nome}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                    {isSuperAdmin && (
-                      <span className="text-[10px] text-muted-foreground">{user.empresa_nome || "Sem empresa"}</span>
-                    )}
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getPermissaoClass(user.permissao)}`}>
-                      {isTargetSuperAdmin ? "Super Admin" : getPermissaoLabel(user.permissao)}
-                    </span>
+                  <div className="flex gap-3 flex-1 min-w-0">
+                    <Avatar className="h-9 w-9 shrink-0">
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">{getInitials(user.nome)}</AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1 min-w-0">
+                      <p className="font-medium text-foreground truncate">{user.nome}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                      {isSuperAdmin && (
+                        <span className="text-[10px] text-muted-foreground">{user.empresa_nome || "Sem empresa"}</span>
+                      )}
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getPermissaoClass(user.permissao)}`}>
+                        {isTargetSuperAdmin ? "Super Admin" : getPermissaoLabel(user.permissao)}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex gap-0.5 ml-2">
                     {canModify && (
@@ -145,11 +127,11 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("nome")}>Nome <SortIcon column="nome" /></TableHead>
-            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("email")}>Email <SortIcon column="email" /></TableHead>
-            {isSuperAdmin && <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("empresa_nome")}>Empresa <SortIcon column="empresa_nome" /></TableHead>}
-            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("permissao")}>Permissão <SortIcon column="permissao" /></TableHead>
-            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("created_at")}>Data de Cadastro <SortIcon column="created_at" /></TableHead>
+            <SortableTableHead label="Nome" sortKey="nome" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+            <SortableTableHead label="Email" sortKey="email" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+            {isSuperAdmin && <SortableTableHead label="Empresa" sortKey="empresa_nome" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />}
+            <SortableTableHead label="Permissão" sortKey="permissao" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+            <SortableTableHead label="Data de Cadastro" sortKey="created_at" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
             <TableHead className="w-[140px] text-center">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -161,7 +143,14 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
 
             return (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.nome}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">{getInitials(user.nome)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">{user.nome}</span>
+                  </div>
+                </TableCell>
                 <TableCell>{user.email}</TableCell>
                 {isSuperAdmin && (
                   <TableCell>
