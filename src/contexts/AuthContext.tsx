@@ -5,6 +5,21 @@ import { toast } from "sonner";
 import { Session, User } from "@supabase/supabase-js";
 import { usePermissoes } from "@/hooks/usePermissoes";
 
+const authErrorMessages: Record<string, string> = {
+  "Invalid login credentials": "E-mail ou senha incorretos.",
+  "Email not confirmed": "E-mail não confirmado. Verifique sua caixa de entrada.",
+  "User not found": "Usuário não encontrado.",
+  "Invalid email or password": "E-mail ou senha inválidos.",
+  "Too many requests": "Muitas tentativas. Aguarde alguns minutos.",
+  "User already registered": "Este e-mail já está cadastrado.",
+  "Signup requires a valid password": "A senha informada é inválida.",
+  "Password should be at least 6 characters": "A senha deve ter no mínimo 6 caracteres.",
+};
+
+function translateAuthError(msg: string): string {
+  return authErrorMessages[msg] || msg;
+}
+
 type EmpresaInfo = {
   empresa_id: string;
   role: string;
@@ -204,7 +219,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
-        toast.error(error.message || "Erro de login");
+        toast.error(translateAuthError(error.message));
         throw error;
       }
 
