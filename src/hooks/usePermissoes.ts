@@ -19,6 +19,9 @@ const routeToScreenMap: Record<string, string> = {
   "/payment-methods": "formas_pagamento",
   "/transactions": "lancamentos",
   "/reports": "relatorios",
+  "/vendas-digitais": "vendas_digitais",
+  "/settings/integracoes": "integracoes",
+  "/settings/webhooks": "webhooks",
 };
 
 // Screens that require admin role to access (not permission-based)
@@ -83,7 +86,7 @@ export const usePermissoes = (userId: string | null, userRole: string | null, is
   /** Check if user can view a route path */
   const canAccessRoute = useCallback((path: string): boolean => {
     // Dashboard and settings are always accessible
-    if (path === "/dashboard" || path === "/settings") return true;
+    if (path === "/dashboard" || path === "/settings" || path === "/settings/integracoes" || path === "/settings/webhooks") return true;
 
     const screenKey = routeToScreenMap[path];
     if (!screenKey) return true;
