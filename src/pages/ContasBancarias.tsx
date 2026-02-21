@@ -1,6 +1,7 @@
 
 import React from "react";
 import { useContasBancarias } from "@/hooks/useContasBancarias";
+import { Landmark } from "lucide-react";
 import ContasBancariasTable from "@/components/contas-bancarias/ContasBancariasTable";
 import ContaBancariaForm from "@/components/contas-bancarias/ContaBancariaForm";
 import ContaBancariaDeleteDialog from "@/components/contas-bancarias/ContaBancariaDeleteDialog";
@@ -33,6 +34,7 @@ const ContasBancariasContent = () => {
         buttonLabel="Nova Conta Bancária"
         onButtonClick={() => handleOpenModal()}
         showButton={canIncluir}
+        icon={Landmark}
       />
       
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

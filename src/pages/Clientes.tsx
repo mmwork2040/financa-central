@@ -1,6 +1,7 @@
 
 import React, { useState } from "react";
 import { useFormatInput } from "@/hooks/use-format-input";
+import { Users as UsersIcon } from "lucide-react";
 import PageHeader from "@/components/common/PageHeader";
 import ClienteForm from "@/components/clientes/ClienteForm";
 import ClienteDeleteDialog from "@/components/clientes/ClienteDeleteDialog";
@@ -221,6 +222,7 @@ const Clientes = () => {
         buttonLabel="Novo Cliente"
         onButtonClick={() => openModal()}
         showButton={canIncluir}
+        icon={UsersIcon}
       />
 
       <ClientesSearch 

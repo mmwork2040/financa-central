@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Plus, ArrowUpRight, ArrowDownRight, Wallet, AlertTriangle, Clock, Activity, Eye, EyeOff } from "lucide-react";
+import { Plus, ArrowUpRight, ArrowDownRight, Wallet, AlertTriangle, Clock, Activity, Eye, EyeOff, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,8 +39,11 @@ const DashboardContent = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold">Olá, {userProfile?.nome?.split(' ')[0] || 'Usuário'}! 👋</h1>
-          <p className="text-sm text-muted-foreground">Aqui está o resumo do seu financeiro</p>
+          <div className="flex items-center gap-2 mb-1">
+            <LayoutDashboard className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <h1 className="text-xl sm:text-2xl font-bold">Olá, {userProfile?.nome?.split(' ')[0] || 'Usuário'}! 👋</h1>
+          </div>
+          <p className="text-xs sm:text-sm text-muted-foreground">Aqui está o resumo do seu financeiro</p>
         </div>
         <Button variant="ghost" size="sm" onClick={toggle} className="gap-1.5">
           {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

@@ -84,10 +84,10 @@ const WebhooksConfig = () => {
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <Webhook className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">Webhooks</h1>
+          <Webhook className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+          <h1 className="text-xl sm:text-2xl font-bold">Webhooks</h1>
         </div>
-        <p className="text-sm text-muted-foreground">Conecte automações externas como n8n, Zapier ou Make</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">Conecte automações externas como n8n, Zapier ou Make</p>
       </div>
 
       <Button onClick={() => setDialogOpen(true)} size="sm">

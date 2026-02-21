@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Shield } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -187,8 +188,12 @@ const Permissoes = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Permissões</h1>
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+          <h1 className="text-xl sm:text-2xl font-bold">Permissões</h1>
+        </div>
+        <p className="text-xs sm:text-sm text-muted-foreground">Defina as permissões de acesso para cada usuário</p>
       </div>
       
       <Card>
