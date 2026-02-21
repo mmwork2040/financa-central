@@ -29,6 +29,7 @@ import {
   FolderOpen,
   Plug,
   Webhook,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
@@ -119,6 +120,7 @@ export const Sidebar = () => {
     { name: "Dashboard", icon: Home, path: "/dashboard" },
     { name: "Lançamentos", icon: Files, path: "/transactions" },
     { name: "Vendas Digitais", icon: ShoppingCart, path: "/vendas-digitais" },
+    { name: "Anúncios", icon: Megaphone, path: "/anuncios" },
   ];
 
   const cadastrosItems = [

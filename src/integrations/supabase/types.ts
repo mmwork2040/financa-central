@@ -264,6 +264,53 @@ export type Database = {
           },
         ]
       }
+      integracoes: {
+        Row: {
+          ambiente: string
+          api_key_encrypted: string | null
+          api_secret_encrypted: string | null
+          ativo: boolean
+          created_at: string
+          empresa_id: string
+          id: string
+          plataforma: string
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          ambiente?: string
+          api_key_encrypted?: string | null
+          api_secret_encrypted?: string | null
+          ativo?: boolean
+          created_at?: string
+          empresa_id: string
+          id?: string
+          plataforma: string
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          ambiente?: string
+          api_key_encrypted?: string | null
+          api_secret_encrypted?: string | null
+          ativo?: boolean
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          plataforma?: string
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integracoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invite_code_permissoes: {
         Row: {
           id: string
@@ -372,6 +419,8 @@ export type Database = {
           fornecedor_id: string | null
           id: string
           parcela_atual: number | null
+          recorrencia_fim: string | null
+          recorrencia_tipo: string | null
           recorrente: boolean
           status: string
           tipo: string
@@ -392,6 +441,8 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           parcela_atual?: number | null
+          recorrencia_fim?: string | null
+          recorrencia_tipo?: string | null
           recorrente?: boolean
           status?: string
           tipo?: string
@@ -412,6 +463,8 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           parcela_atual?: number | null
+          recorrencia_fim?: string | null
+          recorrencia_tipo?: string | null
           recorrente?: boolean
           status?: string
           tipo?: string
@@ -460,6 +513,44 @@ export type Database = {
             columns: ["fornecedor_id"]
             isOneToOne: false
             referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      logs_integracoes: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          evento: string
+          id: string
+          payload: Json | null
+          plataforma: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          evento: string
+          id?: string
+          payload?: Json | null
+          plataforma: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          evento?: string
+          id?: string
+          payload?: Json | null
+          plataforma?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logs_integracoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
         ]
@@ -533,6 +624,44 @@ export type Database = {
             columns: ["perfis_id"]
             isOneToOne: false
             referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recebimentos_digitais: {
+        Row: {
+          created_at: string
+          data_prevista: string | null
+          data_recebida: string | null
+          id: string
+          status: string
+          valor: number
+          venda_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_prevista?: string | null
+          data_recebida?: string | null
+          id?: string
+          status?: string
+          valor?: number
+          venda_id: string
+        }
+        Update: {
+          created_at?: string
+          data_prevista?: string | null
+          data_recebida?: string | null
+          id?: string
+          status?: string
+          valor?: number
+          venda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recebimentos_digitais_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas_digitais"
             referencedColumns: ["id"]
           },
         ]
@@ -612,6 +741,94 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "user_roles_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendas_digitais: {
+        Row: {
+          cliente: string | null
+          created_at: string
+          data_prevista_recebimento: string | null
+          data_venda: string
+          empresa_id: string
+          id: string
+          plataforma: string
+          produto: string | null
+          status: string
+          taxa: number
+          valor_bruto: number
+          valor_liquido: number
+        }
+        Insert: {
+          cliente?: string | null
+          created_at?: string
+          data_prevista_recebimento?: string | null
+          data_venda?: string
+          empresa_id: string
+          id?: string
+          plataforma: string
+          produto?: string | null
+          status?: string
+          taxa?: number
+          valor_bruto?: number
+          valor_liquido?: number
+        }
+        Update: {
+          cliente?: string | null
+          created_at?: string
+          data_prevista_recebimento?: string | null
+          data_venda?: string
+          empresa_id?: string
+          id?: string
+          plataforma?: string
+          produto?: string | null
+          status?: string
+          taxa?: number
+          valor_bruto?: number
+          valor_liquido?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendas_digitais_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhooks_empresa: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          empresa_id: string
+          evento: string
+          id: string
+          url: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          empresa_id: string
+          evento: string
+          id?: string
+          url: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          empresa_id?: string
+          evento?: string
+          id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhooks_empresa_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"

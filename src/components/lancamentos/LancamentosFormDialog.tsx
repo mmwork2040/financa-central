@@ -73,12 +73,22 @@ export const LancamentosFormDialog = () => {
   // Function to handle recurrence toggle
   const handleRecorrenciaChange = (checked: boolean) => {
     const syntheticEvent = {
-      target: {
-        name: 'recorrente',
-        value: checked
-      }
+      target: { name: 'recorrente', value: checked }
     } as unknown as React.ChangeEvent<HTMLInputElement>;
-    
+    handleInputChange(syntheticEvent);
+  };
+
+  const handleRecorrenciaTipoChange = (value: string) => {
+    const syntheticEvent = {
+      target: { name: 'recorrencia_tipo', value }
+    } as unknown as React.ChangeEvent<HTMLInputElement>;
+    handleInputChange(syntheticEvent);
+  };
+
+  const handleRecorrenciaFimChange = (value: string | null) => {
+    const syntheticEvent = {
+      target: { name: 'recorrencia_fim', value }
+    } as unknown as React.ChangeEvent<HTMLInputElement>;
     handleInputChange(syntheticEvent);
   };
 
@@ -86,12 +96,8 @@ export const LancamentosFormDialog = () => {
   const handleParcelasChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value) || null;
     const syntheticEvent = {
-      target: {
-        name: 'total_parcelas',
-        value: value
-      }
+      target: { name: 'total_parcelas', value }
     } as unknown as React.ChangeEvent<HTMLInputElement>;
-    
     handleInputChange(syntheticEvent);
   };
 
@@ -135,7 +141,11 @@ export const LancamentosFormDialog = () => {
           
           <RecorrenciaToggle 
             checked={formData.recorrente || false} 
-            onCheckedChange={handleRecorrenciaChange} 
+            onCheckedChange={handleRecorrenciaChange}
+            recorrenciaTipo={(formData as any).recorrencia_tipo || "mensal"}
+            onRecorrenciaTipoChange={handleRecorrenciaTipoChange}
+            recorrenciaFim={(formData as any).recorrencia_fim}
+            onRecorrenciaFimChange={handleRecorrenciaFimChange}
           />
 
           {/* Conditional parcelas field */}
