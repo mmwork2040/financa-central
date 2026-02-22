@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Webhook, Plus, Trash2, Loader2, Power, PowerOff, AlertCircle, Database } from "lucide-react";
+import { Webhook, Plus, Trash2, Loader2, Power, PowerOff, AlertCircle, Database, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,7 @@ const WebhooksConfig = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [nome, setNome] = useState("");
   const [url, setUrl] = useState("");
@@ -102,7 +103,6 @@ const WebhooksConfig = () => {
     validateJson(value);
   };
 
-  // Auto-suggest payload when acao or tabela changes
   const handleAcaoChange = (value: string) => {
     setNome(value);
     if (value && tabela) {
@@ -122,10 +122,22 @@ const WebhooksConfig = () => {
   };
 
   const resetForm = () => {
-    setNome(""); setUrl(""); setPayloadJson(""); setCampoResposta(""); setComportamento(""); setTabela(""); setJsonError(null);
+    setNome(""); setUrl(""); setPayloadJson(""); setCampoResposta(""); setComportamento(""); setTabela(""); setJsonError(null); setEditingId(null);
   };
 
-  const handleCreate = async () => {
+  const handleOpenEdit = (wh: any) => {
+    setEditingId(wh.id);
+    setNome(wh.nome || wh.evento || "");
+    setUrl(wh.url || "");
+    setPayloadJson(wh.payload_json || "");
+    setCampoResposta(wh.campo_resposta || "");
+    setComportamento(wh.comportamento || "");
+    setTabela(wh.tabela || "");
+    setJsonError(null);
+    setDialogOpen(true);
+  };
+
+  const handleSave = async () => {
     if (!nome.trim() || !url.trim() || !empresaId) return;
     if (payloadJson.trim() && !validateJson(payloadJson)) {
       toast.error("O JSON do payload é inválido. Corrija antes de salvar.");
@@ -133,26 +145,36 @@ const WebhooksConfig = () => {
     }
     setSaving(true);
     try {
-      const { error } = await (supabase as any)
-        .from('webhooks_empresa')
-        .insert({
-          empresa_id: empresaId,
-          nome: nome.trim(),
-          url: url.trim(),
-          evento: nome.trim(),
-          tabela: tabela || null,
-          payload_json: payloadJson.trim() || null,
-          campo_resposta: campoResposta.trim() || null,
-          comportamento: comportamento.trim() || null,
-          ativo: true,
-        });
-      if (error) throw error;
-      toast.success("Webhook criado com sucesso!");
+      const payload = {
+        nome: nome.trim(),
+        url: url.trim(),
+        evento: nome.trim(),
+        tabela: tabela || null,
+        payload_json: payloadJson.trim() || null,
+        campo_resposta: campoResposta.trim() || null,
+        comportamento: comportamento.trim() || null,
+      };
+
+      if (editingId) {
+        const { error } = await (supabase as any)
+          .from('webhooks_empresa')
+          .update(payload)
+          .eq('id', editingId);
+        if (error) throw error;
+        toast.success("Webhook atualizado com sucesso!");
+      } else {
+        const { error } = await (supabase as any)
+          .from('webhooks_empresa')
+          .insert({ ...payload, empresa_id: empresaId, ativo: true });
+        if (error) throw error;
+        toast.success("Webhook criado com sucesso!");
+      }
+
       setDialogOpen(false);
       resetForm();
       fetchWebhooks();
     } catch (error: any) {
-      toast.error(error.message || "Erro ao criar webhook");
+      toast.error(error.message || "Erro ao salvar webhook");
     } finally {
       setSaving(false);
     }
@@ -222,6 +244,9 @@ const WebhooksConfig = () => {
                     )}
                   </div>
                   <div className="flex gap-1 shrink-0">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEdit(wh)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggle(wh.id, wh.ativo)}>
                       {wh.ativo ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
                     </Button>
@@ -254,10 +279,10 @@ const WebhooksConfig = () => {
         </div>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Novo Webhook</DialogTitle>
+            <DialogTitle>{editingId ? "Editar Webhook" : "Novo Webhook"}</DialogTitle>
             <DialogDescription>Configure a ação de suporte e a URL que receberá as notificações.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -322,8 +347,8 @@ const WebhooksConfig = () => {
               />
               <p className="text-[11px] text-muted-foreground mt-1">Descreva o que o sistema deve fazer conforme o retorno do webhook.</p>
             </div>
-            <Button onClick={handleCreate} disabled={saving || !nome.trim() || !url.trim() || !!jsonError || (nome === "Excluir Registro" && !tabela)} className="w-full">
-              {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Criando...</> : "Criar Webhook"}
+            <Button onClick={handleSave} disabled={saving || !nome.trim() || !url.trim() || !!jsonError || (nome === "Excluir Registro" && !tabela)} className="w-full">
+              {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Salvando...</> : editingId ? "Salvar Alterações" : "Criar Webhook"}
             </Button>
           </div>
         </DialogContent>
