@@ -38,7 +38,7 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
     return (
       <div className="space-y-3">
         {paginatedItems.map((c) => (
-          <Card key={c.id} className={hasPendingRequest && hasPendingRequest(c.id) ? "border-l-4 border-l-amber-400 bg-amber-50 dark:bg-amber-950/30" : ""}>
+          <Card key={c.id} className={hasPendingRequest && hasPendingRequest(c.id) ? "border-l-4 border-l-destructive bg-destructive/5" : ""}>
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-1 flex-1 min-w-0">
@@ -135,7 +135,7 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
           </TableHeader>
           <TableBody>
             {paginatedItems.map((cliente) => (
-              <TableRow key={cliente.id} className={hasPendingRequest && hasPendingRequest(cliente.id) ? "bg-amber-50 dark:bg-amber-950/30 border-l-4 border-l-amber-400" : ""}>
+              <TableRow key={cliente.id} className={hasPendingRequest && hasPendingRequest(cliente.id) ? "bg-destructive/5 border-l-4 border-l-destructive" : ""}>
                 <TableCell className="font-medium">{cliente.nome}</TableCell>
                 <TableCell>{cliente.cpf_cnpj ? formatCPFOrCNPJ(cliente.cpf_cnpj) : '-'}</TableCell>
                 <TableCell>{cliente.telefone ? formatPhone(cliente.telefone) : '-'}</TableCell>
