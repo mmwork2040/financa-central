@@ -220,7 +220,7 @@ export const Sidebar = () => {
           ) : (
             <button
               onClick={toggle}
-              className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all"
+              className="rounded-full p-1.5 text-sidebar-foreground bg-sidebar-accent/50 hover:bg-sidebar-accent transition-all"
               aria-label={isExpanded ? "Recolher menu" : "Expandir menu"}
             >
               {isExpanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
