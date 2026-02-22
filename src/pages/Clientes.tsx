@@ -105,28 +105,6 @@ const Clientes = () => {
   };
 
   const handleDelete = async () => {
-    // Fire webhook for direct delete with table name
-    try {
-      await supabase.functions.invoke("fire-webhook", {
-        body: {
-          empresa_id: empresaId,
-          evento: "Excluir Registro",
-          tabela: "clientes",
-          descricao: currentCliente.nome,
-          registro: currentCliente.id,
-          usuario: {
-            id: user?.id,
-            nome: userProfile?.nome,
-            email: userProfile?.email,
-            telefone: userProfile?.telefone || null,
-          },
-          acao: "exclusao_direta",
-        },
-      });
-    } catch (err) {
-      console.warn("Webhook de exclusão direta não disparado:", err);
-    }
-
     const success = await deleteCliente(currentCliente.id);
     if (success) {
       setIsDeleteDialogOpen(false);
