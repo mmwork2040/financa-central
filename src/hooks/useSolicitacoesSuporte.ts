@@ -113,7 +113,8 @@ export const useSolicitacoesSuporte = () => {
         await supabase.functions.invoke("fire-webhook", {
           body: {
             empresa_id: empresaId,
-            evento: "solicitacao_suporte",
+            evento: "Excluir Registro",
+            tabela: params.tabela,
             descricao: `Solicitação de exclusão: ${params.registro_descricao} (${params.tabela})`,
             usuario: {
               id: user.id,
@@ -122,7 +123,7 @@ export const useSolicitacoesSuporte = () => {
               telefone: userProfile.telefone || null,
             },
             acao: "exclusao",
-            registro: params.registro_descricao,
+            registro: params.registro_id,
           },
         });
       } catch (webhookErr) {

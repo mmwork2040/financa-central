@@ -14,6 +14,47 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 
+const acoesDisponiveis = [
+  { value: "Excluir Registro", label: "Excluir Registro" },
+  { value: "Suporte Técnico", label: "Suporte Técnico" },
+];
+
+const tabelasDisponiveis = [
+  { value: "lancamentos", label: "Lançamentos" },
+  { value: "clientes", label: "Clientes" },
+  { value: "fornecedores", label: "Fornecedores" },
+  { value: "categorias", label: "Categorias" },
+  { value: "contas_bancarias", label: "Contas Bancárias" },
+  { value: "formas_pagamento", label: "Formas de Pagamento" },
+];
+
+const gerarPayloadSugerido = (acao: string, tabela: string): string => {
+  const baseFields: Record<string, any> = {
+    empresa_id: "{{empresa_id}}",
+    acao,
+    tabela,
+    timestamp: "{{timestamp}}",
+  };
+
+  if (acao === "Excluir Registro") {
+    const tabelaFields: Record<string, Record<string, any>> = {
+      lancamentos: { registro_id: "{{registro_id}}", descricao: "{{descricao}}", valor: "{{valor}}", tipo: "{{tipo}}", data_vencimento: "{{data_vencimento}}" },
+      clientes: { registro_id: "{{registro_id}}", nome: "{{nome}}", email: "{{email}}", cpf_cnpj: "{{cpf_cnpj}}" },
+      fornecedores: { registro_id: "{{registro_id}}", nome: "{{nome}}", email: "{{email}}", cpf_cnpj: "{{cpf_cnpj}}" },
+      categorias: { registro_id: "{{registro_id}}", nome: "{{nome}}", tipo: "{{tipo}}" },
+      contas_bancarias: { registro_id: "{{registro_id}}", nome: "{{nome}}", banco: "{{banco}}" },
+      formas_pagamento: { registro_id: "{{registro_id}}", descricao: "{{descricao}}" },
+    };
+    return JSON.stringify({ ...baseFields, usuario: { id: "{{user_id}}", nome: "{{user_nome}}", email: "{{user_email}}" }, ...(tabelaFields[tabela] || { registro_id: "{{registro_id}}" }) }, null, 2);
+  }
+
+  if (acao === "Suporte Técnico") {
+    return JSON.stringify({ ...baseFields, usuario: { id: "{{user_id}}", nome: "{{user_nome}}", email: "{{user_email}}", telefone: "{{user_telefone}}" }, assunto: "{{assunto}}", mensagem: "{{mensagem}}" }, null, 2);
+  }
+
+  return JSON.stringify(baseFields, null, 2);
+};
+
 const WebhooksConfig = () => {
   const { empresaId, isSuperAdmin } = useAuth();
   const [webhooks, setWebhooks] = useState<any[]>([]);
@@ -21,7 +62,6 @@ const WebhooksConfig = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Form fields
   const [nome, setNome] = useState("");
   const [url, setUrl] = useState("");
   const [payloadJson, setPayloadJson] = useState("");
@@ -29,15 +69,6 @@ const WebhooksConfig = () => {
   const [comportamento, setComportamento] = useState("");
   const [tabela, setTabela] = useState("");
   const [jsonError, setJsonError] = useState<string | null>(null);
-
-  const tabelasDisponiveis = [
-    { value: "lancamentos", label: "Lançamentos" },
-    { value: "clientes", label: "Clientes" },
-    { value: "fornecedores", label: "Fornecedores" },
-    { value: "categorias", label: "Categorias" },
-    { value: "contas_bancarias", label: "Contas Bancárias" },
-    { value: "formas_pagamento", label: "Formas de Pagamento" },
-  ];
 
   useEffect(() => {
     if (isSuperAdmin) fetchWebhooks();
@@ -61,18 +92,9 @@ const WebhooksConfig = () => {
   };
 
   const validateJson = (value: string): boolean => {
-    if (!value.trim()) {
-      setJsonError(null);
-      return true;
-    }
-    try {
-      JSON.parse(value);
-      setJsonError(null);
-      return true;
-    } catch (e: any) {
-      setJsonError(e.message || "JSON inválido");
-      return false;
-    }
+    if (!value.trim()) { setJsonError(null); return true; }
+    try { JSON.parse(value); setJsonError(null); return true; }
+    catch (e: any) { setJsonError(e.message || "JSON inválido"); return false; }
   };
 
   const handlePayloadChange = (value: string) => {
@@ -80,14 +102,27 @@ const WebhooksConfig = () => {
     validateJson(value);
   };
 
+  // Auto-suggest payload when acao or tabela changes
+  const handleAcaoChange = (value: string) => {
+    setNome(value);
+    if (value && tabela) {
+      const suggested = gerarPayloadSugerido(value, tabela);
+      setPayloadJson(suggested);
+      setJsonError(null);
+    }
+  };
+
+  const handleTabelaChange = (value: string) => {
+    setTabela(value);
+    if (nome && value) {
+      const suggested = gerarPayloadSugerido(nome, value);
+      setPayloadJson(suggested);
+      setJsonError(null);
+    }
+  };
+
   const resetForm = () => {
-    setNome("");
-    setUrl("");
-    setPayloadJson("");
-    setCampoResposta("");
-    setComportamento("");
-    setTabela("");
-    setJsonError(null);
+    setNome(""); setUrl(""); setPayloadJson(""); setCampoResposta(""); setComportamento(""); setTabela(""); setJsonError(null);
   };
 
   const handleCreate = async () => {
@@ -227,12 +262,21 @@ const WebhooksConfig = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Nome da ação *</Label>
-              <Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Solicitação de exclusão" />
+              <Label>Ação *</Label>
+              <Select value={nome} onValueChange={handleAcaoChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a ação" />
+                </SelectTrigger>
+                <SelectContent>
+                  {acoesDisponiveis.map(a => (
+                    <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Tabela da ação</Label>
-              <Select value={tabela} onValueChange={setTabela}>
+              <Select value={tabela} onValueChange={handleTabelaChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a tabela (opcional)" />
                 </SelectTrigger>
@@ -242,7 +286,7 @@ const WebhooksConfig = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground mt-1">Selecione em qual tabela a ação será executada.</p>
+              <p className="text-[11px] text-muted-foreground mt-1">O payload será sugerido automaticamente conforme a ação e tabela.</p>
             </div>
             <div>
               <Label>URL do Webhook *</Label>
@@ -253,7 +297,7 @@ const WebhooksConfig = () => {
               <Textarea
                 value={payloadJson}
                 onChange={e => handlePayloadChange(e.target.value)}
-                placeholder={'{\n  "empresa_id": "{{empresa_id}}",\n  "usuario": "{{usuario}}",\n  "acao": "{{acao}}"\n}'}
+                placeholder={'Selecione a ação e tabela para gerar automaticamente'}
                 className="font-mono text-xs min-h-[120px]"
               />
               {jsonError && (
