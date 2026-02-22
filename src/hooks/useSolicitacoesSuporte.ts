@@ -190,11 +190,39 @@ export const useSolicitacoesSuporte = () => {
     );
   };
 
+  const getPendingRequestId = (tabela: string, registro_id: string) => {
+    const found = solicitacoes.find(
+      (s) => s.tabela === tabela && s.registro_id === registro_id && s.status === "pendente"
+    );
+    return found?.id || null;
+  };
+
+  const cancelarSolicitacao = async (id: string) => {
+    try {
+      const { error } = await (supabase as any)
+        .from("solicitacoes_suporte")
+        .delete()
+        .eq("id", id)
+        .eq("status", "pendente");
+
+      if (error) throw error;
+
+      toast.success("Solicitação de exclusão cancelada.");
+      await fetchSolicitacoes();
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao cancelar solicitação");
+      return false;
+    }
+  };
+
   return {
     solicitacoes,
     loading,
     fetchSolicitacoes,
     criarSolicitacao,
     hasPendingRequest,
+    getPendingRequestId,
+    cancelarSolicitacao,
   };
 };
