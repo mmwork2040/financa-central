@@ -30,6 +30,7 @@ import AnunciosDigitais from "./pages/AnunciosDigitais";
 import LogsIntegracoes from "./pages/LogsIntegracoes";
 import NotFoundPage from "./pages/NotFoundPage";
 import Install from "./pages/Install";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => {
 
                 {/* Protected routes */}
                 <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
+                <Route path="/profile" element={<AppLayout><Profile /></AppLayout>} />
                 <Route path="/settings" element={<AppLayout><ConfiguracoesEmpresa /></AppLayout>} />
                 <Route path="/settings/integracoes" element={<AppLayout><Integracoes /></AppLayout>} />
                 <Route path="/settings/webhooks" element={<AppLayout><WebhooksConfig /></AppLayout>} />

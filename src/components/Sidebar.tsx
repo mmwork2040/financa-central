@@ -229,7 +229,12 @@ export const Sidebar = () => {
       <div className="border-t border-b border-sidebar-border px-3 py-2.5">
         {showExpanded ? (
           <div className="space-y-1.5">
-            <div className="text-sidebar-foreground text-sm font-medium truncate">{userProfile?.nome || "Usuário"}</div>
+            <Link to="/profile" className="block hover:opacity-80 transition-opacity">
+              <div className="text-sidebar-foreground text-sm font-medium truncate">{userProfile?.nome || "Usuário"}</div>
+              <div className="text-sidebar-foreground/60 text-[10px] truncate">
+                {isSuperAdmin ? "Super Admin" : activeEmpresa?.role === 'admin' ? "Administrador" : activeEmpresa?.role === 'usuario' ? "Usuário" : activeEmpresa?.role === 'leitura' ? "Leitura" : "Usuário"}
+              </div>
+            </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex w-full items-center justify-between rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2.5 py-1.5 text-xs text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
