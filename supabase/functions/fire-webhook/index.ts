@@ -111,12 +111,17 @@ Deno.serve(async (req) => {
 
         try {
           responseBody = await response.json();
-          // Extract campo_resposta value from response using dot-notation path
+          // If response is an array, use the first element
           if (wh.campo_resposta && responseBody) {
+            let root: any = responseBody;
+            if (Array.isArray(root)) {
+              root = root[0];
+            }
             const parts = wh.campo_resposta.split(".");
-            let current: any = responseBody;
+            let current: any = root;
             for (const part of parts) {
               if (current == null) break;
+              if (Array.isArray(current)) current = current[0];
               current = current[part];
             }
             campoRespostaValue = current ?? null;
