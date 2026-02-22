@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Check, Lock, Clock, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, Check, Lock, Clock, Pencil, Trash2, Send } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import { formatCurrency } from "@/utils/format";
@@ -80,9 +80,21 @@ export const LancamentosTable = () => {
                             </Tooltip>
                           </TooltipProvider>
                           {isSuperAdmin && canExcluir ? (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleOpenDeleteModal(l.id!)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                            <>
+                              <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleOpenDeleteModal(l.id!)}>
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </TooltipTrigger><TooltipContent><p>Excluir diretamente</p></TooltipContent></Tooltip></TooltipProvider>
+                              <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-600" onClick={() => {
+                                  setSupportTarget({ id: l.id!, descricao: l.descricao });
+                                  setSupportDialogOpen(true);
+                                }}>
+                                  <Send className="h-3.5 w-3.5" />
+                                </Button>
+                              </TooltipTrigger><TooltipContent><p>Solicitar exclusão via webhook</p></TooltipContent></Tooltip></TooltipProvider>
+                            </>
                           ) : canExcluir && hasPendingRequest("lancamentos", l.id!) ? (
                             <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-3.5 w-3.5 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada – aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
                           ) : canExcluir ? (
@@ -199,9 +211,21 @@ export const LancamentosTable = () => {
                           </Tooltip>
                         </TooltipProvider>
                         {isSuperAdmin && canExcluir ? (
-                          <Button variant="ghost" size="sm" onClick={() => handleOpenDeleteModal(lancamento.id!)} className="h-8 w-8 p-0 text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <>
+                            <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+                              <Button variant="ghost" size="sm" onClick={() => handleOpenDeleteModal(lancamento.id!)} className="h-8 w-8 p-0 text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger><TooltipContent><p>Excluir diretamente</p></TooltipContent></Tooltip></TooltipProvider>
+                            <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+                              <Button variant="ghost" size="sm" onClick={() => {
+                                setSupportTarget({ id: lancamento.id!, descricao: lancamento.descricao });
+                                setSupportDialogOpen(true);
+                              }} className="h-8 w-8 p-0 text-amber-600">
+                                <Send className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger><TooltipContent><p>Solicitar exclusão via webhook</p></TooltipContent></Tooltip></TooltipProvider>
+                          </>
                         ) : canExcluir && hasPendingRequest("lancamentos", lancamento.id!) ? (
                           <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada – aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
                         ) : canExcluir ? (
