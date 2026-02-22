@@ -48,7 +48,7 @@ export const useSolicitacoesSuporte = () => {
     fetchSolicitacoes();
   }, [fetchSolicitacoes]);
 
-  // Listen for realtime updates on status changes
+  // Listen for realtime updates on all changes
   useEffect(() => {
     if (!user) return;
 
@@ -56,18 +56,26 @@ export const useSolicitacoesSuporte = () => {
       .channel("solicitacoes_suporte_changes")
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "solicitacoes_suporte" },
+        { event: "*", schema: "public", table: "solicitacoes_suporte" },
         (payload) => {
-          const updated = payload.new as SolicitacaoSuporte;
-          if (updated.user_id === user.id && updated.status !== "pendente") {
-            const statusMsg = updated.status === "aprovado"
-              ? "Sua solicitação de exclusão foi aprovada pelo suporte."
-              : "Sua solicitação de exclusão foi recusada pelo suporte.";
-            toast.info(statusMsg);
+          if (payload.eventType === "INSERT") {
+            const inserted = payload.new as SolicitacaoSuporte;
+            setSolicitacoes((prev) => [inserted, ...prev]);
+          } else if (payload.eventType === "UPDATE") {
+            const updated = payload.new as SolicitacaoSuporte;
+            if (updated.user_id === user.id && updated.status !== "pendente") {
+              const statusMsg = updated.status === "aprovado"
+                ? "Sua solicitação de exclusão foi aprovada pelo suporte."
+                : "Sua solicitação de exclusão foi recusada pelo suporte.";
+              toast.info(statusMsg);
+            }
+            setSolicitacoes((prev) =>
+              prev.map((s) => (s.id === updated.id ? updated : s))
+            );
+          } else if (payload.eventType === "DELETE") {
+            const deleted = payload.old as { id: string };
+            setSolicitacoes((prev) => prev.filter((s) => s.id !== deleted.id));
           }
-          setSolicitacoes((prev) =>
-            prev.map((s) => (s.id === updated.id ? updated : s))
-          );
         }
       )
       .subscribe();
