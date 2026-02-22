@@ -19,9 +19,22 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const acoesDisponiveis = [
   { value: "Excluir Registro", label: "Excluir Registro" },
   { value: "Editar Registro", label: "Editar Registro" },
+  { value: "Chat", label: "Chat" },
 ];
 
 const gerarPayloadSugerido = (acao: string): string => {
+  if (acao === "Chat") {
+    return JSON.stringify({
+      empresa_id: "{{empresa_id}}",
+      empresa_nome: "{{empresa_nome}}",
+      acao: "Chat",
+      timestamp: "{{timestamp}}",
+      usuario: { id: "{{user_id}}", nome: "{{user_nome}}", email: "{{user_email}}", telefone: "{{user_telefone}}" },
+      mensagem: "{{mensagem}}",
+      conversa_id: "{{conversa_id}}",
+    }, null, 2);
+  }
+
   const baseFields: Record<string, any> = {
     empresa_id: "{{empresa_id}}",
     empresa_nome: "{{empresa_nome}}",

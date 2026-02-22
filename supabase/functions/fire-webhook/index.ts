@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { empresa_id, evento, tabela, data, valor, descricao, usuario, acao, registro, assunto, mensagem } = await req.json();
+    const { empresa_id, evento, tabela, data, valor, descricao, usuario, acao, registro, assunto, mensagem, conversa_id } = await req.json();
 
     if (!empresa_id || !evento) {
       throw new Error("empresa_id and evento are required");
@@ -96,6 +96,7 @@ Deno.serve(async (req) => {
               "{{banco}}": "",
               "{{assunto}}": assunto || descricao || "",
               "{{mensagem}}": mensagem || descricao || "",
+              "{{conversa_id}}": conversa_id || "",
             };
 
             for (const [key, val] of Object.entries(replacements)) {
