@@ -63,16 +63,6 @@ export const useSolicitacoesSuporte = () => {
             setSolicitacoes((prev) => [inserted, ...prev]);
           } else if (payload.eventType === "UPDATE") {
             const updated = payload.new as SolicitacaoSuporte;
-            if (updated.user_id === user.id && updated.status !== "pendente") {
-              const resposta = updated.resposta ? `\n${updated.resposta}` : "";
-              if (updated.status === "aprovado") {
-                toast.success(`Solicitação "${updated.registro_descricao}" aprovada.${resposta}`);
-              } else if (updated.status === "recusado") {
-                toast.error(`Solicitação "${updated.registro_descricao}" recusada.${resposta}`);
-              } else {
-                toast.info(`Solicitação "${updated.registro_descricao}" atualizada para: ${updated.status}.${resposta}`);
-              }
-            }
             setSolicitacoes((prev) =>
               prev.map((s) => (s.id === updated.id ? updated : s))
             );
