@@ -15,48 +15,90 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { empresa_id, evento, data, valor, descricao, usuario, acao, registro } = await req.json();
+    const { empresa_id, evento, tabela, data, valor, descricao, usuario, acao, registro } = await req.json();
 
     if (!empresa_id || !evento) {
       throw new Error("empresa_id and evento are required");
     }
 
-    // Get active webhooks for this event and empresa
-    const { data: webhooks, error } = await supabase
+    // Build query - match by evento (nome da ação) and optionally by tabela
+    let query = supabase
       .from("webhooks_empresa")
       .select("*")
       .eq("empresa_id", empresa_id)
-      .eq("evento", evento)
       .eq("ativo", true);
 
-    if (error) throw error;
+    // Try to match by nome (ação) first, fallback to evento
+    const { data: webhooksByNome } = await query.eq("nome", evento);
+    
+    let webhooks = webhooksByNome || [];
 
-    let payload: Record<string, any>;
+    // If no match by nome, try by evento field
+    if (webhooks.length === 0) {
+      const { data: webhooksByEvento } = await supabase
+        .from("webhooks_empresa")
+        .select("*")
+        .eq("empresa_id", empresa_id)
+        .eq("evento", evento)
+        .eq("ativo", true);
+      webhooks = webhooksByEvento || [];
+    }
 
-    if (evento === "solicitacao_suporte") {
-      payload = {
-        empresa_id,
-        evento,
-        usuario: usuario || {},
-        acao: acao || "exclusao",
-        registro: registro || descricao || "",
-        timestamp: new Date().toISOString(),
-      };
-    } else {
-      payload = {
-        empresa_id,
-        evento,
-        data: data || new Date().toISOString().split("T")[0],
-        valor: valor || "0",
-        descricao: descricao || "",
-        timestamp: new Date().toISOString(),
-      };
+    // If tabela is provided, also try matching webhooks configured for that tabela
+    if (tabela && webhooks.length === 0) {
+      const { data: webhooksByTabela } = await supabase
+        .from("webhooks_empresa")
+        .select("*")
+        .eq("empresa_id", empresa_id)
+        .eq("tabela", tabela)
+        .eq("ativo", true);
+      webhooks = webhooksByTabela || [];
     }
 
     const results = [];
 
-    for (const wh of webhooks || []) {
+    for (const wh of webhooks) {
       try {
+        // Use configured payload_json as template, or build default
+        let payload: Record<string, any>;
+
+        if (wh.payload_json) {
+          try {
+            let payloadStr = wh.payload_json;
+            // Replace template variables
+            const replacements: Record<string, string> = {
+              "{{empresa_id}}": empresa_id || "",
+              "{{timestamp}}": new Date().toISOString(),
+              "{{registro_id}}": registro || "",
+              "{{descricao}}": descricao || "",
+              "{{valor}}": valor?.toString() || "",
+              "{{user_id}}": usuario?.id || "",
+              "{{user_nome}}": usuario?.nome || "",
+              "{{user_email}}": usuario?.email || "",
+              "{{user_telefone}}": usuario?.telefone || "",
+              "{{nome}}": descricao || "",
+              "{{email}}": usuario?.email || "",
+              "{{cpf_cnpj}}": "",
+              "{{tipo}}": acao || "",
+              "{{data_vencimento}}": data || "",
+              "{{banco}}": "",
+              "{{assunto}}": descricao || "",
+              "{{mensagem}}": descricao || "",
+            };
+
+            for (const [key, val] of Object.entries(replacements)) {
+              payloadStr = payloadStr.replaceAll(key, val);
+            }
+
+            payload = JSON.parse(payloadStr);
+          } catch {
+            // Fallback if template parsing fails
+            payload = { empresa_id, evento, descricao, usuario, acao, registro, timestamp: new Date().toISOString() };
+          }
+        } else {
+          payload = { empresa_id, evento, descricao, usuario, acao, registro, timestamp: new Date().toISOString() };
+        }
+
         const response = await fetch(wh.url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -69,17 +111,17 @@ Deno.serve(async (req) => {
           plataforma: "webhook",
           evento,
           status: response.ok ? "success" : "error",
-          payload: { url: wh.url, status: response.status, ...payload },
+          payload: { url: wh.url, status: response.status, webhook_nome: wh.nome, ...payload },
         });
 
-        results.push({ url: wh.url, status: response.status, ok: response.ok });
+        results.push({ url: wh.url, status: response.status, ok: response.ok, webhook_nome: wh.nome });
       } catch (err: any) {
         await supabase.from("logs_integracoes").insert({
           empresa_id,
           plataforma: "webhook",
           evento,
           status: "error",
-          payload: { url: wh.url, error: err.message, ...payload },
+          payload: { url: wh.url, error: err.message },
         });
         results.push({ url: wh.url, error: err.message });
       }

@@ -883,6 +883,7 @@ export type Database = {
           id: string
           nome: string | null
           payload_json: string | null
+          tabela: string | null
           url: string
         }
         Insert: {
@@ -895,6 +896,7 @@ export type Database = {
           id?: string
           nome?: string | null
           payload_json?: string | null
+          tabela?: string | null
           url: string
         }
         Update: {
@@ -907,6 +909,7 @@ export type Database = {
           id?: string
           nome?: string | null
           payload_json?: string | null
+          tabela?: string | null
           url?: string
         }
         Relationships: [
