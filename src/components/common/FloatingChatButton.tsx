@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { MessageCircle, Loader2, X, Send, Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,6 +28,7 @@ const FloatingChatButton: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [chatAvailable, setChatAvailable] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const [conversas, setConversas] = useState<Conversa[]>([]);
   const [activeConversa, setActiveConversa] = useState<Conversa | null>(null);
@@ -40,6 +40,8 @@ const FloatingChatButton: React.FC = () => {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const openRef = useRef(open);
+  openRef.current = open;
 
   // Check if Chat webhook is configured and active
   useEffect(() => {
@@ -92,7 +94,7 @@ const FloatingChatButton: React.FC = () => {
     if (activeConversa) fetchMensagens();
   }, [activeConversa, fetchMensagens]);
 
-  // Realtime subscription for messages
+  // Realtime subscription for messages in active conversation
   useEffect(() => {
     if (!activeConversa) return;
     const channel = supabase
@@ -101,15 +103,54 @@ const FloatingChatButton: React.FC = () => {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "mensagens_chat", filter: `conversa_id=eq.${activeConversa.id}` },
         (payload: any) => {
+          const newMsg = payload.new as Mensagem;
           setMensagens((prev) => {
-            if (prev.find((m) => m.id === payload.new.id)) return prev;
-            return [...prev, payload.new as Mensagem];
+            if (prev.find((m) => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
           });
+          // If message is from sistema and chat is closed, auto-open and increment unread
+          if (newMsg.remetente === "sistema") {
+            if (!openRef.current) {
+              setUnreadCount((c) => c + 1);
+              setOpen(true); // Auto-open on response
+            }
+          }
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [activeConversa]);
+
+  // Global realtime: listen for ANY new system message across user's conversations
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel("chat-global-unread")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "mensagens_chat" },
+        (payload: any) => {
+          const newMsg = payload.new as Mensagem;
+          if (newMsg.remetente !== "sistema") return;
+          // Check if this conversation belongs to the user
+          const isActive = activeConversa?.id === newMsg.conversa_id;
+          if (!openRef.current) {
+            setUnreadCount((c) => c + 1);
+            setOpen(true); // Priority: auto-open chat
+          } else if (!isActive) {
+            // Chat is open but viewing different conversation
+            setUnreadCount((c) => c + 1);
+          }
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, activeConversa]);
+
+  // Clear unread when opening chat
+  useEffect(() => {
+    if (open) setUnreadCount(0);
+  }, [open]);
 
   // Auto-scroll
   useEffect(() => {
@@ -219,10 +260,15 @@ const FloatingChatButton: React.FC = () => {
     <>
       <Button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg"
+        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg relative"
         size="icon"
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+        {!open && unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
       </Button>
 
       {open && (
