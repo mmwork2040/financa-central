@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Webhook, Plus, Trash2, Loader2, Power, PowerOff, AlertCircle, Database, Pencil, Zap } from "lucide-react";
+import { Webhook, Plus, Trash2, Loader2, Power, PowerOff, AlertCircle, Pencil, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,40 +18,22 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 const acoesDisponiveis = [
   { value: "Excluir Registro", label: "Excluir Registro" },
-  { value: "Suporte Técnico", label: "Suporte Técnico" },
+  { value: "Editar Registro", label: "Editar Registro" },
 ];
 
-const tabelasDisponiveis = [
-  { value: "lancamentos", label: "Lançamentos" },
-  { value: "clientes", label: "Clientes" },
-  { value: "fornecedores", label: "Fornecedores" },
-  { value: "categorias", label: "Categorias" },
-  { value: "contas_bancarias", label: "Contas Bancárias" },
-  { value: "formas_pagamento", label: "Formas de Pagamento" },
-];
-
-const gerarPayloadSugerido = (acao: string, tabela: string): string => {
+const gerarPayloadSugerido = (acao: string): string => {
   const baseFields: Record<string, any> = {
     empresa_id: "{{empresa_id}}",
     acao,
+    tabela: "{{tabela}}",
     timestamp: "{{timestamp}}",
+    usuario: { id: "{{user_id}}", nome: "{{user_nome}}", email: "{{user_email}}", telefone: "{{user_telefone}}" },
+    registro_id: "{{registro_id}}",
+    descricao: "{{descricao}}",
   };
 
-  if (acao === "Excluir Registro") {
-    baseFields.tabela = tabela;
-    const tabelaFields: Record<string, Record<string, any>> = {
-      lancamentos: { registro_id: "{{registro_id}}", descricao: "{{descricao}}", valor: "{{valor}}", tipo: "{{tipo}}", data_vencimento: "{{data_vencimento}}" },
-      clientes: { registro_id: "{{registro_id}}", nome: "{{nome}}", email: "{{email}}", cpf_cnpj: "{{cpf_cnpj}}" },
-      fornecedores: { registro_id: "{{registro_id}}", nome: "{{nome}}", email: "{{email}}", cpf_cnpj: "{{cpf_cnpj}}" },
-      categorias: { registro_id: "{{registro_id}}", nome: "{{nome}}", tipo: "{{tipo}}" },
-      contas_bancarias: { registro_id: "{{registro_id}}", nome: "{{nome}}", banco: "{{banco}}" },
-      formas_pagamento: { registro_id: "{{registro_id}}", descricao: "{{descricao}}" },
-    };
-    return JSON.stringify({ ...baseFields, usuario: { id: "{{user_id}}", nome: "{{user_nome}}", email: "{{user_email}}", telefone: "{{user_telefone}}" }, ...(tabelaFields[tabela] || { registro_id: "{{registro_id}}" }) }, null, 2);
-  }
-
-  if (acao === "Suporte Técnico") {
-    return JSON.stringify({ ...baseFields, usuario: { id: "{{user_id}}", nome: "{{user_nome}}", email: "{{user_email}}", telefone: "{{user_telefone}}" }, assunto: "{{assunto}}", mensagem: "{{mensagem}}" }, null, 2);
+  if (acao === "Editar Registro") {
+    baseFields.dados = "{{dados}}";
   }
 
   return JSON.stringify(baseFields, null, 2);
@@ -114,26 +96,9 @@ const WebhooksConfig = () => {
 
   const handleAcaoChange = (value: string) => {
     setNome(value);
-    // For "Suporte Técnico", auto-generate payload immediately (no table needed)
-    if (value === "Suporte Técnico") {
-      setTabela("");
-      const suggested = gerarPayloadSugerido(value, "");
-      setPayloadJson(suggested);
-      setJsonError(null);
-    } else if (value && tabela) {
-      const suggested = gerarPayloadSugerido(value, tabela);
-      setPayloadJson(suggested);
-      setJsonError(null);
-    }
-  };
-
-  const handleTabelaChange = (value: string) => {
-    setTabela(value);
-    if (nome && value) {
-      const suggested = gerarPayloadSugerido(nome, value);
-      setPayloadJson(suggested);
-      setJsonError(null);
-    }
+    const suggested = gerarPayloadSugerido(value);
+    setPayloadJson(suggested);
+    setJsonError(null);
   };
 
   const resetForm = () => {
@@ -162,7 +127,7 @@ const WebhooksConfig = () => {
         nome: nome.trim(),
         url: url.trim(),
         evento: nome.trim(),
-        tabela: nome === "Excluir Registro" ? (tabela || null) : null,
+        tabela: null,
         payload_json: payloadJson.trim() || null,
         campo_resposta: "resultado",
         comportamento: null,
@@ -378,12 +343,6 @@ const WebhooksConfig = () => {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{wh.url}</p>
-                    {wh.tabela && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <Database className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{tabelasDisponiveis.find(t => t.value === wh.tabela)?.label || wh.tabela}</span>
-                      </div>
-                    )}
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <TooltipProvider delayDuration={200}>
@@ -441,22 +400,6 @@ const WebhooksConfig = () => {
                 </SelectContent>
               </Select>
             </div>
-            {nome === "Excluir Registro" && (
-              <div>
-                <Label>Tabela da ação *</Label>
-                <Select value={tabela} onValueChange={handleTabelaChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a tabela" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tabelasDisponiveis.map(t => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-[11px] text-muted-foreground mt-1">O payload será sugerido automaticamente conforme a tabela.</p>
-              </div>
-            )}
             <div>
               <Label>URL do Webhook *</Label>
               <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://hooks.zapier.com/..." />
@@ -466,7 +409,7 @@ const WebhooksConfig = () => {
               <Textarea
                 value={payloadJson}
                 onChange={e => handlePayloadChange(e.target.value)}
-                placeholder={nome === "Suporte Técnico" ? "Payload gerado automaticamente" : "Selecione a ação e tabela para gerar automaticamente"}
+                placeholder="Selecione a ação para gerar automaticamente"
                 className="font-mono text-xs min-h-[120px]"
               />
               {jsonError && (
@@ -476,7 +419,7 @@ const WebhooksConfig = () => {
                 </div>
               )}
             </div>
-            <Button onClick={handleSave} disabled={saving || !nome.trim() || !url.trim() || !!jsonError || (nome === "Excluir Registro" && !tabela)} className="w-full">
+            <Button onClick={handleSave} disabled={saving || !nome.trim() || !url.trim() || !!jsonError} className="w-full">
               {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Salvando...</> : editingId ? "Salvar Alterações" : "Criar Webhook"}
             </Button>
           </div>
@@ -506,7 +449,7 @@ const WebhooksConfig = () => {
           <DialogHeader>
             <DialogTitle>Testar Webhook</DialogTitle>
             <DialogDescription>
-              Selecione um registro real da tabela "{tabelasDisponiveis.find(t => t.value === testWebhook?.tabela)?.label || testWebhook?.tabela}" para enviar como teste. O payload incluirá a marcação [TESTE].
+              Selecione um registro real da tabela "{testWebhook?.tabela}" para enviar como teste. O payload incluirá a marcação [TESTE].
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
