@@ -59,6 +59,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import NotificacoesDropdown from "@/components/common/NotificacoesDropdown";
 
 export const Sidebar = () => {
   const { isExpanded, toggle } = useSidebar();
@@ -210,19 +211,22 @@ export const Sidebar = () => {
             <h1 className="text-base font-bold text-sidebar-foreground truncate">Finança Central</h1>
           )}
         </div>
-        {isMobile ? (
-          <button onClick={() => setMobileOpen(false)} className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all shrink-0">
-            <X size={18} />
-          </button>
-        ) : (
-          <button
-            onClick={toggle}
-            className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all shrink-0"
-            aria-label={isExpanded ? "Recolher menu" : "Expandir menu"}
-          >
-            {isExpanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-          </button>
-        )}
+        <div className="flex items-center gap-1 shrink-0">
+          <NotificacoesDropdown />
+          {isMobile ? (
+            <button onClick={() => setMobileOpen(false)} className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all">
+              <X size={18} />
+            </button>
+          ) : (
+            <button
+              onClick={toggle}
+              className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all"
+              aria-label={isExpanded ? "Recolher menu" : "Expandir menu"}
+            >
+              {isExpanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Company switcher */}
