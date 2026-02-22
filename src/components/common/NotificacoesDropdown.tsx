@@ -79,12 +79,36 @@ const NotificacoesDropdown = () => {
             </div>
           ) : (
             <div className="divide-y">
-              {notificacoes.map((n) => (
+              {notificacoes.map((n) => {
+                const isRecusada = n.tipo === 'suporte_recusada';
+                const isAprovada = n.tipo === 'suporte_aprovada';
+                const isAtualizada = n.tipo === 'suporte_atualizada' || (n.tipo === 'suporte' && !isRecusada && !isAprovada);
+                
+                const borderColor = isRecusada
+                  ? "border-l-4 border-l-destructive"
+                  : isAprovada
+                  ? "border-l-4 border-l-green-500"
+                  : isAtualizada
+                  ? "border-l-4 border-l-orange-400"
+                  : "";
+
+                const dotColor = isRecusada
+                  ? "bg-destructive"
+                  : isAprovada
+                  ? "bg-green-500"
+                  : isAtualizada
+                  ? "bg-orange-400"
+                  : !n.lida
+                  ? "bg-primary"
+                  : "bg-transparent";
+
+                return (
                 <div
                   key={n.id}
                   className={cn(
                     "flex items-start gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer",
-                    !n.lida && "bg-primary/5"
+                    !n.lida && "bg-primary/5",
+                    borderColor
                   )}
                   onClick={() => {
                     if (!n.lida) marcarComoLida(n.id);
@@ -93,7 +117,7 @@ const NotificacoesDropdown = () => {
                   <div
                     className={cn(
                       "mt-1.5 h-2 w-2 rounded-full shrink-0",
-                      !n.lida ? "bg-primary" : "bg-transparent"
+                      dotColor
                     )}
                   />
                   <div className="flex-1 min-w-0">
@@ -118,7 +142,8 @@ const NotificacoesDropdown = () => {
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </ScrollArea>
