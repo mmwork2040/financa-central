@@ -21,8 +21,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         <p className="text-muted-foreground">Visualize e gerencie suas informações financeiras.</p>
       </div>
       {onNewTransactionClick && (
-        <Button onClick={onNewTransactionClick}>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button size="sm" onClick={onNewTransactionClick}>
+          <Plus className="mr-1.5 h-4 w-4" />
           Novo Lançamento
         </Button>
       )}
