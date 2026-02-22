@@ -57,7 +57,7 @@ export const LancamentosTable = () => {
     return (
       <div className="space-y-3 overflow-hidden">
         {paginatedItems.map((l) => (
-          <Card key={l.id}>
+          <Card key={l.id} className={hasPendingRequest("lancamentos", l.id!) ? "border-l-4 border-l-amber-400 bg-amber-50 dark:bg-amber-950/30" : ""}>
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-1 flex-1 min-w-0">
@@ -190,7 +190,7 @@ export const LancamentosTable = () => {
         </TableHeader>
         <TableBody>
           {lancamentos.map((lancamento) => (
-            <TableRow key={lancamento.id}>
+            <TableRow key={lancamento.id} className={hasPendingRequest("lancamentos", lancamento.id!) ? "bg-amber-50 dark:bg-amber-950/30 border-l-4 border-l-amber-400" : ""}>
               <TableCell>{new Date(lancamento.created_at).toLocaleDateString()}</TableCell>
               <TableCell className="font-medium">
                 {lancamento.descricao}
