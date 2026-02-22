@@ -139,7 +139,7 @@ export const Sidebar = () => {
   const configItems = [
     { name: "Empresa", icon: Settings, path: "/settings" },
     { name: "Integrações", icon: Plug, path: "/settings/integracoes" },
-    { name: "Webhooks", icon: Webhook, path: "/settings/webhooks" },
+    ...(isSuperAdmin ? [{ name: "Webhooks", icon: Webhook, path: "/settings/webhooks" }] : []),
     { name: "Logs", icon: ScrollText, path: "/settings/logs" },
   ];
 

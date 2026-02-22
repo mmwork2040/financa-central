@@ -1,38 +1,38 @@
 
 import React, { useState, useEffect } from "react";
-import { Webhook, Plus, Trash2, Loader2, Power, PowerOff } from "lucide-react";
+import { Webhook, Plus, Trash2, Loader2, Power, PowerOff, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-
-const EVENTOS = [
-  { value: "nova_venda", label: "Nova venda" },
-  { value: "venda_reembolsada", label: "Venda reembolsada" },
-  { value: "conta_vencendo", label: "Conta vencendo" },
-  { value: "conta_paga", label: "Conta paga" },
-  { value: "saldo_negativo", label: "Saldo negativo" },
-  { value: "solicitacao_suporte", label: "Solicitação de suporte" },
-];
+import { Navigate } from "react-router-dom";
 
 const WebhooksConfig = () => {
-  const { empresaId } = useAuth();
+  const { empresaId, isSuperAdmin } = useAuth();
   const [webhooks, setWebhooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [url, setUrl] = useState("");
-  const [evento, setEvento] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Form fields
+  const [nome, setNome] = useState("");
+  const [url, setUrl] = useState("");
+  const [payloadJson, setPayloadJson] = useState("");
+  const [campoResposta, setCampoResposta] = useState("");
+  const [comportamento, setComportamento] = useState("");
+  const [jsonError, setJsonError] = useState<string | null>(null);
+
   useEffect(() => {
-    fetchWebhooks();
-  }, []);
+    if (isSuperAdmin) fetchWebhooks();
+  }, [isSuperAdmin]);
+
+  if (!isSuperAdmin) return <Navigate to="/dashboard" replace />;
 
   const fetchWebhooks = async () => {
     try {
@@ -49,18 +49,59 @@ const WebhooksConfig = () => {
     }
   };
 
+  const validateJson = (value: string): boolean => {
+    if (!value.trim()) {
+      setJsonError(null);
+      return true;
+    }
+    try {
+      JSON.parse(value);
+      setJsonError(null);
+      return true;
+    } catch (e: any) {
+      setJsonError(e.message || "JSON inválido");
+      return false;
+    }
+  };
+
+  const handlePayloadChange = (value: string) => {
+    setPayloadJson(value);
+    validateJson(value);
+  };
+
+  const resetForm = () => {
+    setNome("");
+    setUrl("");
+    setPayloadJson("");
+    setCampoResposta("");
+    setComportamento("");
+    setJsonError(null);
+  };
+
   const handleCreate = async () => {
-    if (!url.trim() || !evento || !empresaId) return;
+    if (!nome.trim() || !url.trim() || !empresaId) return;
+    if (payloadJson.trim() && !validateJson(payloadJson)) {
+      toast.error("O JSON do payload é inválido. Corrija antes de salvar.");
+      return;
+    }
     setSaving(true);
     try {
       const { error } = await (supabase as any)
         .from('webhooks_empresa')
-        .insert({ empresa_id: empresaId, url: url.trim(), evento, ativo: true });
+        .insert({
+          empresa_id: empresaId,
+          nome: nome.trim(),
+          url: url.trim(),
+          evento: nome.trim(),
+          payload_json: payloadJson.trim() || null,
+          campo_resposta: campoResposta.trim() || null,
+          comportamento: comportamento.trim() || null,
+          ativo: true,
+        });
       if (error) throw error;
       toast.success("Webhook criado com sucesso!");
       setDialogOpen(false);
-      setUrl("");
-      setEvento("");
+      resetForm();
       fetchWebhooks();
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar webhook");
@@ -90,10 +131,10 @@ const WebhooksConfig = () => {
           </div>
           <h1 className="text-xl sm:text-2xl font-bold">Webhooks</h1>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground">Conecte automações externas como n8n, Zapier ou Make</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">Configure ações de suporte e automações via webhook</p>
       </div>
 
-      <Button onClick={() => setDialogOpen(true)} size="sm">
+      <Button onClick={() => { resetForm(); setDialogOpen(true); }} size="sm">
         <Plus className="h-4 w-4 mr-1" /> Novo Webhook
       </Button>
 
@@ -113,87 +154,98 @@ const WebhooksConfig = () => {
         <div className="space-y-3">
           {webhooks.map(wh => (
             <Card key={wh.id}>
-              <CardContent className="p-4 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant="outline" className="text-[10px] shrink-0">
-                      {EVENTOS.find(e => e.value === wh.evento)?.label || wh.evento}
-                    </Badge>
-                    {wh.ativo ? (
-                      <Badge className="bg-green-100 text-green-700 text-[10px]">Ativo</Badge>
-                    ) : (
-                      <Badge className="bg-gray-100 text-gray-500 text-[10px]">Inativo</Badge>
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-sm truncate">{wh.nome || wh.evento}</span>
+                      {wh.ativo ? (
+                        <Badge className="bg-green-100 text-green-700 text-[10px]">Ativo</Badge>
+                      ) : (
+                        <Badge className="bg-gray-100 text-gray-500 text-[10px]">Inativo</Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{wh.url}</p>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggle(wh.id, wh.ativo)}>
+                      {wh.ativo ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(wh.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                {(wh.campo_resposta || wh.comportamento) && (
+                  <div className="border-t pt-2 space-y-1">
+                    {wh.campo_resposta && (
+                      <p className="text-xs"><span className="font-medium text-muted-foreground">Campo resposta:</span> <code className="bg-muted px-1 rounded text-[11px]">{wh.campo_resposta}</code></p>
+                    )}
+                    {wh.comportamento && (
+                      <p className="text-xs"><span className="font-medium text-muted-foreground">Comportamento:</span> {wh.comportamento}</p>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{wh.url}</p>
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggle(wh.id, wh.ativo)}>
-                    {wh.ativo ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(wh.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                )}
+                {wh.payload_json && (
+                  <details className="text-xs">
+                    <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Ver payload</summary>
+                    <pre className="bg-muted p-2 rounded-lg overflow-x-auto mt-1 text-[11px]">{(() => {
+                      try { return JSON.stringify(JSON.parse(wh.payload_json), null, 2); } catch { return wh.payload_json; }
+                    })()}</pre>
+                  </details>
+                )}
               </CardContent>
             </Card>
           ))}
         </div>
       )}
 
-      <Card className="border-dashed">
-        <CardContent className="p-4">
-          <h4 className="text-sm font-semibold mb-2">Payload padrão</h4>
-          <pre className="text-xs bg-muted p-3 rounded-lg overflow-x-auto">
-{`{
-  "empresa_id": "uuid",
-  "evento": "nova_venda",
-  "data": "2025-01-15",
-  "valor": "150.00",
-  "descricao": "Venda do produto X"
-}`}
-          </pre>
-          <h4 className="text-sm font-semibold mb-2 mt-4">Payload - Solicitação de suporte</h4>
-          <pre className="text-xs bg-muted p-3 rounded-lg overflow-x-auto">
-{`{
-  "empresa_id": "uuid",
-  "evento": "solicitacao_suporte",
-  "usuario": {
-    "id": "uuid",
-    "nome": "Nome do Usuário",
-    "email": "email@exemplo.com",
-    "telefone": "(11) 99999-9999"
-  },
-  "acao": "exclusao",
-  "registro": "Lançamento: Venda X"
-}`}
-          </pre>
-        </CardContent>
-      </Card>
-
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Novo Webhook</DialogTitle>
-            <DialogDescription>Configure a URL que receberá as notificações.</DialogDescription>
+            <DialogDescription>Configure a ação de suporte e a URL que receberá as notificações.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <Label>Nome da ação *</Label>
+              <Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Solicitação de exclusão" />
+            </div>
             <div>
               <Label>URL do Webhook *</Label>
               <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://hooks.zapier.com/..." />
             </div>
             <div>
-              <Label>Evento *</Label>
-              <Select value={evento} onValueChange={setEvento}>
-                <SelectTrigger><SelectValue placeholder="Selecione o evento" /></SelectTrigger>
-                <SelectContent>
-                  {EVENTOS.map(e => (
-                    <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Payload JSON</Label>
+              <Textarea
+                value={payloadJson}
+                onChange={e => handlePayloadChange(e.target.value)}
+                placeholder={'{\n  "empresa_id": "{{empresa_id}}",\n  "usuario": "{{usuario}}",\n  "acao": "{{acao}}"\n}'}
+                className="font-mono text-xs min-h-[120px]"
+              />
+              {jsonError && (
+                <div className="flex items-center gap-1 mt-1 text-destructive text-xs">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>{jsonError}</span>
+                </div>
+              )}
             </div>
-            <Button onClick={handleCreate} disabled={saving || !url.trim() || !evento} className="w-full">
+            <div>
+              <Label>Campo da resposta (output)</Label>
+              <Input value={campoResposta} onChange={e => setCampoResposta(e.target.value)} placeholder="Ex: data.status ou resultado" />
+              <p className="text-[11px] text-muted-foreground mt-1">Informe o campo do JSON de resposta que o sistema deve tratar.</p>
+            </div>
+            <div>
+              <Label>Comportamento ao receber retorno</Label>
+              <Textarea
+                value={comportamento}
+                onChange={e => setComportamento(e.target.value)}
+                placeholder="Ex: Se status = 'aprovado', excluir o registro. Se status = 'recusado', notificar o usuário."
+                className="min-h-[80px] text-sm"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">Descreva o que o sistema deve fazer conforme o retorno do webhook.</p>
+            </div>
+            <Button onClick={handleCreate} disabled={saving || !nome.trim() || !url.trim() || !!jsonError} className="w-full">
               {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Criando...</> : "Criar Webhook"}
             </Button>
           </div>
