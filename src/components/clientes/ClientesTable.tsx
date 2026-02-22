@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Lock, Clock, HelpCircle } from "lucide-react";
+import { Pencil, Trash2, Lock, Clock, HelpCircle, Send } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -59,9 +59,20 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                         <div className="flex items-center gap-1">
                           <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Registro automático – edição bloqueada</p></TooltipContent></Tooltip></TooltipProvider>
                           {isSuperAdmin && canDelete ? (
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(c)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <>
+                              <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(c)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger><TooltipContent><p>Excluir diretamente</p></TooltipContent></Tooltip></TooltipProvider>
+                              {onSupportDelete && (
+                                <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-amber-600" onClick={() => onSupportDelete(c)}>
+                                    <Send className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger><TooltipContent><p>Solicitar exclusão via webhook</p></TooltipContent></Tooltip></TooltipProvider>
+                              )}
+                            </>
                           ) : canDelete && hasPendingRequest && hasPendingRequest(c.id) ? (
                             <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada – aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
                           ) : canDelete && onSupportDelete ? (
@@ -130,9 +141,20 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                       <div className="flex justify-center items-center gap-2">
                         <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Registro automático – edição bloqueada</p></TooltipContent></Tooltip></TooltipProvider>
                         {isSuperAdmin && canDelete ? (
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(cliente)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <>
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(cliente)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger><TooltipContent><p>Excluir diretamente</p></TooltipContent></Tooltip></TooltipProvider>
+                            {onSupportDelete && (
+                              <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-amber-600" onClick={() => onSupportDelete(cliente)}>
+                                  <Send className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger><TooltipContent><p>Solicitar exclusão via webhook</p></TooltipContent></Tooltip></TooltipProvider>
+                            )}
+                          </>
                         ) : canDelete && hasPendingRequest && hasPendingRequest(cliente.id) ? (
                           <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada – aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
                         ) : canDelete && onSupportDelete ? (
