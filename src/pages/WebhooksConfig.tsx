@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Webhook, Plus, Trash2, Loader2, Power, PowerOff, AlertCircle, Database, Pencil } from "lucide-react";
+import { Webhook, Plus, Trash2, Loader2, Power, PowerOff, AlertCircle, Database, Pencil, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const acoesDisponiveis = [
   { value: "Excluir Registro", label: "Excluir Registro" },
@@ -62,6 +64,8 @@ const WebhooksConfig = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nome: string } | null>(null);
+  const [testing, setTesting] = useState<string | null>(null);
 
   const [nome, setNome] = useState("");
   const [url, setUrl] = useState("");
@@ -190,6 +194,36 @@ const WebhooksConfig = () => {
     const { error } = await (supabase as any).from('webhooks_empresa').delete().eq('id', id);
     if (error) toast.error("Erro ao remover");
     else { toast.success("Webhook removido."); fetchWebhooks(); }
+    setDeleteTarget(null);
+  };
+
+  const handleTestWebhook = async (wh: any) => {
+    setTesting(wh.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("fire-webhook", {
+        body: {
+          empresa_id: empresaId,
+          evento: wh.nome || wh.evento,
+          tabela: wh.tabela || null,
+          descricao: "Teste de webhook",
+          registro: "test-id-000",
+          usuario: { id: "test", nome: "Super Admin (Teste)", email: "teste@sistema.com", telefone: "" },
+          acao: "teste",
+        },
+      });
+      if (error) throw error;
+      const fired = data?.webhooks_fired || 0;
+      if (fired > 0) {
+        const r = data.results?.[0];
+        toast.success(`Webhook disparado! Status: ${r?.status || "OK"}${r?.campo_resposta_value !== undefined ? ` | ${r.campo_resposta}: ${r.campo_resposta_value}` : ""}`);
+      } else {
+        toast.warning("Nenhum webhook correspondente encontrado para disparar.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao testar webhook");
+    } finally {
+      setTesting(null);
+    }
   };
 
   return (
@@ -244,13 +278,23 @@ const WebhooksConfig = () => {
                     )}
                   </div>
                   <div className="flex gap-1 shrink-0">
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleTestWebhook(wh)} disabled={testing === wh.id}>
+                            {testing === wh.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Testar webhook</p></TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEdit(wh)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggle(wh.id, wh.ativo)}>
                       {wh.ativo ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(wh.id)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteTarget({ id: wh.id, nome: wh.nome || wh.evento })}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -353,6 +397,23 @@ const WebhooksConfig = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o webhook "{deleteTarget?.nome}"? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteTarget && handleDelete(deleteTarget.id)} className="bg-destructive hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
