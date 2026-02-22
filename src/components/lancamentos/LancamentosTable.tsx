@@ -1,11 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Check, Lock, Clock, Pencil, Trash2, Send } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import { formatCurrency } from "@/utils/format";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +25,25 @@ export const LancamentosTable = () => {
   const { criarSolicitacao, hasPendingRequest } = useSolicitacoesSuporte();
   const [supportDialogOpen, setSupportDialogOpen] = useState(false);
   const [supportTarget, setSupportTarget] = useState<{ id: string; descricao: string } | null>(null);
+  const [hasActiveDeleteWebhook, setHasActiveDeleteWebhook] = useState(false);
+
+  // Check if there's an active "Excluir Registro" webhook
+  useEffect(() => {
+    const checkWebhook = async () => {
+      try {
+        const { data } = await (supabase as any)
+          .from("webhooks_empresa")
+          .select("id")
+          .eq("nome", "Excluir Registro")
+          .eq("ativo", true)
+          .limit(1);
+        setHasActiveDeleteWebhook(!!(data && data.length > 0));
+      } catch {
+        setHasActiveDeleteWebhook(false);
+      }
+    };
+    checkWebhook();
+  }, []);
 
   const { 
     lancamentos, handleSort, handleOpenModal, handleOpenDeleteModal, handleUpdateStatus,
@@ -86,24 +106,28 @@ export const LancamentosTable = () => {
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                               </TooltipTrigger><TooltipContent><p>Excluir diretamente</p></TooltipContent></Tooltip></TooltipProvider>
-                              <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-600" onClick={() => {
-                                  setSupportTarget({ id: l.id!, descricao: l.descricao });
-                                  setSupportDialogOpen(true);
-                                }}>
-                                  <Send className="h-3.5 w-3.5" />
-                                </Button>
-                              </TooltipTrigger><TooltipContent><p>Solicitar exclusão via webhook</p></TooltipContent></Tooltip></TooltipProvider>
+                              {hasActiveDeleteWebhook && (
+                                <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-600" onClick={() => {
+                                    setSupportTarget({ id: l.id!, descricao: l.descricao });
+                                    setSupportDialogOpen(true);
+                                  }}>
+                                    <Send className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger><TooltipContent><p>Solicitar exclusão via webhook</p></TooltipContent></Tooltip></TooltipProvider>
+                              )}
                             </>
-                          ) : canExcluir && hasPendingRequest("lancamentos", l.id!) ? (
-                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-3.5 w-3.5 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada – aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
-                          ) : canExcluir ? (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
-                              setSupportTarget({ id: l.id!, descricao: l.descricao });
-                              setSupportDialogOpen(true);
-                            }}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                          ) : canExcluir && hasActiveDeleteWebhook ? (
+                            hasPendingRequest("lancamentos", l.id!) ? (
+                              <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-3.5 w-3.5 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada – aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
+                            ) : (
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
+                                setSupportTarget({ id: l.id!, descricao: l.descricao });
+                                setSupportDialogOpen(true);
+                              }}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )
                           ) : null}
                         </div>
                       ) : (
@@ -149,11 +173,6 @@ export const LancamentosTable = () => {
               </div>
             </TableHead>
             <TableHead>
-              <div className="flex items-center cursor-pointer" onClick={() => handleSort('data_vencimento')}>
-                Vencimento <ArrowUpDown className="ml-2 h-3 w-3" />
-              </div>
-            </TableHead>
-            <TableHead>
               <div className="flex items-center cursor-pointer" onClick={() => handleSort('descricao')}>
                 Descrição <ArrowUpDown className="ml-2 h-3 w-3" />
               </div>
@@ -173,7 +192,6 @@ export const LancamentosTable = () => {
           {lancamentos.map((lancamento) => (
             <TableRow key={lancamento.id}>
               <TableCell>{new Date(lancamento.created_at).toLocaleDateString()}</TableCell>
-              <TableCell>{new Date(lancamento.data_vencimento).toLocaleDateString()}</TableCell>
               <TableCell className="font-medium">
                 {lancamento.descricao}
                 <div className="text-xs text-muted-foreground">
@@ -217,24 +235,28 @@ export const LancamentosTable = () => {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger><TooltipContent><p>Excluir diretamente</p></TooltipContent></Tooltip></TooltipProvider>
-                            <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
-                              <Button variant="ghost" size="sm" onClick={() => {
-                                setSupportTarget({ id: lancamento.id!, descricao: lancamento.descricao });
-                                setSupportDialogOpen(true);
-                              }} className="h-8 w-8 p-0 text-amber-600">
-                                <Send className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger><TooltipContent><p>Solicitar exclusão via webhook</p></TooltipContent></Tooltip></TooltipProvider>
+                            {hasActiveDeleteWebhook && (
+                              <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={() => {
+                                  setSupportTarget({ id: lancamento.id!, descricao: lancamento.descricao });
+                                  setSupportDialogOpen(true);
+                                }} className="h-8 w-8 p-0 text-amber-600">
+                                  <Send className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger><TooltipContent><p>Solicitar exclusão via webhook</p></TooltipContent></Tooltip></TooltipProvider>
+                            )}
                           </>
-                        ) : canExcluir && hasPendingRequest("lancamentos", lancamento.id!) ? (
-                          <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada – aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
-                        ) : canExcluir ? (
-                          <Button variant="ghost" size="sm" onClick={() => {
-                            setSupportTarget({ id: lancamento.id!, descricao: lancamento.descricao });
-                            setSupportDialogOpen(true);
-                          }} className="h-8 w-8 p-0 text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                        ) : canExcluir && hasActiveDeleteWebhook ? (
+                          hasPendingRequest("lancamentos", lancamento.id!) ? (
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada – aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
+                          ) : (
+                            <Button variant="ghost" size="sm" onClick={() => {
+                              setSupportTarget({ id: lancamento.id!, descricao: lancamento.descricao });
+                              setSupportDialogOpen(true);
+                            }} className="h-8 w-8 p-0 text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )
                         ) : null}
                       </div>
                     ) : (
