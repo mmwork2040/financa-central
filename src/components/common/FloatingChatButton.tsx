@@ -392,7 +392,7 @@ const FloatingChatButton: React.FC = () => {
       )}
 
       <AlertDialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[10000]">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir todas as conversas</AlertDialogTitle>
             <AlertDialogDescription>
