@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Webhook, Plus, Trash2, Loader2, Power, PowerOff, AlertCircle, Pencil, Zap } from "lucide-react";
+import { Webhook, Plus, Trash2, Loader2, Power, PowerOff, AlertCircle, Pencil, Zap, Copy } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -395,9 +395,28 @@ const WebhooksConfig = () => {
                 {wh.payload_json && (
                   <details className="text-xs">
                     <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Ver payload</summary>
-                    <pre className="bg-muted p-2 rounded-lg overflow-x-auto mt-1 text-[11px]">{(() => {
-                      try { return JSON.stringify(JSON.parse(wh.payload_json), null, 2); } catch { return wh.payload_json; }
-                    })()}</pre>
+                    <div className="relative mt-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-foreground z-10"
+                        onClick={() => {
+                          try {
+                            const formatted = JSON.stringify(JSON.parse(wh.payload_json), null, 2);
+                            navigator.clipboard.writeText(formatted);
+                            toast.success("JSON copiado!");
+                          } catch {
+                            navigator.clipboard.writeText(wh.payload_json);
+                            toast.success("JSON copiado!");
+                          }
+                        }}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <pre className="bg-muted p-2 rounded-lg overflow-x-auto text-[11px] pr-8">{(() => {
+                        try { return JSON.stringify(JSON.parse(wh.payload_json), null, 2); } catch { return wh.payload_json; }
+                      })()}</pre>
+                    </div>
                   </details>
                 )}
               </CardContent>
@@ -433,7 +452,22 @@ const WebhooksConfig = () => {
               <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://hooks.zapier.com/..." />
             </div>
             <div>
-              <Label>Payload JSON</Label>
+              <div className="flex items-center justify-between">
+                <Label>Payload JSON</Label>
+                {payloadJson.trim() && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      navigator.clipboard.writeText(payloadJson);
+                      toast.success("JSON copiado!");
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
               <Textarea
                 value={payloadJson}
                 onChange={e => handlePayloadChange(e.target.value)}
