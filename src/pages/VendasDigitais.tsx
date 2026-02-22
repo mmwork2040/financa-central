@@ -194,7 +194,10 @@ const VendasDigitais = () => {
                     <p className="text-sm font-semibold truncate">{venda.produto || "Produto"}</p>
                     <Badge variant="outline" className="text-[10px] shrink-0">{venda.plataforma}</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">{venda.cliente || "—"} • {formatDate(venda.data_venda)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {venda.cliente || "—"} • Venda: {formatDate(venda.data_venda)}
+                    {venda.created_at && ` • Registro: ${formatDate(venda.created_at)}`}
+                  </p>
                 </div>
                 <div className="text-right shrink-0 ml-3">
                   <p className="text-sm font-bold text-green-600">{formatCurrency(venda.valor_liquido)}</p>
