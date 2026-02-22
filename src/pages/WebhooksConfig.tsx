@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Webhook, Plus, Trash2, Loader2, Power, PowerOff, AlertCircle } from "lucide-react";
+import { Webhook, Plus, Trash2, Loader2, Power, PowerOff, AlertCircle, Database } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -26,7 +27,17 @@ const WebhooksConfig = () => {
   const [payloadJson, setPayloadJson] = useState("");
   const [campoResposta, setCampoResposta] = useState("");
   const [comportamento, setComportamento] = useState("");
+  const [tabela, setTabela] = useState("");
   const [jsonError, setJsonError] = useState<string | null>(null);
+
+  const tabelasDisponiveis = [
+    { value: "lancamentos", label: "Lançamentos" },
+    { value: "clientes", label: "Clientes" },
+    { value: "fornecedores", label: "Fornecedores" },
+    { value: "categorias", label: "Categorias" },
+    { value: "contas_bancarias", label: "Contas Bancárias" },
+    { value: "formas_pagamento", label: "Formas de Pagamento" },
+  ];
 
   useEffect(() => {
     if (isSuperAdmin) fetchWebhooks();
@@ -75,6 +86,7 @@ const WebhooksConfig = () => {
     setPayloadJson("");
     setCampoResposta("");
     setComportamento("");
+    setTabela("");
     setJsonError(null);
   };
 
@@ -93,6 +105,7 @@ const WebhooksConfig = () => {
           nome: nome.trim(),
           url: url.trim(),
           evento: nome.trim(),
+          tabela: tabela || null,
           payload_json: payloadJson.trim() || null,
           campo_resposta: campoResposta.trim() || null,
           comportamento: comportamento.trim() || null,
@@ -166,6 +179,12 @@ const WebhooksConfig = () => {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{wh.url}</p>
+                    {wh.tabela && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <Database className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{tabelasDisponiveis.find(t => t.value === wh.tabela)?.label || wh.tabela}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggle(wh.id, wh.ativo)}>
@@ -210,6 +229,20 @@ const WebhooksConfig = () => {
             <div>
               <Label>Nome da ação *</Label>
               <Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Solicitação de exclusão" />
+            </div>
+            <div>
+              <Label>Tabela da ação</Label>
+              <Select value={tabela} onValueChange={setTabela}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a tabela (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tabelasDisponiveis.map(t => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">Selecione em qual tabela a ação será executada.</p>
             </div>
             <div>
               <Label>URL do Webhook *</Label>
