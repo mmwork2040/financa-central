@@ -375,6 +375,14 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (!selectedId) return;
     
     try {
+      // Remove pending support requests for this record
+      await supabase
+        .from('solicitacoes_suporte')
+        .delete()
+        .eq('registro_id', selectedId)
+        .eq('tabela', 'lancamentos')
+        .eq('status', 'pendente');
+
       const { error } = await supabase.from("lancamentos").delete().eq("id", selectedId);
 
       if (error) {

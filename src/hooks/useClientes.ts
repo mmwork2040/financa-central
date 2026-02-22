@@ -99,6 +99,14 @@ export const useClientes = () => {
 
   const deleteCliente = async (clienteId: string) => {
     try {
+      // Remove pending support requests for this record
+      await supabase
+        .from('solicitacoes_suporte')
+        .delete()
+        .eq('registro_id', clienteId)
+        .eq('tabela', 'clientes')
+        .eq('status', 'pendente');
+
       const { error } = await supabase
         .from('clientes')
         .delete()
