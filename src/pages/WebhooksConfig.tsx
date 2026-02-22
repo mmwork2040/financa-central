@@ -18,6 +18,7 @@ const EVENTOS = [
   { value: "conta_vencendo", label: "Conta vencendo" },
   { value: "conta_paga", label: "Conta paga" },
   { value: "saldo_negativo", label: "Saldo negativo" },
+  { value: "solicitacao_suporte", label: "Solicitação de suporte" },
 ];
 
 const WebhooksConfig = () => {
@@ -150,6 +151,21 @@ const WebhooksConfig = () => {
   "data": "2025-01-15",
   "valor": "150.00",
   "descricao": "Venda do produto X"
+}`}
+          </pre>
+          <h4 className="text-sm font-semibold mb-2 mt-4">Payload - Solicitação de suporte</h4>
+          <pre className="text-xs bg-muted p-3 rounded-lg overflow-x-auto">
+{`{
+  "empresa_id": "uuid",
+  "evento": "solicitacao_suporte",
+  "usuario": {
+    "id": "uuid",
+    "nome": "Nome do Usuário",
+    "email": "email@exemplo.com",
+    "telefone": "(11) 99999-9999"
+  },
+  "acao": "exclusao",
+  "registro": "Lançamento: Venda X"
 }`}
           </pre>
         </CardContent>
