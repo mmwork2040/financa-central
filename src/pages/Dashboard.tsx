@@ -190,14 +190,6 @@ const DashboardContent = () => {
         </CardContent>
       </Card>
 
-      {/* Floating Add Button */}
-      <button
-        onClick={() => handleOpenModal()}
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl hover:shadow-2xl hover:scale-105 transition-all"
-        aria-label="Adicionar lançamento"
-      >
-        <Plus size={24} />
-      </button>
 
       <LancamentosFormDialog />
     </div>
