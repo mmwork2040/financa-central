@@ -214,8 +214,48 @@ Deno.serve(async (req) => {
 
     let vendaId: string | null = null;
     let lancamentoId: string | null = null;
+    let clienteId: string | null = null;
 
     if (saleData && saleData.valor_bruto > 0) {
+      // Auto-register client if sufficient data exists
+      if (saleData.cliente) {
+        const clienteName = saleData.cliente;
+        // Extract email if present (format: "Name" or "email@domain.com")
+        const isEmail = clienteName.includes("@");
+        const nome = isEmail ? clienteName.split("@")[0] : clienteName;
+        const email = isEmail ? clienteName : null;
+
+        // Check if client already exists for this empresa
+        const { data: existingCliente } = await supabase
+          .from("clientes")
+          .select("id")
+          .eq("empresa_id", empresaId)
+          .or(`nome.eq.${clienteName}${email ? `,email.eq.${email}` : ""}`)
+          .maybeSingle();
+
+        if (existingCliente) {
+          clienteId = existingCliente.id;
+        } else {
+          const { data: newCliente, error: clienteError } = await supabase
+            .from("clientes")
+            .insert({
+              empresa_id: empresaId,
+              nome: nome,
+              email: email,
+              ativo: true,
+            })
+            .select("id")
+            .single();
+
+          if (clienteError) {
+            console.error("Erro ao cadastrar cliente:", clienteError);
+          } else {
+            clienteId = newCliente.id;
+            console.log("Cliente cadastrado automaticamente:", clienteId);
+          }
+        }
+      }
+
       // Insert venda_digital
       const { data: venda, error: vendaError } = await supabase
         .from("vendas_digitais")
@@ -254,6 +294,7 @@ Deno.serve(async (req) => {
             data_pagamento: dataVenda,
             status: "pago",
             origem: "integracao",
+            ...(clienteId ? { cliente_id: clienteId } : {}),
           })
           .select("id")
           .single();
