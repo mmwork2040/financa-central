@@ -20,22 +20,14 @@ export const useNotificacoes = () => {
   const { user } = useAuth();
 
   const fetchNotificacoes = useCallback(async () => {
-    if (!user) {
-      console.log("[Notificacoes] user is null, skipping fetch");
-      return;
-    }
+    if (!user) return;
     setLoading(true);
     try {
-      console.log("[Notificacoes] Fetching for user:", user.id);
       const { data, error } = await (supabase as any)
         .from("notificacoes")
         .select("*")
         .order("created_at", { ascending: false });
-      if (error) {
-        console.error("[Notificacoes] Query error:", error);
-        throw error;
-      }
-      console.log("[Notificacoes] Fetched:", data?.length, "notifications");
+      if (error) throw error;
       setNotificacoes(data || []);
     } catch (err) {
       console.error("Erro ao carregar notificações:", err);
