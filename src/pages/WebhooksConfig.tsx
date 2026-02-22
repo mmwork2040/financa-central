@@ -415,14 +415,16 @@ const WebhooksConfig = () => {
           <div className="space-y-4">
             <div>
               <Label>Ação *</Label>
-              <Select value={nome} onValueChange={handleAcaoChange}>
+              <Select value={nome} onValueChange={handleAcaoChange} disabled={!!editingId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a ação" />
                 </SelectTrigger>
                 <SelectContent>
-                  {acoesDisponiveis.map(a => (
-                    <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
-                  ))}
+                  {acoesDisponiveis
+                    .filter(a => editingId ? true : !webhooks.some(w => w.nome === a.value))
+                    .map(a => (
+                      <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
