@@ -322,7 +322,7 @@ const WebhooksConfig = () => {
               />
               <p className="text-[11px] text-muted-foreground mt-1">Descreva o que o sistema deve fazer conforme o retorno do webhook.</p>
             </div>
-            <Button onClick={handleCreate} disabled={saving || !nome.trim() || !url.trim() || !!jsonError} className="w-full">
+            <Button onClick={handleCreate} disabled={saving || !nome.trim() || !url.trim() || !!jsonError || (nome === "Excluir Registro" && !tabela)} className="w-full">
               {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Criando...</> : "Criar Webhook"}
             </Button>
           </div>
