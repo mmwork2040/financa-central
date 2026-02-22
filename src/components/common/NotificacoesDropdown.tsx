@@ -80,9 +80,10 @@ const NotificacoesDropdown = () => {
           ) : (
             <div className="divide-y">
               {notificacoes.map((n) => {
-                const isRecusada = n.tipo === 'suporte_recusada';
-                const isAprovada = n.tipo === 'suporte_aprovada';
-                const isAtualizada = n.tipo === 'suporte_atualizada' || (n.tipo === 'suporte' && !isRecusada && !isAprovada);
+                const tipoTrimmed = (n.tipo || '').trim();
+                const isRecusada = tipoTrimmed === 'suporte_recusada';
+                const isAprovada = tipoTrimmed === 'suporte_aprovada';
+                const isAtualizada = tipoTrimmed === 'suporte_atualizada' || (tipoTrimmed.startsWith('suporte') && !isRecusada && !isAprovada);
                 
                 const borderColor = isRecusada
                   ? "border-l-4 border-l-destructive"
