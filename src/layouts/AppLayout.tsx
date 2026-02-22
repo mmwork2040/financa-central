@@ -9,6 +9,7 @@ import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
 import { useCompanyTheme } from "@/hooks/useCompanyTheme";
 import { useIsMobile } from "@/hooks/use-mobile";
 import FloatingChatButton from "@/components/common/FloatingChatButton";
+import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
@@ -16,6 +17,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const themeReady = useCompanyTheme();
+  useSupportNotifications();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
