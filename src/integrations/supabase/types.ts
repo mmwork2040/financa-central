@@ -875,26 +875,38 @@ export type Database = {
       webhooks_empresa: {
         Row: {
           ativo: boolean
+          campo_resposta: string | null
+          comportamento: string | null
           created_at: string
           empresa_id: string
           evento: string
           id: string
+          nome: string | null
+          payload_json: string | null
           url: string
         }
         Insert: {
           ativo?: boolean
+          campo_resposta?: string | null
+          comportamento?: string | null
           created_at?: string
           empresa_id: string
           evento: string
           id?: string
+          nome?: string | null
+          payload_json?: string | null
           url: string
         }
         Update: {
           ativo?: boolean
+          campo_resposta?: string | null
+          comportamento?: string | null
           created_at?: string
           empresa_id?: string
           evento?: string
           id?: string
+          nome?: string | null
+          payload_json?: string | null
           url?: string
         }
         Relationships: [
