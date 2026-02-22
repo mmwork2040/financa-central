@@ -96,6 +96,29 @@ export const useSolicitacoesSuporte = () => {
       return false;
     }
 
+    // Prevent duplicate requests for the same record
+    if (hasPendingRequest(params.tabela, params.registro_id)) {
+      toast.warning("Já existe uma solicitação pendente para este registro.");
+      return false;
+    }
+
+    // Also check in DB to avoid race conditions
+    try {
+      const { data: existing } = await (supabase as any)
+        .from("solicitacoes_suporte")
+        .select("id")
+        .eq("registro_id", params.registro_id)
+        .eq("tabela", params.tabela)
+        .eq("status", "pendente")
+        .limit(1);
+      if (existing && existing.length > 0) {
+        toast.warning("Já existe uma solicitação pendente para este registro.");
+        return false;
+      }
+    } catch {
+      // Continue if check fails
+    }
+
     try {
       // First, fire the webhook for "Excluir Registro" and the specific table
       let webhookResult: any = null;
