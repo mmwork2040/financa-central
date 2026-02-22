@@ -21,6 +21,15 @@ Deno.serve(async (req) => {
       throw new Error("empresa_id and evento are required");
     }
 
+    // Fetch empresa name
+    let empresaNome = "";
+    const { data: empresaData } = await supabase
+      .from("empresas")
+      .select("nome")
+      .eq("id", empresa_id)
+      .single();
+    if (empresaData) empresaNome = empresaData.nome;
+
     // Search webhooks matching by nome (ação) AND tabela together
     let webhooks: any[] = [];
 
@@ -70,6 +79,7 @@ Deno.serve(async (req) => {
             let payloadStr = wh.payload_json;
             const replacements: Record<string, string> = {
               "{{empresa_id}}": empresa_id || "",
+              "{{empresa_nome}}": empresaNome || "",
               "{{timestamp}}": new Date().toISOString(),
               "{{registro_id}}": registro || "",
               "{{descricao}}": descricao || "",
