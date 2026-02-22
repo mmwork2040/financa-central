@@ -12,12 +12,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Ban } from "lucide-react";
 
 interface SupportDeleteDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (motivo: string) => Promise<void>;
+  onCancel?: () => Promise<boolean>;
   recordName: string;
   isPending?: boolean;
 }
@@ -26,11 +28,13 @@ const SupportDeleteDialog: React.FC<SupportDeleteDialogProps> = ({
   isOpen,
   onClose,
   onConfirm,
+  onCancel,
   recordName,
   isPending = false,
 }) => {
   const [motivo, setMotivo] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const handleConfirm = async () => {
     setSubmitting(true);
@@ -39,6 +43,17 @@ const SupportDeleteDialog: React.FC<SupportDeleteDialogProps> = ({
       setMotivo("");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!onCancel) return;
+    setCancelling(true);
+    try {
+      const success = await onCancel();
+      if (success) onClose();
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -54,7 +69,20 @@ const SupportDeleteDialog: React.FC<SupportDeleteDialogProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Fechar</AlertDialogCancel>
+            {onCancel && (
+              <Button
+                variant="destructive"
+                onClick={handleCancel}
+                disabled={cancelling}
+              >
+                {cancelling ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Cancelando...</>
+                ) : (
+                  <><Ban className="h-4 w-4 mr-2" /> Cancelar Solicitação</>
+                )}
+              </Button>
+            )}
+            <AlertDialogCancel disabled={cancelling}>Fechar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
