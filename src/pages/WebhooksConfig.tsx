@@ -292,7 +292,7 @@ const WebhooksConfig = () => {
       const fired = data?.webhooks_fired || 0;
       if (fired > 0) {
         const r = data.results?.[0];
-        toast.success(`Webhook disparado! Status: ${r?.status || "OK"}${r?.campo_resposta_value !== undefined ? ` | ${r.campo_resposta}: ${r.campo_resposta_value}` : ""}`);
+        toast.success(`Webhook disparado! ${r?.campo_resposta_value !== undefined && r?.campo_resposta_value !== null ? r.campo_resposta_value : `Status: ${r?.status || "OK"}`}`);
       } else {
         toast.warning("Nenhum webhook correspondente encontrado para disparar.");
       }
@@ -320,7 +320,7 @@ const WebhooksConfig = () => {
       const fired = data?.webhooks_fired || 0;
       if (fired > 0) {
         const r = data.results?.[0];
-        toast.success(`Teste disparado com dados reais! Status: ${r?.status || "OK"}${r?.campo_resposta_value !== undefined ? ` | ${r.campo_resposta}: ${r.campo_resposta_value}` : ""}`);
+        toast.success(`Teste disparado com dados reais! ${r?.campo_resposta_value !== undefined && r?.campo_resposta_value !== null ? r.campo_resposta_value : `Status: ${r?.status || "OK"}`}`);
       } else {
         toast.warning("Nenhum webhook correspondente encontrado para disparar.");
       }
