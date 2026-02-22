@@ -12,6 +12,7 @@ export interface Cliente {
   email?: string;
   endereco?: string;
   ativo: boolean;
+  origem?: string;
 }
 
 export const initialCliente: Cliente = {

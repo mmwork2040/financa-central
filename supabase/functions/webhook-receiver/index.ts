@@ -243,6 +243,7 @@ Deno.serve(async (req) => {
               nome: nome,
               email: email,
               ativo: true,
+              origem: "integracao",
             })
             .select("id")
             .single();

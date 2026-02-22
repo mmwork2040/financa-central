@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Lock } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import MobilePagination, { usePagination } from "@/components/common/MobilePagination";
 import { useTableSort } from "@/hooks/useTableSort";
 import SortableTableHead from "@/components/common/SortableTableHead";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ClientesTableProps {
   clientes: Cliente[];
@@ -37,7 +38,12 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-1 flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">{c.nome}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-medium text-foreground truncate">{c.nome}</p>
+                    {c.origem === 'integracao' && (
+                      <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" /></TooltipTrigger><TooltipContent><p>Cliente cadastrado automaticamente via integração</p></TooltipContent></Tooltip></TooltipProvider>
+                    )}
+                  </div>
                   {c.cpf_cnpj && <p className="text-xs text-muted-foreground">{formatCPFOrCNPJ(c.cpf_cnpj)}</p>}
                   {c.telefone && <p className="text-xs text-muted-foreground">{formatPhone(c.telefone)}</p>}
                   {c.email && <p className="text-xs text-muted-foreground truncate">{c.email}</p>}
@@ -48,7 +54,7 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                   }`}>
                     {c.ativo ? 'Ativo' : 'Inativo'}
                   </span>
-                  {showActions && (
+                  {showActions && c.origem !== 'integracao' && (
                     <div className="flex gap-1">
                       {canEdit && (
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(c)}>
@@ -89,7 +95,14 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
           <TableBody>
             {paginatedItems.map((cliente) => (
               <TableRow key={cliente.id}>
-                <TableCell className="font-medium">{cliente.nome}</TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-1.5">
+                    {cliente.nome}
+                    {cliente.origem === 'integracao' && (
+                      <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" /></TooltipTrigger><TooltipContent><p>Cliente cadastrado automaticamente via integração</p></TooltipContent></Tooltip></TooltipProvider>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>{cliente.cpf_cnpj ? formatCPFOrCNPJ(cliente.cpf_cnpj) : '-'}</TableCell>
                 <TableCell>{cliente.telefone ? formatPhone(cliente.telefone) : '-'}</TableCell>
                 <TableCell>{cliente.email || '-'}</TableCell>
@@ -102,18 +115,22 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                 </TableCell>
                 {showActions && (
                   <TableCell className="text-right">
-                    <div className="flex justify-end items-center gap-2">
-                      {canEdit && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(cliente)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {canDelete && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(cliente)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    {cliente.origem !== 'integracao' ? (
+                      <div className="flex justify-end items-center gap-2">
+                        {canEdit && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(cliente)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(cliente)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                 )}
               </TableRow>
