@@ -149,7 +149,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [formasPagamento, setFormasPagamento] = useState<FormaPagamento[]>([]);
   const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
-  const { empresaId } = useAuth();
+  const { empresaId, user, userProfile } = useAuth();
 
   // Add sort state
   const [sortField, setSortField] = useState<string>('data_vencimento');
@@ -375,6 +375,31 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (!selectedId) return;
     
     try {
+      // Find the lancamento to get its description for webhook
+      const lancamento = lancamentos.find(l => l.id === selectedId);
+
+      // Fire webhook for direct delete with table name
+      try {
+        await supabase.functions.invoke("fire-webhook", {
+          body: {
+            empresa_id: empresaId,
+            evento: "Excluir Registro",
+            tabela: "lancamentos",
+            descricao: lancamento?.descricao || "",
+            registro: selectedId,
+            usuario: {
+              id: user?.id,
+              nome: userProfile?.nome,
+              email: userProfile?.email,
+              telefone: userProfile?.telefone || null,
+            },
+            acao: "exclusao_direta",
+          },
+        });
+      } catch (err) {
+        console.warn("Webhook de exclusão direta não disparado:", err);
+      }
+
       const { error } = await supabase.from("lancamentos").delete().eq("id", selectedId);
 
       if (error) {

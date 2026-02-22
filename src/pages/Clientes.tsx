@@ -13,9 +13,10 @@ import { useSolicitacoesSuporte } from "@/hooks/useSolicitacoesSuporte";
 import { formatCPFOrCNPJ, formatPhone } from "@/utils/format";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Clientes = () => {
-  const { canPerformAction } = useAuth();
+  const { canPerformAction, user, userProfile, empresaId } = useAuth();
   const canIncluir = canPerformAction("clientes", "pode_incluir");
   const canAlterar = canPerformAction("clientes", "pode_alterar");
   const canExcluir = canPerformAction("clientes", "pode_excluir");
@@ -104,6 +105,28 @@ const Clientes = () => {
   };
 
   const handleDelete = async () => {
+    // Fire webhook for direct delete with table name
+    try {
+      await supabase.functions.invoke("fire-webhook", {
+        body: {
+          empresa_id: empresaId,
+          evento: "Excluir Registro",
+          tabela: "clientes",
+          descricao: currentCliente.nome,
+          registro: currentCliente.id,
+          usuario: {
+            id: user?.id,
+            nome: userProfile?.nome,
+            email: userProfile?.email,
+            telefone: userProfile?.telefone || null,
+          },
+          acao: "exclusao_direta",
+        },
+      });
+    } catch (err) {
+      console.warn("Webhook de exclusão direta não disparado:", err);
+    }
+
     const success = await deleteCliente(currentCliente.id);
     if (success) {
       setIsDeleteDialogOpen(false);
