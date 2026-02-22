@@ -40,9 +40,10 @@ export const useNotificacoes = () => {
     fetchNotificacoes();
   }, [fetchNotificacoes]);
 
-  // Realtime
+  // Realtime + polling fallback
   useEffect(() => {
     if (!user) return;
+
     const channel = supabase
       .channel("notificacoes_realtime")
       .on(
@@ -63,10 +64,17 @@ export const useNotificacoes = () => {
         }
       )
       .subscribe();
+
+    // Polling fallback every 10s to catch missed realtime events
+    const interval = setInterval(() => {
+      fetchNotificacoes();
+    }, 10000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(interval);
     };
-  }, [user]);
+  }, [user, fetchNotificacoes]);
 
   const unreadCount = notificacoes.filter((n) => !n.lida).length;
 
