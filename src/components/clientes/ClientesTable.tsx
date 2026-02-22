@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Lock, Clock, HelpCircle, Send } from "lucide-react";
+import { Pencil, Trash2, Lock, Clock, Send, Bot, UserPlus } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -46,6 +46,17 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                   {c.cpf_cnpj && <p className="text-xs text-muted-foreground">{formatCPFOrCNPJ(c.cpf_cnpj)}</p>}
                   {c.telefone && <p className="text-xs text-muted-foreground">{formatPhone(c.telefone)}</p>}
                   {c.email && <p className="text-xs text-muted-foreground truncate">{c.email}</p>}
+                  <div className="flex items-center gap-1 mt-1">
+                    {c.origem === 'integracao' ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300">
+                        <Bot className="h-3 w-3" /> Automático
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
+                        <UserPlus className="h-3 w-3" /> Manual
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-2 ml-2">
                   <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${
@@ -117,6 +128,7 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
               <SortableTableHead label="CPF/CNPJ" sortKey="cpf_cnpj" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
               <SortableTableHead label="Telefone" sortKey="telefone" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
               <SortableTableHead label="E-mail" sortKey="email" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+              <SortableTableHead label="Origem" sortKey="origem" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
               <SortableTableHead label="Status" sortKey="ativo" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
               {showActions && <TableHead className="w-20 text-center">Ações</TableHead>}
             </TableRow>
@@ -128,6 +140,17 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                 <TableCell>{cliente.cpf_cnpj ? formatCPFOrCNPJ(cliente.cpf_cnpj) : '-'}</TableCell>
                 <TableCell>{cliente.telefone ? formatPhone(cliente.telefone) : '-'}</TableCell>
                 <TableCell>{cliente.email || '-'}</TableCell>
+                <TableCell>
+                  {cliente.origem === 'integracao' ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+                      <Bot className="h-3 w-3" /> Automático
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                      <UserPlus className="h-3 w-3" /> Manual
+                    </span>
+                  )}
+                </TableCell>
                 <TableCell>
                   <span className={`inline-block rounded-full px-2 py-1 text-xs ${
                     cliente.ativo ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'
