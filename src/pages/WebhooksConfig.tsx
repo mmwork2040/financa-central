@@ -155,6 +155,18 @@ const WebhooksConfig = () => {
         if (error) throw error;
         toast.success("Webhook atualizado com sucesso!");
       } else {
+        // Check if webhook already exists for this action
+        const { data: existing } = await (supabase as any)
+          .from('webhooks_empresa')
+          .select('id')
+          .eq('empresa_id', empresaId)
+          .eq('nome', nome.trim())
+          .limit(1);
+        if (existing && existing.length > 0) {
+          toast.error(`Já existe um webhook configurado para a ação "${nome}". Edite o existente.`);
+          setSaving(false);
+          return;
+        }
         const { error } = await (supabase as any)
           .from('webhooks_empresa')
           .insert({ ...payload, empresa_id: empresaId, ativo: true });
