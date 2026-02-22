@@ -37,32 +37,32 @@ const DashboardContent = () => {
   return (
     <div className="space-y-6 pb-20">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
-              <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold">Olá, {userProfile?.nome?.split(' ')[0] || 'Usuário'}! 👋</h1>
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
+            <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground">Aqui está o resumo do seu financeiro</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Olá, {userProfile?.nome?.split(' ')[0] || 'Usuário'}! 👋</h1>
         </div>
-        <Button variant="ghost" size="sm" onClick={toggle} className="gap-1.5">
-          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </Button>
+        <p className="text-xs sm:text-sm text-muted-foreground">Aqui está o resumo do seu financeiro</p>
       </div>
 
-      {/* Health Indicator */}
-      <div className={cn("flex items-center gap-3 rounded-lg border p-3", health.bg)}>
-        <span className="text-lg">{health.icon}</span>
-        <div>
-          <p className={cn("text-sm font-semibold", health.color)}>Saúde Financeira: {health.label}</p>
-          <p className="text-xs text-muted-foreground">
-            {healthStatus === 'saudavel' && "Suas contas estão em dia!"}
-            {healthStatus === 'atencao' && "Fique atento aos compromissos pendentes."}
-            {healthStatus === 'risco' && "Você tem contas em atraso. Regularize para evitar problemas."}
-          </p>
+      {/* Health Indicator with Eye toggle */}
+      <div className={cn("flex items-center justify-between gap-3 rounded-lg border p-3", health.bg)}>
+        <div className="flex items-center gap-3">
+          <span className="text-lg">{health.icon}</span>
+          <div>
+            <p className={cn("text-sm font-semibold", health.color)}>Saúde Financeira: {health.label}</p>
+            <p className="text-xs text-muted-foreground">
+              {healthStatus === 'saudavel' && "Suas contas estão em dia!"}
+              {healthStatus === 'atencao' && "Fique atento aos compromissos pendentes."}
+              {healthStatus === 'risco' && "Você tem contas em atraso. Regularize para evitar problemas."}
+            </p>
+          </div>
         </div>
+        <Button variant="ghost" size="icon" onClick={toggle} className="shrink-0 h-8 w-8" title={visible ? "Ocultar valores" : "Exibir valores"}>
+          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </Button>
       </div>
 
       {/* Summary Cards */}
