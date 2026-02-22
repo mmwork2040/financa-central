@@ -56,31 +56,20 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                   {showActions && (
                     <div className="flex gap-1">
                       {c.origem === 'integracao' ? (
-                        isSuperAdmin ? (
-                          <>
-                            {canEdit && (
-                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(c)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {canDelete && (
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(c)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </>
-                        ) : (
-                          <div className="flex items-center gap-1">
-                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Registro automático (integração)</p></TooltipContent></Tooltip></TooltipProvider>
-                            {canDelete && hasPendingRequest && hasPendingRequest(c.id) ? (
-                              <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada - aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
-                            ) : canDelete && onSupportDelete ? (
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onSupportDelete(c)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            ) : null}
-                          </div>
-                        )
+                        <div className="flex items-center gap-1">
+                          <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Registro automático – edição bloqueada</p></TooltipContent></Tooltip></TooltipProvider>
+                          {isSuperAdmin && canDelete ? (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(c)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : canDelete && hasPendingRequest && hasPendingRequest(c.id) ? (
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada – aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
+                          ) : canDelete && onSupportDelete ? (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onSupportDelete(c)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : null}
+                        </div>
                       ) : (
                         <>
                           {canEdit && (
@@ -138,31 +127,20 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                 {showActions && (
                   <TableCell>
                     {cliente.origem === 'integracao' ? (
-                      isSuperAdmin ? (
-                        <div className="flex justify-center items-center gap-2">
-                          {canEdit && (
-                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(cliente)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {canDelete && (
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(cliente)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex justify-center items-center gap-2">
-                          <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Registro automático (integração)</p></TooltipContent></Tooltip></TooltipProvider>
-                          {canDelete && hasPendingRequest && hasPendingRequest(cliente.id) ? (
-                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada - aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
-                          ) : canDelete && onSupportDelete ? (
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onSupportDelete(cliente)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          ) : null}
-                        </div>
-                      )
+                      <div className="flex justify-center items-center gap-2">
+                        <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Registro automático – edição bloqueada</p></TooltipContent></Tooltip></TooltipProvider>
+                        {isSuperAdmin && canDelete ? (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(cliente)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        ) : canDelete && hasPendingRequest && hasPendingRequest(cliente.id) ? (
+                          <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada – aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
+                        ) : canDelete && onSupportDelete ? (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onSupportDelete(cliente)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        ) : null}
+                      </div>
                     ) : (
                       <div className="flex justify-center items-center gap-2">
                         {canEdit && (
