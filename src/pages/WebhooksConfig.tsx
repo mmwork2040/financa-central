@@ -34,11 +34,11 @@ const gerarPayloadSugerido = (acao: string, tabela: string): string => {
   const baseFields: Record<string, any> = {
     empresa_id: "{{empresa_id}}",
     acao,
-    tabela,
     timestamp: "{{timestamp}}",
   };
 
   if (acao === "Excluir Registro") {
+    baseFields.tabela = tabela;
     const tabelaFields: Record<string, Record<string, any>> = {
       lancamentos: { registro_id: "{{registro_id}}", descricao: "{{descricao}}", valor: "{{valor}}", tipo: "{{tipo}}", data_vencimento: "{{data_vencimento}}" },
       clientes: { registro_id: "{{registro_id}}", nome: "{{nome}}", email: "{{email}}", cpf_cnpj: "{{cpf_cnpj}}" },
@@ -47,7 +47,7 @@ const gerarPayloadSugerido = (acao: string, tabela: string): string => {
       contas_bancarias: { registro_id: "{{registro_id}}", nome: "{{nome}}", banco: "{{banco}}" },
       formas_pagamento: { registro_id: "{{registro_id}}", descricao: "{{descricao}}" },
     };
-    return JSON.stringify({ ...baseFields, usuario: { id: "{{user_id}}", nome: "{{user_nome}}", email: "{{user_email}}" }, ...(tabelaFields[tabela] || { registro_id: "{{registro_id}}" }) }, null, 2);
+    return JSON.stringify({ ...baseFields, usuario: { id: "{{user_id}}", nome: "{{user_nome}}", email: "{{user_email}}", telefone: "{{user_telefone}}" }, ...(tabelaFields[tabela] || { registro_id: "{{registro_id}}" }) }, null, 2);
   }
 
   if (acao === "Suporte Técnico") {
@@ -77,8 +77,6 @@ const WebhooksConfig = () => {
   const [nome, setNome] = useState("");
   const [url, setUrl] = useState("");
   const [payloadJson, setPayloadJson] = useState("");
-  const [campoResposta, setCampoResposta] = useState("");
-  const [comportamento, setComportamento] = useState("");
   const [tabela, setTabela] = useState("");
   const [jsonError, setJsonError] = useState<string | null>(null);
 
@@ -116,7 +114,13 @@ const WebhooksConfig = () => {
 
   const handleAcaoChange = (value: string) => {
     setNome(value);
-    if (value && tabela) {
+    // For "Suporte Técnico", auto-generate payload immediately (no table needed)
+    if (value === "Suporte Técnico") {
+      setTabela("");
+      const suggested = gerarPayloadSugerido(value, "");
+      setPayloadJson(suggested);
+      setJsonError(null);
+    } else if (value && tabela) {
       const suggested = gerarPayloadSugerido(value, tabela);
       setPayloadJson(suggested);
       setJsonError(null);
@@ -133,7 +137,7 @@ const WebhooksConfig = () => {
   };
 
   const resetForm = () => {
-    setNome(""); setUrl(""); setPayloadJson(""); setCampoResposta(""); setComportamento(""); setTabela(""); setJsonError(null); setEditingId(null);
+    setNome(""); setUrl(""); setPayloadJson(""); setTabela(""); setJsonError(null); setEditingId(null);
   };
 
   const handleOpenEdit = (wh: any) => {
@@ -141,8 +145,6 @@ const WebhooksConfig = () => {
     setNome(wh.nome || wh.evento || "");
     setUrl(wh.url || "");
     setPayloadJson(wh.payload_json || "");
-    setCampoResposta(wh.campo_resposta || "");
-    setComportamento(wh.comportamento || "");
     setTabela(wh.tabela || "");
     setJsonError(null);
     setDialogOpen(true);
@@ -160,10 +162,10 @@ const WebhooksConfig = () => {
         nome: nome.trim(),
         url: url.trim(),
         evento: nome.trim(),
-        tabela: tabela || null,
+        tabela: nome === "Excluir Registro" ? (tabela || null) : null,
         payload_json: payloadJson.trim() || null,
-        campo_resposta: campoResposta.trim() || null,
-        comportamento: comportamento.trim() || null,
+        campo_resposta: "resultado",
+        comportamento: null,
       };
 
       if (editingId) {
@@ -245,7 +247,7 @@ const WebhooksConfig = () => {
 
   const openTestDialog = async (wh: any) => {
     if (!wh.tabela) {
-      // No table configured, fire directly with generic test data
+      // No table configured (e.g. Suporte Técnico), fire directly with generic test data
       handleTestWebhookDirect(wh);
       return;
     }
@@ -292,7 +294,8 @@ const WebhooksConfig = () => {
       const fired = data?.webhooks_fired || 0;
       if (fired > 0) {
         const r = data.results?.[0];
-        toast.success(`Webhook disparado! ${r?.campo_resposta_value !== undefined && r?.campo_resposta_value !== null ? r.campo_resposta_value : `Status: ${r?.status || "OK"}`}`);
+        const resultado = r?.campo_resposta_value;
+        toast.success(`Webhook disparado! ${resultado !== undefined && resultado !== null ? resultado : `Status: ${r?.status || "OK"}`}`);
       } else {
         toast.warning("Nenhum webhook correspondente encontrado para disparar.");
       }
@@ -312,7 +315,6 @@ const WebhooksConfig = () => {
     setTestDialogOpen(false);
     try {
       const body = buildTestPayload(testWebhook, record);
-      // Mark as test
       body.descricao = `[TESTE] ${body.descricao}`;
 
       const { data, error } = await supabase.functions.invoke("fire-webhook", { body });
@@ -320,7 +322,8 @@ const WebhooksConfig = () => {
       const fired = data?.webhooks_fired || 0;
       if (fired > 0) {
         const r = data.results?.[0];
-        toast.success(`Teste disparado com dados reais! ${r?.campo_resposta_value !== undefined && r?.campo_resposta_value !== null ? r.campo_resposta_value : `Status: ${r?.status || "OK"}`}`);
+        const resultado = r?.campo_resposta_value;
+        toast.success(`Teste disparado com dados reais! ${resultado !== undefined && resultado !== null ? resultado : `Status: ${r?.status || "OK"}`}`);
       } else {
         toast.warning("Nenhum webhook correspondente encontrado para disparar.");
       }
@@ -404,16 +407,6 @@ const WebhooksConfig = () => {
                     </Button>
                   </div>
                 </div>
-                {(wh.campo_resposta || wh.comportamento) && (
-                  <div className="border-t pt-2 space-y-1">
-                    {wh.campo_resposta && (
-                      <p className="text-xs"><span className="font-medium text-muted-foreground">Campo resposta:</span> <code className="bg-muted px-1 rounded text-[11px]">{wh.campo_resposta}</code></p>
-                    )}
-                    {wh.comportamento && (
-                      <p className="text-xs"><span className="font-medium text-muted-foreground">Comportamento:</span> {wh.comportamento}</p>
-                    )}
-                  </div>
-                )}
                 {wh.payload_json && (
                   <details className="text-xs">
                     <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Ver payload</summary>
@@ -448,20 +441,22 @@ const WebhooksConfig = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Tabela da ação</Label>
-              <Select value={tabela} onValueChange={handleTabelaChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a tabela (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tabelasDisponiveis.map(t => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground mt-1">O payload será sugerido automaticamente conforme a ação e tabela.</p>
-            </div>
+            {nome === "Excluir Registro" && (
+              <div>
+                <Label>Tabela da ação *</Label>
+                <Select value={tabela} onValueChange={handleTabelaChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a tabela" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tabelasDisponiveis.map(t => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground mt-1">O payload será sugerido automaticamente conforme a tabela.</p>
+              </div>
+            )}
             <div>
               <Label>URL do Webhook *</Label>
               <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://hooks.zapier.com/..." />
@@ -471,7 +466,7 @@ const WebhooksConfig = () => {
               <Textarea
                 value={payloadJson}
                 onChange={e => handlePayloadChange(e.target.value)}
-                placeholder={'Selecione a ação e tabela para gerar automaticamente'}
+                placeholder={nome === "Suporte Técnico" ? "Payload gerado automaticamente" : "Selecione a ação e tabela para gerar automaticamente"}
                 className="font-mono text-xs min-h-[120px]"
               />
               {jsonError && (
@@ -480,21 +475,6 @@ const WebhooksConfig = () => {
                   <span>{jsonError}</span>
                 </div>
               )}
-            </div>
-            <div>
-              <Label>Campo da resposta (output)</Label>
-              <Input value={campoResposta} onChange={e => setCampoResposta(e.target.value)} placeholder="Ex: data.status ou resultado" />
-              <p className="text-[11px] text-muted-foreground mt-1">Informe o campo do JSON de resposta que o sistema deve tratar.</p>
-            </div>
-            <div>
-              <Label>Comportamento ao receber retorno</Label>
-              <Textarea
-                value={comportamento}
-                onChange={e => setComportamento(e.target.value)}
-                placeholder="Ex: Se status = 'aprovado', excluir o registro. Se status = 'recusado', notificar o usuário."
-                className="min-h-[80px] text-sm"
-              />
-              <p className="text-[11px] text-muted-foreground mt-1">Descreva o que o sistema deve fazer conforme o retorno do webhook.</p>
             </div>
             <Button onClick={handleSave} disabled={saving || !nome.trim() || !url.trim() || !!jsonError || (nome === "Excluir Registro" && !tabela)} className="w-full">
               {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Salvando...</> : editingId ? "Salvar Alterações" : "Criar Webhook"}

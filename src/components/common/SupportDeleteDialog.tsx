@@ -67,8 +67,10 @@ const SupportDeleteDialog: React.FC<SupportDeleteDialogProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle>Solicitar exclusão ao suporte</AlertDialogTitle>
           <AlertDialogDescription>
-            Este registro foi cadastrado automaticamente via integração e só pode ser excluído pelo suporte.
-            Deseja solicitar a exclusão de "{recordName}"?
+            Este registro foi cadastrado automaticamente via integração. 
+            Ao confirmar, uma notificação será enviada à equipe de suporte. 
+            Quando a solicitação for atendida, o registro será excluído automaticamente. 
+            Basta atualizar a página para confirmar a exclusão de "{recordName}".
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="py-2">
