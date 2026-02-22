@@ -22,7 +22,7 @@ export const LancamentosTable = () => {
   const isMobile = useIsMobile();
   const { visible } = useValuesVisibility();
   const displayCurrency = (val: number) => visible ? formatCurrency(val) : "••••••";
-  const { criarSolicitacao, hasPendingRequest } = useSolicitacoesSuporte();
+  const { criarSolicitacao, hasPendingRequest, getPendingRequestId, cancelarSolicitacao } = useSolicitacoesSuporte();
   const [supportDialogOpen, setSupportDialogOpen] = useState(false);
   const [supportTarget, setSupportTarget] = useState<{ id: string; descricao: string } | null>(null);
   const [hasActiveDeleteWebhook, setHasActiveDeleteWebhook] = useState(false);
@@ -302,6 +302,20 @@ export const LancamentosTable = () => {
             setSupportTarget(null);
           }
         }}
+        onCancel={
+          supportTarget && hasPendingRequest("lancamentos", supportTarget.id)
+            ? async () => {
+                const reqId = getPendingRequestId("lancamentos", supportTarget.id);
+                if (!reqId) return false;
+                const success = await cancelarSolicitacao(reqId);
+                if (success) {
+                  setSupportDialogOpen(false);
+                  setSupportTarget(null);
+                }
+                return success;
+              }
+            : undefined
+        }
         recordName={supportTarget?.descricao || ""}
         isPending={supportTarget ? hasPendingRequest("lancamentos", supportTarget.id) : false}
       />
