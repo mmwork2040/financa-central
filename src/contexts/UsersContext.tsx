@@ -44,7 +44,10 @@ export const UsersProvider = ({ children }: UsersProviderProps) => {
   const { users, loading, saving, deleting, saveUser, deleteUser, revokeUser, isSuperAdmin } = useUsers();
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  const filteredUsers = users.filter(user => 
+  // Hide super admins from non-super-admin users
+  const visibleUsers = isSuperAdmin ? users : users.filter(u => !u.is_super_admin);
+
+  const filteredUsers = visibleUsers.filter(user => 
     user.nome.toLowerCase().includes(searchQuery.toLowerCase()) || 
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
