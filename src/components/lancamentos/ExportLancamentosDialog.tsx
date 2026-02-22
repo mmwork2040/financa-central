@@ -89,9 +89,7 @@ const ExportLancamentosDialog: React.FC<ExportLancamentosDialogProps> = ({
             Exportar Lançamentos
           </DialogTitle>
           <DialogDescription>
-            Exporte todos os lançamentos e seus registros relacionados (categorias,
-            clientes, fornecedores, contas bancárias e formas de pagamento) para outra
-            empresa. Registros já existentes na empresa destino serão reutilizados.
+            <span className="text-destructive font-semibold">Atenção:</span> Todos os registros existentes na empresa destino (lançamentos, categorias, clientes, fornecedores, contas bancárias e formas de pagamento) serão <span className="text-destructive font-semibold">excluídos</span> antes da importação. Em seguida, os dados da empresa atual serão copiados para a empresa destino.
           </DialogDescription>
         </DialogHeader>
 

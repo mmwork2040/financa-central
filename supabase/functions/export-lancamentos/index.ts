@@ -52,6 +52,16 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ========== CLEAN TARGET COMPANY DATA ==========
+    // Delete in correct order (lancamentos first due to FK references)
+    await supabase.from("lancamentos").delete().eq("empresa_id", targetEmpresaId);
+    await supabase.from("clientes").delete().eq("empresa_id", targetEmpresaId);
+    await supabase.from("fornecedores").delete().eq("empresa_id", targetEmpresaId);
+    await supabase.from("categorias").delete().eq("empresa_id", targetEmpresaId);
+    await supabase.from("contas_bancarias").delete().eq("empresa_id", targetEmpresaId);
+    await supabase.from("formas_pagamento").delete().eq("empresa_id", targetEmpresaId);
+
+    // ========== FETCH SOURCE DATA ==========
     // Fetch source lançamentos with all fields
     const { data: sourceLancamentos, error: fetchErr } = await supabase
       .from("lancamentos")
@@ -108,24 +118,6 @@ Deno.serve(async (req) => {
           if (record[f] !== undefined) newRecord[f] = record[f];
         }
 
-        // Check if similar record already exists in target (by nome/descricao)
-        const nameField = table === "formas_pagamento" ? "descricao" : "nome";
-        const nameValue = record[nameField];
-        
-        if (nameValue) {
-          const { data: existing } = await supabase
-            .from(table)
-            .select("id")
-            .eq("empresa_id", targetEmpresa)
-            .eq(nameField, nameValue)
-            .limit(1);
-
-          if (existing && existing.length > 0) {
-            idMap[oldId] = existing[0].id;
-            continue;
-          }
-        }
-
         const { data: inserted, error: insertErr } = await supabase
           .from(table)
           .insert(newRecord)
@@ -158,19 +150,7 @@ Deno.serve(async (req) => {
     let extraClientesCount = 0;
     if (allSourceClientes) {
       for (const cliente of allSourceClientes) {
-        if (clienteMap[cliente.id]) continue; // already copied
-
-        const { data: existing } = await supabase
-          .from("clientes")
-          .select("id")
-          .eq("empresa_id", targetEmpresaId)
-          .eq("nome", cliente.nome)
-          .limit(1);
-
-        if (existing && existing.length > 0) {
-          clienteMap[cliente.id] = existing[0].id;
-          continue;
-        }
+        if (clienteMap[cliente.id]) continue;
 
         const { nome, cpf_cnpj, telefone, email, endereco, ativo, origem } = cliente;
         const { data: inserted, error: insertErr } = await supabase
