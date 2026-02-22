@@ -89,7 +89,55 @@ export const useSolicitacoesSuporte = () => {
     }
 
     try {
-      // Create the support request
+      // First, fire the webhook for "Excluir Registro" and the specific table
+      let webhookResult: any = null;
+      try {
+        const { data: whData } = await supabase.functions.invoke("fire-webhook", {
+          body: {
+            empresa_id: empresaId,
+            evento: "Excluir Registro",
+            tabela: params.tabela,
+            descricao: params.registro_descricao,
+            registro: params.registro_id,
+            usuario: {
+              id: user.id,
+              nome: userProfile.nome,
+              email: userProfile.email,
+              telefone: userProfile.telefone || null,
+            },
+            acao: "exclusao",
+          },
+        });
+        webhookResult = whData;
+      } catch (webhookErr) {
+        console.warn("Webhook de exclusão não disparado:", webhookErr);
+      }
+
+      // Check if any webhook was fired and returned a response
+      const webhooksFired = webhookResult?.webhooks_fired || 0;
+      const results = webhookResult?.results || [];
+
+      // If a webhook was fired successfully, check the response
+      if (webhooksFired > 0 && results.length > 0) {
+        const firstResult = results[0];
+        
+        if (firstResult.ok && firstResult.campo_resposta_value !== null && firstResult.campo_resposta_value !== undefined) {
+          // Webhook responded with campo_resposta value
+          const comportamento = firstResult.comportamento;
+          
+          if (comportamento) {
+            toast.info(`Webhook disparado. Resposta: ${firstResult.campo_resposta_value}. Comportamento: ${comportamento}`);
+          } else {
+            toast.info(`Webhook disparado com sucesso. Resposta: ${firstResult.campo_resposta_value}`);
+          }
+        } else if (firstResult.ok) {
+          toast.info("Webhook de exclusão disparado com sucesso.");
+        } else {
+          toast.warning("Webhook disparado, mas retornou erro.");
+        }
+      }
+
+      // Create the support request regardless
       const { error } = await (supabase as any)
         .from("solicitacoes_suporte")
         .insert({
@@ -107,28 +155,6 @@ export const useSolicitacoesSuporte = () => {
         });
 
       if (error) throw error;
-
-      // Fire webhook for support request with user data
-      try {
-        await supabase.functions.invoke("fire-webhook", {
-          body: {
-            empresa_id: empresaId,
-            evento: "Excluir Registro",
-            tabela: params.tabela,
-            descricao: `Solicitação de exclusão: ${params.registro_descricao} (${params.tabela})`,
-            usuario: {
-              id: user.id,
-              nome: userProfile.nome,
-              email: userProfile.email,
-              telefone: userProfile.telefone || null,
-            },
-            acao: "exclusao",
-            registro: params.registro_id,
-          },
-        });
-      } catch (webhookErr) {
-        console.warn("Webhook de suporte não disparado:", webhookErr);
-      }
 
       toast.success("Solicitação de exclusão enviada ao suporte.");
       await fetchSolicitacoes();

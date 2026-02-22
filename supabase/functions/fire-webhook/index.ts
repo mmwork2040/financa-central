@@ -21,51 +21,53 @@ Deno.serve(async (req) => {
       throw new Error("empresa_id and evento are required");
     }
 
-    // Build query - match by evento (nome da ação) and optionally by tabela
-    let query = supabase
-      .from("webhooks_empresa")
-      .select("*")
-      .eq("empresa_id", empresa_id)
-      .eq("ativo", true);
+    // Search webhooks matching by nome (ação) AND tabela together
+    let webhooks: any[] = [];
 
-    // Try to match by nome (ação) first, fallback to evento
-    const { data: webhooksByNome } = await query.eq("nome", evento);
-    
-    let webhooks = webhooksByNome || [];
+    if (tabela) {
+      // Try matching both nome + tabela
+      const { data: matched } = await supabase
+        .from("webhooks_empresa")
+        .select("*")
+        .eq("empresa_id", empresa_id)
+        .eq("ativo", true)
+        .eq("nome", evento)
+        .eq("tabela", tabela);
+      webhooks = matched || [];
+    }
 
-    // If no match by nome, try by evento field
+    // Fallback: match by nome only (no tabela filter)
     if (webhooks.length === 0) {
-      const { data: webhooksByEvento } = await supabase
+      const { data: byNome } = await supabase
+        .from("webhooks_empresa")
+        .select("*")
+        .eq("empresa_id", empresa_id)
+        .eq("ativo", true)
+        .eq("nome", evento);
+      webhooks = byNome || [];
+    }
+
+    // Fallback: match by evento field
+    if (webhooks.length === 0) {
+      const { data: byEvento } = await supabase
         .from("webhooks_empresa")
         .select("*")
         .eq("empresa_id", empresa_id)
         .eq("evento", evento)
         .eq("ativo", true);
-      webhooks = webhooksByEvento || [];
-    }
-
-    // If tabela is provided, also try matching webhooks configured for that tabela
-    if (tabela && webhooks.length === 0) {
-      const { data: webhooksByTabela } = await supabase
-        .from("webhooks_empresa")
-        .select("*")
-        .eq("empresa_id", empresa_id)
-        .eq("tabela", tabela)
-        .eq("ativo", true);
-      webhooks = webhooksByTabela || [];
+      webhooks = byEvento || [];
     }
 
     const results = [];
 
     for (const wh of webhooks) {
       try {
-        // Use configured payload_json as template, or build default
+        // Build payload from template or default
         let payload: Record<string, any>;
 
         if (wh.payload_json) {
           try {
             let payloadStr = wh.payload_json;
-            // Replace template variables
             const replacements: Record<string, string> = {
               "{{empresa_id}}": empresa_id || "",
               "{{timestamp}}": new Date().toISOString(),
@@ -92,7 +94,6 @@ Deno.serve(async (req) => {
 
             payload = JSON.parse(payloadStr);
           } catch {
-            // Fallback if template parsing fails
             payload = { empresa_id, evento, descricao, usuario, acao, registro, timestamp: new Date().toISOString() };
           }
         } else {
@@ -105,16 +106,38 @@ Deno.serve(async (req) => {
           body: JSON.stringify(payload),
         });
 
+        let responseBody: any = null;
+        let campoRespostaValue: any = null;
+
+        try {
+          responseBody = await response.json();
+          // Extract campo_resposta value from response if configured
+          if (wh.campo_resposta && responseBody) {
+            campoRespostaValue = responseBody[wh.campo_resposta] ?? null;
+          }
+        } catch {
+          // Response is not JSON
+        }
+
         // Log the integration
         await supabase.from("logs_integracoes").insert({
           empresa_id,
           plataforma: "webhook",
           evento,
           status: response.ok ? "success" : "error",
-          payload: { url: wh.url, status: response.status, webhook_nome: wh.nome, ...payload },
+          payload: { url: wh.url, status: response.status, webhook_nome: wh.nome, response: responseBody, ...payload },
         });
 
-        results.push({ url: wh.url, status: response.status, ok: response.ok, webhook_nome: wh.nome });
+        results.push({
+          url: wh.url,
+          status: response.status,
+          ok: response.ok,
+          webhook_nome: wh.nome,
+          campo_resposta: wh.campo_resposta,
+          campo_resposta_value: campoRespostaValue,
+          comportamento: wh.comportamento,
+          response: responseBody,
+        });
       } catch (err: any) {
         await supabase.from("logs_integracoes").insert({
           empresa_id,
