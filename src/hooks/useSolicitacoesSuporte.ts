@@ -152,13 +152,13 @@ export const useSolicitacoesSuporte = () => {
             } catch (delErr: any) {
               toast.warning(`Webhook aprovou, mas erro ao excluir: ${delErr.message}`);
             }
-          } else if (isRejected) {
+         } else if (isRejected) {
             toast.warning(respostaMsg);
           } else {
-            toast.info(respostaMsg);
+            // Don't show toast for generic webhook success
           }
         } else if (firstResult.ok) {
-          toast.info("Webhook de exclusão disparado com sucesso.");
+          // Webhook fired successfully - no toast needed
         } else {
           toast.warning("Webhook disparado, mas retornou erro.");
         }
