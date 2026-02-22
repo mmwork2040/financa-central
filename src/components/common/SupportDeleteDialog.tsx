@@ -86,7 +86,7 @@ const SupportDeleteDialog: React.FC<SupportDeleteDialogProps> = ({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={submitting}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleConfirm}
+            onClick={(e) => { e.preventDefault(); handleConfirm(); }}
             disabled={submitting}
             className="bg-destructive hover:bg-destructive/90"
           >
