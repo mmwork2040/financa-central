@@ -257,6 +257,9 @@ const FloatingChatButton: React.FC = () => {
 
   if (checking || !chatAvailable) return null;
 
+  const portalTarget = typeof document !== "undefined" ? document.body : null;
+  if (!portalTarget) return null;
+
   return createPortal(
     <>
       <Button
