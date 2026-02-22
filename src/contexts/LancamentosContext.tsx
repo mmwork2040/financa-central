@@ -338,6 +338,34 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     fetchContasBancarias,
   ]);
 
+  // Realtime: auto-remove deleted lancamentos from UI
+  useEffect(() => {
+    const channel = supabase
+      .channel("lancamentos_realtime")
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "lancamentos" },
+        (payload) => {
+          const deleted = payload.old as { id: string };
+          if (deleted?.id) {
+            setLancamentos((prev) => prev.filter((l) => l.id !== deleted.id));
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "lancamentos" },
+        () => {
+          fetchLancamentos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchLancamentos]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
