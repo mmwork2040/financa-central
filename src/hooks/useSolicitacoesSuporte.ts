@@ -74,10 +74,16 @@ export const useSolicitacoesSuporte = () => {
       )
       .subscribe();
 
+    // Polling fallback every 10s
+    const interval = setInterval(() => {
+      fetchSolicitacoes();
+    }, 10000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(interval);
     };
-  }, [user]);
+  }, [user, fetchSolicitacoes]);
 
   const criarSolicitacao = async (params: {
     tabela: string;
