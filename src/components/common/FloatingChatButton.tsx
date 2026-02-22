@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { MessageCircle, Loader2, X, Send, Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -256,7 +257,7 @@ const FloatingChatButton: React.FC = () => {
 
   if (checking || !chatAvailable) return null;
 
-  return (
+  return createPortal(
     <>
       <Button
         onClick={() => setOpen(!open)}
@@ -405,7 +406,8 @@ const FloatingChatButton: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </>,
+    document.body
   );
 };
 
