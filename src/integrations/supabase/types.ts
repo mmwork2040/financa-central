@@ -725,6 +725,68 @@ export type Database = {
           },
         ]
       }
+      solicitacoes_suporte: {
+        Row: {
+          acao: string
+          created_at: string
+          empresa_id: string
+          id: string
+          motivo: string | null
+          registro_descricao: string
+          registro_id: string
+          resposta: string | null
+          status: string
+          tabela: string
+          updated_at: string
+          user_email: string
+          user_id: string
+          user_nome: string
+          user_telefone: string | null
+        }
+        Insert: {
+          acao?: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+          motivo?: string | null
+          registro_descricao: string
+          registro_id: string
+          resposta?: string | null
+          status?: string
+          tabela: string
+          updated_at?: string
+          user_email: string
+          user_id: string
+          user_nome: string
+          user_telefone?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          motivo?: string | null
+          registro_descricao?: string
+          registro_id?: string
+          resposta?: string | null
+          status?: string
+          tabela?: string
+          updated_at?: string
+          user_email?: string
+          user_id?: string
+          user_nome?: string
+          user_telefone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_suporte_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

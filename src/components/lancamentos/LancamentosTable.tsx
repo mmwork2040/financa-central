@@ -68,43 +68,32 @@ export const LancamentosTable = () => {
                   {showActions && (
                     <div className="flex gap-0.5">
                       {l.origem === 'integracao' ? (
-                        isSuperAdmin ? (
-                          <>
-                            {canAlterar && (
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenModal(l)}>
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
-                            {canExcluir && (
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleOpenDeleteModal(l.id!)}>
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
-                          </>
-                        ) : (
-                          <div className="flex items-center gap-0.5">
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center h-7 px-1.5 text-muted-foreground">
-                                    <Lock className="h-3.5 w-3.5" />
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Lançamento automático (integração)</p></TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            {canExcluir && hasPendingRequest("lancamentos", l.id!) ? (
-                              <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-3.5 w-3.5 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada - aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
-                            ) : canExcluir ? (
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
-                                setSupportTarget({ id: l.id!, descricao: l.descricao });
-                                setSupportDialogOpen(true);
-                              }}>
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            ) : null}
-                          </div>
-                        )
+                        <div className="flex items-center gap-0.5">
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center h-7 px-1.5 text-muted-foreground">
+                                  <Lock className="h-3.5 w-3.5" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent><p>Lançamento automático – edição bloqueada</p></TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          {isSuperAdmin && canExcluir ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleOpenDeleteModal(l.id!)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          ) : canExcluir && hasPendingRequest("lancamentos", l.id!) ? (
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-3.5 w-3.5 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada – aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
+                          ) : canExcluir ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
+                              setSupportTarget({ id: l.id!, descricao: l.descricao });
+                              setSupportDialogOpen(true);
+                            }}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          ) : null}
+                        </div>
                       ) : (
                         <>
                           {canAlterar && l.status === "pendente" && (
@@ -198,43 +187,32 @@ export const LancamentosTable = () => {
                 <TableCell>
                   <div className="flex justify-center space-x-1">
                     {lancamento.origem === 'integracao' ? (
-                      isSuperAdmin ? (
-                        <>
-                          {canAlterar && (
-                            <Button variant="ghost" size="sm" onClick={() => handleOpenModal(lancamento)} className="h-8 w-8 p-0">
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {canExcluir && (
-                            <Button variant="ghost" size="sm" onClick={() => handleOpenDeleteModal(lancamento.id!)} className="h-8 w-8 p-0 text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </>
-                      ) : (
-                        <div className="flex items-center gap-1">
-                          <TooltipProvider delayDuration={200}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center h-8 px-2 text-muted-foreground">
-                                  <Lock className="h-4 w-4" />
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent><p>Lançamento automático (integração)</p></TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          {canExcluir && hasPendingRequest("lancamentos", lancamento.id!) ? (
-                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada - aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
-                          ) : canExcluir ? (
-                            <Button variant="ghost" size="sm" onClick={() => {
-                              setSupportTarget({ id: lancamento.id!, descricao: lancamento.descricao });
-                              setSupportDialogOpen(true);
-                            }} className="h-8 w-8 p-0 text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          ) : null}
-                        </div>
-                      )
+                      <div className="flex items-center justify-center gap-1">
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center h-8 px-2 text-muted-foreground">
+                                <Lock className="h-4 w-4" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Lançamento automático – edição bloqueada</p></TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        {isSuperAdmin && canExcluir ? (
+                          <Button variant="ghost" size="sm" onClick={() => handleOpenDeleteModal(lancamento.id!)} className="h-8 w-8 p-0 text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        ) : canExcluir && hasPendingRequest("lancamentos", lancamento.id!) ? (
+                          <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada – aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
+                        ) : canExcluir ? (
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            setSupportTarget({ id: lancamento.id!, descricao: lancamento.descricao });
+                            setSupportDialogOpen(true);
+                          }} className="h-8 w-8 p-0 text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        ) : null}
+                      </div>
                     ) : (
                       <>
                         {canAlterar && lancamento.status === "pendente" && (
