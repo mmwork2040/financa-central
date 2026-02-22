@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { empresa_id, evento, data, valor, descricao } = await req.json();
+    const { empresa_id, evento, data, valor, descricao, usuario, acao, registro } = await req.json();
 
     if (!empresa_id || !evento) {
       throw new Error("empresa_id and evento are required");
@@ -31,14 +31,27 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
-    const payload = {
-      empresa_id,
-      evento,
-      data: data || new Date().toISOString().split("T")[0],
-      valor: valor || "0",
-      descricao: descricao || "",
-      timestamp: new Date().toISOString(),
-    };
+    let payload: Record<string, any>;
+
+    if (evento === "solicitacao_suporte") {
+      payload = {
+        empresa_id,
+        evento,
+        usuario: usuario || {},
+        acao: acao || "exclusao",
+        registro: registro || descricao || "",
+        timestamp: new Date().toISOString(),
+      };
+    } else {
+      payload = {
+        empresa_id,
+        evento,
+        data: data || new Date().toISOString().split("T")[0],
+        valor: valor || "0",
+        descricao: descricao || "",
+        timestamp: new Date().toISOString(),
+      };
+    }
 
     const results = [];
 

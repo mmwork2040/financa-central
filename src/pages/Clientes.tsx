@@ -7,7 +7,9 @@ import ClienteForm from "@/components/clientes/ClienteForm";
 import ClienteDeleteDialog from "@/components/clientes/ClienteDeleteDialog";
 import ClientesSearch from "@/components/clientes/ClientesSearch";
 import ClientesTable from "@/components/clientes/ClientesTable";
+import SupportDeleteDialog from "@/components/common/SupportDeleteDialog";
 import { useClientes, initialCliente, type Cliente } from "@/hooks/useClientes";
+import { useSolicitacoesSuporte } from "@/hooks/useSolicitacoesSuporte";
 import { formatCPFOrCNPJ, formatPhone } from "@/utils/format";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,9 +21,11 @@ const Clientes = () => {
   const canExcluir = canPerformAction("clientes", "pode_excluir");
 
   const { clientes, loading, isSaving, fetchClientes, saveCliente, deleteCliente } = useClientes();
+  const { criarSolicitacao, hasPendingRequest } = useSolicitacoesSuporte();
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false);
   const [currentCliente, setCurrentCliente] = useState<Cliente>({ ...initialCliente });
 
   // Hooks para formatação dos inputs
@@ -50,6 +54,23 @@ const Clientes = () => {
   const confirmDelete = (cliente: Cliente) => {
     setCurrentCliente(cliente);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleSupportDelete = (cliente: Cliente) => {
+    setCurrentCliente(cliente);
+    setIsSupportDialogOpen(true);
+  };
+
+  const handleSupportDeleteConfirm = async (motivo: string) => {
+    const success = await criarSolicitacao({
+      tabela: "clientes",
+      registro_id: currentCliente.id,
+      registro_descricao: `Cliente: ${currentCliente.nome}`,
+      motivo,
+    });
+    if (success) {
+      setIsSupportDialogOpen(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -244,6 +265,8 @@ const Clientes = () => {
           clientes={filteredClientes}
           onEdit={openModal}
           onDelete={confirmDelete}
+          onSupportDelete={handleSupportDelete}
+          hasPendingRequest={(id) => hasPendingRequest("clientes", id)}
           canEdit={canAlterar}
           canDelete={canExcluir}
         />
@@ -272,6 +295,14 @@ const Clientes = () => {
         onClose={() => setIsDeleteDialogOpen(false)}
         onDelete={handleDelete}
         cliente={currentCliente}
+      />
+
+      <SupportDeleteDialog
+        isOpen={isSupportDialogOpen}
+        onClose={() => setIsSupportDialogOpen(false)}
+        onConfirm={handleSupportDeleteConfirm}
+        recordName={currentCliente.nome}
+        isPending={hasPendingRequest("clientes", currentCliente.id)}
       />
     </div>
   );

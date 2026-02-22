@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Lock } from "lucide-react";
+import { Pencil, Trash2, Lock, Clock, HelpCircle } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -13,18 +13,22 @@ import MobilePagination, { usePagination } from "@/components/common/MobilePagin
 import { useTableSort } from "@/hooks/useTableSort";
 import SortableTableHead from "@/components/common/SortableTableHead";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ClientesTableProps {
   clientes: Cliente[];
   onEdit: (cliente: Cliente) => void;
   onDelete: (cliente: Cliente) => void;
+  onSupportDelete?: (cliente: Cliente) => void;
+  hasPendingRequest?: (id: string) => boolean;
   canEdit?: boolean;
   canDelete?: boolean;
 }
 
 const ClientesTable: React.FC<ClientesTableProps> = ({
-  clientes, onEdit, onDelete, canEdit = true, canDelete = true,
+  clientes, onEdit, onDelete, onSupportDelete, hasPendingRequest, canEdit = true, canDelete = true,
 }) => {
+  const { isSuperAdmin } = useAuth();
   const showActions = canEdit || canDelete;
   const isMobile = useIsMobile();
   const { sortedItems, sortKey, sortDir, toggleSort } = useTableSort(clientes);
@@ -52,7 +56,31 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                   {showActions && (
                     <div className="flex gap-1">
                       {c.origem === 'integracao' ? (
-                        <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Cliente cadastrado automaticamente via integração</p></TooltipContent></Tooltip></TooltipProvider>
+                        isSuperAdmin ? (
+                          <>
+                            {canEdit && (
+                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(c)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(c)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Registro automático (integração)</p></TooltipContent></Tooltip></TooltipProvider>
+                            {canDelete && hasPendingRequest && hasPendingRequest(c.id) ? (
+                              <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada - aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
+                            ) : canDelete && onSupportDelete ? (
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onSupportDelete(c)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            ) : null}
+                          </div>
+                        )
                       ) : (
                         <>
                           {canEdit && (
@@ -110,9 +138,31 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                 {showActions && (
                   <TableCell>
                     {cliente.origem === 'integracao' ? (
-                      <div className="flex justify-center">
-                        <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Cliente cadastrado automaticamente via integração</p></TooltipContent></Tooltip></TooltipProvider>
-                      </div>
+                      isSuperAdmin ? (
+                        <div className="flex justify-center items-center gap-2">
+                          {canEdit && (
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(cliente)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(cliente)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex justify-center items-center gap-2">
+                          <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Registro automático (integração)</p></TooltipContent></Tooltip></TooltipProvider>
+                          {canDelete && hasPendingRequest && hasPendingRequest(cliente.id) ? (
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Clock className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Exclusão solicitada - aguardando suporte</p></TooltipContent></Tooltip></TooltipProvider>
+                          ) : canDelete && onSupportDelete ? (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onSupportDelete(cliente)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : null}
+                        </div>
+                      )
                     ) : (
                       <div className="flex justify-center items-center gap-2">
                         {canEdit && (
