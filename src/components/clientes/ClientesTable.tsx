@@ -90,7 +90,7 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
               <SortableTableHead label="Telefone" sortKey="telefone" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
               <SortableTableHead label="E-mail" sortKey="email" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
               <SortableTableHead label="Status" sortKey="ativo" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
-              {showActions && <TableHead className="w-20 text-right">Ações</TableHead>}
+              {showActions && <TableHead className="w-20 text-center">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -108,13 +108,13 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                   </span>
                 </TableCell>
                 {showActions && (
-                  <TableCell className="text-right">
+                  <TableCell>
                     {cliente.origem === 'integracao' ? (
-                      <div className="flex justify-end">
+                      <div className="flex justify-center">
                         <TooltipProvider><Tooltip><TooltipTrigger asChild><Lock className="h-4 w-4 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>Cliente cadastrado automaticamente via integração</p></TooltipContent></Tooltip></TooltipProvider>
                       </div>
                     ) : (
-                      <div className="flex justify-end items-center gap-2">
+                      <div className="flex justify-center items-center gap-2">
                         {canEdit && (
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(cliente)}>
                             <Pencil className="h-4 w-4" />
