@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface ContaBancariaDeleteDialogProps {
   open: boolean;
@@ -21,6 +22,17 @@ const ContaBancariaDeleteDialog: React.FC<ContaBancariaDeleteDialogProps> = ({
   onClose,
   onDelete,
 }) => {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await onDelete();
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
@@ -31,8 +43,10 @@ const ContaBancariaDeleteDialog: React.FC<ContaBancariaDeleteDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button variant="destructive" onClick={onDelete}>Excluir</Button>
+          <Button variant="outline" onClick={onClose} disabled={deleting}>Cancelar</Button>
+          <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+            {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Excluindo...</> : "Excluir"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
