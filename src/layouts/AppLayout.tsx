@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
 import { useCompanyTheme } from "@/hooks/useCompanyTheme";
 import { useIsMobile } from "@/hooks/use-mobile";
+import FloatingHelpButton from "@/components/common/FloatingHelpButton";
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
@@ -52,6 +53,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
           {children}
         </div>
       </main>
+      <FloatingHelpButton />
     </div>
   );
 };
