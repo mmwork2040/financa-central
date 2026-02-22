@@ -110,24 +110,33 @@ Deno.serve(async (req) => {
         let campoRespostaValue: any = null;
 
         try {
-          responseBody = await response.json();
-          // If response is an array, use the first element
+          const rawText = await response.text();
+          console.log("Webhook raw response:", rawText);
+          try {
+            responseBody = JSON.parse(rawText);
+          } catch {
+            responseBody = rawText;
+          }
+          // Extract campo_resposta value from response
           if (wh.campo_resposta && responseBody) {
             let root: any = responseBody;
             if (Array.isArray(root)) {
               root = root[0];
             }
-            const parts = wh.campo_resposta.split(".");
-            let current: any = root;
-            for (const part of parts) {
-              if (current == null) break;
-              if (Array.isArray(current)) current = current[0];
-              current = current[part];
+            if (root && typeof root === "object") {
+              const parts = wh.campo_resposta.split(".");
+              let current: any = root;
+              for (const part of parts) {
+                if (current == null) break;
+                if (Array.isArray(current)) current = current[0];
+                current = current[part];
+              }
+              campoRespostaValue = current ?? null;
             }
-            campoRespostaValue = current ?? null;
+            console.log("campo_resposta:", wh.campo_resposta, "extracted value:", campoRespostaValue);
           }
-        } catch {
-          // Response is not JSON
+        } catch (parseErr) {
+          console.error("Error parsing response:", parseErr);
         }
 
         // Log the integration
