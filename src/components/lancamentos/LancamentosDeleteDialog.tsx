@@ -50,6 +50,11 @@ export const LancamentosDeleteDialog = () => {
                 <span className="font-medium text-foreground">{clienteNome}</span>
               </div>
             )}
+            {isIntegracao && clienteNome && (
+              <p className="text-xs text-muted-foreground mt-1 pl-6">
+                O cliente vinculado <strong>não será excluído</strong> junto com este lançamento.
+              </p>
+            )}
           </div>
         )}
 
