@@ -22,7 +22,7 @@ const Clientes = () => {
   const canExcluir = canPerformAction("clientes", "pode_excluir");
 
   const { clientes, loading, isSaving, fetchClientes, saveCliente, deleteCliente } = useClientes();
-  const { criarSolicitacao, hasPendingRequest } = useSolicitacoesSuporte();
+  const { criarSolicitacao, hasPendingRequest, getPendingRequestId, cancelarSolicitacao } = useSolicitacoesSuporte();
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -324,6 +324,17 @@ const Clientes = () => {
         isOpen={isSupportDialogOpen}
         onClose={() => setIsSupportDialogOpen(false)}
         onConfirm={handleSupportDeleteConfirm}
+        onCancel={
+          hasPendingRequest("clientes", currentCliente.id)
+            ? async () => {
+                const reqId = getPendingRequestId("clientes", currentCliente.id);
+                if (!reqId) return false;
+                const success = await cancelarSolicitacao(reqId);
+                if (success) setIsSupportDialogOpen(false);
+                return success;
+              }
+            : undefined
+        }
         recordName={currentCliente.nome}
         isPending={hasPendingRequest("clientes", currentCliente.id)}
       />
