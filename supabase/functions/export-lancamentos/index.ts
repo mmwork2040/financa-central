@@ -149,6 +149,43 @@ Deno.serve(async (req) => {
       "nome", "cpf_cnpj", "telefone", "email", "endereco", "ativo", "origem"
     ]);
 
+    // Also copy ALL clients from source (integration clients may not be linked to lancamentos)
+    const { data: allSourceClientes } = await supabase
+      .from("clientes")
+      .select("*")
+      .eq("empresa_id", sourceEmpresaId);
+
+    let extraClientesCount = 0;
+    if (allSourceClientes) {
+      for (const cliente of allSourceClientes) {
+        if (clienteMap[cliente.id]) continue; // already copied
+
+        const { data: existing } = await supabase
+          .from("clientes")
+          .select("id")
+          .eq("empresa_id", targetEmpresaId)
+          .eq("nome", cliente.nome)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          clienteMap[cliente.id] = existing[0].id;
+          continue;
+        }
+
+        const { nome, cpf_cnpj, telefone, email, endereco, ativo, origem } = cliente;
+        const { data: inserted, error: insertErr } = await supabase
+          .from("clientes")
+          .insert({ empresa_id: targetEmpresaId, nome, cpf_cnpj, telefone, email, endereco, ativo, origem })
+          .select("id")
+          .single();
+
+        if (!insertErr && inserted) {
+          clienteMap[cliente.id] = inserted.id;
+          extraClientesCount++;
+        }
+      }
+    }
+
     const fornecedorMap = await copyRelated("fornecedores", fornecedorIds, sourceEmpresaId, targetEmpresaId, [
       "nome", "cpf_cnpj", "telefone", "email", "endereco", "ativo"
     ]);
@@ -201,6 +238,7 @@ Deno.serve(async (req) => {
         fornecedoresCount: Object.keys(fornecedorMap).length,
         contasBancariasCount: Object.keys(contaBancariaMap).length,
         formasPagamentoCount: Object.keys(formaPagamentoMap).length,
+        extraClientesCount,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
