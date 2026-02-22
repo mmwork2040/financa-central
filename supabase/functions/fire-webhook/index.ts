@@ -91,6 +91,7 @@ Deno.serve(async (req) => {
               "{{nome}}": descricao || "",
               "{{email}}": usuario?.email || "",
               "{{cpf_cnpj}}": "",
+              "{{tabela}}": tabela || "",
               "{{tipo}}": acao || "",
               "{{data_vencimento}}": data || "",
               "{{banco}}": "",
