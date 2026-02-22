@@ -24,6 +24,7 @@ const acoesDisponiveis = [
 const gerarPayloadSugerido = (acao: string): string => {
   const baseFields: Record<string, any> = {
     empresa_id: "{{empresa_id}}",
+    empresa_nome: "{{empresa_nome}}",
     acao,
     tabela: "{{tabela}}",
     timestamp: "{{timestamp}}",
