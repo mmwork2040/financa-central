@@ -111,9 +111,15 @@ Deno.serve(async (req) => {
 
         try {
           responseBody = await response.json();
-          // Extract campo_resposta value from response if configured
+          // Extract campo_resposta value from response using dot-notation path
           if (wh.campo_resposta && responseBody) {
-            campoRespostaValue = responseBody[wh.campo_resposta] ?? null;
+            const parts = wh.campo_resposta.split(".");
+            let current: any = responseBody;
+            for (const part of parts) {
+              if (current == null) break;
+              current = current[part];
+            }
+            campoRespostaValue = current ?? null;
           }
         } catch {
           // Response is not JSON
