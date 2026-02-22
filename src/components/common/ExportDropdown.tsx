@@ -18,8 +18,8 @@ const ExportDropdown: React.FC<ExportDropdownProps> = ({ onExport, label = "Expo
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline">
-          <FileDown className="mr-2 h-4 w-4" />
+        <Button variant="outline" size="sm">
+          <FileDown className="mr-1.5 h-4 w-4" />
           {label}
         </Button>
       </DropdownMenuTrigger>

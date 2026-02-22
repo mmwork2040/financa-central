@@ -34,8 +34,8 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         <p className="text-xs sm:text-sm text-muted-foreground">{description}</p>
       </div>
       {showButton && buttonLabel && onButtonClick && (
-        <Button onClick={onButtonClick}>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button size="sm" onClick={onButtonClick}>
+          <Plus className="mr-1.5 h-4 w-4" />
           {buttonLabel}
         </Button>
       )}
