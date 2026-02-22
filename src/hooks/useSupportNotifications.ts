@@ -16,13 +16,14 @@ export const useSupportNotifications = () => {
         { event: "UPDATE", schema: "public", table: "solicitacoes_suporte" },
         (payload) => {
           const updated = payload.new as any;
-          if (updated.user_id === user.id && updated.empresa_id === empresaId) {
+          if (updated.user_id === user.id && updated.empresa_id === empresaId && updated.status !== "pendente") {
+            const resposta = updated.resposta ? `\n${updated.resposta}` : "";
             if (updated.status === "aprovado") {
-              toast.success(`Sua solicitação de exclusão "${updated.registro_descricao}" foi aprovada pelo suporte.`);
+              toast.success(`Solicitação "${updated.registro_descricao}" aprovada.${resposta}`);
             } else if (updated.status === "recusado") {
-              toast.error(`Sua solicitação de exclusão "${updated.registro_descricao}" foi recusada pelo suporte.`);
-            } else if (updated.status !== "pendente") {
-              toast.info(`Sua solicitação "${updated.registro_descricao}" foi atualizada para: ${updated.status}`);
+              toast.error(`Solicitação "${updated.registro_descricao}" recusada.${resposta}`);
+            } else {
+              toast.info(`Solicitação "${updated.registro_descricao}" atualizada para: ${updated.status}.${resposta}`);
             }
           }
         }
