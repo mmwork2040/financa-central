@@ -1,18 +1,28 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
-import { Link2, User } from "lucide-react";
+import { Link2, User, Loader2 } from "lucide-react";
 
 export const LancamentosDeleteDialog = () => {
   const { openDeleteModal, setOpenDeleteModal, handleDelete, lancamentos } = useLancamentosContext();
   const { selectedId } = useLancamentosContext();
+  const [deleting, setDeleting] = useState(false);
 
   const lancamento = lancamentos.find(l => l.id === selectedId);
   const isIntegracao = lancamento?.origem === "integracao";
   const clienteNome = lancamento?.cliente?.nome;
+
+  const onDelete = async () => {
+    setDeleting(true);
+    try {
+      await handleDelete();
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <Dialog open={openDeleteModal} onOpenChange={setOpenDeleteModal}>
@@ -44,8 +54,10 @@ export const LancamentosDeleteDialog = () => {
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpenDeleteModal(false)}>Cancelar</Button>
-          <Button variant="destructive" onClick={handleDelete}>Excluir</Button>
+          <Button variant="outline" onClick={() => setOpenDeleteModal(false)} disabled={deleting}>Cancelar</Button>
+          <Button variant="destructive" onClick={onDelete} disabled={deleting}>
+            {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Excluindo...</> : "Excluir"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
