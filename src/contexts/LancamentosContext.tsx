@@ -480,6 +480,30 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           throw error;
         }
 
+        // Fire webhook for edit
+        try {
+          await supabase.functions.invoke("fire-webhook", {
+            body: {
+              empresa_id: empresaId,
+              evento: "Editar Registro",
+              tabela: "lancamentos",
+              descricao: dataToSave.descricao,
+              registro: selectedId,
+              valor: dataToSave.valor?.toString(),
+              data: dataToSave.data_vencimento,
+              usuario: {
+                id: user?.id,
+                nome: userProfile?.nome,
+                email: userProfile?.email,
+                telefone: (userProfile as any)?.telefone || null,
+              },
+              acao: "edicao",
+            },
+          });
+        } catch (err) {
+          console.warn("Webhook de edição não disparado:", err);
+        }
+
         setLancamentos(
           lancamentos.map((lancamento) =>
             lancamento.id === selectedId ? { ...lancamento, ...dataToSave } : lancamento
