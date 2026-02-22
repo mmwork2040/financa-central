@@ -35,7 +35,7 @@ interface AdData {
 const MASK = "••••••";
 
 const AnunciosDigitais = () => {
-  const [periodo, setPeriodo] = useState("30");
+  const [periodo, setPeriodo] = useState("15");
   const [adSummary, setAdSummary] = useState<AdData[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -141,7 +141,9 @@ const AnunciosDigitais = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="7">7 dias</SelectItem>
+              <SelectItem value="15">15 dias</SelectItem>
               <SelectItem value="30">30 dias</SelectItem>
+              <SelectItem value="60">60 dias</SelectItem>
               <SelectItem value="90">90 dias</SelectItem>
             </SelectContent>
           </Select>
