@@ -117,18 +117,41 @@ export const useSolicitacoesSuporte = () => {
       const webhooksFired = webhookResult?.webhooks_fired || 0;
       const results = webhookResult?.results || [];
 
-      // If a webhook was fired successfully, check the response
+      // If a webhook was fired successfully, check the response and apply comportamento
       if (webhooksFired > 0 && results.length > 0) {
         const firstResult = results[0];
         
         if (firstResult.ok && firstResult.campo_resposta_value !== null && firstResult.campo_resposta_value !== undefined) {
-          // Webhook responded with campo_resposta value
-          const comportamento = firstResult.comportamento;
+          const respostaValue = String(firstResult.campo_resposta_value).toLowerCase().trim();
+          const comportamento = (firstResult.comportamento || "").toLowerCase();
           
-          if (comportamento) {
-            toast.info(`Webhook disparado. Resposta: ${firstResult.campo_resposta_value}. Comportamento: ${comportamento}`);
+          // Interpret the comportamento based on the response value
+          const isApproved = respostaValue === "aprovado" || respostaValue === "approved" || respostaValue === "true" || respostaValue === "sim" || respostaValue === "yes" || respostaValue === "1";
+          const isRejected = respostaValue === "recusado" || respostaValue === "rejected" || respostaValue === "denied" || respostaValue === "false" || respostaValue === "não" || respostaValue === "nao" || respostaValue === "no" || respostaValue === "0";
+          
+          if (comportamento.includes("excluir") && isApproved) {
+            // Comportamento says to delete the record if approved - perform auto-delete
+            try {
+              const { error: deleteError } = await (supabase as any)
+                .from(params.tabela)
+                .delete()
+                .eq("id", params.registro_id);
+              if (deleteError) {
+                console.error("Erro ao excluir registro automaticamente:", deleteError);
+                toast.warning(`Webhook aprovou a exclusão, mas houve erro ao excluir: ${deleteError.message}`);
+              } else {
+                toast.success(`Exclusão aprovada pelo webhook e registro removido automaticamente.`);
+                return true;
+              }
+            } catch (delErr: any) {
+              toast.warning(`Webhook aprovou, mas erro ao excluir: ${delErr.message}`);
+            }
+          } else if (isRejected) {
+            toast.warning(`Exclusão recusada pelo webhook. Resposta: ${firstResult.campo_resposta_value}`);
+          } else if (isApproved) {
+            toast.success(`Webhook aprovou a solicitação. Resposta: ${firstResult.campo_resposta_value}`);
           } else {
-            toast.info(`Webhook disparado com sucesso. Resposta: ${firstResult.campo_resposta_value}`);
+            toast.info(`Webhook disparado. ${firstResult.campo_resposta}: ${firstResult.campo_resposta_value}`);
           }
         } else if (firstResult.ok) {
           toast.info("Webhook de exclusão disparado com sucesso.");
