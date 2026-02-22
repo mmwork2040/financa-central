@@ -58,7 +58,7 @@ const gerarPayloadSugerido = (acao: string, tabela: string): string => {
 };
 
 const WebhooksConfig = () => {
-  const { empresaId, isSuperAdmin } = useAuth();
+  const { empresaId, isSuperAdmin, user, userProfile } = useAuth();
   const [webhooks, setWebhooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -66,6 +66,13 @@ const WebhooksConfig = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; nome: string } | null>(null);
   const [testing, setTesting] = useState<string | null>(null);
+
+  // Test dialog state
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
+  const [testWebhook, setTestWebhook] = useState<any>(null);
+  const [testRecords, setTestRecords] = useState<any[]>([]);
+  const [testRecordsLoading, setTestRecordsLoading] = useState(false);
+  const [selectedTestRecord, setSelectedTestRecord] = useState<string>("");
 
   const [nome, setNome] = useState("");
   const [url, setUrl] = useState("");
@@ -197,7 +204,72 @@ const WebhooksConfig = () => {
     setDeleteTarget(null);
   };
 
-  const handleTestWebhook = async (wh: any) => {
+  const getRecordLabel = (record: any, tabelaName: string): string => {
+    switch (tabelaName) {
+      case "lancamentos": return `${record.descricao} - R$ ${record.valor}`;
+      case "clientes": return `${record.nome}${record.email ? ` (${record.email})` : ""}`;
+      case "fornecedores": return `${record.nome}${record.email ? ` (${record.email})` : ""}`;
+      case "categorias": return `${record.nome} (${record.tipo})`;
+      case "contas_bancarias": return `${record.nome}${record.banco ? ` - ${record.banco}` : ""}`;
+      case "formas_pagamento": return record.descricao;
+      default: return record.nome || record.descricao || record.id;
+    }
+  };
+
+  const buildTestPayload = (wh: any, record: any) => {
+    const t = wh.tabela;
+    const base: Record<string, any> = {
+      empresa_id: empresaId,
+      evento: wh.nome || wh.evento,
+      tabela: t,
+      registro: record.id,
+      acao: "teste",
+      descricao: record.descricao || record.nome || "",
+    };
+
+    if (t === "lancamentos") {
+      base.valor = record.valor;
+      base.data = record.data_vencimento;
+      base.descricao = record.descricao;
+    }
+
+    base.usuario = {
+      id: user?.id || "test",
+      nome: userProfile?.nome || "Super Admin (Teste)",
+      email: userProfile?.email || "teste@sistema.com",
+      telefone: userProfile?.telefone || "",
+    };
+
+    return base;
+  };
+
+  const openTestDialog = async (wh: any) => {
+    if (!wh.tabela) {
+      // No table configured, fire directly with generic test data
+      handleTestWebhookDirect(wh);
+      return;
+    }
+    setTestWebhook(wh);
+    setSelectedTestRecord("");
+    setTestDialogOpen(true);
+    setTestRecordsLoading(true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from(wh.tabela)
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      setTestRecords(data || []);
+    } catch (err: any) {
+      toast.error("Erro ao carregar registros: " + err.message);
+      setTestRecords([]);
+    } finally {
+      setTestRecordsLoading(false);
+    }
+  };
+
+  const handleTestWebhookDirect = async (wh: any) => {
     setTesting(wh.id);
     try {
       const { data, error } = await supabase.functions.invoke("fire-webhook", {
@@ -205,9 +277,14 @@ const WebhooksConfig = () => {
           empresa_id: empresaId,
           evento: wh.nome || wh.evento,
           tabela: wh.tabela || null,
-          descricao: "Teste de webhook",
+          descricao: "[TESTE] Disparo de teste do webhook",
           registro: "test-id-000",
-          usuario: { id: "test", nome: "Super Admin (Teste)", email: "teste@sistema.com", telefone: "" },
+          usuario: {
+            id: user?.id || "test",
+            nome: userProfile?.nome || "Super Admin (Teste)",
+            email: userProfile?.email || "teste@sistema.com",
+            telefone: userProfile?.telefone || "",
+          },
           acao: "teste",
         },
       });
@@ -216,6 +293,34 @@ const WebhooksConfig = () => {
       if (fired > 0) {
         const r = data.results?.[0];
         toast.success(`Webhook disparado! Status: ${r?.status || "OK"}${r?.campo_resposta_value !== undefined ? ` | ${r.campo_resposta}: ${r.campo_resposta_value}` : ""}`);
+      } else {
+        toast.warning("Nenhum webhook correspondente encontrado para disparar.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao testar webhook");
+    } finally {
+      setTesting(null);
+    }
+  };
+
+  const handleTestWithRecord = async () => {
+    if (!testWebhook || !selectedTestRecord) return;
+    const record = testRecords.find(r => r.id === selectedTestRecord);
+    if (!record) return;
+
+    setTesting(testWebhook.id);
+    setTestDialogOpen(false);
+    try {
+      const body = buildTestPayload(testWebhook, record);
+      // Mark as test
+      body.descricao = `[TESTE] ${body.descricao}`;
+
+      const { data, error } = await supabase.functions.invoke("fire-webhook", { body });
+      if (error) throw error;
+      const fired = data?.webhooks_fired || 0;
+      if (fired > 0) {
+        const r = data.results?.[0];
+        toast.success(`Teste disparado com dados reais! Status: ${r?.status || "OK"}${r?.campo_resposta_value !== undefined ? ` | ${r.campo_resposta}: ${r.campo_resposta_value}` : ""}`);
       } else {
         toast.warning("Nenhum webhook correspondente encontrado para disparar.");
       }
@@ -281,7 +386,7 @@ const WebhooksConfig = () => {
                     <TooltipProvider delayDuration={200}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleTestWebhook(wh)} disabled={testing === wh.id}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => openTestDialog(wh)} disabled={testing === wh.id}>
                             {testing === wh.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                           </Button>
                         </TooltipTrigger>
@@ -414,6 +519,47 @@ const WebhooksConfig = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Test Dialog - select real record */}
+      <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Testar Webhook</DialogTitle>
+            <DialogDescription>
+              Selecione um registro real da tabela "{tabelasDisponiveis.find(t => t.value === testWebhook?.tabela)?.label || testWebhook?.tabela}" para enviar como teste. O payload incluirá a marcação [TESTE].
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {testRecordsLoading ? (
+              <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+            ) : testRecords.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhum registro encontrado nesta tabela.</p>
+            ) : (
+              <div>
+                <Label>Registro</Label>
+                <Select value={selectedTestRecord} onValueChange={setSelectedTestRecord}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um registro" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {testRecords.map(r => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {getRecordLabel(r, testWebhook?.tabela || "")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setTestDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleTestWithRecord} disabled={!selectedTestRecord || testing === testWebhook?.id}>
+                {testing === testWebhook?.id ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Disparando...</> : <><Zap className="h-4 w-4 mr-2" /> Disparar Teste</>}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
