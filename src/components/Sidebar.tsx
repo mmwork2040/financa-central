@@ -412,7 +412,7 @@ export const Sidebar = () => {
       {isMobile && (
         <button
           onClick={() => setMobileOpen(true)}
-          className="fixed top-3 left-3 z-50 rounded-lg bg-primary p-2 text-primary-foreground shadow-lg"
+          className="fixed top-3 left-3 z-50 rounded-full bg-gradient-to-br from-orange-300/98 to-orange-600/98 p-2.5 text-white shadow-glow"
           aria-label="Abrir menu"
         >
           <Menu size={22} />
@@ -428,9 +428,9 @@ export const Sidebar = () => {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar border-r border-sidebar-border shadow-lg transition-all duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-50 flex flex-col glass-surface border-r border-sidebar-border shadow-premium transition-all duration-300 ease-in-out",
           isMobile
-            ? cn("w-72", mobileOpen ? "translate-x-0" : "-translate-x-full")
+            ? cn("w-72 rounded-r-3xl", mobileOpen ? "translate-x-0" : "-translate-x-full")
             : isExpanded ? "w-60" : "w-14"
         )}
       >
