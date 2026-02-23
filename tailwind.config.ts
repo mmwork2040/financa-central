@@ -19,9 +19,6 @@ export default {
       }
     },
     extend: {
-      fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -79,40 +76,39 @@ export default {
           900: "#7c2d12",
         },
         success: {
-          DEFAULT: "#22C55E",
+          DEFAULT: "#22C55E", // Green for positive values/success
           foreground: "#ffffff"
         },
         warning: {
-          DEFAULT: "#F59E0B",
+          DEFAULT: "#F59E0B", // Amber for warnings
           foreground: "#ffffff"
         },
         danger: {
-          DEFAULT: "#EF4444",
+          DEFAULT: "#EF4444", // Red for negative values/danger
           foreground: "#ffffff"
         }
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-        xl: "1.25rem",
-        "2xl": "1.5rem",
-        "3xl": "1.875rem",
-      },
-      boxShadow: {
-        'glass': '0 4px 16px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.80)',
-        'glass-hover': '0 18px 50px rgba(15, 23, 42, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.80)',
-        'glow': '0 0 36px rgba(234, 88, 12, 0.22)',
-        'premium': '0 18px 50px rgba(15, 23, 42, 0.08)',
+        sm: "calc(var(--radius) - 4px)"
       },
       keyframes: {
         "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" }
+          from: {
+            height: "0"
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)"
+          }
         },
         "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" }
+          from: {
+            height: "var(--radix-accordion-content-height)"
+          },
+          to: {
+            height: "0"
+          }
         },
         "fade-in": {
           "0%": { opacity: "0" },

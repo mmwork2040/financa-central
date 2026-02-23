@@ -39,10 +39,10 @@ const DashboardContent = () => {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-2xl bg-primary/10 shadow-glass">
+          <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
             <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Olá, {userProfile?.nome?.split(' ')[0] || 'Usuário'}! 👋</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Olá, {userProfile?.nome?.split(' ')[0] || 'Usuário'}! 👋</h1>
         </div>
         <p className="text-xs sm:text-sm text-muted-foreground">Aqui está o resumo do seu financeiro</p>
       </div>
@@ -67,7 +67,7 @@ const DashboardContent = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Card className="card-hoverable">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-green-100 p-1.5"><ArrowUpRight className="h-4 w-4 text-green-600" /></div>
@@ -79,7 +79,7 @@ const DashboardContent = () => {
           </CardContent>
         </Card>
         
-        <Card className="card-hoverable">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-red-100 p-1.5"><ArrowDownRight className="h-4 w-4 text-red-600" /></div>
@@ -91,7 +91,7 @@ const DashboardContent = () => {
           </CardContent>
         </Card>
         
-        <Card className="card-hoverable">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-blue-100 p-1.5"><Wallet className="h-4 w-4 text-blue-600" /></div>
@@ -103,7 +103,7 @@ const DashboardContent = () => {
           </CardContent>
         </Card>
         
-        <Card className="card-hoverable">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-amber-100 p-1.5"><AlertTriangle className="h-4 w-4 text-amber-600" /></div>
