@@ -10,19 +10,19 @@ interface AuthContainerProps {
 
 export const AuthContainer = ({ children, title, description }: AuthContainerProps) => {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 md:p-8">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-6 shadow-md md:p-8">
+    <div className="flex min-h-screen flex-col items-center justify-center app-bg-premium p-4 md:p-8">
+      <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Fluxo de Contas</h1>
-          <p className="mt-2 text-sm text-gray-600">Bem-vindo ao sistema de Controle de Contas</p>
+          <h1 className="text-3xl font-bold text-foreground md:text-4xl tracking-tight">Fluxo de Contas</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Bem-vindo ao sistema de Controle de Contas</p>
         </div>
 
-        <Card className="border-0 shadow-none">
-          <CardHeader className="px-0 pt-4">
-            <CardTitle>{title}</CardTitle>
+        <Card className="card-hoverable">
+          <CardHeader className="pt-6">
+            <CardTitle className="text-xl">{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </CardHeader>
-          <CardContent className="px-0">
+          <CardContent>
             {children}
           </CardContent>
         </Card>

@@ -27,7 +27,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   if (loading || !themeReady) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center app-bg-premium">
         <p className="text-muted-foreground">Carregando...</p>
       </div>
     );
@@ -43,7 +43,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="flex min-h-screen bg-background overflow-x-hidden">
+    <div className="flex min-h-screen app-bg-premium overflow-x-hidden">
       <Sidebar />
       <main
         className={cn(
