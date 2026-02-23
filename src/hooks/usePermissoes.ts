@@ -19,6 +19,7 @@ const routeToScreenMap: Record<string, string> = {
   "/payment-methods": "formas_pagamento",
   "/transactions": "lancamentos",
   "/reports": "relatorios",
+  "/projetos": "projetos",
   "/vendas-digitais": "vendas_digitais",
   "/settings/integracoes": "integracoes",
   "/settings/webhooks": "webhooks",

@@ -31,6 +31,7 @@ import LogsIntegracoes from "./pages/LogsIntegracoes";
 import NotFoundPage from "./pages/NotFoundPage";
 import Install from "./pages/Install";
 import Profile from "./pages/Profile";
+import Projetos from "./pages/Projetos";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => {
                 <Route path="/payment-methods" element={<ProtectedRoute path="/payment-methods"><AppLayout><FormasPagamento /></AppLayout></ProtectedRoute>} />
                 <Route path="/transactions" element={<ProtectedRoute path="/transactions"><AppLayout><Lancamentos /></AppLayout></ProtectedRoute>} />
                 <Route path="/reports" element={<ProtectedRoute path="/reports"><AppLayout><Relatorios /></AppLayout></ProtectedRoute>} />
+                <Route path="/projetos" element={<ProtectedRoute path="/projetos"><AppLayout><Projetos /></AppLayout></ProtectedRoute>} />
                 
                 {/* 404 route */}
                 <Route path="*" element={<NotFoundPage />} />

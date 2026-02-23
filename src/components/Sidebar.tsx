@@ -31,6 +31,7 @@ import {
   Webhook,
   Megaphone,
   ScrollText,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
@@ -121,6 +122,7 @@ export const Sidebar = () => {
   const mainItems = [
     { name: "Dashboard", icon: Home, path: "/dashboard" },
     { name: "Lançamentos", icon: Files, path: "/transactions" },
+    { name: "Projetos", icon: Briefcase, path: "/projetos" },
     { name: "Vendas Digitais", icon: ShoppingCart, path: "/vendas-digitais" },
     { name: "Anúncios", icon: Megaphone, path: "/anuncios" },
   ];
