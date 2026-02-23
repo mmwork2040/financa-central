@@ -19,7 +19,8 @@ export const LancamentosFilterDialog = () => {
     aplicarFiltros,
     categorias,
     fornecedores,
-    clientes
+    clientes,
+    projetos,
   } = useLancamentosContext();
 
   return (
@@ -192,6 +193,26 @@ export const LancamentosFilterDialog = () => {
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="projeto-filtro">Projeto</Label>
+                    <Select 
+                      value={filtros.projeto_id || "all"} 
+                      onValueChange={(v) => handleFilterSelectChange('projeto_id', v === "all" ? null : v)}
+                    >
+                      <SelectTrigger id="projeto-filtro">
+                        <SelectValue placeholder="Todos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        {projetos.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </AccordionContent>

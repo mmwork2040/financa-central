@@ -23,6 +23,7 @@ export type Lancamento = {
   cliente_id: string | null;
   conta_bancaria_id: string | null;
   forma_pagamento_id: string | null;
+  projeto_id?: string | null;
   recorrente: boolean;
   parcela_atual: number | null;
   total_parcelas: number | null;
@@ -31,6 +32,7 @@ export type Lancamento = {
   fornecedor?: { id: string; nome: string };
   cliente?: { id: string; nome: string };
   categoria?: { id: string; nome: string; tipo: string };
+  projeto?: { id: string; nome: string } | null;
   origem?: string;
 };
 
@@ -59,6 +61,11 @@ export type FormaPagamento = {
   descricao: string;
 };
 
+export type ProjetoSimple = {
+  id: string;
+  nome: string;
+};
+
 export type ContaBancaria = {
   id: string;
   created_at?: string;
@@ -75,6 +82,7 @@ type FiltrosType = {
   valor_max?: number | null;
   fornecedor_id?: string | null;
   cliente_id?: string | null;
+  projeto_id?: string | null;
 };
 
 type LancamentoFormData = Omit<Lancamento, 'id' | 'created_at' | 'fornecedor' | 'cliente' | 'categoria' | 'origem'>;
@@ -104,6 +112,7 @@ interface LancamentosContextType {
   clientes: Cliente[];
   formasPagamento: FormaPagamento[];
   contasBancarias: ContaBancaria[];
+  projetos: ProjetoSimple[];
   handleDateChange: (field: string, date: Date | null) => void;
   openDeleteModal: boolean;
   setOpenDeleteModal: (open: boolean) => void;
@@ -121,6 +130,7 @@ interface LancamentosContextType {
   refreshClientes: () => void;
   refreshFormasPagamento: () => void;
   refreshContasBancarias: () => void;
+  refreshProjetos: () => void;
 }
 
 const LancamentosContext = createContext<LancamentosContextType | undefined>(
@@ -149,6 +159,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [formasPagamento, setFormasPagamento] = useState<FormaPagamento[]>([]);
   const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
+  const [projetos, setProjetos] = useState<ProjetoSimple[]>([]);
   const { empresaId, user, userProfile } = useAuth();
 
   // Add sort state
@@ -165,6 +176,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     valor_max: null,
     fornecedor_id: null,
     cliente_id: null,
+    projeto_id: null,
   });
 
   const [formData, setFormData] = useState<LancamentoFormData>({
@@ -178,6 +190,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     cliente_id: null,
     conta_bancaria_id: null,
     forma_pagamento_id: null,
+    projeto_id: null,
     recorrente: false,
     parcela_atual: null,
     total_parcelas: null,
@@ -191,7 +204,8 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         *,
         categoria:categorias(*),
         fornecedor:fornecedores(*),
-        cliente:clientes(*)
+        cliente:clientes(*),
+        projeto:projetos(id, nome)
       `).order(sortField, { ascending: sortDirection === 'asc' });
 
       if (filtros.tipo) {
@@ -220,6 +234,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
       if (filtros.cliente_id) {
         query = query.eq("cliente_id", filtros.cliente_id);
+      }
+      if (filtros.projeto_id) {
+        query = query.eq("projeto_id", filtros.projeto_id);
       }
 
       const { data, error } = await query;
@@ -322,6 +339,19 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, []);
 
+  const fetchProjetos = useCallback(async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from("projetos")
+        .select("id, nome")
+        .order("nome");
+      if (error) throw error;
+      setProjetos(data || []);
+    } catch (error: any) {
+      console.error("Erro ao carregar projetos:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchLancamentos();
     fetchCategorias();
@@ -329,6 +359,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     fetchClientes();
     fetchFormasPagamento();
     fetchContasBancarias();
+    fetchProjetos();
   }, [
     fetchLancamentos,
     fetchCategorias,
@@ -336,6 +367,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     fetchClientes,
     fetchFormasPagamento,
     fetchContasBancarias,
+    fetchProjetos,
   ]);
 
   // Realtime: auto-remove deleted lancamentos from UI
@@ -371,7 +403,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   };
 
   const handleSelectChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value === "no-category" || value === "no-client" || value === "no-supplier" || value === "no-payment-method" || value === "no-bank-account" ? null : value });
+    setFormData({ ...formData, [field]: value === "no-category" || value === "no-client" || value === "no-supplier" || value === "no-payment-method" || value === "no-bank-account" || value === "no-project" ? null : value });
   };
 
   const handleFilterInputChange = (
@@ -441,6 +473,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         cliente_id: null,
         conta_bancaria_id: null,
         forma_pagamento_id: null,
+        projeto_id: null,
         recorrente: false,
         parcela_atual: null,
         total_parcelas: null,
@@ -463,6 +496,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       cliente_id: lancamento.cliente_id,
       conta_bancaria_id: lancamento.conta_bancaria_id,
       forma_pagamento_id: lancamento.forma_pagamento_id,
+      projeto_id: lancamento.projeto_id || null,
       recorrente: lancamento.recorrente,
       parcela_atual: lancamento.parcela_atual,
       total_parcelas: lancamento.total_parcelas,
@@ -549,6 +583,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         cliente_id: null,
         conta_bancaria_id: null,
         forma_pagamento_id: null,
+        projeto_id: null,
         recorrente: false,
         parcela_atual: null,
         total_parcelas: null,
@@ -642,6 +677,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       valor_max: null,
       fornecedor_id: null,
       cliente_id: null,
+      projeto_id: null,
     });
     fetchLancamentos();
   };
@@ -673,6 +709,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         clientes,
         formasPagamento,
         contasBancarias,
+        projetos,
         handleDateChange,
         openDeleteModal,
         setOpenDeleteModal,
@@ -690,6 +727,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         refreshClientes: fetchClientes,
         refreshFormasPagamento: fetchFormasPagamento,
         refreshContasBancarias: fetchContasBancarias,
+        refreshProjetos: fetchProjetos,
       }}
     >
       {children}

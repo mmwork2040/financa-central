@@ -27,12 +27,14 @@ export const LancamentosFormDialog = () => {
     fornecedores,
     formasPagamento,
     contasBancarias,
+    projetos,
     selectedId,
     refreshCategorias,
     refreshFornecedores,
     refreshClientes,
     refreshFormasPagamento,
     refreshContasBancarias,
+    refreshProjetos,
   } = useLancamentosContext();
 
   const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita" | "investimento">(formData.tipo || "despesa");
@@ -207,6 +209,16 @@ export const LancamentosFormDialog = () => {
               ],
               onSuccess: refreshContasBancarias,
             }}
+          />
+          
+          <GenericSelect 
+            label="Projeto"
+            value={formData.projeto_id} 
+            onChange={(value) => handleSelectChange('projeto_id', value)}
+            options={projetos}
+            noneOptionValue="no-project"
+            nameField="nome"
+            placeholder="Selecione o projeto (opcional)"
           />
         </div>
         <DialogFooter>
