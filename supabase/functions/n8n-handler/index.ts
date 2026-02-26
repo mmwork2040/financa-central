@@ -107,44 +107,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ─── Action: identify-by-email — Identify user by email or phone and save phone ───
+    // ─── Action: identify-by-email — Identify user by phone number ───
     if (action === "identify-by-email") {
-      const email = (body.email || "").trim().toLowerCase();
       const phone = (body.phone || "").replace(/\D/g, "");
 
-      if (!email && !phone) {
-        return new Response(JSON.stringify({ error: "email or phone is required" }), {
+      if (!phone) {
+        return new Response(JSON.stringify({ error: "phone is required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       let perfil: any = null;
-
-      // Try finding by phone first if provided
-      if (phone) {
-        const phoneVariants = [phone, `+${phone}`, phone.replace(/^55/, "")];
-        for (const variant of phoneVariants) {
-          let q = supabase
-            .from("perfis")
-            .select("id, nome, email, empresa_id, evolution_webhook_url")
-            .ilike("evolution_webhook_url", `%${variant}%`)
-            .not("empresa_id", "is", null);
-          if (empresaId) q = q.eq("empresa_id", empresaId);
-          const { data } = await q.maybeSingle();
-          if (data) { perfil = data; break; }
-        }
-      }
-
-      // Fallback to email if phone didn't match
-      if (!perfil && email) {
+      const phoneVariants = [phone, `+${phone}`, phone.replace(/^55/, "")];
+      for (const variant of phoneVariants) {
         let q = supabase
           .from("perfis")
           .select("id, nome, email, empresa_id, evolution_webhook_url")
-          .ilike("email", email)
+          .ilike("evolution_webhook_url", `%${variant}%`)
           .not("empresa_id", "is", null);
         if (empresaId) q = q.eq("empresa_id", empresaId);
         const { data } = await q.maybeSingle();
-        if (data) perfil = data;
+        if (data) { perfil = data; break; }
+      }
+
+      if (!perfil) {
+        return new Response(JSON.stringify({ found: false }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
       if (!perfil) {
@@ -155,13 +144,6 @@ Deno.serve(async (req) => {
 
       empresaId = perfil.empresa_id!;
 
-      // Save phone for future identification if not already set
-      if (phone && !perfil.evolution_webhook_url) {
-        await supabase
-          .from("perfis")
-          .update({ evolution_webhook_url: phone })
-          .eq("id", perfil.id);
-      }
 
       // Fetch user's companies
       const { data: emailUserRoles } = await supabase
