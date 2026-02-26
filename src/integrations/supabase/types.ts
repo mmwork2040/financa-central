@@ -52,40 +52,61 @@ export type Database = {
       clientes: {
         Row: {
           ativo: boolean
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
           cpf_cnpj: string | null
           created_at: string
           email: string | null
           empresa_id: string | null
           endereco: string | null
+          estado: string | null
           id: string
           nome: string
+          numero: string | null
           origem: string
+          rua: string | null
           telefone: string | null
           updated_at: string
         }
         Insert: {
           ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
           empresa_id?: string | null
           endereco?: string | null
+          estado?: string | null
           id?: string
           nome: string
+          numero?: string | null
           origem?: string
+          rua?: string | null
           telefone?: string | null
           updated_at?: string
         }
         Update: {
           ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
           empresa_id?: string | null
           endereco?: string | null
+          estado?: string | null
           id?: string
           nome?: string
+          numero?: string | null
           origem?: string
+          rua?: string | null
           telefone?: string | null
           updated_at?: string
         }
@@ -261,37 +282,58 @@ export type Database = {
       fornecedores: {
         Row: {
           ativo: boolean
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
           cpf_cnpj: string | null
           created_at: string
           email: string | null
           empresa_id: string | null
           endereco: string | null
+          estado: string | null
           id: string
           nome: string
+          numero: string | null
+          rua: string | null
           telefone: string | null
           updated_at: string
         }
         Insert: {
           ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
           empresa_id?: string | null
           endereco?: string | null
+          estado?: string | null
           id?: string
           nome: string
+          numero?: string | null
+          rua?: string | null
           telefone?: string | null
           updated_at?: string
         }
         Update: {
           ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
           empresa_id?: string | null
           endereco?: string | null
+          estado?: string | null
           id?: string
           nome?: string
+          numero?: string | null
+          rua?: string | null
           telefone?: string | null
           updated_at?: string
         }
