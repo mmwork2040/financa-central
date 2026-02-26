@@ -377,7 +377,7 @@ const Integracoes = () => {
 
   // Auto-connect Lovable AI if no other IA is active
   const autoConnectLovableAI = async () => {
-    if (!empresaId) return;
+    if (!empresaId || !isSuperAdmin) return;
     const iaPlataformas = PLATAFORMAS.filter(p => p.categoria === 'ia' && p.id !== 'lovable_ai').map(p => p.id);
     const hasOtherIA = integracoes.some((i: any) => iaPlataformas.includes(i.plataforma) && i.ativo);
     const lovableConnected = integracoes.some((i: any) => i.plataforma === 'lovable_ai' && i.ativo);
