@@ -53,13 +53,19 @@ const LLM_CONFIGS: Record<string, { url: string; buildHeaders: (key: string) => 
 
 const NO_AI_MSG = "Não há IA configurada no sistema. Entre em contato com o administrador.";
 
-const SYSTEM_PROMPT = `Você é um assistente financeiro conciso do sistema FinançaCentral. 
+const buildSystemPrompt = (userName: string, userContext: string) => `Você é um assistente financeiro conciso do sistema FinançaCentral.
+Você está atendendo EXCLUSIVAMENTE o usuário "${userName}".
 REGRAS OBRIGATÓRIAS:
+- A conversa é INDIVIDUAL e INTRANSFERÍVEL. NUNCA compartilhe dados de outros usuários.
+- Use SOMENTE os dados fornecidos no contexto abaixo para responder. NÃO invente dados.
 - Responda SOMENTE sobre assuntos do sistema financeiro (lançamentos, categorias, contas, clientes, fornecedores, relatórios).
 - Limite TODAS as respostas a no máximo 150 caracteres, exceto relatórios financeiros (máximo 500 caracteres).
 - Se o assunto não for relacionado ao sistema, responda: "Só posso ajudar com assuntos do sistema financeiro."
 - Seja direto e objetivo. Sem saudações longas.
-- Responda em português brasileiro.`;
+- Responda em português brasileiro.
+
+DADOS DO USUÁRIO (contexto financeiro atual):
+${userContext}`;
 
 const IDENTIFY_MSG = "Não consegui identificar seu cadastro. Por favor, informe seu email de cadastro no sistema para que eu possa atendê-lo.";
 
@@ -261,8 +267,48 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: true })
       .limit(10);
 
+    // ─── Fetch user-specific financial data for context ───
+    const now = new Date();
+    const mesAtual = now.toISOString().slice(0, 7); // YYYY-MM
+    const inicioMes = `${mesAtual}-01`;
+    const fimMes = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+
+    // Get user's lancamentos (scoped to empresa)
+    const { data: lancamentos } = await supabase
+      .from("lancamentos")
+      .select("tipo, valor, status, descricao, data_vencimento")
+      .eq("empresa_id", empresaId)
+      .gte("data_vencimento", inicioMes)
+      .lte("data_vencimento", fimMes)
+      .order("data_vencimento", { ascending: false })
+      .limit(20);
+
+    // Get contas bancárias
+    const { data: contas } = await supabase
+      .from("contas_bancarias")
+      .select("nome, saldo_atual")
+      .eq("empresa_id", empresaId)
+      .limit(5);
+
+    // Build user context summary
+    const receitas = (lancamentos || []).filter((l: any) => l.tipo === "receita");
+    const despesas = (lancamentos || []).filter((l: any) => l.tipo === "despesa");
+    const totalReceitas = receitas.reduce((s: number, l: any) => s + Number(l.valor), 0);
+    const totalDespesas = despesas.reduce((s: number, l: any) => s + Number(l.valor), 0);
+    const saldoContas = (contas || []).map((c: any) => `${c.nome}: R$${Number(c.saldo_atual).toFixed(2)}`).join("; ");
+    const pendentes = (lancamentos || []).filter((l: any) => l.status === "pendente").length;
+
+    const userContext = [
+      `Mês: ${mesAtual}`,
+      `Receitas: R$${totalReceitas.toFixed(2)} (${receitas.length} lançamentos)`,
+      `Despesas: R$${totalDespesas.toFixed(2)} (${despesas.length} lançamentos)`,
+      `Saldo: R$${(totalReceitas - totalDespesas).toFixed(2)}`,
+      `Pendentes: ${pendentes}`,
+      saldoContas ? `Contas: ${saldoContas}` : "",
+    ].filter(Boolean).join(" | ");
+
     const messages: any[] = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: buildSystemPrompt(userName || "Usuário", userContext) },
       ...(recentMsgs || []).map((m: any) => ({
         role: m.remetente === "usuario" ? "user" : "assistant",
         content: m.conteudo,
