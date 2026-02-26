@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Building2, Upload, Loader2, User, Undo2, Check, Trash2 } from "lucide-react";
 import InviteCodesCard from "@/components/convites/InviteCodesCard";
+import CepAddressFields, { AddressData } from "@/components/common/CepAddressFields";
 
 const SYSTEM_PRIMARY_COLOR = "#f97316";
 
@@ -22,6 +23,9 @@ const ConfiguracoesEmpresa = () => {
   const [empresa, setEmpresa] = useState({
     nome: "", cnpj: "", email: "", telefone: "", endereco: "",
     cor_primaria: SYSTEM_PRIMARY_COLOR, logo_url: "",
+  });
+  const [address, setAddress] = useState<AddressData>({
+    cep: "", rua: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
   });
 
   const isAdmin = userRole === "admin" || isSuperAdmin;
@@ -45,6 +49,15 @@ const ConfiguracoesEmpresa = () => {
           telefone: data.telefone || "", endereco: data.endereco || "",
           cor_primaria: corFromDb, logo_url: data.logo_url || "",
         });
+        setAddress({
+          cep: (data as any).cep || "",
+          rua: (data as any).rua || "",
+          numero: (data as any).numero || "",
+          complemento: (data as any).complemento || "",
+          bairro: (data as any).bairro || "",
+          cidade: (data as any).cidade || "",
+          estado: (data as any).estado || "",
+        });
         if (!data.cor_primaria && empresaId) {
           await supabase.from("empresas").update({ cor_primaria: SYSTEM_PRIMARY_COLOR }).eq("id", empresaId);
         }
@@ -60,10 +73,13 @@ const ConfiguracoesEmpresa = () => {
     if (!empresaId || !isAdmin) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from("empresas").update({
+      const { error } = await (supabase as any).from("empresas").update({
         nome: empresa.nome, cnpj: empresa.cnpj || null, email: empresa.email || null,
         telefone: empresa.telefone || null, endereco: empresa.endereco || null,
         cor_primaria: empresa.cor_primaria, logo_url: empresa.logo_url || null,
+        cep: address.cep || null, rua: address.rua || null, numero: address.numero || null,
+        complemento: address.complemento || null, bairro: address.bairro || null,
+        cidade: address.cidade || null, estado: address.estado || null,
       }).eq("id", empresaId);
       if (error) throw error;
       toast.success("Dados da empresa atualizados com sucesso.");
@@ -210,8 +226,11 @@ const ConfiguracoesEmpresa = () => {
               <Input id="telefone" value={empresa.telefone} onChange={(e) => handleChange("telefone", e.target.value)} disabled={!isAdmin} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endereco">Endereço</Label>
-              <Input id="endereco" value={empresa.endereco} onChange={(e) => handleChange("endereco", e.target.value)} disabled={!isAdmin} />
+              <Label>Endereço</Label>
+              <CepAddressFields
+                address={address}
+                onChange={(field, value) => setAddress(prev => ({ ...prev, [field]: value }))}
+              />
             </div>
           </CardContent>
         </Card>
