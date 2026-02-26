@@ -79,6 +79,10 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    // empresa_id from query parameter (URL per company)
+    const reqUrl = new URL(req.url);
+    const empresaId = reqUrl.searchParams.get("empresa_id") || "";
+
     const body = await req.json();
     
     // Evolution API sends messages in this format
@@ -87,8 +91,6 @@ Deno.serve(async (req) => {
                         body?.data?.message?.extendedTextMessage?.text || 
                         body?.message?.conversation ||
                         body?.text || "";
-    const instanceName = body?.instance || body?.data?.instance || "";
-    const empresaId = body?.empresa_id || "";
 
     if (!messageText.trim()) {
       return new Response(JSON.stringify({ ok: true, skipped: true }), {
