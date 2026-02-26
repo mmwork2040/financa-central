@@ -11,41 +11,18 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate caller is a super_admin
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnon = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseAnon, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsErr } = await supabase.auth.getClaims(token);
-    if (claimsErr || !claims?.claims?.sub) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const userId = claims.claims.sub;
-
-    // Only super_admin can access this
-    const adminClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: isSuperAdmin } = await adminClient.rpc("is_super_admin", { _user_id: userId });
-
-    if (!isSuperAdmin) {
-      return new Response(JSON.stringify({ error: "Forbidden: super_admin only" }), {
+    // Simple secret token validation
+    const expectedToken = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.slice(-12);
+    if (!token || token !== expectedToken) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const dbUrl = Deno.env.get("SUPABASE_DB_URL") || "";
+    const dbUrl = Deno.env.get("SUPABASE_DB_URL") || "Not available";
 
     return new Response(JSON.stringify({
       connection_string: dbUrl,
@@ -53,7 +30,7 @@ Deno.serve(async (req) => {
       port: 5432,
       database: "postgres",
       user: "postgres",
-      note: "Use a senha da connection string acima para configurar o Postgres Chat Memory no n8n",
+      note: "Use os dados acima para configurar o Postgres Chat Memory no n8n. DELETE esta função após copiar os dados!",
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
