@@ -458,6 +458,7 @@ export type Database = {
           id: string
           origem: string
           parcela_atual: number | null
+          projeto_id: string | null
           recorrencia_fim: string | null
           recorrencia_tipo: string | null
           recorrente: boolean
@@ -481,6 +482,7 @@ export type Database = {
           id?: string
           origem?: string
           parcela_atual?: number | null
+          projeto_id?: string | null
           recorrencia_fim?: string | null
           recorrencia_tipo?: string | null
           recorrente?: boolean
@@ -504,6 +506,7 @@ export type Database = {
           id?: string
           origem?: string
           parcela_atual?: number | null
+          projeto_id?: string | null
           recorrencia_fim?: string | null
           recorrencia_tipo?: string | null
           recorrente?: boolean
@@ -554,6 +557,13 @@ export type Database = {
             columns: ["fornecedor_id"]
             isOneToOne: false
             referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
             referencedColumns: ["id"]
           },
         ]
@@ -744,6 +754,47 @@ export type Database = {
             columns: ["perfis_id"]
             isOneToOne: false
             referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projetos: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          orcamento: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          orcamento?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          orcamento?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projetos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
         ]
