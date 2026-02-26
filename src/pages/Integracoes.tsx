@@ -186,6 +186,20 @@ const PLATAFORMAS: Plataforma[] = [
     needsSecret: false, usesWebhook: false, keyValidation: { hint: "Token no formato 123456:ABC-DEF..." },
     categoria: "comunicacao",
   },
+  {
+    id: "evolution_api", name: "Evolution API", description: "WhatsApp via Evolution API (auto-hospedado)",
+    icon: MessageCircle, color: "bg-emerald-100 text-emerald-700",
+    site: "https://doc.evolution-api.com/", doc: "https://doc.evolution-api.com/",
+    events: ["messages.upsert", "messages.update", "connection.update"],
+    steps: [
+      "Acesse o painel da sua instância Evolution API",
+      "Vá em Configurações e copie o Global API Key ou Instance API Key",
+      "Copie também a URL do servidor (ex: https://sua-evolution.com)",
+      "Cole a URL do servidor e a API Key nos campos abaixo",
+    ],
+    needsSecret: true, usesWebhook: true, keyValidation: { hint: "API Key da Evolution API" },
+    categoria: "comunicacao",
+  },
 ];
 
 const Integracoes = () => {
@@ -285,6 +299,11 @@ const Integracoes = () => {
         setKeyError(validationError);
         return;
       }
+    }
+    // Evolution API requires server URL
+    if (currentPlat.id === 'evolution_api' && !apiSecret.trim()) {
+      toast.error("A URL do servidor é obrigatória para a Evolution API");
+      return;
     }
     setSaving(true);
     try {
@@ -759,8 +778,16 @@ const Integracoes = () => {
               </div>
               {currentPlat.needsSecret && (
                 <div>
-                  <Label>API Secret</Label>
-                  <Input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="Cole o secret aqui" />
+                  <Label>{currentPlat.id === 'evolution_api' ? 'URL do Servidor *' : 'API Secret'}</Label>
+                  <Input
+                    type={currentPlat.id === 'evolution_api' ? 'url' : 'password'}
+                    value={apiSecret}
+                    onChange={e => setApiSecret(e.target.value)}
+                    placeholder={currentPlat.id === 'evolution_api' ? 'https://sua-evolution-api.com' : 'Cole o secret aqui'}
+                  />
+                  {currentPlat.id === 'evolution_api' && (
+                    <p className="text-xs text-muted-foreground mt-1">URL base da sua instância Evolution API</p>
+                  )}
                 </div>
               )}
               <div>

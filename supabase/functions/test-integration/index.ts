@@ -75,6 +75,13 @@ const TEST_ENDPOINTS: Record<string, { url: string; method: string; headers: (ke
     method: "GET",
     headers: () => ({}),
   },
+  evolution_api: {
+    url: "",  // built dynamically from api_secret (server URL)
+    method: "GET",
+    headers: (key) => ({
+      "apikey": key,
+    }),
+  },
 };
 
 Deno.serve(async (req) => {
@@ -150,6 +157,17 @@ Deno.serve(async (req) => {
     // For Telegram, build URL dynamically with bot token
     if (plataforma === "telegram") {
       testUrl = `https://api.telegram.org/bot${apiKey}/getMe`;
+    }
+    // For Evolution API, build URL from server URL stored in api_secret
+    if (plataforma === "evolution_api") {
+      const serverUrl = (apiSecret || "").replace(/\/+$/, "");
+      if (!serverUrl) {
+        return new Response(
+          JSON.stringify({ success: false, status: "error", message: "URL do servidor não configurada" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      testUrl = `${serverUrl}/instance/fetchInstances`;
     }
 
     const fetchOptions: RequestInit = {
