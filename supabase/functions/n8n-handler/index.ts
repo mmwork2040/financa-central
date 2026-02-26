@@ -16,16 +16,29 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const reqUrl = new URL(req.url);
-    const empresaId = reqUrl.searchParams.get("empresa_id") || "";
+    let empresaId = reqUrl.searchParams.get("empresa_id") || "";
     const action = reqUrl.searchParams.get("action") || "";
 
-    if (!empresaId) {
-      return new Response(JSON.stringify({ error: "empresa_id is required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const body = req.method !== "GET" ? await req.json() : {};
+
+    // ─── Helper: resolve empresa_id from email if not provided ───
+    const resolveEmpresaId = async (email?: string): Promise<string | null> => {
+      if (empresaId) return empresaId;
+      if (!email) return null;
+
+      const { data: perfil } = await supabase
+        .from("perfis")
+        .select("id, nome, email, empresa_id")
+        .ilike("email", email.trim().toLowerCase())
+        .not("empresa_id", "is", null)
+        .maybeSingle();
+
+      if (perfil?.empresa_id) {
+        empresaId = perfil.empresa_id;
+        return empresaId;
+      }
+      return null;
+    };
 
     // ─── Action: identify — Identify user by phone number ───
     if (action === "identify") {
@@ -39,20 +52,28 @@ Deno.serve(async (req) => {
       const phoneClean = phone.replace(/\D/g, "");
       const phoneVariants = [phoneClean, `+${phoneClean}`, phoneClean.replace(/^55/, "")];
 
+      // If empresa_id provided, search within it; otherwise search all
       for (const variant of phoneVariants) {
-        const { data: perfil } = await supabase
+        let query = supabase
           .from("perfis")
           .select("id, nome, email, empresa_id")
-          .eq("empresa_id", empresaId)
           .ilike("evolution_webhook_url", `%${variant}%`)
-          .maybeSingle();
+          .not("empresa_id", "is", null);
+
+        if (empresaId) {
+          query = query.eq("empresa_id", empresaId);
+        }
+
+        const { data: perfil } = await query.maybeSingle();
 
         if (perfil) {
+          empresaId = perfil.empresa_id!;
           return new Response(JSON.stringify({
             found: true,
             user_id: perfil.id,
             nome: perfil.nome,
             email: perfil.email,
+            empresa_id: perfil.empresa_id,
           }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
       }
@@ -73,18 +94,25 @@ Deno.serve(async (req) => {
         });
       }
 
-      const { data: perfil } = await supabase
+      let query = supabase
         .from("perfis")
-        .select("id, nome, email")
-        .eq("empresa_id", empresaId)
+        .select("id, nome, email, empresa_id")
         .ilike("email", email)
-        .maybeSingle();
+        .not("empresa_id", "is", null);
+
+      if (empresaId) {
+        query = query.eq("empresa_id", empresaId);
+      }
+
+      const { data: perfil } = await query.maybeSingle();
 
       if (!perfil) {
         return new Response(JSON.stringify({ found: false }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      empresaId = perfil.empresa_id!;
 
       // Save phone for future identification
       if (phone) {
@@ -99,6 +127,7 @@ Deno.serve(async (req) => {
         user_id: perfil.id,
         nome: perfil.nome,
         email: perfil.email,
+        empresa_id: perfil.empresa_id,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -109,6 +138,22 @@ Deno.serve(async (req) => {
 
       if (!userId || !message) {
         return new Response(JSON.stringify({ error: "user_id and message are required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Resolve empresa_id from user profile if not provided
+      if (!empresaId) {
+        const { data: userPerfil } = await supabase
+          .from("perfis")
+          .select("empresa_id")
+          .eq("id", userId)
+          .maybeSingle();
+        if (userPerfil?.empresa_id) empresaId = userPerfil.empresa_id;
+      }
+
+      if (!empresaId) {
+        return new Response(JSON.stringify({ error: "empresa_id could not be resolved" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
