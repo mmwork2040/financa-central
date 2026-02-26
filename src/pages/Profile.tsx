@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Save, Lock, User, MessageCircle, Loader2 } from "lucide-react";
 import PageHeader from "@/components/common/PageHeader";
+import { phoneInputMask } from "@/utils/format";
 
 const getInitials = (nome: string) =>
   nome.split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase();
@@ -35,8 +36,14 @@ const Profile = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [fotoUrl, setFotoUrl] = useState<string | null>(userProfile?.foto_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [evolutionWebhookUrl, setEvolutionWebhookUrl] = useState(userProfile?.evolution_webhook_url || "");
+  const rawPhone = userProfile?.evolution_webhook_url || "";
+  const [evolutionWebhookUrl, setEvolutionWebhookUrl] = useState(rawPhone ? phoneInputMask(rawPhone) : "");
   const [savingWebhook, setSavingWebhook] = useState(false);
+
+  const handlePhoneFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 11);
+    setEvolutionWebhookUrl(phoneInputMask(raw));
+  };
 
   const handleSaveName = async () => {
     if (!nome.trim()) {
@@ -134,16 +141,35 @@ const Profile = () => {
   };
 
   const handleSaveWebhook = async () => {
+    const rawPhone = evolutionWebhookUrl.replace(/\D/g, "");
+    if (rawPhone.length < 10 || rawPhone.length > 11) {
+      toast.error("Informe um número de telefone válido com DDD.");
+      return;
+    }
     setSavingWebhook(true);
     try {
+      // Check uniqueness
+      const { data: existing } = await supabase
+        .from("perfis")
+        .select("id")
+        .eq("evolution_webhook_url", rawPhone)
+        .neq("id", user!.id)
+        .maybeSingle();
+
+      if (existing) {
+        toast.error("Este número de telefone já está cadastrado por outro usuário.");
+        setSavingWebhook(false);
+        return;
+      }
+
       const { error } = await (supabase as any)
         .from("perfis")
-        .update({ evolution_webhook_url: evolutionWebhookUrl.trim() || null })
+        .update({ evolution_webhook_url: rawPhone })
         .eq("id", user!.id);
       if (error) throw error;
-      toast.success("Webhook da Evolution API salvo com sucesso");
+      toast.success("Telefone WhatsApp salvo com sucesso");
     } catch (error: any) {
-      toast.error(error.message || "Erro ao salvar webhook");
+      toast.error(error.message || "Erro ao salvar telefone");
     } finally {
       setSavingWebhook(false);
     }
@@ -271,8 +297,9 @@ const Profile = () => {
                   id="whatsapp-phone"
                   type="tel"
                   value={evolutionWebhookUrl}
-                  onChange={e => setEvolutionWebhookUrl(e.target.value)}
-                  placeholder="5511999999999"
+                  onChange={handlePhoneFieldChange}
+                  placeholder="(00) 00000-0000"
+                  className="font-mono"
                 />
                 <Button onClick={handleSaveWebhook} disabled={savingWebhook} size="sm">
                   {savingWebhook ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
@@ -280,7 +307,7 @@ const Profile = () => {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Formato: código do país + DDD + número (ex: 5511999999999)
+                Formato WhatsApp: (DDD) + número. Este número deve ser único no sistema.
               </p>
             </div>
           </CardContent>
