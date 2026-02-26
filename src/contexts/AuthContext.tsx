@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         empresasList = (allEmpresas || []).map(e => ({
           empresa_id: e.id,
-          role: roles?.find(r => r.empresa_id === e.id)?.role || 'super_admin',
+          role: roles?.find(r => r.empresa_id === e.id)?.role || 'admin',
           empresa_nome: e.nome,
           pessoal: e.pessoal,
         }));
