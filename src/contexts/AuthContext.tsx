@@ -37,12 +37,14 @@ type AuthContextType = {
   isSuperAdmin: boolean;
   isPessoal: boolean;
   empresas: EmpresaInfo[];
+  needsPhone: boolean;
   canAccessRoute: (path: string) => boolean;
   canAccessScreen: (screenKey: string) => boolean;
   canPerformAction: (screenKey: string, action: 'pode_incluir' | 'pode_alterar' | 'pode_excluir') => boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   switchEmpresa: (empresaId: string) => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -55,12 +57,14 @@ const AuthContext = createContext<AuthContextType>({
   isSuperAdmin: false,
   isPessoal: false,
   empresas: [],
+  needsPhone: false,
   canAccessRoute: () => true,
   canAccessScreen: () => true,
   canPerformAction: () => false,
   login: async () => {},
   logout: async () => {},
   switchEmpresa: async () => {},
+  refreshProfile: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -73,8 +77,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [empresas, setEmpresas] = useState<EmpresaInfo[]>([]);
   const isSuperAdmin = userRole === 'super_admin';
   const isPessoal = empresas.find(e => e.empresa_id === empresaId)?.pessoal === true;
+  const needsPhone = !!user && !!userProfile && !userProfile.evolution_webhook_url;
   const { canAccessRoute, canAccessScreen, canPerformAction } = usePermissoes(user?.id || null, userRole, isSuperAdmin);
   const navigate = useNavigate();
+
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchUserProfile(user.id);
+    }
+  };
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -291,12 +302,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isSuperAdmin,
         isPessoal,
         empresas,
+        needsPhone,
         canAccessRoute,
         canAccessScreen,
         canPerformAction,
         login,
         logout,
         switchEmpresa,
+        refreshProfile,
       }}
     >
       {children}

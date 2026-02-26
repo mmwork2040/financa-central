@@ -12,11 +12,19 @@ serve(async (req) => {
   }
 
   try {
-    const { email, password, nome } = await req.json();
+    const { email, password, nome, phone } = await req.json();
 
-    if (!email || !password || !nome) {
+    if (!email || !password || !nome || !phone) {
       return new Response(
-        JSON.stringify({ error: "Todos os campos são obrigatórios" }),
+        JSON.stringify({ error: "Todos os campos são obrigatórios (nome, email, senha e telefone)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const phoneClean = phone.replace(/\D/g, "");
+    if (phoneClean.length < 10 || phoneClean.length > 11) {
+      return new Response(
+        JSON.stringify({ error: "Número de telefone inválido. Informe com DDD." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -25,6 +33,20 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Check phone uniqueness
+    const { data: existingPhone } = await supabaseAdmin
+      .from("perfis")
+      .select("id")
+      .eq("evolution_webhook_url", phoneClean)
+      .maybeSingle();
+
+    if (existingPhone) {
+      return new Response(
+        JSON.stringify({ error: "Este número de telefone já está cadastrado." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Create auth user (no empresa)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -44,8 +66,15 @@ serve(async (req) => {
       );
     }
 
-    // The handle_new_user trigger will create the perfis record automatically
-    // No empresa or user_role is created — user will choose on first login
+    // Save phone to perfis (trigger creates the record, so we update it)
+    if (authData.user) {
+      // Small delay to ensure trigger has created the perfis record
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await supabaseAdmin
+        .from("perfis")
+        .update({ evolution_webhook_url: phoneClean })
+        .eq("id", authData.user.id);
+    }
 
     return new Response(
       JSON.stringify({ success: true, message: "Conta criada com sucesso!" }),
