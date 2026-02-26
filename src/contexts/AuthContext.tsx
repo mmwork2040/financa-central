@@ -134,12 +134,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .select('id, nome, pessoal')
           .order('nome');
 
-        empresasList = (allEmpresas || []).map(e => ({
-          empresa_id: e.id,
-          role: roles?.find(r => r.empresa_id === e.id)?.role || 'admin',
-          empresa_nome: e.nome,
-          pessoal: e.pessoal,
-        }));
+        empresasList = (allEmpresas || []).map(e => {
+          const empresaRole = roles?.find(r => r.empresa_id === e.id)?.role;
+          return {
+            empresa_id: e.id,
+            role: empresaRole === 'super_admin' ? 'admin' : (empresaRole || 'admin'),
+            empresa_nome: e.nome,
+            pessoal: e.pessoal,
+          };
+        });
       } else {
         if (!roles || roles.length === 0) return null;
 
