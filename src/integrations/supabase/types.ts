@@ -189,6 +189,7 @@ export type Database = {
           email: string | null
           endereco: string | null
           id: string
+          llm_padrao: string | null
           logo_url: string | null
           nome: string
           pessoal: boolean
@@ -202,6 +203,7 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           id?: string
+          llm_padrao?: string | null
           logo_url?: string | null
           nome: string
           pessoal?: boolean
@@ -215,6 +217,7 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           id?: string
+          llm_padrao?: string | null
           logo_url?: string | null
           nome?: string
           pessoal?: boolean
