@@ -82,6 +82,46 @@ const TEST_ENDPOINTS: Record<string, { url: string; method: string; headers: (ke
       "apikey": key,
     }),
   },
+  lovable_ai: {
+    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    method: "POST",
+    headers: () => ({
+      "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY") || ""}`,
+      "Content-Type": "application/json",
+    }),
+    buildBody: () => JSON.stringify({
+      model: "google/gemini-3-flash-preview",
+      messages: [{ role: "user", content: "ping" }],
+      max_tokens: 5,
+    }),
+  },
+  openai: {
+    url: "https://api.openai.com/v1/models",
+    method: "GET",
+    headers: (key) => ({
+      "Authorization": `Bearer ${key}`,
+    }),
+  },
+  google_gemini: {
+    url: "",  // built dynamically
+    method: "GET",
+    headers: () => ({}),
+  },
+  anthropic: {
+    url: "https://api.anthropic.com/v1/models",
+    method: "GET",
+    headers: (key) => ({
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+    }),
+  },
+  deepseek: {
+    url: "https://api.deepseek.com/models",
+    method: "GET",
+    headers: (key) => ({
+      "Authorization": `Bearer ${key}`,
+    }),
+  },
 };
 
 Deno.serve(async (req) => {
@@ -123,19 +163,27 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data: integ, error: fetchError } = await adminSupabase
-      .from("integracoes")
-      .select("api_key_encrypted, api_secret_encrypted, ambiente")
-      .eq("empresa_id", empresa_id)
-      .eq("plataforma", plataforma)
-      .eq("ativo", true)
-      .single();
+    let apiKey = "";
+    let apiSecret: string | undefined;
 
-    if (fetchError || !integ) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Integração não encontrada ou inativa" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Lovable AI uses pre-configured key, no need to fetch from integracoes
+    if (plataforma !== "lovable_ai") {
+      const { data: integ, error: fetchError } = await adminSupabase
+        .from("integracoes")
+        .select("api_key_encrypted, api_secret_encrypted, ambiente")
+        .eq("empresa_id", empresa_id)
+        .eq("plataforma", plataforma)
+        .eq("ativo", true)
+        .single();
+
+      if (fetchError || !integ) {
+        return new Response(
+          JSON.stringify({ success: false, message: "Integração não encontrada ou inativa" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      apiKey = integ.api_key_encrypted || "";
+      apiSecret = integ.api_secret_encrypted || undefined;
     }
 
     const testConfig = TEST_ENDPOINTS[plataforma];
@@ -145,9 +193,6 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const apiKey = integ.api_key_encrypted || "";
-    const apiSecret = integ.api_secret_encrypted || undefined;
 
     // For Google Ads, append key as query param
     let testUrl = testConfig.url;
@@ -168,6 +213,14 @@ Deno.serve(async (req) => {
         );
       }
       testUrl = `${serverUrl}/instance/fetchInstances`;
+    }
+    // For Google Gemini, build URL with key as query param
+    if (plataforma === "google_gemini") {
+      testUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+    }
+    // For Lovable AI, use the pre-configured key (no user key needed)
+    if (plataforma === "lovable_ai") {
+      // Headers are built in TEST_ENDPOINTS using env var directly
     }
 
     const fetchOptions: RequestInit = {
