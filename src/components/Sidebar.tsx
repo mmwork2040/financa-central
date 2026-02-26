@@ -262,7 +262,7 @@ export const Sidebar = () => {
                   >
                     <div className="truncate">
                       <div className="text-sm">{emp.empresa_nome}</div>
-                      <div className="text-xs text-muted-foreground">{emp.role}</div>
+                      <div className="text-xs text-muted-foreground">{emp.role === 'admin' ? 'Administrador' : emp.role === 'usuario' ? 'Usuário' : emp.role === 'leitura' ? 'Leitura' : emp.role}</div>
                     </div>
                     {emp.empresa_id === empresaId && <Check size={14} className="shrink-0 text-primary" />}
                   </DropdownMenuItem>
@@ -308,7 +308,7 @@ export const Sidebar = () => {
                   >
                     <div className="truncate">
                       <div className="text-sm">{emp.empresa_nome}</div>
-                      <div className="text-xs text-muted-foreground">{emp.role}</div>
+                      <div className="text-xs text-muted-foreground">{emp.role === 'admin' ? 'Administrador' : emp.role === 'usuario' ? 'Usuário' : emp.role === 'leitura' ? 'Leitura' : emp.role}</div>
                     </div>
                     {emp.empresa_id === empresaId && <Check size={14} className="shrink-0 text-primary" />}
                   </DropdownMenuItem>
