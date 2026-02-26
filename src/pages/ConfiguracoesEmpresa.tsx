@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Building2, Upload, Loader2, User, Undo2, Check, Trash2 } from "lucide-react";
 import InviteCodesCard from "@/components/convites/InviteCodesCard";
 import CepAddressFields, { AddressData } from "@/components/common/CepAddressFields";
+import { phoneInputMask } from "@/utils/format";
 
 const SYSTEM_PRIMARY_COLOR = "#f97316";
 
@@ -46,7 +47,7 @@ const ConfiguracoesEmpresa = () => {
         setOriginalColor(corFromDb);
         setEmpresa({
           nome: data.nome || "", cnpj: data.cnpj || "", email: data.email || "",
-          telefone: data.telefone || "", endereco: data.endereco || "",
+          telefone: data.telefone ? phoneInputMask(data.telefone.replace(/\D/g, "")) : "", endereco: data.endereco || "",
           cor_primaria: corFromDb, logo_url: data.logo_url || "",
         });
         setAddress({
@@ -223,7 +224,16 @@ const ConfiguracoesEmpresa = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="telefone">Telefone</Label>
-              <Input id="telefone" value={empresa.telefone} onChange={(e) => handleChange("telefone", e.target.value)} disabled={!isAdmin} />
+              <Input
+                id="telefone"
+                value={empresa.telefone}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  handleChange("telefone", phoneInputMask(raw));
+                }}
+                placeholder="(00) 00000-0000"
+                disabled={!isAdmin}
+              />
             </div>
             <div className="space-y-2">
               <Label>Endereço</Label>
