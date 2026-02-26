@@ -309,10 +309,38 @@ const Integracoes = () => {
     toast.success("URL copiada para a área de transferência!");
   };
 
+  // Auto-connect Lovable AI if no other IA is active
+  const autoConnectLovableAI = async () => {
+    if (!empresaId) return;
+    const iaPlataformas = PLATAFORMAS.filter(p => p.categoria === 'ia' && p.id !== 'lovable_ai').map(p => p.id);
+    const hasOtherIA = integracoes.some((i: any) => iaPlataformas.includes(i.plataforma) && i.ativo);
+    const lovableConnected = integracoes.some((i: any) => i.plataforma === 'lovable_ai' && i.ativo);
+    
+    if (!hasOtherIA && !lovableConnected) {
+      await (supabase as any)
+        .from('integracoes')
+        .upsert({
+          empresa_id: empresaId,
+          plataforma: 'lovable_ai',
+          api_key_encrypted: 'webhook_only',
+          ambiente: 'producao',
+          ativo: true,
+        }, { onConflict: 'empresa_id,plataforma' });
+      fetchIntegracoes();
+    }
+  };
+
   useEffect(() => {
     fetchIntegracoes();
     fetchLlmPadrao();
   }, []);
+
+  // Auto-connect Lovable AI after integracoes are loaded
+  useEffect(() => {
+    if (!loading && integracoes.length >= 0) {
+      autoConnectLovableAI();
+    }
+  }, [loading, integracoes.length]);
 
   const currentPlat = PLATAFORMAS.find(p => p.id === connectDialog);
 
@@ -427,6 +455,16 @@ const Integracoes = () => {
         }, { onConflict: 'empresa_id,plataforma' });
 
       if (error) throw error;
+      
+      // If connecting an IA platform (not lovable_ai), auto-disconnect Lovable AI
+      if (currentPlat.categoria === 'ia' && connectDialog !== 'lovable_ai') {
+        await (supabase as any)
+          .from('integracoes')
+          .update({ ativo: false })
+          .eq('empresa_id', empresaId)
+          .eq('plataforma', 'lovable_ai');
+      }
+      
       toast.success("Integração conectada com sucesso!");
       const savedPlataforma = connectDialog;
       closeWizard();
@@ -592,8 +630,9 @@ const Integracoes = () => {
             {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => {
               const info = CATEGORIAS_INFO[cat];
               const CatIcon = info.icon;
-              const count = PLATAFORMAS.filter(p => p.categoria === cat).length;
-              const connectedCount = PLATAFORMAS.filter(p => p.categoria === cat && getStatus(p.id) === 'connected').length;
+              const filteredPlats = PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin));
+              const count = filteredPlats.length;
+              const connectedCount = filteredPlats.filter(p => getStatus(p.id) === 'connected').length;
               return (
                 <TabsTrigger key={cat} value={cat} className="gap-1.5 text-xs sm:text-sm">
                   <CatIcon className="h-3.5 w-3.5" />
@@ -609,7 +648,7 @@ const Integracoes = () => {
           {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => (
             <TabsContent key={cat} value={cat}>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {PLATAFORMAS.filter(p => p.categoria === cat).map(plat => {
+                {PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin)).map(plat => {
             const status = getStatus(plat.id);
             const Icon = plat.icon;
             return (
