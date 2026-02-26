@@ -687,6 +687,7 @@ export type Database = {
           created_at: string
           email: string
           empresa_id: string | null
+          evolution_webhook_url: string | null
           foto_url: string | null
           id: string
           nome: string
@@ -697,6 +698,7 @@ export type Database = {
           created_at?: string
           email: string
           empresa_id?: string | null
+          evolution_webhook_url?: string | null
           foto_url?: string | null
           id: string
           nome: string
@@ -707,6 +709,7 @@ export type Database = {
           created_at?: string
           email?: string
           empresa_id?: string | null
+          evolution_webhook_url?: string | null
           foto_url?: string | null
           id?: string
           nome?: string
