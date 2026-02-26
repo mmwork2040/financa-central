@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { phoneInputMask } from "@/utils/format";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -13,17 +14,30 @@ const Register = () => {
   const [form, setForm] = useState({
     nome: "",
     email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 11);
+    setForm({ ...form, phone: phoneInputMask(raw) });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.nome || !form.email || !form.password) {
+    const rawPhone = form.phone.replace(/\D/g, "");
+
+    if (!form.nome || !form.email || !form.password || !rawPhone) {
       toast.error("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    if (rawPhone.length < 10 || rawPhone.length > 11) {
+      toast.error("Informe um número de telefone válido com DDD.");
       return;
     }
 
@@ -45,6 +59,7 @@ const Register = () => {
           email: form.email,
           password: form.password,
           nome: form.nome,
+          phone: rawPhone,
         },
       });
 
@@ -52,7 +67,6 @@ const Register = () => {
       if (data?.error) throw new Error(data.error);
 
       toast.success("Conta criada com sucesso! Faça login para acessar o sistema.");
-
       navigate("/login");
     } catch (error: any) {
       toast.error(error.message || "Ocorreu um erro inesperado.");
@@ -89,6 +103,21 @@ const Register = () => {
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="phone" className="text-sm font-medium text-foreground">
+              Telefone WhatsApp <span className="text-destructive">*</span>
+            </label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="(00) 00000-0000"
+              value={form.phone}
+              onChange={handlePhoneChange}
+              required
+              className="font-mono tracking-wider"
             />
           </div>
 
