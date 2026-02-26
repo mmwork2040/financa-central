@@ -286,7 +286,7 @@ const Profile = () => {
               Telefone WhatsApp
             </CardTitle>
             <CardDescription>
-              Informe seu número de WhatsApp para identificação automática em integrações externas (ex: n8n).
+              Informe seu número de WhatsApp para identificação automática.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
