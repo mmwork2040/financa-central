@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, Share2, MessageCircle, Send } from "lucide-react";
+import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, Share2, MessageCircle, Send, Brain, Star, StarOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-type PlataformaCategoria = "vendas" | "pagamentos" | "anuncios" | "comunicacao";
+type PlataformaCategoria = "vendas" | "pagamentos" | "anuncios" | "comunicacao" | "ia";
 
 interface Plataforma {
   id: string;
@@ -39,6 +39,7 @@ const CATEGORIAS_INFO: Record<PlataformaCategoria, { label: string; icon: any }>
   pagamentos: { label: "Pagamentos", icon: CreditCard },
   anuncios: { label: "Anúncios", icon: Megaphone },
   comunicacao: { label: "Comunicação", icon: MessageCircle },
+  ia: { label: "Inteligência Artificial", icon: Brain },
 };
 
 const PLATAFORMAS: Plataforma[] = [
@@ -200,6 +201,77 @@ const PLATAFORMAS: Plataforma[] = [
     needsSecret: true, usesWebhook: true, keyValidation: { hint: "API Key da Evolution API" },
     categoria: "comunicacao",
   },
+  // --- Inteligência Artificial ---
+  {
+    id: "lovable_ai", name: "Lovable AI", description: "IA integrada (sem configuração de chave)",
+    icon: Brain, color: "bg-violet-100 text-violet-700",
+    site: "https://docs.lovable.dev/features/ai", doc: "https://docs.lovable.dev/features/ai",
+    steps: [
+      "A Lovable AI já está pré-configurada no sistema",
+      "Basta ativar a integração clicando no botão abaixo",
+      "Nenhuma chave de API é necessária",
+      "Modelos disponíveis: Gemini, GPT-5 e outros",
+    ],
+    needsSecret: false, webhookOnly: true, usesWebhook: false,
+    keyValidation: { hint: "" },
+    categoria: "ia",
+  },
+  {
+    id: "openai", name: "OpenAI", description: "GPT-4o, GPT-4, GPT-3.5 e outros modelos",
+    icon: Brain, color: "bg-gray-100 text-gray-800",
+    site: "https://platform.openai.com/api-keys", doc: "https://platform.openai.com/docs",
+    steps: [
+      "Acesse platform.openai.com e faça login",
+      "Vá em API Keys e crie uma nova chave",
+      "Copie a chave gerada (começa com sk-)",
+      "Cole a chave no campo API Key abaixo",
+    ],
+    needsSecret: false, usesWebhook: false,
+    keyValidation: { prefix: "sk-", hint: "Deve começar com sk-" },
+    categoria: "ia",
+  },
+  {
+    id: "google_gemini", name: "Google Gemini", description: "Gemini Pro, Flash e outros modelos Google",
+    icon: Brain, color: "bg-blue-100 text-blue-600",
+    site: "https://aistudio.google.com/apikey", doc: "https://ai.google.dev/docs",
+    steps: [
+      "Acesse aistudio.google.com",
+      "Clique em 'Get API Key' e crie uma chave",
+      "Copie a chave gerada",
+      "Cole no campo API Key abaixo",
+    ],
+    needsSecret: false, usesWebhook: false,
+    keyValidation: { prefix: "AIza", hint: "Deve começar com AIza" },
+    categoria: "ia",
+  },
+  {
+    id: "anthropic", name: "Anthropic Claude", description: "Claude 3.5, Claude 3 Opus/Sonnet/Haiku",
+    icon: Brain, color: "bg-amber-100 text-amber-700",
+    site: "https://console.anthropic.com/settings/keys", doc: "https://docs.anthropic.com/",
+    steps: [
+      "Acesse console.anthropic.com",
+      "Vá em Settings → API Keys",
+      "Crie uma nova chave e copie",
+      "Cole a chave no campo API Key abaixo",
+    ],
+    needsSecret: false, usesWebhook: false,
+    keyValidation: { prefix: "sk-ant-", hint: "Deve começar com sk-ant-" },
+    categoria: "ia",
+  },
+  {
+    id: "deepseek", name: "DeepSeek", description: "DeepSeek V3 e modelos de raciocínio",
+    icon: Brain, color: "bg-cyan-100 text-cyan-700",
+    site: "https://platform.deepseek.com/api_keys", doc: "https://platform.deepseek.com/api-docs",
+    steps: [
+      "Acesse platform.deepseek.com",
+      "Vá em API Keys e crie uma nova chave",
+      "Copie a chave gerada",
+      "Cole no campo API Key abaixo",
+    ],
+    needsSecret: false, usesWebhook: false,
+    keyValidation: { prefix: "sk-", hint: "Deve começar com sk-" },
+    categoria: "ia",
+  },
 ];
 
 const Integracoes = () => {
@@ -223,6 +295,8 @@ const Integracoes = () => {
   const [exporting, setExporting] = useState(false);
   const [exportResult, setExportResult] = useState<{ count: number; webhookUrls: { plataforma: string; url: string }[] } | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'disconnect' | 'edit'; plataforma: string } | null>(null);
+  const [llmPadrao, setLlmPadrao] = useState<string | null>(null);
+  const [settingDefault, setSettingDefault] = useState<string | null>(null);
 
   const getWebhookUrl = (platformId: string) => {
     if (!empresaId) return "";
@@ -237,6 +311,7 @@ const Integracoes = () => {
 
   useEffect(() => {
     fetchIntegracoes();
+    fetchLlmPadrao();
   }, []);
 
   const currentPlat = PLATAFORMAS.find(p => p.id === connectDialog);
@@ -281,6 +356,39 @@ const Integracoes = () => {
       console.error("Erro:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchLlmPadrao = async () => {
+    if (!empresaId) return;
+    try {
+      const { data } = await (supabase as any)
+        .from('empresas')
+        .select('llm_padrao')
+        .eq('id', empresaId)
+        .single();
+      setLlmPadrao(data?.llm_padrao || null);
+    } catch (error) {
+      console.error("Erro ao buscar LLM padrão:", error);
+    }
+  };
+
+  const handleSetDefaultLlm = async (plataforma: string) => {
+    if (!empresaId) return;
+    setSettingDefault(plataforma);
+    try {
+      const newDefault = llmPadrao === plataforma ? null : plataforma;
+      const { error } = await (supabase as any)
+        .from('empresas')
+        .update({ llm_padrao: newDefault })
+        .eq('id', empresaId);
+      if (error) throw error;
+      setLlmPadrao(newDefault);
+      toast.success(newDefault ? `${PLATAFORMAS.find(p => p.id === plataforma)?.name} definida como IA padrão!` : "IA padrão removida.");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao definir IA padrão");
+    } finally {
+      setSettingDefault(null);
     }
   };
 
@@ -512,10 +620,13 @@ const Integracoes = () => {
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                         <h3 className="font-semibold text-sm">{plat.name}</h3>
                         {status === 'connected' && <Badge variant="outline" className="border-green-300 text-green-700 text-[10px] px-1.5">Conectado</Badge>}
                         {status === 'disconnected' && <Badge variant="outline" className="border-red-300 text-red-600 text-[10px] px-1.5">Desconectado</Badge>}
+                        {plat.categoria === 'ia' && llmPadrao === plat.id && (
+                          <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5">⭐ Padrão</Badge>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground mb-2">{plat.description}</p>
                       <div className="flex items-center gap-3">
@@ -579,6 +690,23 @@ const Integracoes = () => {
                           </TooltipTrigger>
                           <TooltipContent><p>Desconectar</p></TooltipContent>
                         </Tooltip>
+                        {plat.categoria === 'ia' && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant={llmPadrao === plat.id ? "default" : "outline"}
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleSetDefaultLlm(plat.id)}
+                                disabled={settingDefault === plat.id}
+                              >
+                                {settingDefault === plat.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> :
+                                  llmPadrao === plat.id ? <Star className="h-3.5 w-3.5" /> : <StarOff className="h-3.5 w-3.5" />}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>{llmPadrao === plat.id ? 'IA Padrão ativa' : 'Definir como IA padrão'}</p></TooltipContent>
+                          </Tooltip>
+                        )}
                       </TooltipProvider>
                     ) : (
                       <Button size="sm" className="w-full" onClick={() => openWizard(plat.id)}>Conectar</Button>
