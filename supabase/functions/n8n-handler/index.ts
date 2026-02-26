@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
       for (const variant of phoneVariants) {
         let query = supabase
           .from("perfis")
-          .select("id, nome, email, empresa_id")
+          .select("id, nome, email, empresa_id, evolution_webhook_url")
           .ilike("evolution_webhook_url", `%${variant}%`)
           .not("empresa_id", "is", null);
 
@@ -68,12 +68,36 @@ Deno.serve(async (req) => {
 
         if (perfil) {
           empresaId = perfil.empresa_id!;
+
+          // Fetch user's companies
+          const { data: userRoles } = await supabase
+            .from("user_roles")
+            .select("empresa_id, role")
+            .eq("user_id", perfil.id);
+
+          let empresasList: any[] = [];
+          if (userRoles && userRoles.length > 0) {
+            const empresaIds = userRoles.map((r: any) => r.empresa_id);
+            const { data: empresasData } = await supabase
+              .from("empresas")
+              .select("id, nome, pessoal")
+              .in("id", empresaIds);
+            empresasList = (empresasData || []).map((e: any) => ({
+              empresa_id: e.id,
+              nome: e.nome,
+              pessoal: e.pessoal,
+              role: userRoles.find((r: any) => r.empresa_id === e.id)?.role || "leitura",
+            }));
+          }
+
           return new Response(JSON.stringify({
             found: true,
             user_id: perfil.id,
             nome: perfil.nome,
             email: perfil.email,
+            telefone: perfil.evolution_webhook_url || null,
             empresa_id: perfil.empresa_id,
+            empresas: empresasList,
           }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
       }
@@ -96,7 +120,7 @@ Deno.serve(async (req) => {
 
       let query = supabase
         .from("perfis")
-        .select("id, nome, email, empresa_id")
+        .select("id, nome, email, empresa_id, evolution_webhook_url")
         .ilike("email", email)
         .not("empresa_id", "is", null);
 
@@ -122,12 +146,35 @@ Deno.serve(async (req) => {
           .eq("id", perfil.id);
       }
 
+      // Fetch user's companies
+      const { data: emailUserRoles } = await supabase
+        .from("user_roles")
+        .select("empresa_id, role")
+        .eq("user_id", perfil.id);
+
+      let emailEmpresasList: any[] = [];
+      if (emailUserRoles && emailUserRoles.length > 0) {
+        const eIds = emailUserRoles.map((r: any) => r.empresa_id);
+        const { data: eData } = await supabase
+          .from("empresas")
+          .select("id, nome, pessoal")
+          .in("id", eIds);
+        emailEmpresasList = (eData || []).map((e: any) => ({
+          empresa_id: e.id,
+          nome: e.nome,
+          pessoal: e.pessoal,
+          role: emailUserRoles.find((r: any) => r.empresa_id === e.id)?.role || "leitura",
+        }));
+      }
+
       return new Response(JSON.stringify({
         found: true,
         user_id: perfil.id,
         nome: perfil.nome,
         email: perfil.email,
+        telefone: phone || perfil.evolution_webhook_url || null,
         empresa_id: perfil.empresa_id,
+        empresas: emailEmpresasList,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
