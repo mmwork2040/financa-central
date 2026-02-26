@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormModal } from "@/components/modals/FormModal";
-import { useFormatInput } from "@/hooks/use-format-input";
 import { type Cliente } from "@/hooks/useClientes";
+import CepAddressFields, { type AddressData } from "@/components/common/CepAddressFields";
 
 interface ClienteFormProps {
   isOpen: boolean;
@@ -14,6 +14,7 @@ interface ClienteFormProps {
   cliente: Cliente;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleCheckboxChange: (checked: boolean) => void;
+  handleAddressChange: (field: keyof AddressData, value: string) => void;
   cpfCnpjInput: {
     displayValue: string;
     handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -32,10 +33,21 @@ const ClienteForm: React.FC<ClienteFormProps> = ({
   cliente,
   handleInputChange,
   handleCheckboxChange,
+  handleAddressChange,
   cpfCnpjInput,
   telefoneInput,
   isSaving,
 }) => {
+  const addressData: AddressData = {
+    cep: cliente.cep || "",
+    rua: cliente.rua || "",
+    numero: cliente.numero || "",
+    complemento: cliente.complemento || "",
+    bairro: cliente.bairro || "",
+    cidade: cliente.cidade || "",
+    estado: cliente.estado || "",
+  };
+
   return (
     <FormModal
       title={cliente.id ? "Editar Cliente" : "Novo Cliente"}
@@ -91,16 +103,7 @@ const ClienteForm: React.FC<ClienteFormProps> = ({
             placeholder="exemplo@email.com"
           />
         </div>
-        <div>
-          <Label htmlFor="endereco">Endereço</Label>
-          <Input
-            id="endereco"
-            name="endereco"
-            value={cliente.endereco}
-            onChange={handleInputChange}
-            placeholder="Rua, número, bairro, cidade - UF"
-          />
-        </div>
+        <CepAddressFields address={addressData} onChange={handleAddressChange} />
         <div className="flex items-center space-x-2">
           <Checkbox 
             id="ativo" 

@@ -29,6 +29,7 @@ const Fornecedores = () => {
     confirmDelete,
     handleInputChange,
     handleCheckboxChange,
+    handleAddressChange,
     handleSubmit,
     handleDelete,
     setIsModalOpen,
@@ -93,6 +94,7 @@ const Fornecedores = () => {
           currentFornecedor={currentFornecedor}
           handleInputChange={handleInputChange}
           handleCheckboxChange={handleCheckboxChange}
+          handleAddressChange={handleAddressChange}
           cpfCnpjInput={cpfCnpjInput}
           telefoneInput={telefoneInput}
         />

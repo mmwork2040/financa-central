@@ -21,7 +21,7 @@ export const saveFornecedor = async (fornecedor: Fornecedor, empresaId?: string 
     if (!fornecedor.nome) throw new Error("Nome do fornecedor é obrigatório");
 
     if (fornecedor.id) {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('fornecedores')
         .update({
           nome: fornecedor.nome,
@@ -29,6 +29,13 @@ export const saveFornecedor = async (fornecedor: Fornecedor, empresaId?: string 
           telefone: fornecedor.telefone,
           email: fornecedor.email,
           endereco: fornecedor.endereco,
+          cep: fornecedor.cep || null,
+          rua: fornecedor.rua || null,
+          numero: fornecedor.numero || null,
+          complemento: fornecedor.complemento || null,
+          bairro: fornecedor.bairro || null,
+          cidade: fornecedor.cidade || null,
+          estado: fornecedor.estado || null,
           ativo: fornecedor.ativo,
         })
         .eq('id', fornecedor.id);
@@ -36,7 +43,7 @@ export const saveFornecedor = async (fornecedor: Fornecedor, empresaId?: string 
       if (error) throw error;
       return { success: true, message: "Fornecedor atualizado com sucesso!" };
     } else {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('fornecedores')
         .insert({
           nome: fornecedor.nome,
@@ -44,6 +51,13 @@ export const saveFornecedor = async (fornecedor: Fornecedor, empresaId?: string 
           telefone: fornecedor.telefone,
           email: fornecedor.email,
           endereco: fornecedor.endereco,
+          cep: fornecedor.cep || null,
+          rua: fornecedor.rua || null,
+          numero: fornecedor.numero || null,
+          complemento: fornecedor.complemento || null,
+          bairro: fornecedor.bairro || null,
+          cidade: fornecedor.cidade || null,
+          estado: fornecedor.estado || null,
           ativo: fornecedor.ativo,
           empresa_id: empresaId,
         });
