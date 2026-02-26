@@ -38,7 +38,7 @@ const FloatingHelpButton: React.FC = () => {
             id: user.id,
             nome: userProfile.nome,
             email: userProfile.email,
-            telefone: userProfile.telefone || "",
+            telefone: userProfile.evolution_webhook_url || "",
           },
           acao: "suporte",
           assunto: assunto.trim(),
