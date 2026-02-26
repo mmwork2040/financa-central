@@ -136,14 +136,10 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (!perfil) {
-        return new Response(JSON.stringify({ found: false }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
       empresaId = perfil.empresa_id!;
 
+      // Check if user is super_admin
+      const { data: isSuperAdmin } = await supabase.rpc("is_super_admin", { _user_id: perfil.id });
 
       // Fetch user's companies
       const { data: emailUserRoles } = await supabase
@@ -152,7 +148,19 @@ Deno.serve(async (req) => {
         .eq("user_id", perfil.id);
 
       let emailEmpresasList: any[] = [];
-      if (emailUserRoles && emailUserRoles.length > 0) {
+
+      if (isSuperAdmin) {
+        // Super admin has access to ALL companies
+        const { data: allEmpresas } = await supabase
+          .from("empresas")
+          .select("id, nome, pessoal");
+        emailEmpresasList = (allEmpresas || []).map((e: any) => ({
+          empresa_id: e.id,
+          nome: e.nome,
+          pessoal: e.pessoal,
+          role: emailUserRoles?.find((r: any) => r.empresa_id === e.id)?.role || "super_admin",
+        }));
+      } else if (emailUserRoles && emailUserRoles.length > 0) {
         const eIds = emailUserRoles.map((r: any) => r.empresa_id);
         const { data: eData } = await supabase
           .from("empresas")
