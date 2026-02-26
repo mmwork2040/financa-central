@@ -34,6 +34,45 @@ interface Plataforma {
   categoria: PlataformaCategoria;
 }
 
+const LLM_MODELS: Record<string, { value: string; label: string }[]> = {
+  lovable_ai: [
+    { value: "google/gemini-3-flash-preview", label: "Gemini 3 Flash (Rápido)" },
+    { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+    { value: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite (Econômico)" },
+    { value: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+    { value: "google/gemini-3-pro-preview", label: "Gemini 3 Pro" },
+    { value: "openai/gpt-5", label: "GPT-5" },
+    { value: "openai/gpt-5-mini", label: "GPT-5 Mini" },
+    { value: "openai/gpt-5-nano", label: "GPT-5 Nano (Econômico)" },
+    { value: "openai/gpt-5.2", label: "GPT-5.2 (Mais recente)" },
+  ],
+  openai: [
+    { value: "gpt-4o", label: "GPT-4o" },
+    { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+    { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
+    { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
+    { value: "o1", label: "o1 (Raciocínio)" },
+    { value: "o1-mini", label: "o1 Mini" },
+  ],
+  google_gemini: [
+    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
+    { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
+    { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
+  ],
+  anthropic: [
+    { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet" },
+    { value: "claude-3-opus", label: "Claude 3 Opus" },
+    { value: "claude-3-sonnet", label: "Claude 3 Sonnet" },
+    { value: "claude-3-haiku", label: "Claude 3 Haiku" },
+  ],
+  deepseek: [
+    { value: "deepseek-chat", label: "DeepSeek V3" },
+    { value: "deepseek-reasoner", label: "DeepSeek R1 (Raciocínio)" },
+  ],
+};
+
 const CATEGORIAS_INFO: Record<PlataformaCategoria, { label: string; icon: any }> = {
   vendas: { label: "Vendas Digitais", icon: ShoppingCart },
   pagamentos: { label: "Pagamentos", icon: CreditCard },
@@ -297,6 +336,33 @@ const Integracoes = () => {
   const [confirmAction, setConfirmAction] = useState<{ type: 'disconnect' | 'edit'; plataforma: string } | null>(null);
   const [llmPadrao, setLlmPadrao] = useState<string | null>(null);
   const [settingDefault, setSettingDefault] = useState<string | null>(null);
+  const [savingModel, setSavingModel] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState("");
+
+  const getSelectedModel = (plataformaId: string): string => {
+    const integ = integracoes.find((i: any) => i.plataforma === plataformaId);
+    return integ?.webhook_secret || LLM_MODELS[plataformaId]?.[0]?.value || '';
+  };
+
+  const handleSaveModel = async (plataformaId: string, model: string) => {
+    if (!empresaId) return;
+    setSavingModel(plataformaId);
+    try {
+      const { error } = await (supabase as any)
+        .from('integracoes')
+        .update({ webhook_secret: model })
+        .eq('empresa_id', empresaId)
+        .eq('plataforma', plataformaId);
+      if (error) throw error;
+      setIntegracoes(prev => prev.map(i => i.plataforma === plataformaId ? { ...i, webhook_secret: model } : i));
+      const modelLabel = LLM_MODELS[plataformaId]?.find(m => m.value === model)?.label || model;
+      toast.success(`Modelo ${modelLabel} salvo como padrão!`);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao salvar modelo");
+    } finally {
+      setSavingModel(null);
+    }
+  };
 
   const getWebhookUrl = (platformId: string) => {
     if (!empresaId) return "";
@@ -361,6 +427,7 @@ const Integracoes = () => {
     setApiSecret("");
     const integ = integracoes.find((i: any) => i.plataforma === platId);
     setAmbiente(integ?.ambiente || "producao");
+    setSelectedModel(integ?.webhook_secret || LLM_MODELS[platId]?.[0]?.value || '');
     setKeyError("");
   };
 
@@ -377,7 +444,7 @@ const Integracoes = () => {
     try {
       const { data, error } = await (supabase as any)
         .from('integracoes')
-        .select('plataforma, ativo, ambiente, created_at');
+        .select('plataforma, ativo, ambiente, created_at, webhook_secret');
       if (error) throw error;
       setIntegracoes(data || []);
     } catch (error) {
@@ -450,6 +517,7 @@ const Integracoes = () => {
           plataforma: connectDialog,
           api_key_encrypted: isWebhookOnly ? 'webhook_only' : apiKey.trim(),
           api_secret_encrypted: apiSecret.trim() || null,
+          webhook_secret: currentPlat.categoria === 'ia' && selectedModel ? selectedModel : (apiSecret.trim() || null),
           ambiente,
           ativo: true,
         }, { onConflict: 'empresa_id,plataforma' });
@@ -800,6 +868,28 @@ const Integracoes = () => {
                       )}
                     </div>
                   )}
+                  {/* Model selector for connected IA platforms */}
+                  {status === 'connected' && plat.categoria === 'ia' && LLM_MODELS[plat.id] && (
+                    <div className="mt-2 space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Modelo</Label>
+                      <Select
+                        value={getSelectedModel(plat.id)}
+                        onValueChange={(val) => handleSaveModel(plat.id, val)}
+                        disabled={savingModel === plat.id}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Selecione o modelo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {LLM_MODELS[plat.id].map(m => (
+                            <SelectItem key={m.value} value={m.value} className="text-xs">
+                              {m.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   {testResult && testResult.plataforma === plat.id && (
                     <div className={`mt-2 flex items-center gap-2 text-xs rounded-md p-2 ${
                       testResult.status === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400' :
@@ -915,6 +1005,21 @@ const Integracoes = () => {
                   </a>
                 )}
               </div>
+              {/* Model selector for IA webhookOnly platforms (step 0) */}
+              {currentPlat.categoria === 'ia' && LLM_MODELS[currentPlat.id] && (
+                <div>
+                  <Label>Modelo padrão</Label>
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o modelo" /></SelectTrigger>
+                    <SelectContent>
+                      {LLM_MODELS[currentPlat.id].map(m => (
+                        <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">Este modelo será usado no chat via Evolution API</p>
+                </div>
+              )}
               {(currentPlat as any).webhookOnly ? (
                 <Button onClick={handleConnect} disabled={saving} className="w-full">
                   {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Salvando...</> : <><Check className="h-4 w-4 mr-1" /> Ativar integração</>}
@@ -955,6 +1060,21 @@ const Integracoes = () => {
                   {currentPlat.id === 'evolution_api' && (
                     <p className="text-xs text-muted-foreground mt-1">URL base da sua instância Evolution API</p>
                   )}
+                </div>
+              )}
+              {/* Model selector for IA platforms on step 1 */}
+              {currentPlat.categoria === 'ia' && LLM_MODELS[currentPlat.id] && (
+                <div>
+                  <Label>Modelo padrão</Label>
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o modelo" /></SelectTrigger>
+                    <SelectContent>
+                      {LLM_MODELS[currentPlat.id].map(m => (
+                        <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">Este modelo será usado no chat via Evolution API</p>
                 </div>
               )}
               <div>
