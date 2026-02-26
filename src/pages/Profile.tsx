@@ -252,28 +252,27 @@ const Profile = () => {
             </Button>
           </CardContent>
         </Card>
-        {/* Evolution API Webhook */}
+        {/* Telefone WhatsApp */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <MessageCircle className="h-4 w-4" />
-              Evolution API — Webhook Pessoal
+              Telefone WhatsApp
             </CardTitle>
             <CardDescription>
-              Configure a URL do webhook da sua instância Evolution API para receber e enviar mensagens pelo WhatsApp.
-              Esta URL será usada automaticamente a cada login para manter o canal de comunicação ativo.
+              Informe seu número de WhatsApp para identificação automática em integrações externas (ex: n8n).
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="evolution-webhook">URL do Webhook</Label>
+              <Label htmlFor="whatsapp-phone">Número do WhatsApp</Label>
               <div className="flex gap-2">
                 <Input
-                  id="evolution-webhook"
-                  type="url"
+                  id="whatsapp-phone"
+                  type="tel"
                   value={evolutionWebhookUrl}
                   onChange={e => setEvolutionWebhookUrl(e.target.value)}
-                  placeholder="https://sua-evolution-api.com/webhook/sua-instancia"
+                  placeholder="5511999999999"
                 />
                 <Button onClick={handleSaveWebhook} disabled={savingWebhook} size="sm">
                   {savingWebhook ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
@@ -281,7 +280,7 @@ const Profile = () => {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Exemplo: https://evolution.suaempresa.com/webhook/instancia1
+                Formato: código do país + DDD + número (ex: 5511999999999)
               </p>
             </div>
           </CardContent>
