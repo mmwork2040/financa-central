@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Save, Lock, User } from "lucide-react";
+import { Camera, Save, Lock, User, MessageCircle, Loader2 } from "lucide-react";
 import PageHeader from "@/components/common/PageHeader";
 
 const getInitials = (nome: string) =>
@@ -35,6 +35,8 @@ const Profile = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [fotoUrl, setFotoUrl] = useState<string | null>(userProfile?.foto_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [evolutionWebhookUrl, setEvolutionWebhookUrl] = useState(userProfile?.evolution_webhook_url || "");
+  const [savingWebhook, setSavingWebhook] = useState(false);
 
   const handleSaveName = async () => {
     if (!nome.trim()) {
@@ -128,6 +130,22 @@ const Profile = () => {
       toast.error(error.message || "Erro ao fazer upload da foto");
     } finally {
       setUploadingPhoto(false);
+    }
+  };
+
+  const handleSaveWebhook = async () => {
+    setSavingWebhook(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("perfis")
+        .update({ evolution_webhook_url: evolutionWebhookUrl.trim() || null })
+        .eq("id", user!.id);
+      if (error) throw error;
+      toast.success("Webhook da Evolution API salvo com sucesso");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao salvar webhook");
+    } finally {
+      setSavingWebhook(false);
     }
   };
 
@@ -232,6 +250,40 @@ const Profile = () => {
             <Button onClick={handleChangePassword} disabled={savingPassword} className="w-full">
               {savingPassword ? "Alterando..." : "Alterar Senha"}
             </Button>
+          </CardContent>
+        </Card>
+        {/* Evolution API Webhook */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <MessageCircle className="h-4 w-4" />
+              Evolution API — Webhook Pessoal
+            </CardTitle>
+            <CardDescription>
+              Configure a URL do webhook da sua instância Evolution API para receber e enviar mensagens pelo WhatsApp.
+              Esta URL será usada automaticamente a cada login para manter o canal de comunicação ativo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="evolution-webhook">URL do Webhook</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="evolution-webhook"
+                  type="url"
+                  value={evolutionWebhookUrl}
+                  onChange={e => setEvolutionWebhookUrl(e.target.value)}
+                  placeholder="https://sua-evolution-api.com/webhook/sua-instancia"
+                />
+                <Button onClick={handleSaveWebhook} disabled={savingWebhook} size="sm">
+                  {savingWebhook ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+                  {savingWebhook ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Exemplo: https://evolution.suaempresa.com/webhook/instancia1
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
