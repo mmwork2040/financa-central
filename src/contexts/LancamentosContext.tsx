@@ -540,7 +540,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 id: user?.id,
                 nome: userProfile?.nome,
                 email: userProfile?.email,
-                telefone: (userProfile as any)?.telefone || null,
+                telefone: userProfile?.evolution_webhook_url || null,
               },
               acao: "edicao",
             },

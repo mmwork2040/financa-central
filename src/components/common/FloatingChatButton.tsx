@@ -199,7 +199,7 @@ const FloatingChatButton: React.FC = () => {
             id: user?.id,
             nome: userProfile?.nome,
             email: userProfile?.email,
-            telefone: (userProfile as any)?.telefone || "",
+            telefone: userProfile?.evolution_webhook_url || "",
           },
           acao: "Chat",
         },

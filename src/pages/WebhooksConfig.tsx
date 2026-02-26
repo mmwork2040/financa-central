@@ -230,7 +230,7 @@ const WebhooksConfig = () => {
       id: user?.id || "test",
       nome: userProfile?.nome || "Super Admin (Teste)",
       email: userProfile?.email || "teste@sistema.com",
-      telefone: userProfile?.telefone || "",
+      telefone: userProfile?.evolution_webhook_url || "",
     };
 
     return base;
@@ -276,7 +276,7 @@ const WebhooksConfig = () => {
             id: user?.id || "test",
             nome: userProfile?.nome || "Super Admin (Teste)",
             email: userProfile?.email || "teste@sistema.com",
-            telefone: userProfile?.telefone || "",
+            telefone: userProfile?.evolution_webhook_url || "",
           },
           acao: "teste",
         },
