@@ -68,6 +68,10 @@ export const useFornecedores = () => {
     setCurrentFornecedor(prev => ({ ...prev, ativo: checked }));
   };
 
+  const handleAddressChange = (field: string, value: string) => {
+    setCurrentFornecedor(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -220,6 +224,7 @@ export const useFornecedores = () => {
     confirmDelete,
     handleInputChange,
     handleCheckboxChange,
+    handleAddressChange,
     handleSubmit,
     handleDelete,
     setIsModalOpen,

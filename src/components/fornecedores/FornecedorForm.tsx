@@ -4,12 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Fornecedor } from "@/types/fornecedor.types";
-import { useFormatInput } from "@/hooks/use-format-input";
+import CepAddressFields, { type AddressData } from "@/components/common/CepAddressFields";
 
 interface FornecedorFormProps {
   currentFornecedor: Fornecedor;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleCheckboxChange: (checked: boolean) => void;
+  handleAddressChange: (field: keyof AddressData, value: string) => void;
   cpfCnpjInput?: {
     displayValue: string;
     handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -24,9 +25,20 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
   currentFornecedor,
   handleInputChange,
   handleCheckboxChange,
+  handleAddressChange,
   cpfCnpjInput,
   telefoneInput,
 }) => {
+  const addressData: AddressData = {
+    cep: currentFornecedor.cep || "",
+    rua: currentFornecedor.rua || "",
+    numero: currentFornecedor.numero || "",
+    complemento: currentFornecedor.complemento || "",
+    bairro: currentFornecedor.bairro || "",
+    cidade: currentFornecedor.cidade || "",
+    estado: currentFornecedor.estado || "",
+  };
+
   return (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-1 gap-4">
@@ -75,16 +87,7 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
           placeholder="exemplo@email.com"
         />
       </div>
-      <div>
-        <Label htmlFor="endereco">Endereço</Label>
-        <Input
-          id="endereco"
-          name="endereco"
-          value={currentFornecedor.endereco || ''}
-          onChange={handleInputChange}
-          placeholder="Rua, número, bairro, cidade - UF"
-        />
-      </div>
+      <CepAddressFields address={addressData} onChange={handleAddressChange} />
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="ativo" 

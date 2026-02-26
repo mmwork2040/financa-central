@@ -89,6 +89,10 @@ const Clientes = () => {
     }));
   };
 
+  const handleAddressChange = (field: string, value: string) => {
+    setCurrentCliente(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -286,6 +290,7 @@ const Clientes = () => {
         cliente={currentCliente}
         handleInputChange={handleInputChange}
         handleCheckboxChange={handleCheckboxChange}
+        handleAddressChange={handleAddressChange}
         cpfCnpjInput={cpfCnpjInput}
         telefoneInput={telefoneInput}
         isSaving={isSaving}

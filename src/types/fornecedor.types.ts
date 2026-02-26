@@ -6,6 +6,13 @@ export interface Fornecedor {
   telefone?: string;
   email?: string;
   endereco?: string;
+  cep?: string;
+  rua?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
   ativo: boolean;
 }
 
@@ -16,5 +23,12 @@ export const initialFornecedor: Fornecedor = {
   telefone: "",
   email: "",
   endereco: "",
+  cep: "",
+  rua: "",
+  numero: "",
+  complemento: "",
+  bairro: "",
+  cidade: "",
+  estado: "",
   ativo: true,
 };

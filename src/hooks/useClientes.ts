@@ -11,6 +11,13 @@ export interface Cliente {
   telefone?: string;
   email?: string;
   endereco?: string;
+  cep?: string;
+  rua?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
   ativo: boolean;
   origem?: string;
 }
@@ -22,6 +29,13 @@ export const initialCliente: Cliente = {
   telefone: "",
   email: "",
   endereco: "",
+  cep: "",
+  rua: "",
+  numero: "",
+  complemento: "",
+  bairro: "",
+  cidade: "",
+  estado: "",
   ativo: true,
 };
 
@@ -61,13 +75,20 @@ export const useClientes = () => {
         const { error } = await supabase
           .from('clientes')
           .update({
-            nome: cliente.nome,
+          nome: cliente.nome,
             cpf_cnpj: cliente.cpf_cnpj || null,
             telefone: cliente.telefone || null,
             email: cliente.email || null,
             endereco: cliente.endereco || null,
+            cep: cliente.cep || null,
+            rua: cliente.rua || null,
+            numero: cliente.numero || null,
+            complemento: cliente.complemento || null,
+            bairro: cliente.bairro || null,
+            cidade: cliente.cidade || null,
+            estado: cliente.estado || null,
             ativo: cliente.ativo,
-          })
+          } as any)
           .eq('id', cliente.id);
         if (error) throw error;
         toast.success("Cliente atualizado com sucesso!");
@@ -80,9 +101,16 @@ export const useClientes = () => {
             telefone: cliente.telefone || null,
             email: cliente.email || null,
             endereco: cliente.endereco || null,
+            cep: cliente.cep || null,
+            rua: cliente.rua || null,
+            numero: cliente.numero || null,
+            complemento: cliente.complemento || null,
+            bairro: cliente.bairro || null,
+            cidade: cliente.cidade || null,
+            estado: cliente.estado || null,
             ativo: cliente.ativo,
             empresa_id: empresaId,
-          });
+          } as any);
         if (error) throw error;
         toast.success("Cliente cadastrado com sucesso!");
       }
