@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.export-integracoes]
 verify_jwt = false
+
+[functions.evolution-ai-chat]
+verify_jwt = false
