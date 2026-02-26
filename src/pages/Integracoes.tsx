@@ -226,20 +226,6 @@ const PLATAFORMAS: Plataforma[] = [
     needsSecret: false, usesWebhook: false, keyValidation: { hint: "Token no formato 123456:ABC-DEF..." },
     categoria: "comunicacao",
   },
-  {
-    id: "evolution_api", name: "Evolution API", description: "WhatsApp via Evolution API (auto-hospedado)",
-    icon: MessageCircle, color: "bg-emerald-100 text-emerald-700",
-    site: "https://doc.evolution-api.com/", doc: "https://doc.evolution-api.com/",
-    events: ["messages.upsert", "messages.update", "connection.update"],
-    steps: [
-      "Acesse o painel da sua instância Evolution API",
-      "Vá em Configurações e copie o Global API Key ou Instance API Key",
-      "Copie também a URL do servidor (ex: https://sua-evolution.com)",
-      "Cole a URL do servidor e a API Key nos campos abaixo",
-    ],
-    needsSecret: true, usesWebhook: true, keyValidation: { hint: "API Key da Evolution API" },
-    categoria: "comunicacao",
-  },
   // --- Inteligência Artificial ---
   {
     id: "lovable_ai", name: "Lovable AI", description: "IA integrada (sem configuração de chave)",
