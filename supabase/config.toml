@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.n8n-handler]
 verify_jwt = false
+
+[functions.n8n-query]
+verify_jwt = false
