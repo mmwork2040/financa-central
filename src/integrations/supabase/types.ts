@@ -704,6 +704,27 @@ export type Database = {
           },
         ]
       }
+      n8n_chat_histories: {
+        Row: {
+          created_at: string | null
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
       notificacoes: {
         Row: {
           created_at: string
