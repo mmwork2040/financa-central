@@ -29,6 +29,3 @@ verify_jwt = false
 
 [functions.n8n-handler]
 verify_jwt = false
-
-[functions.get-db-credentials]
-verify_jwt = false
