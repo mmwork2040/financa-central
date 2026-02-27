@@ -1,0 +1,357 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    const body = await req.json();
+    const { action, empresa_id, user_id, periodo, filters } = body;
+
+    if (!empresa_id) {
+      return new Response(JSON.stringify({ error: "empresa_id is required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Helper: date range from periodo
+    const getDateRange = (p?: string) => {
+      const now = new Date();
+      const fim = now.toISOString().split("T")[0];
+      let inicio: string;
+      switch (p) {
+        case "semana":
+          inicio = new Date(now.getTime() - 7 * 86400000).toISOString().split("T")[0];
+          break;
+        case "mes":
+          inicio = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+          break;
+        case "trimestre":
+          inicio = new Date(now.getFullYear(), now.getMonth() - 2, 1).toISOString().split("T")[0];
+          break;
+        case "semestre":
+          inicio = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().split("T")[0];
+          break;
+        case "ano":
+          inicio = new Date(now.getFullYear(), 0, 1).toISOString().split("T")[0];
+          break;
+        default:
+          inicio = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+      }
+      return { inicio, fim };
+    };
+
+    let result: any = null;
+
+    switch (action) {
+      // ─── RESUMO FINANCEIRO GERAL ───
+      case "resumo-financeiro": {
+        const { inicio, fim } = getDateRange(periodo);
+
+        const { data: lancamentos } = await supabase
+          .from("lancamentos")
+          .select("tipo, valor, status, descricao, data_vencimento, data_pagamento")
+          .eq("empresa_id", empresa_id)
+          .gte("data_vencimento", inicio)
+          .lte("data_vencimento", fim);
+
+        const receitas = (lancamentos || []).filter((l: any) => l.tipo === "receita");
+        const despesas = (lancamentos || []).filter((l: any) => l.tipo === "despesa");
+        const totalReceitas = receitas.reduce((s: number, l: any) => s + Number(l.valor), 0);
+        const totalDespesas = despesas.reduce((s: number, l: any) => s + Number(l.valor), 0);
+        const pendentes = (lancamentos || []).filter((l: any) => l.status === "pendente");
+        const pagos = (lancamentos || []).filter((l: any) => l.status === "pago");
+
+        const { data: contas } = await supabase
+          .from("contas_bancarias")
+          .select("nome, saldo_atual")
+          .eq("empresa_id", empresa_id);
+
+        const saldoTotal = (contas || []).reduce((s: number, c: any) => s + Number(c.saldo_atual), 0);
+
+        result = {
+          periodo: { inicio, fim },
+          receitas: { total: totalReceitas, quantidade: receitas.length },
+          despesas: { total: totalDespesas, quantidade: despesas.length },
+          saldo: totalReceitas - totalDespesas,
+          pendentes: { total: pendentes.reduce((s: number, l: any) => s + Number(l.valor), 0), quantidade: pendentes.length },
+          pagos: { total: pagos.reduce((s: number, l: any) => s + Number(l.valor), 0), quantidade: pagos.length },
+          contas_bancarias: contas || [],
+          saldo_total_contas: saldoTotal,
+        };
+        break;
+      }
+
+      // ─── LANÇAMENTOS (RECEITAS E DESPESAS) ───
+      case "lancamentos": {
+        const { inicio, fim } = getDateRange(periodo);
+        let query = supabase
+          .from("lancamentos")
+          .select("*, categoria:categoria_id(nome), cliente:cliente_id(nome), fornecedor:fornecedor_id(nome), conta_bancaria:conta_bancaria_id(nome), forma_pagamento:forma_pagamento_id(descricao), projeto:projeto_id(nome)")
+          .eq("empresa_id", empresa_id)
+          .gte("data_vencimento", inicio)
+          .lte("data_vencimento", fim)
+          .order("data_vencimento", { ascending: false });
+
+        if (filters?.tipo) query = query.eq("tipo", filters.tipo);
+        if (filters?.status) query = query.eq("status", filters.status);
+        if (filters?.categoria_id) query = query.eq("categoria_id", filters.categoria_id);
+        if (filters?.limit) query = query.limit(filters.limit);
+
+        const { data, error } = await query;
+        if (error) throw error;
+        result = data;
+        break;
+      }
+
+      // ─── DESPESAS PENDENTES ───
+      case "despesas-pendentes": {
+        const { data } = await supabase
+          .from("lancamentos")
+          .select("descricao, valor, data_vencimento, categoria:categoria_id(nome), fornecedor:fornecedor_id(nome)")
+          .eq("empresa_id", empresa_id)
+          .eq("tipo", "despesa")
+          .eq("status", "pendente")
+          .order("data_vencimento", { ascending: true })
+          .limit(filters?.limit || 20);
+
+        result = data;
+        break;
+      }
+
+      // ─── RECEITAS PENDENTES ───
+      case "receitas-pendentes": {
+        const { data } = await supabase
+          .from("lancamentos")
+          .select("descricao, valor, data_vencimento, categoria:categoria_id(nome), cliente:cliente_id(nome)")
+          .eq("empresa_id", empresa_id)
+          .eq("tipo", "receita")
+          .eq("status", "pendente")
+          .order("data_vencimento", { ascending: true })
+          .limit(filters?.limit || 20);
+
+        result = data;
+        break;
+      }
+
+      // ─── RESUMO POR CATEGORIAS ───
+      case "resumo-categorias": {
+        const { inicio, fim } = getDateRange(periodo);
+
+        const { data: lancamentos } = await supabase
+          .from("lancamentos")
+          .select("tipo, valor, categoria:categoria_id(nome)")
+          .eq("empresa_id", empresa_id)
+          .gte("data_vencimento", inicio)
+          .lte("data_vencimento", fim);
+
+        const categorias: Record<string, { receitas: number; despesas: number }> = {};
+        (lancamentos || []).forEach((l: any) => {
+          const cat = l.categoria?.nome || "Sem categoria";
+          if (!categorias[cat]) categorias[cat] = { receitas: 0, despesas: 0 };
+          if (l.tipo === "receita") categorias[cat].receitas += Number(l.valor);
+          else categorias[cat].despesas += Number(l.valor);
+        });
+
+        result = Object.entries(categorias).map(([nome, vals]) => ({ categoria: nome, ...vals }));
+        break;
+      }
+
+      // ─── VENDAS DIGITAIS ───
+      case "vendas-digitais": {
+        const { inicio, fim } = getDateRange(periodo);
+        let query = supabase
+          .from("vendas_digitais")
+          .select("*")
+          .eq("empresa_id", empresa_id)
+          .gte("data_venda", inicio)
+          .lte("data_venda", fim)
+          .order("data_venda", { ascending: false });
+
+        if (filters?.plataforma) query = query.eq("plataforma", filters.plataforma);
+        if (filters?.status) query = query.eq("status", filters.status);
+        if (filters?.limit) query = query.limit(filters.limit);
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        const totalBruto = (data || []).reduce((s: number, v: any) => s + Number(v.valor_bruto), 0);
+        const totalLiquido = (data || []).reduce((s: number, v: any) => s + Number(v.valor_liquido), 0);
+        const totalTaxas = (data || []).reduce((s: number, v: any) => s + Number(v.taxa), 0);
+
+        result = {
+          vendas: data,
+          resumo: { total_bruto: totalBruto, total_liquido: totalLiquido, total_taxas: totalTaxas, quantidade: (data || []).length },
+        };
+        break;
+      }
+
+      // ─── RECEBIMENTOS DIGITAIS ───
+      case "recebimentos-digitais": {
+        const { data: vendas } = await supabase
+          .from("vendas_digitais")
+          .select("id")
+          .eq("empresa_id", empresa_id);
+
+        const vendaIds = (vendas || []).map((v: any) => v.id);
+
+        if (vendaIds.length > 0) {
+          let query = supabase
+            .from("recebimentos_digitais")
+            .select("*, venda:venda_id(produto, plataforma, cliente)")
+            .in("venda_id", vendaIds)
+            .order("data_prevista", { ascending: true });
+
+          if (filters?.status) query = query.eq("status", filters.status);
+          if (filters?.limit) query = query.limit(filters.limit);
+
+          const { data } = await query;
+          result = data;
+        } else {
+          result = [];
+        }
+        break;
+      }
+
+      // ─── CONTAS BANCÁRIAS ───
+      case "contas-bancarias": {
+        const { data } = await supabase
+          .from("contas_bancarias")
+          .select("*")
+          .eq("empresa_id", empresa_id);
+
+        result = data;
+        break;
+      }
+
+      // ─── CLIENTES ───
+      case "clientes": {
+        let query = supabase
+          .from("clientes")
+          .select("*")
+          .eq("empresa_id", empresa_id)
+          .order("nome", { ascending: true });
+
+        if (filters?.ativo !== undefined) query = query.eq("ativo", filters.ativo);
+        if (filters?.search) query = query.ilike("nome", `%${filters.search}%`);
+        if (filters?.limit) query = query.limit(filters.limit);
+
+        const { data } = await query;
+        result = data;
+        break;
+      }
+
+      // ─── FORNECEDORES ───
+      case "fornecedores": {
+        let query = supabase
+          .from("fornecedores")
+          .select("*")
+          .eq("empresa_id", empresa_id)
+          .order("nome", { ascending: true });
+
+        if (filters?.ativo !== undefined) query = query.eq("ativo", filters.ativo);
+        if (filters?.search) query = query.ilike("nome", `%${filters.search}%`);
+        if (filters?.limit) query = query.limit(filters.limit);
+
+        const { data } = await query;
+        result = data;
+        break;
+      }
+
+      // ─── PROJETOS ───
+      case "projetos": {
+        let query = supabase
+          .from("projetos")
+          .select("*")
+          .eq("empresa_id", empresa_id)
+          .order("created_at", { ascending: false });
+
+        if (filters?.status) query = query.eq("status", filters.status);
+        if (filters?.limit) query = query.limit(filters.limit);
+
+        const { data } = await query;
+        result = data;
+        break;
+      }
+
+      // ─── CATEGORIAS ───
+      case "categorias": {
+        const { data } = await supabase
+          .from("categorias")
+          .select("*")
+          .eq("empresa_id", empresa_id)
+          .order("nome", { ascending: true });
+
+        result = data;
+        break;
+      }
+
+      // ─── FORMAS DE PAGAMENTO ───
+      case "formas-pagamento": {
+        const { data } = await supabase
+          .from("formas_pagamento")
+          .select("*")
+          .eq("empresa_id", empresa_id);
+
+        result = data;
+        break;
+      }
+
+      // ─── FLUXO DE CAIXA (comparativo mensal) ───
+      case "fluxo-caixa": {
+        const { inicio, fim } = getDateRange(periodo || "semestre");
+
+        const { data: lancamentos } = await supabase
+          .from("lancamentos")
+          .select("tipo, valor, data_vencimento")
+          .eq("empresa_id", empresa_id)
+          .gte("data_vencimento", inicio)
+          .lte("data_vencimento", fim);
+
+        const meses: Record<string, { receitas: number; despesas: number }> = {};
+        (lancamentos || []).forEach((l: any) => {
+          const mes = l.data_vencimento?.slice(0, 7); // YYYY-MM
+          if (!meses[mes]) meses[mes] = { receitas: 0, despesas: 0 };
+          if (l.tipo === "receita") meses[mes].receitas += Number(l.valor);
+          else meses[mes].despesas += Number(l.valor);
+        });
+
+        result = Object.entries(meses)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([mes, vals]) => ({ mes, ...vals, saldo: vals.receitas - vals.despesas }));
+        break;
+      }
+
+      default:
+        return new Response(JSON.stringify({
+          error: "Invalid action",
+          available_actions: [
+            "resumo-financeiro", "lancamentos", "despesas-pendentes", "receitas-pendentes",
+            "resumo-categorias", "vendas-digitais", "recebimentos-digitais", "contas-bancarias",
+            "clientes", "fornecedores", "projetos", "categorias", "formas-pagamento", "fluxo-caixa"
+          ],
+        }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+    }
+
+    return new Response(JSON.stringify({ success: true, action, data: result }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error: any) {
+    console.error("n8n-query error:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
