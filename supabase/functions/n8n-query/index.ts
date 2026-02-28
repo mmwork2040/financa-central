@@ -40,17 +40,33 @@ Deno.serve(async (req) => {
     if (rawBody && typeof rawBody === "object" && rawBody.json_montado && !rawBody.action) {
       rawBody = rawBody.json_montado;
     }
+    // Helper: limpar valores que são placeholders literais do n8n (ex: "{empresa_id}", "", undefined)
+    const sanitize = (val: any): any => {
+      if (val === undefined || val === null) return undefined;
+      if (typeof val === "string") {
+        const trimmed = val.trim();
+        // Detectar placeholders literais: {param}, {{param}}, $fromAI(...), strings vazias
+        if (!trimmed || /^\{.*\}$/.test(trimmed) || /^\$fromAI\(/.test(trimmed)) return undefined;
+      }
+      return val;
+    };
+
     const body = rawBody;
-    const { action, empresa_id, user_id, periodo } = body;
+    const action = sanitize(body.action) || body.action;
+    const empresa_id = sanitize(body.empresa_id);
+    const user_id = sanitize(body.user_id);
+    const periodo = sanitize(body.periodo);
     
     // Suportar filtros como objeto aninhado OU como parâmetros top-level (flat)
-    // Isso garante compatibilidade com HTTP Request Tool do n8n que não suporta objetos aninhados
     const filters = body.filters || {};
-    // Mesclar parâmetros flat no filters (prioridade para o que vier em filters)
     const flatFilterKeys = ["tipo", "status", "categoria_id", "plataforma", "ativo", "search", "limit"];
     for (const key of flatFilterKeys) {
-      if (body[key] !== undefined && filters[key] === undefined) {
-        filters[key] = body[key];
+      const rawVal = body[key] !== undefined ? body[key] : filters[key];
+      const cleanVal = sanitize(rawVal);
+      if (cleanVal !== undefined) {
+        filters[key] = cleanVal;
+      } else {
+        delete filters[key];
       }
     }
 

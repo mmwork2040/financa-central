@@ -52,7 +52,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
     ],
-    body: { action: "resumo-financeiro", empresa_id: "{empresa_id}", periodo: "{periodo}" },
+    body: { action: "resumo-financeiro", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano. Padrão: mes') }}" },
   },
   {
     action: "lancamentos",
@@ -87,7 +87,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "categoria_id", type: "string", required: false, description: "UUID da categoria" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "lancamentos", empresa_id: "{empresa_id}", periodo: "{periodo}", tipo: "{tipo}", status: "{status}", categoria_id: "{categoria_id}", limit: "{limit}" },
+    body: { action: "lancamentos", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa') }}", status: "{{ $fromAI('status', 'pendente ou pago') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "despesas-pendentes",
@@ -111,7 +111,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "despesas-pendentes", empresa_id: "{empresa_id}", limit: "{limit}" },
+    body: { action: "despesas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "receitas-pendentes",
@@ -135,7 +135,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "receitas-pendentes", empresa_id: "{empresa_id}", limit: "{limit}" },
+    body: { action: "receitas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "resumo-categorias",
@@ -161,7 +161,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
     ],
-    body: { action: "resumo-categorias", empresa_id: "{empresa_id}", periodo: "{periodo}" },
+    body: { action: "resumo-categorias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}" },
   },
   {
     action: "vendas-digitais",
@@ -196,7 +196,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "status", type: "string", required: false, description: "Status da venda (ex: aprovada, pendente)" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "vendas-digitais", empresa_id: "{empresa_id}", periodo: "{periodo}", plataforma: "{plataforma}", status: "{status}", limit: "{limit}" },
+    body: { action: "vendas-digitais", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", plataforma: "{{ $fromAI('plataforma', 'Nome da plataforma ex: Hotmart, Kiwify') }}", status: "{{ $fromAI('status', 'Status da venda ex: aprovada, pendente') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "recebimentos-digitais",
@@ -222,7 +222,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "status", type: "string", required: false, description: "Status: pendente ou recebido" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "recebimentos-digitais", empresa_id: "{empresa_id}", status: "{status}", limit: "{limit}" },
+    body: { action: "recebimentos-digitais", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", status: "{{ $fromAI('status', 'pendente ou recebido') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "contas-bancarias",
@@ -244,7 +244,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
     ],
-    body: { action: "contas-bancarias", empresa_id: "{empresa_id}" },
+    body: { action: "contas-bancarias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}" },
   },
   {
     action: "clientes",
@@ -272,7 +272,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "search", type: "string", required: false, description: "Busca por nome" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "clientes", empresa_id: "{empresa_id}", ativo: "{ativo}", search: "{search}", limit: "{limit}" },
+    body: { action: "clientes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", ativo: "{{ $fromAI('ativo', 'true ou false') }}", search: "{{ $fromAI('search', 'Busca por nome') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "fornecedores",
@@ -300,7 +300,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "search", type: "string", required: false, description: "Busca por nome" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "fornecedores", empresa_id: "{empresa_id}", ativo: "{ativo}", search: "{search}", limit: "{limit}" },
+    body: { action: "fornecedores", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", ativo: "{{ $fromAI('ativo', 'true ou false') }}", search: "{{ $fromAI('search', 'Busca por nome') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "projetos",
@@ -326,7 +326,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "status", type: "string", required: false, description: "Status: ativo, concluido ou cancelado" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "projetos", empresa_id: "{empresa_id}", status: "{status}", limit: "{limit}" },
+    body: { action: "projetos", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", status: "{{ $fromAI('status', 'ativo, concluido ou cancelado') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "categorias",
@@ -347,7 +347,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
     ],
-    body: { action: "categorias", empresa_id: "{empresa_id}" },
+    body: { action: "categorias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}" },
   },
   {
     action: "formas-pagamento",
@@ -368,7 +368,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
     ],
-    body: { action: "formas-pagamento", empresa_id: "{empresa_id}" },
+    body: { action: "formas-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}" },
   },
   {
     action: "fluxo-caixa",
@@ -394,7 +394,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
     ],
-    body: { action: "fluxo-caixa", empresa_id: "{empresa_id}", periodo: "{periodo}" },
+    body: { action: "fluxo-caixa", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}" },
   },
 ];
 
@@ -533,7 +533,7 @@ const N8nJsonTemplates = () => {
               <li><strong>Send Body:</strong> ON</li>
               <li><strong>Body Content Type:</strong> JSON</li>
               <li><strong>Specify Body:</strong> <strong>"Using JSON"</strong></li>
-              <li><strong>JSON:</strong> Cole da aba <em>"Body JSON"</em> abaixo</li>
+              <li><strong>JSON:</strong> Cole da aba <em>"Body JSON"</em> abaixo (os <code className="text-[11px] bg-background px-1 rounded">{"{{ $fromAI() }}"}</code> serão preenchidos pelo agente)</li>
             </ol>
           </div>
           <div className="mt-2 p-2 rounded border border-red-500/20 bg-red-500/5">
@@ -654,7 +654,7 @@ const N8nJsonTemplates = () => {
                           <TabsContent value="body" className="mt-0">
                             <div className="flex items-center justify-between mb-1.5">
                               <span className="text-[11px] text-muted-foreground">
-                                Specify Body → <strong>"Using JSON"</strong> → cole este JSON. Os placeholders <code className="text-[10px] bg-background px-1 rounded">{`{param}`}</code> são preenchidos automaticamente pelo agente de IA:
+                                Specify Body → <strong>"Using JSON"</strong> → cole este JSON. Os <code className="text-[10px] bg-background px-1 rounded">{"{{ $fromAI() }}"}</code> são preenchidos automaticamente pelo agente de IA:
                               </span>
                               <Button
                                 variant="ghost"
