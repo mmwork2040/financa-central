@@ -75,8 +75,24 @@ Deno.serve(async (req) => {
             .select("empresa_id, role")
             .eq("user_id", perfil.id);
 
+          const isSuper = (userRoles || []).some((r: any) => r.role === "super_admin");
+
           let empresasList: any[] = [];
-          if (userRoles && userRoles.length > 0) {
+          if (isSuper) {
+            const { data: allEmpresas } = await supabase
+              .from("empresas")
+              .select("id, nome, pessoal")
+              .order("nome");
+            empresasList = (allEmpresas || []).map((e: any) => {
+              const existingRole = (userRoles || []).find((r: any) => r.empresa_id === e.id)?.role;
+              return {
+                empresa_id: e.id,
+                nome: e.nome,
+                pessoal: e.pessoal,
+                role: existingRole === "super_admin" ? "admin" : (existingRole || "admin"),
+              };
+            });
+          } else if (userRoles && userRoles.length > 0) {
             const empresaIds = userRoles.map((r: any) => r.empresa_id);
             const { data: empresasData } = await supabase
               .from("empresas")
@@ -176,14 +192,31 @@ Deno.serve(async (req) => {
 
       empresaId = perfil.empresa_id!;
 
-      // Fetch user's companies (only where they have explicit user_roles)
+      // Check if user is super_admin
       const { data: emailUserRoles } = await supabase
         .from("user_roles")
         .select("empresa_id, role")
         .eq("user_id", perfil.id);
 
+      const isSuperAdmin = (emailUserRoles || []).some((r: any) => r.role === "super_admin");
+
       let emailEmpresasList: any[] = [];
-      if (emailUserRoles && emailUserRoles.length > 0) {
+      if (isSuperAdmin) {
+        // Super admin sees ALL empresas
+        const { data: allEmpresas } = await supabase
+          .from("empresas")
+          .select("id, nome, pessoal")
+          .order("nome");
+        emailEmpresasList = (allEmpresas || []).map((e: any) => {
+          const existingRole = (emailUserRoles || []).find((r: any) => r.empresa_id === e.id)?.role;
+          return {
+            empresa_id: e.id,
+            nome: e.nome,
+            pessoal: e.pessoal,
+            role: existingRole === "super_admin" ? "admin" : (existingRole || "admin"),
+          };
+        });
+      } else if (emailUserRoles && emailUserRoles.length > 0) {
         const eIds = emailUserRoles.map((r: any) => r.empresa_id);
         const { data: eData } = await supabase
           .from("empresas")
