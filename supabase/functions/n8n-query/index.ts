@@ -442,13 +442,147 @@ Deno.serve(async (req) => {
         break;
       }
 
+      // ─── CRIAR LANÇAMENTO (RECEITA OU DESPESA) ───
+      case "criar-lancamento": {
+        const descricao = sanitize(body.descricao);
+        const valor = body.valor;
+        const tipo = sanitize(body.tipo) || "despesa";
+        const status_lanc = sanitize(body.status) || "pendente";
+        const data_vencimento = sanitize(body.data_vencimento);
+        const categoria_id = sanitize(body.categoria_id);
+        const cliente_id = sanitize(body.cliente_id);
+        const fornecedor_id = sanitize(body.fornecedor_id);
+        const conta_bancaria_id = sanitize(body.conta_bancaria_id);
+        const forma_pagamento_id = sanitize(body.forma_pagamento_id);
+        const projeto_id = sanitize(body.projeto_id);
+        const data_pagamento = sanitize(body.data_pagamento);
+
+        if (!descricao || valor === undefined || valor === null) {
+          return new Response(JSON.stringify({ error: "descricao and valor are required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (!data_vencimento) {
+          return new Response(JSON.stringify({ error: "data_vencimento is required (YYYY-MM-DD)" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const insertData: any = {
+          empresa_id,
+          descricao,
+          valor: Number(valor),
+          tipo,
+          status: status_lanc,
+          data_vencimento,
+          origem: "n8n",
+        };
+        if (categoria_id) insertData.categoria_id = categoria_id;
+        if (cliente_id) insertData.cliente_id = cliente_id;
+        if (fornecedor_id) insertData.fornecedor_id = fornecedor_id;
+        if (conta_bancaria_id) insertData.conta_bancaria_id = conta_bancaria_id;
+        if (forma_pagamento_id) insertData.forma_pagamento_id = forma_pagamento_id;
+        if (projeto_id) insertData.projeto_id = projeto_id;
+        if (data_pagamento) insertData.data_pagamento = data_pagamento;
+
+        const { data: newLanc, error: insertError } = await supabase
+          .from("lancamentos")
+          .insert(insertData)
+          .select("*")
+          .single();
+
+        if (insertError) throw insertError;
+        result = newLanc;
+        break;
+      }
+
+      // ─── ATUALIZAR TELEGRAM ID DO USUÁRIO ───
+      case "atualizar-telegram-id": {
+        const telegram_id = sanitize(body.telegram_id);
+        const target_user_id = sanitize(body.user_id) || sanitize(user_id);
+        const target_email = sanitize(body.email);
+
+        if (!telegram_id) {
+          return new Response(JSON.stringify({ error: "telegram_id is required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (!target_user_id && !target_email) {
+          return new Response(JSON.stringify({ error: "user_id or email is required to identify the user" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        let updateQuery = supabase
+          .from("perfis")
+          .update({ telegram_id: String(telegram_id) });
+
+        if (target_user_id) {
+          updateQuery = updateQuery.eq("id", target_user_id);
+        } else if (target_email) {
+          updateQuery = updateQuery.ilike("email", target_email.trim().toLowerCase());
+        }
+
+        const { data: updatedPerfil, error: updateError } = await updateQuery
+          .select("id, nome, email, telegram_id")
+          .single();
+
+        if (updateError) throw updateError;
+        result = updatedPerfil;
+        break;
+      }
+
+      // ─── ATUALIZAR TELEGRAM ID DO CLIENTE ───
+      case "atualizar-telegram-cliente": {
+        const telegram_id = sanitize(body.telegram_id);
+        const cliente_id_target = sanitize(body.cliente_id);
+        const cliente_email = sanitize(body.email);
+        const cliente_telefone = sanitize(body.telefone);
+
+        if (!telegram_id) {
+          return new Response(JSON.stringify({ error: "telegram_id is required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (!cliente_id_target && !cliente_email && !cliente_telefone) {
+          return new Response(JSON.stringify({ error: "cliente_id, email or telefone is required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        let clienteQuery = supabase
+          .from("clientes")
+          .update({ telegram_id: String(telegram_id) })
+          .eq("empresa_id", empresa_id);
+
+        if (cliente_id_target) {
+          clienteQuery = clienteQuery.eq("id", cliente_id_target);
+        } else if (cliente_email) {
+          clienteQuery = clienteQuery.ilike("email", cliente_email.trim().toLowerCase());
+        } else if (cliente_telefone) {
+          clienteQuery = clienteQuery.ilike("telefone", `%${cliente_telefone.replace(/\D/g, "")}%`);
+        }
+
+        const { data: updatedCliente, error: clienteError } = await clienteQuery
+          .select("id, nome, email, telefone, telegram_id")
+          .single();
+
+        if (clienteError) throw clienteError;
+        result = updatedCliente;
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({
           error: "Invalid action",
           available_actions: [
             "resumo-financeiro", "lancamentos", "despesas-pendentes", "receitas-pendentes",
             "resumo-categorias", "vendas-digitais", "recebimentos-digitais", "contas-bancarias",
-            "clientes", "fornecedores", "projetos", "categorias", "formas-pagamento", "fluxo-caixa"
+            "clientes", "fornecedores", "projetos", "categorias", "formas-pagamento", "fluxo-caixa",
+            "criar-lancamento", "atualizar-telegram-id", "atualizar-telegram-cliente"
           ],
         }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
