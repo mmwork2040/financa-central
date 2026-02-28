@@ -396,6 +396,102 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     ],
     body: { action: "fluxo-caixa", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}" },
   },
+  {
+    action: "criar-lancamento",
+    toolName: "criar_lancamento",
+    label: "Criar Lançamento",
+    description: "Cria um novo lançamento financeiro (receita ou despesa)",
+    toolDescription: `Cria um novo lançamento financeiro no sistema.
+
+Use quando o usuário solicitar:
+- Registrar uma despesa
+- Registrar uma receita
+- Lançar uma conta
+- Adicionar um gasto
+
+Parâmetros:
+- empresa_id (obrigatório)
+- descricao (obrigatório)
+- valor (obrigatório)
+- data_vencimento (obrigatório, formato YYYY-MM-DD)
+- tipo (receita ou despesa, padrão: despesa)
+- status (pendente ou pago, padrão: pendente)
+- categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id (opcionais)
+- data_pagamento (opcional, formato YYYY-MM-DD)
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Financeiro",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "descricao", type: "string", required: true, description: "Descrição do lançamento" },
+      { name: "valor", type: "number", required: true, description: "Valor do lançamento" },
+      { name: "data_vencimento", type: "string", required: true, description: "Data de vencimento (YYYY-MM-DD)" },
+      { name: "tipo", type: "string", required: false, description: "receita ou despesa (padrão: despesa)" },
+      { name: "status", type: "string", required: false, description: "pendente ou pago (padrão: pendente)" },
+      { name: "categoria_id", type: "string", required: false, description: "UUID da categoria" },
+      { name: "cliente_id", type: "string", required: false, description: "UUID do cliente" },
+      { name: "fornecedor_id", type: "string", required: false, description: "UUID do fornecedor" },
+      { name: "conta_bancaria_id", type: "string", required: false, description: "UUID da conta bancária" },
+      { name: "forma_pagamento_id", type: "string", required: false, description: "UUID da forma de pagamento" },
+      { name: "projeto_id", type: "string", required: false, description: "UUID do projeto" },
+      { name: "data_pagamento", type: "string", required: false, description: "Data de pagamento (YYYY-MM-DD)" },
+    ],
+    body: { action: "criar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", descricao: "{{ $fromAI('descricao', 'Descrição do lançamento') }}", valor: "{{ $fromAI('valor', 'Valor numérico do lançamento') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'Data de vencimento YYYY-MM-DD') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa') }}", status: "{{ $fromAI('status', 'pendente ou pago') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'Data de pagamento YYYY-MM-DD') }}" },
+  },
+  {
+    action: "atualizar-telegram-id",
+    toolName: "atualizar_telegram_id",
+    label: "Atualizar Telegram do Usuário",
+    description: "Atualiza o telegram_id de um usuário no sistema",
+    toolDescription: `Atualiza o ID do Telegram de um usuário.
+
+Use quando o usuário solicitar:
+- Vincular Telegram
+- Salvar ID do Telegram
+- Atualizar identificador Telegram
+
+Parâmetros:
+- empresa_id (obrigatório)
+- telegram_id (obrigatório)
+- user_id ou email (um dos dois é obrigatório para identificar o usuário)
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "telegram_id", type: "string", required: true, description: "ID do Telegram do usuário" },
+      { name: "user_id", type: "string", required: false, description: "UUID do usuário" },
+      { name: "email", type: "string", required: false, description: "Email do usuário" },
+    ],
+    body: { action: "atualizar-telegram-id", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", telegram_id: "{{ $fromAI('telegram_id', 'ID do Telegram do usuário') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", email: "{{ $fromAI('email', 'Email do usuário') }}" },
+  },
+  {
+    action: "atualizar-telegram-cliente",
+    toolName: "atualizar_telegram_cliente",
+    label: "Atualizar Telegram do Cliente",
+    description: "Atualiza o telegram_id de um cliente no sistema",
+    toolDescription: `Atualiza o ID do Telegram de um cliente.
+
+Use quando o usuário solicitar:
+- Vincular Telegram do cliente
+- Salvar ID do Telegram do cliente
+
+Parâmetros:
+- empresa_id (obrigatório)
+- telegram_id (obrigatório)
+- cliente_id, email ou telefone (um deles é obrigatório para identificar o cliente)
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "telegram_id", type: "string", required: true, description: "ID do Telegram do cliente" },
+      { name: "cliente_id", type: "string", required: false, description: "UUID do cliente" },
+      { name: "email", type: "string", required: false, description: "Email do cliente" },
+      { name: "telefone", type: "string", required: false, description: "Telefone do cliente" },
+    ],
+    body: { action: "atualizar-telegram-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", telegram_id: "{{ $fromAI('telegram_id', 'ID do Telegram do cliente') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente') }}", email: "{{ $fromAI('email', 'Email do cliente') }}", telefone: "{{ $fromAI('telefone', 'Telefone do cliente') }}" },
+  },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
