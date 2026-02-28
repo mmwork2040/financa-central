@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.n8n-query]
 verify_jwt = false
+
+[functions.mcp-financeiro]
+verify_jwt = false
