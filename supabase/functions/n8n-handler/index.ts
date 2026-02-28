@@ -107,33 +107,71 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ─── Action: identify-by-email — Identify user by phone number ───
+    // ─── Action: identify-by-email — Identify user by telegram_id, phone or email ───
     if (action === "identify-by-email") {
       const phone = (body.phone || "").replace(/\D/g, "");
+      const telegramId = body.telegram_id || "";
+      const email = body.email || "";
 
-      if (!phone) {
-        return new Response(JSON.stringify({ error: "phone is required" }), {
+      if (!phone && !telegramId && !email) {
+        return new Response(JSON.stringify({ error: "phone, telegram_id or email is required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       let perfil: any = null;
-      const phoneVariants = [phone, `+${phone}`, phone.replace(/^55/, "")];
-      for (const variant of phoneVariants) {
+
+      // 1. Try to find by telegram_id first
+      if (!perfil && telegramId) {
         let q = supabase
           .from("perfis")
-          .select("id, nome, email, empresa_id, evolution_webhook_url")
-          .ilike("evolution_webhook_url", `%${variant}%`)
+          .select("id, nome, email, empresa_id, evolution_webhook_url, telegram_id")
+          .eq("telegram_id", String(telegramId))
           .not("empresa_id", "is", null);
         if (empresaId) q = q.eq("empresa_id", empresaId);
         const { data } = await q.maybeSingle();
-        if (data) { perfil = data; break; }
+        if (data) perfil = data;
+      }
+
+      // 2. Fallback: search by phone
+      if (!perfil && phone) {
+        const phoneVariants = [phone, `+${phone}`, phone.replace(/^55/, "")];
+        for (const variant of phoneVariants) {
+          let q = supabase
+            .from("perfis")
+            .select("id, nome, email, empresa_id, evolution_webhook_url, telegram_id")
+            .ilike("evolution_webhook_url", `%${variant}%`)
+            .not("empresa_id", "is", null);
+          if (empresaId) q = q.eq("empresa_id", empresaId);
+          const { data } = await q.maybeSingle();
+          if (data) { perfil = data; break; }
+        }
+      }
+
+      // 3. Fallback: search by email
+      if (!perfil && email) {
+        let q = supabase
+          .from("perfis")
+          .select("id, nome, email, empresa_id, evolution_webhook_url, telegram_id")
+          .ilike("email", email.trim().toLowerCase())
+          .not("empresa_id", "is", null);
+        if (empresaId) q = q.eq("empresa_id", empresaId);
+        const { data } = await q.maybeSingle();
+        if (data) perfil = data;
       }
 
       if (!perfil) {
         return new Response(JSON.stringify({ found: false }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      // If user found but telegram_id not set, update it
+      if (telegramId && !perfil.telegram_id) {
+        await supabase
+          .from("perfis")
+          .update({ telegram_id: String(telegramId) })
+          .eq("id", perfil.id);
       }
 
       empresaId = perfil.empresa_id!;
@@ -165,6 +203,7 @@ Deno.serve(async (req) => {
         nome: perfil.nome,
         email: perfil.email,
         telefone: phone || perfil.evolution_webhook_url || null,
+        telegram_id: perfil.telegram_id || telegramId || null,
         empresa_id: perfil.empresa_id,
         empresas: emailEmpresasList,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
