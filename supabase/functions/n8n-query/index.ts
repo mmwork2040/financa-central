@@ -79,6 +79,19 @@ Deno.serve(async (req) => {
 
         const saldoTotal = (contas || []).reduce((s: number, c: any) => s + Number(c.saldo_atual), 0);
 
+        // Incluir vendas digitais no resumo
+        const { data: vendas } = await supabase
+          .from("vendas_digitais")
+          .select("valor_bruto, valor_liquido, taxa, status")
+          .eq("empresa_id", empresa_id)
+          .gte("data_venda", inicio)
+          .lte("data_venda", fim);
+
+        const vendasAprovadas = (vendas || []).filter((v: any) => v.status === "aprovada");
+        const totalVendasBruto = vendasAprovadas.reduce((s: number, v: any) => s + Number(v.valor_bruto), 0);
+        const totalVendasLiquido = vendasAprovadas.reduce((s: number, v: any) => s + Number(v.valor_liquido), 0);
+        const totalVendasTaxas = vendasAprovadas.reduce((s: number, v: any) => s + Number(v.taxa), 0);
+
         result = {
           periodo: { inicio, fim },
           receitas: { total: totalReceitas, quantidade: receitas.length },
@@ -86,6 +99,13 @@ Deno.serve(async (req) => {
           saldo: totalReceitas - totalDespesas,
           pendentes: { total: pendentes.reduce((s: number, l: any) => s + Number(l.valor), 0), quantidade: pendentes.length },
           pagos: { total: pagos.reduce((s: number, l: any) => s + Number(l.valor), 0), quantidade: pagos.length },
+          vendas_digitais: {
+            total_bruto: totalVendasBruto,
+            total_liquido: totalVendasLiquido,
+            total_taxas: totalVendasTaxas,
+            quantidade: vendasAprovadas.length,
+            todas_vendas: (vendas || []).length,
+          },
           contas_bancarias: contas || [],
           saldo_total_contas: saldoTotal,
         };
