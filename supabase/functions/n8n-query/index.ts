@@ -261,8 +261,8 @@ Deno.serve(async (req) => {
           .lte("data_venda", fim)
           .order("data_venda", { ascending: false });
 
-        if (filters?.plataforma) query = query.eq("plataforma", filters.plataforma);
-        if (filters?.status) query = query.eq("status", filters.status);
+        if (filters?.plataforma) query = query.ilike("plataforma", filters.plataforma);
+        if (filters?.status) query = query.ilike("status", filters.status);
         if (filters?.limit) query = query.limit(filters.limit);
 
         const { data, error } = await query;
