@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Copy, Check, Search, Plus, Trash2, Code2, ChevronDown, ChevronRight } from "lucide-react";
+import { Copy, Check, Search, Plus, Trash2, Code2, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,6 +20,7 @@ interface ActionTemplate {
   toolName: string;
   label: string;
   description: string;
+  toolDescription: string;
   category: string;
   params: ToolParam[];
   body: Record<string, any>;
@@ -31,6 +32,21 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "resumo_financeiro",
     label: "Resumo Financeiro",
     description: "Visão geral: receitas, despesas, saldo, vendas digitais e contas bancárias",
+    toolDescription: `Consulta o resumo financeiro geral da empresa.
+
+Use quando o usuário solicitar:
+- Resumo financeiro
+- Quanto gastei / recebi
+- Saldo atual
+- Visão geral das finanças
+
+Parâmetros:
+- empresa_id
+- periodo
+
+Se não informar período, usar "mes".
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Resumos",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -43,6 +59,25 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "lancamentos",
     label: "Lançamentos",
     description: "Lista de lançamentos com filtros por tipo, status e categoria",
+    toolDescription: `Consulta lançamentos financeiros (receitas e despesas).
+
+Use quando o usuário solicitar:
+- Lançamentos do mês
+- Receitas ou despesas
+- Contas a pagar / receber
+- Movimentações financeiras
+
+Parâmetros:
+- empresa_id
+- periodo
+- tipo
+- status
+- categoria_id
+- limit
+
+Se não informar período, usar "mes".
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -59,6 +94,18 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "despesas_pendentes",
     label: "Despesas Pendentes",
     description: "Lista de despesas com status pendente ordenadas por vencimento",
+    toolDescription: `Consulta despesas pendentes de pagamento.
+
+Use quando o usuário solicitar:
+- Despesas pendentes
+- Contas a pagar
+- O que preciso pagar
+
+Parâmetros:
+- empresa_id
+- limit
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -71,6 +118,18 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "receitas_pendentes",
     label: "Receitas Pendentes",
     description: "Lista de receitas com status pendente ordenadas por vencimento",
+    toolDescription: `Consulta receitas pendentes de recebimento.
+
+Use quando o usuário solicitar:
+- Receitas pendentes
+- Contas a receber
+- O que tenho para receber
+
+Parâmetros:
+- empresa_id
+- limit
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -83,6 +142,20 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "resumo_categorias",
     label: "Resumo por Categorias",
     description: "Totais de receitas e despesas agrupados por categoria",
+    toolDescription: `Consulta totais agrupados por categoria.
+
+Use quando o usuário solicitar:
+- Gastos por categoria
+- Onde estou gastando mais
+- Resumo por categoria
+
+Parâmetros:
+- empresa_id
+- periodo
+
+Se não informar período, usar "mes".
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Resumos",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -95,6 +168,26 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "vendas_digitais",
     label: "Vendas Digitais",
     description: "Vendas de plataformas externas com filtros por plataforma e status",
+    toolDescription: `Consulta vendas realizadas em plataformas digitais.
+
+Use quando o usuário solicitar:
+- Vendas online
+- Vendas Hotmart, Monetizze, Eduzz ou similiar
+- Vendas digitais aprovadas
+- Relatório de vendas digitais
+
+Parâmetros:
+- empresa_id
+- periodo
+- plataforma
+- status
+- limit
+
+Se não informar período, usar "mes".
+
+Não usar para recebimentos pendentes.
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Vendas",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -110,6 +203,19 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "recebimentos_digitais",
     label: "Recebimentos Digitais",
     description: "Recebimentos vinculados a vendas digitais",
+    toolDescription: `Consulta recebimentos de vendas digitais.
+
+Use quando o usuário solicitar:
+- Recebimentos pendentes
+- Quando vou receber
+- Parcelas de vendas digitais
+
+Parâmetros:
+- empresa_id
+- status
+- limit
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Vendas",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -123,6 +229,17 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "contas_bancarias",
     label: "Contas Bancárias",
     description: "Lista de todas as contas bancárias e seus saldos",
+    toolDescription: `Consulta contas bancárias e saldos.
+
+Use quando o usuário solicitar:
+- Saldo das contas
+- Contas bancárias
+- Quanto tenho no banco
+
+Parâmetros:
+- empresa_id
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -134,6 +251,20 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "clientes",
     label: "Clientes",
     description: "Lista de clientes com filtros de busca e status",
+    toolDescription: `Consulta lista de clientes cadastrados.
+
+Use quando o usuário solicitar:
+- Lista de clientes
+- Buscar cliente
+- Clientes ativos
+
+Parâmetros:
+- empresa_id
+- ativo
+- search
+- limit
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -148,6 +279,20 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "fornecedores",
     label: "Fornecedores",
     description: "Lista de fornecedores com filtros de busca e status",
+    toolDescription: `Consulta lista de fornecedores cadastrados.
+
+Use quando o usuário solicitar:
+- Lista de fornecedores
+- Buscar fornecedor
+- Fornecedores ativos
+
+Parâmetros:
+- empresa_id
+- ativo
+- search
+- limit
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -162,6 +307,19 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "projetos",
     label: "Projetos",
     description: "Lista de projetos com filtro por status",
+    toolDescription: `Consulta projetos cadastrados.
+
+Use quando o usuário solicitar:
+- Lista de projetos
+- Projetos ativos
+- Status dos projetos
+
+Parâmetros:
+- empresa_id
+- status
+- limit
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -175,6 +333,16 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "categorias",
     label: "Categorias",
     description: "Lista de todas as categorias cadastradas",
+    toolDescription: `Consulta categorias cadastradas.
+
+Use quando o usuário solicitar:
+- Lista de categorias
+- Categorias disponíveis
+
+Parâmetros:
+- empresa_id
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -186,6 +354,16 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "formas_pagamento",
     label: "Formas de Pagamento",
     description: "Lista de formas de pagamento cadastradas",
+    toolDescription: `Consulta formas de pagamento cadastradas.
+
+Use quando o usuário solicitar:
+- Formas de pagamento
+- Meios de pagamento disponíveis
+
+Parâmetros:
+- empresa_id
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -197,6 +375,20 @@ const DEFAULT_TEMPLATES: ActionTemplate[] = [
     toolName: "fluxo_caixa",
     label: "Fluxo de Caixa",
     description: "Comparativo mensal de receitas vs despesas",
+    toolDescription: `Consulta o fluxo de caixa comparativo mensal.
+
+Use quando o usuário solicitar:
+- Fluxo de caixa
+- Comparativo mensal
+- Evolução financeira
+
+Parâmetros:
+- empresa_id
+- periodo
+
+Se não informar período, usar "semestre".
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Resumos",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
@@ -269,6 +461,7 @@ const N8nJsonTemplates = () => {
       toolName: newTemplate.action.replace(/-/g, "_"),
       label: newTemplate.label,
       description: newTemplate.description || "Template personalizado",
+      toolDescription: newTemplate.description || "Template personalizado",
       category: "Personalizado",
       params: [{ name: "empresa_id", type: "string", required: true, description: "UUID da empresa" }],
       body: parsedJson,
@@ -320,18 +513,61 @@ const N8nJsonTemplates = () => {
         </CardContent>
       </Card>
 
+      {/* Aviso importante sobre "Defined automatically by the model" */}
+      <Card className="border-red-500/30 bg-red-500/5">
+        <CardContent className="pt-5 pb-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-red-700 dark:text-red-400">⚠️ Não use "Defined automatically by the model" no HTTP Request</p>
+              <div className="text-xs text-muted-foreground space-y-1.5">
+                <p>O campo <strong>JSON</strong> do nó HTTP Request <strong>NÃO</strong> deve ficar como "Defined automatically by the model", porque o modelo não sabe incluir o campo <code className="text-[11px] bg-background px-1 rounded">action</code> que é obrigatório.</p>
+                <p><strong>Configuração correta do HTTP Request:</strong></p>
+                <ol className="list-decimal list-inside space-y-0.5 ml-1">
+                  <li>Send Body: <strong>ON</strong></li>
+                  <li>Body Content Type: <strong>JSON</strong></li>
+                  <li>Specify Body: <strong>Using JSON</strong></li>
+                  <li>JSON: <strong>Cole o body da aba "Body (HTTP Request)"</strong> de cada tool abaixo</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Instruções */}
       <Card className="border-amber-500/30 bg-amber-500/5">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Code2 className="h-4 w-4 text-amber-600" />
-            Como configurar no MCP Server Trigger
+            Como configurar cada Tool no MCP Server Trigger
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-xs text-muted-foreground">
-          <p><strong>1. Tool Node (MCP Server Trigger):</strong> Para cada tool, adicione os parâmetros listados na aba <em>"Parâmetros"</em> — preencha Nome, Tipo, Obrigatório e Descrição conforme a tabela.</p>
-          <p><strong>2. HTTP Request Node:</strong> Copie o JSON da aba <em>"Body HTTP Request"</em> e cole no campo Body do HTTP Request que aponta para o endpoint acima.</p>
-          <p><strong>3. Método:</strong> Sempre <code className="text-[11px]">POST</code> com Content-Type <code className="text-[11px]">application/json</code>.</p>
+        <CardContent className="space-y-3 text-xs text-muted-foreground">
+          <div className="space-y-1">
+            <p className="font-semibold text-foreground">Passo 1 — Tool Node (Aba Parameters):</p>
+            <ul className="list-disc list-inside ml-2 space-y-0.5">
+              <li><strong>Description:</strong> Copie da aba <em>"Descrição (Tool)"</em></li>
+              <li><strong>Method:</strong> POST</li>
+              <li><strong>URL:</strong> Cole o endpoint acima</li>
+            </ul>
+          </div>
+          <div className="space-y-1">
+            <p className="font-semibold text-foreground">Passo 2 — Tool Node (Aba Parameters → seção "Parameters"):</p>
+            <ul className="list-disc list-inside ml-2 space-y-0.5">
+              <li>Clique em <strong>"Add Parameter"</strong> para cada parâmetro listado na aba <em>"Parâmetros"</em></li>
+              <li>Preencha: Name, Type, Required, Description conforme a tabela</li>
+            </ul>
+          </div>
+          <div className="space-y-1">
+            <p className="font-semibold text-foreground">Passo 3 — HTTP Request (Corpo do Request):</p>
+            <ul className="list-disc list-inside ml-2 space-y-0.5">
+              <li>Send Headers: ON → api-key com o valor da anon key</li>
+              <li>Send Body: ON → Body Content Type: JSON</li>
+              <li>Specify Body: <strong>"Using JSON"</strong> (NÃO "Defined automatically by the model")</li>
+              <li>Cole o JSON da aba <em>"Body (HTTP Request)"</em></li>
+            </ul>
+          </div>
         </CardContent>
       </Card>
 
@@ -418,14 +654,34 @@ const N8nJsonTemplates = () => {
                     </div>
                     {isExpanded && (
                       <div className="border-t bg-muted/30 px-4 py-3">
-                        <Tabs defaultValue="params" className="w-full">
+                        <Tabs defaultValue="description" className="w-full">
                           <TabsList className="h-8 mb-3">
-                            <TabsTrigger value="params" className="text-xs px-3 h-7">Parâmetros (Tool Node)</TabsTrigger>
+                            <TabsTrigger value="description" className="text-xs px-3 h-7">Descrição (Tool)</TabsTrigger>
+                            <TabsTrigger value="params" className="text-xs px-3 h-7">Parâmetros</TabsTrigger>
                             <TabsTrigger value="body" className="text-xs px-3 h-7">Body (HTTP Request)</TabsTrigger>
                           </TabsList>
+                          
+                          <TabsContent value="description" className="mt-0">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[11px] text-muted-foreground">Cole no campo <strong>Description</strong> do tool node no MCP Server Trigger</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 gap-1 text-xs"
+                                onClick={() => handleCopy(template.toolDescription, `desc-${template.action}`)}
+                              >
+                                {copiedId === `desc-${template.action}` ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                                Copiar
+                              </Button>
+                            </div>
+                            <pre className="text-xs font-mono bg-background/80 rounded border p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
+                              {template.toolDescription}
+                            </pre>
+                          </TabsContent>
+
                           <TabsContent value="params" className="mt-0">
                             <p className="text-[11px] text-muted-foreground mb-2">
-                              Adicione cada parâmetro abaixo no tool node do MCP Server Trigger:
+                              No tool node, clique em <strong>"Add Parameter"</strong> e preencha cada um:
                             </p>
                             <div className="rounded border overflow-hidden">
                               <Table>
@@ -457,14 +713,13 @@ const N8nJsonTemplates = () => {
                                 </TableBody>
                               </Table>
                             </div>
-                            <p className="text-[11px] text-muted-foreground mt-2">
-                              <strong>Tool Name:</strong> <code className="text-[11px] bg-background px-1 rounded">{template.toolName}</code> · 
-                              <strong> Description:</strong> {template.description}
-                            </p>
                           </TabsContent>
+
                           <TabsContent value="body" className="mt-0">
                             <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[11px] text-muted-foreground">Cole no Body (JSON) do HTTP Request → POST {`{endpoint}`}</span>
+                              <span className="text-[11px] text-muted-foreground">
+                                Specify Body → <strong>"Using JSON"</strong> → cole este JSON:
+                              </span>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -478,6 +733,9 @@ const N8nJsonTemplates = () => {
                             <pre className="text-xs font-mono bg-background/80 rounded border p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[250px] overflow-y-auto">
                               {bodyStr}
                             </pre>
+                            <p className="text-[10px] text-red-500 dark:text-red-400 mt-2 font-medium">
+                              ⚠️ NÃO use "Defined automatically by the model" — o campo action não será incluído e causará erro.
+                            </p>
                           </TabsContent>
                         </Tabs>
                       </div>
