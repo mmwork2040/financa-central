@@ -15,7 +15,32 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const body = await req.json();
+    // Aceitar body como objeto direto ou string JSON (parse automático)
+    let rawBody = await req.json();
+    // Se o n8n enviar o body como string JSON escapada, fazer parse novamente
+    if (typeof rawBody === "string") {
+      try { rawBody = JSON.parse(rawBody); } catch (_) { /* mantém como está */ }
+    }
+    // Se veio encapsulado em { output: "..." } do n8n
+    if (rawBody && typeof rawBody === "object" && typeof rawBody.output === "string") {
+      try { rawBody = JSON.parse(rawBody.output); } catch (_) { /* mantém como está */ }
+    }
+    // Se veio como array com um item [{ output: "..." }] ou [{ json_montado: {...} }]
+    if (Array.isArray(rawBody)) {
+      const first = rawBody[0];
+      if (first?.output) {
+        try { rawBody = typeof first.output === "string" ? JSON.parse(first.output) : first.output; } catch (_) { rawBody = first; }
+      } else if (first?.json_montado) {
+        rawBody = first.json_montado;
+      } else {
+        rawBody = first || {};
+      }
+    }
+    // Se veio com json_montado como wrapper
+    if (rawBody && typeof rawBody === "object" && rawBody.json_montado && !rawBody.action) {
+      rawBody = rawBody.json_montado;
+    }
+    const body = rawBody;
     const { action, empresa_id, user_id, periodo, filters } = body;
 
     const requestTimestamp = new Date().toISOString();
