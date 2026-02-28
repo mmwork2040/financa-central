@@ -32,6 +32,7 @@ import {
   Megaphone,
   ScrollText,
   Briefcase,
+  Code2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
@@ -84,7 +85,7 @@ export const Sidebar = () => {
   // Auto-open submenus when on their routes
   useEffect(() => {
     const cadastrosPaths = ["/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods"];
-    const configPaths = ["/settings", "/settings/integracoes", "/settings/webhooks", "/settings/logs"];
+    const configPaths = ["/settings", "/settings/integracoes", "/settings/webhooks", "/settings/logs", "/settings/n8n-templates"];
     if (cadastrosPaths.some(p => location.pathname.startsWith(p))) setCadastrosOpen(true);
     if (configPaths.some(p => location.pathname.startsWith(p))) setConfigOpen(true);
   }, [location.pathname]);
@@ -143,6 +144,7 @@ export const Sidebar = () => {
     { name: "Empresa", icon: Settings, path: "/settings" },
     { name: "Integrações", icon: Plug, path: "/settings/integracoes" },
     ...(isSuperAdmin ? [{ name: "Webhooks", icon: Webhook, path: "/settings/webhooks" }] : []),
+    ...(isSuperAdmin ? [{ name: "n8n Templates", icon: Code2, path: "/settings/n8n-templates" }] : []),
     { name: "Logs", icon: ScrollText, path: "/settings/logs" },
   ];
 
