@@ -32,6 +32,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import Install from "./pages/Install";
 import Profile from "./pages/Profile";
 import Projetos from "./pages/Projetos";
+import N8nTemplates from "./pages/N8nTemplates";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => {
                 <Route path="/settings/integracoes" element={<AppLayout><Integracoes /></AppLayout>} />
                 <Route path="/settings/webhooks" element={<AppLayout><WebhooksConfig /></AppLayout>} />
                 <Route path="/settings/logs" element={<AppLayout><LogsIntegracoes /></AppLayout>} />
+                <Route path="/settings/n8n-templates" element={<AppLayout><N8nTemplates /></AppLayout>} />
                 <Route path="/vendas-digitais" element={<AppLayout><VendasDigitais /></AppLayout>} />
                 <Route path="/anuncios" element={<AppLayout><AnunciosDigitais /></AppLayout>} />
                 
