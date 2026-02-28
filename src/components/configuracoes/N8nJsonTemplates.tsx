@@ -52,7 +52,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
     ],
-    body: { action: "resumo-financeiro", empresa_id: "{{ $json.empresa_id }}", periodo: "{{ $json.periodo }}" },
+    body: { action: "resumo-financeiro", empresa_id: "{empresa_id}", periodo: "{periodo}" },
   },
   {
     action: "lancamentos",
@@ -87,7 +87,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "categoria_id", type: "string", required: false, description: "UUID da categoria" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "lancamentos", empresa_id: "{{ $json.empresa_id }}", periodo: "{{ $json.periodo }}", tipo: "{{ $json.tipo }}", status: "{{ $json.status }}", categoria_id: "{{ $json.categoria_id }}", limit: "{{ $json.limit }}" },
+    body: { action: "lancamentos", empresa_id: "{empresa_id}", periodo: "{periodo}", tipo: "{tipo}", status: "{status}", categoria_id: "{categoria_id}", limit: "{limit}" },
   },
   {
     action: "despesas-pendentes",
@@ -111,7 +111,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "despesas-pendentes", empresa_id: "{{ $json.empresa_id }}", limit: "{{ $json.limit }}" },
+    body: { action: "despesas-pendentes", empresa_id: "{empresa_id}", limit: "{limit}" },
   },
   {
     action: "receitas-pendentes",
@@ -135,7 +135,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "receitas-pendentes", empresa_id: "{{ $json.empresa_id }}", limit: "{{ $json.limit }}" },
+    body: { action: "receitas-pendentes", empresa_id: "{empresa_id}", limit: "{limit}" },
   },
   {
     action: "resumo-categorias",
@@ -161,7 +161,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
     ],
-    body: { action: "resumo-categorias", empresa_id: "{{ $json.empresa_id }}", periodo: "{{ $json.periodo }}" },
+    body: { action: "resumo-categorias", empresa_id: "{empresa_id}", periodo: "{periodo}" },
   },
   {
     action: "vendas-digitais",
@@ -196,7 +196,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "status", type: "string", required: false, description: "Status da venda (ex: aprovada, pendente)" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "vendas-digitais", empresa_id: "{{ $json.empresa_id }}", periodo: "{{ $json.periodo }}", plataforma: "{{ $json.plataforma }}", status: "{{ $json.status }}", limit: "{{ $json.limit }}" },
+    body: { action: "vendas-digitais", empresa_id: "{empresa_id}", periodo: "{periodo}", plataforma: "{plataforma}", status: "{status}", limit: "{limit}" },
   },
   {
     action: "recebimentos-digitais",
@@ -222,7 +222,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "status", type: "string", required: false, description: "Status: pendente ou recebido" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "recebimentos-digitais", empresa_id: "{{ $json.empresa_id }}", status: "{{ $json.status }}", limit: "{{ $json.limit }}" },
+    body: { action: "recebimentos-digitais", empresa_id: "{empresa_id}", status: "{status}", limit: "{limit}" },
   },
   {
     action: "contas-bancarias",
@@ -244,7 +244,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
     ],
-    body: { action: "contas-bancarias", empresa_id: "{{ $json.empresa_id }}" },
+    body: { action: "contas-bancarias", empresa_id: "{empresa_id}" },
   },
   {
     action: "clientes",
@@ -272,7 +272,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "search", type: "string", required: false, description: "Busca por nome" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "clientes", empresa_id: "{{ $json.empresa_id }}", ativo: "{{ $json.ativo }}", search: "{{ $json.search }}", limit: "{{ $json.limit }}" },
+    body: { action: "clientes", empresa_id: "{empresa_id}", ativo: "{ativo}", search: "{search}", limit: "{limit}" },
   },
   {
     action: "fornecedores",
@@ -300,7 +300,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "search", type: "string", required: false, description: "Busca por nome" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "fornecedores", empresa_id: "{{ $json.empresa_id }}", ativo: "{{ $json.ativo }}", search: "{{ $json.search }}", limit: "{{ $json.limit }}" },
+    body: { action: "fornecedores", empresa_id: "{empresa_id}", ativo: "{ativo}", search: "{search}", limit: "{limit}" },
   },
   {
     action: "projetos",
@@ -326,7 +326,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "status", type: "string", required: false, description: "Status: ativo, concluido ou cancelado" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "projetos", empresa_id: "{{ $json.empresa_id }}", status: "{{ $json.status }}", limit: "{{ $json.limit }}" },
+    body: { action: "projetos", empresa_id: "{empresa_id}", status: "{status}", limit: "{limit}" },
   },
   {
     action: "categorias",
@@ -347,7 +347,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
     ],
-    body: { action: "categorias", empresa_id: "{{ $json.empresa_id }}" },
+    body: { action: "categorias", empresa_id: "{empresa_id}" },
   },
   {
     action: "formas-pagamento",
@@ -368,7 +368,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
     ],
-    body: { action: "formas-pagamento", empresa_id: "{{ $json.empresa_id }}" },
+    body: { action: "formas-pagamento", empresa_id: "{empresa_id}" },
   },
   {
     action: "fluxo-caixa",
@@ -394,7 +394,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
     ],
-    body: { action: "fluxo-caixa", empresa_id: "{{ $json.empresa_id }}", periodo: "{{ $json.periodo }}" },
+    body: { action: "fluxo-caixa", empresa_id: "{empresa_id}", periodo: "{periodo}" },
   },
 ];
 
@@ -654,7 +654,7 @@ const N8nJsonTemplates = () => {
                           <TabsContent value="body" className="mt-0">
                             <div className="flex items-center justify-between mb-1.5">
                               <span className="text-[11px] text-muted-foreground">
-                                Specify Body → <strong>"Using JSON"</strong> → cole este JSON:
+                                Specify Body → <strong>"Using JSON"</strong> → cole este JSON. Os placeholders <code className="text-[10px] bg-background px-1 rounded">{`{param}`}</code> são preenchidos automaticamente pelo agente de IA:
                               </span>
                               <Button
                                 variant="ghost"
