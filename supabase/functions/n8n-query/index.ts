@@ -18,7 +18,26 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action, empresa_id, user_id, periodo, filters } = body;
 
+    const requestTimestamp = new Date().toISOString();
+    const requestLog = {
+      timestamp: requestTimestamp,
+      method: req.method,
+      url: req.url,
+      action,
+      empresa_id,
+      user_id: user_id || null,
+      periodo: periodo || null,
+      filters: filters || null,
+      headers: {
+        content_type: req.headers.get("content-type"),
+        origin: req.headers.get("origin"),
+        user_agent: req.headers.get("user-agent"),
+      },
+    };
+    console.log("📥 [n8n-query] REQUEST:", JSON.stringify(requestLog, null, 2));
+
     if (!empresa_id) {
+      console.log("❌ [n8n-query] ERRO: empresa_id ausente");
       return new Response(JSON.stringify({ error: "empresa_id is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -365,11 +384,57 @@ Deno.serve(async (req) => {
         });
     }
 
+    const duration = Date.now() - new Date(requestTimestamp).getTime();
+    const responseLog = {
+      timestamp: new Date().toISOString(),
+      action,
+      empresa_id,
+      duration_ms: duration,
+      result_type: Array.isArray(result) ? "array" : typeof result,
+      result_count: Array.isArray(result) ? result.length : (result && typeof result === "object" ? Object.keys(result).length : null),
+      status: 200,
+    };
+    console.log("📤 [n8n-query] RESPONSE:", JSON.stringify(responseLog, null, 2));
+
+    // Salvar log no banco
+    try {
+      await supabase.from("logs_integracoes").insert({
+        empresa_id,
+        plataforma: "n8n-query",
+        evento: action,
+        status: "sucesso",
+        payload: {
+          request: { action, periodo, filters, user_id },
+          response: { duration_ms: duration, result_count: responseLog.result_count },
+          endpoint: `${supabaseUrl}/functions/v1/n8n-query`,
+          format: { method: "POST", content_type: "application/json", body_schema: { action: "string", empresa_id: "uuid", periodo: "string?", filters: "object?" } },
+        },
+      });
+    } catch (logErr) {
+      console.warn("⚠️ [n8n-query] Falha ao salvar log:", logErr);
+    }
+
     return new Response(JSON.stringify({ success: true, action, data: result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("n8n-query error:", error);
+    console.error("❌ [n8n-query] ERROR:", error);
+
+    // Tentar salvar log de erro
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, serviceRoleKey);
+      const body2 = await req.clone().json().catch(() => ({}));
+      await supabase.from("logs_integracoes").insert({
+        empresa_id: body2.empresa_id || "00000000-0000-0000-0000-000000000000",
+        plataforma: "n8n-query",
+        evento: body2.action || "unknown",
+        status: "erro",
+        payload: { error: error.message, request: body2 },
+      });
+    } catch (_) { /* ignore */ }
+
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
