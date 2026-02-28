@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Copy, Check, Search, Plus, Trash2, Code2, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
+import { Copy, Check, Search, Plus, Trash2, Code2, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 
 interface ToolParam {
   name: string;
@@ -513,60 +513,33 @@ const N8nJsonTemplates = () => {
         </CardContent>
       </Card>
 
-      {/* Aviso importante sobre "Defined automatically by the model" */}
-      <Card className="border-red-500/30 bg-red-500/5">
-        <CardContent className="pt-5 pb-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-red-700 dark:text-red-400">⚠️ Não use "Defined automatically by the model" no HTTP Request</p>
-              <div className="text-xs text-muted-foreground space-y-1.5">
-                <p>O campo <strong>JSON</strong> do nó HTTP Request <strong>NÃO</strong> deve ficar como "Defined automatically by the model", porque o modelo não sabe incluir o campo <code className="text-[11px] bg-background px-1 rounded">action</code> que é obrigatório.</p>
-                <p><strong>Configuração correta do HTTP Request:</strong></p>
-                <ol className="list-decimal list-inside space-y-0.5 ml-1">
-                  <li>Send Body: <strong>ON</strong></li>
-                  <li>Body Content Type: <strong>JSON</strong></li>
-                  <li>Specify Body: <strong>Using JSON</strong></li>
-                  <li>JSON: <strong>Cole o body da aba "Body (HTTP Request)"</strong> de cada tool abaixo</li>
-                </ol>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Instruções */}
+      {/* Instruções do HTTP Request Tool */}
       <Card className="border-amber-500/30 bg-amber-500/5">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Code2 className="h-4 w-4 text-amber-600" />
-            Como configurar cada Tool no MCP Server Trigger
+            Como configurar cada HTTP Request Tool
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-xs text-muted-foreground">
           <div className="space-y-1">
-            <p className="font-semibold text-foreground">Passo 1 — Tool Node (Aba Parameters):</p>
-            <ul className="list-disc list-inside ml-2 space-y-0.5">
-              <li><strong>Description:</strong> Copie da aba <em>"Descrição (Tool)"</em></li>
+            <p className="font-semibold text-foreground">No nó HTTP Request Tool (Parameters):</p>
+            <ol className="list-decimal list-inside ml-2 space-y-0.5">
+              <li><strong>Description:</strong> Copie da aba <em>"Descrição"</em> abaixo</li>
               <li><strong>Method:</strong> POST</li>
               <li><strong>URL:</strong> Cole o endpoint acima</li>
-            </ul>
+              <li><strong>Send Query Parameters:</strong> OFF (não necessário)</li>
+              <li><strong>Send Headers:</strong> ON → Name: <code className="text-[11px] bg-background px-1 rounded">apikey</code> · Value: sua anon key</li>
+              <li><strong>Send Body:</strong> ON</li>
+              <li><strong>Body Content Type:</strong> JSON</li>
+              <li><strong>Specify Body:</strong> <strong>"Using JSON"</strong></li>
+              <li><strong>JSON:</strong> Cole da aba <em>"Body JSON"</em> abaixo</li>
+            </ol>
           </div>
-          <div className="space-y-1">
-            <p className="font-semibold text-foreground">Passo 2 — Tool Node (Aba Parameters → seção "Parameters"):</p>
-            <ul className="list-disc list-inside ml-2 space-y-0.5">
-              <li>Clique em <strong>"Add Parameter"</strong> para cada parâmetro listado na aba <em>"Parâmetros"</em></li>
-              <li>Preencha: Name, Type, Required, Description conforme a tabela</li>
-            </ul>
-          </div>
-          <div className="space-y-1">
-            <p className="font-semibold text-foreground">Passo 3 — HTTP Request (Corpo do Request):</p>
-            <ul className="list-disc list-inside ml-2 space-y-0.5">
-              <li>Send Headers: ON → api-key com o valor da anon key</li>
-              <li>Send Body: ON → Body Content Type: JSON</li>
-              <li>Specify Body: <strong>"Using JSON"</strong> (NÃO "Defined automatically by the model")</li>
-              <li>Cole o JSON da aba <em>"Body (HTTP Request)"</em></li>
-            </ul>
+          <div className="mt-2 p-2 rounded border border-red-500/20 bg-red-500/5">
+            <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+              ⚠️ NÃO use "Defined automatically by the model" no Specify Body — o campo <code className="text-[11px]">action</code> ficará ausente e causará erro.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -656,14 +629,13 @@ const N8nJsonTemplates = () => {
                       <div className="border-t bg-muted/30 px-4 py-3">
                         <Tabs defaultValue="description" className="w-full">
                           <TabsList className="h-8 mb-3">
-                            <TabsTrigger value="description" className="text-xs px-3 h-7">Descrição (Tool)</TabsTrigger>
-                            <TabsTrigger value="params" className="text-xs px-3 h-7">Parâmetros</TabsTrigger>
-                            <TabsTrigger value="body" className="text-xs px-3 h-7">Body (HTTP Request)</TabsTrigger>
+                            <TabsTrigger value="description" className="text-xs px-3 h-7">Descrição</TabsTrigger>
+                            <TabsTrigger value="body" className="text-xs px-3 h-7">Body JSON</TabsTrigger>
                           </TabsList>
                           
                           <TabsContent value="description" className="mt-0">
                             <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[11px] text-muted-foreground">Cole no campo <strong>Description</strong> do tool node no MCP Server Trigger</span>
+                              <span className="text-[11px] text-muted-foreground">Cole no campo <strong>Description</strong> do HTTP Request Tool</span>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -677,42 +649,6 @@ const N8nJsonTemplates = () => {
                             <pre className="text-xs font-mono bg-background/80 rounded border p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
                               {template.toolDescription}
                             </pre>
-                          </TabsContent>
-
-                          <TabsContent value="params" className="mt-0">
-                            <p className="text-[11px] text-muted-foreground mb-2">
-                              No tool node, clique em <strong>"Add Parameter"</strong> e preencha cada um:
-                            </p>
-                            <div className="rounded border overflow-hidden">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow className="bg-muted/50">
-                                    <TableHead className="text-xs h-8 font-semibold">Nome</TableHead>
-                                    <TableHead className="text-xs h-8 font-semibold">Tipo</TableHead>
-                                    <TableHead className="text-xs h-8 font-semibold">Obrigatório</TableHead>
-                                    <TableHead className="text-xs h-8 font-semibold">Descrição</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {template.params.map(param => (
-                                    <TableRow key={param.name}>
-                                      <TableCell className="text-xs font-mono py-1.5">{param.name}</TableCell>
-                                      <TableCell className="text-xs py-1.5">
-                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{param.type}</Badge>
-                                      </TableCell>
-                                      <TableCell className="text-xs py-1.5">
-                                        {param.required ? (
-                                          <Badge className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20">Sim</Badge>
-                                        ) : (
-                                          <span className="text-muted-foreground">Não</span>
-                                        )}
-                                      </TableCell>
-                                      <TableCell className="text-xs py-1.5 text-muted-foreground">{param.description}</TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </div>
                           </TabsContent>
 
                           <TabsContent value="body" className="mt-0">
@@ -733,9 +669,6 @@ const N8nJsonTemplates = () => {
                             <pre className="text-xs font-mono bg-background/80 rounded border p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[250px] overflow-y-auto">
                               {bodyStr}
                             </pre>
-                            <p className="text-[10px] text-red-500 dark:text-red-400 mt-2 font-medium">
-                              ⚠️ NÃO use "Defined automatically by the model" — o campo action não será incluído e causará erro.
-                            </p>
                           </TabsContent>
                         </Tabs>
                       </div>
