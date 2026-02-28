@@ -41,7 +41,18 @@ Deno.serve(async (req) => {
       rawBody = rawBody.json_montado;
     }
     const body = rawBody;
-    const { action, empresa_id, user_id, periodo, filters } = body;
+    const { action, empresa_id, user_id, periodo } = body;
+    
+    // Suportar filtros como objeto aninhado OU como parâmetros top-level (flat)
+    // Isso garante compatibilidade com HTTP Request Tool do n8n que não suporta objetos aninhados
+    const filters = body.filters || {};
+    // Mesclar parâmetros flat no filters (prioridade para o que vier em filters)
+    const flatFilterKeys = ["tipo", "status", "categoria_id", "plataforma", "ativo", "search", "limit"];
+    for (const key of flatFilterKeys) {
+      if (body[key] !== undefined && filters[key] === undefined) {
+        filters[key] = body[key];
+      }
+    }
 
     const requestTimestamp = new Date().toISOString();
     const requestLog = {
