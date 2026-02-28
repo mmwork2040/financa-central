@@ -46,26 +46,27 @@ Deno.serve(async (req) => {
     // Helper: date range from periodo
     const getDateRange = (p?: string) => {
       const now = new Date();
-      const fim = now.toISOString().split("T")[0];
+      // Usar fim do dia para incluir registros com timestamp
+      const fim = now.toISOString().split("T")[0] + "T23:59:59.999Z";
       let inicio: string;
       switch (p) {
         case "semana":
-          inicio = new Date(now.getTime() - 7 * 86400000).toISOString().split("T")[0];
+          inicio = new Date(now.getTime() - 7 * 86400000).toISOString().split("T")[0] + "T00:00:00.000Z";
           break;
         case "mes":
-          inicio = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+          inicio = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0] + "T00:00:00.000Z";
           break;
         case "trimestre":
-          inicio = new Date(now.getFullYear(), now.getMonth() - 2, 1).toISOString().split("T")[0];
+          inicio = new Date(now.getFullYear(), now.getMonth() - 2, 1).toISOString().split("T")[0] + "T00:00:00.000Z";
           break;
         case "semestre":
-          inicio = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().split("T")[0];
+          inicio = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().split("T")[0] + "T00:00:00.000Z";
           break;
         case "ano":
-          inicio = new Date(now.getFullYear(), 0, 1).toISOString().split("T")[0];
+          inicio = new Date(now.getFullYear(), 0, 1).toISOString().split("T")[0] + "T00:00:00.000Z";
           break;
         default:
-          inicio = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+          inicio = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0] + "T00:00:00.000Z";
       }
       return { inicio, fim };
     };
