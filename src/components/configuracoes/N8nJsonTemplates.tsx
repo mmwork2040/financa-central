@@ -5,167 +5,319 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Copy, Check, Search, Plus, Trash2, Code2, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ActionTemplate {
   action: string;
+  toolName: string;
   label: string;
   description: string;
   category: string;
-  json: Record<string, any>;
+  schema: Record<string, any>;
+  body: Record<string, any>;
 }
+
+const endpoint = `\${SUPABASE_URL}/functions/v1/n8n-query`;
 
 const DEFAULT_TEMPLATES: ActionTemplate[] = [
   {
     action: "resumo-financeiro",
+    toolName: "resumo_financeiro",
     label: "Resumo Financeiro",
     description: "Visão geral: receitas, despesas, saldo, vendas digitais e contas bancárias",
     category: "Resumos",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+        periodo: { type: "string", description: "semana, mes, trimestre, semestre ou ano" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "resumo-financeiro",
-      empresa_id: "<UUID da empresa>",
-      periodo: "<semana|mes|trimestre|semestre|ano>",
+      empresa_id: "{{ $json.empresa_id }}",
+      periodo: "{{ $json.periodo }}",
     },
   },
   {
     action: "lancamentos",
+    toolName: "lancamentos",
     label: "Lançamentos",
     description: "Lista de lançamentos com filtros por tipo, status e categoria",
     category: "Financeiro",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+        periodo: { type: "string", description: "semana, mes, trimestre, semestre ou ano" },
+        tipo: { type: "string", description: "Filtro: receita ou despesa" },
+        status: { type: "string", description: "Filtro: pendente ou pago" },
+        categoria_id: { type: "string", description: "UUID da categoria" },
+        limit: { type: "number", description: "Limite de resultados" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "lancamentos",
-      empresa_id: "<UUID da empresa>",
-      periodo: "<período>",
-      filters: { tipo: "<receita|despesa>", status: "<pendente|pago>", categoria_id: "<UUID>", limit: 50 },
+      empresa_id: "{{ $json.empresa_id }}",
+      periodo: "{{ $json.periodo }}",
+      tipo: "{{ $json.tipo }}",
+      status: "{{ $json.status }}",
+      categoria_id: "{{ $json.categoria_id }}",
+      limit: "{{ $json.limit }}",
     },
   },
   {
     action: "despesas-pendentes",
+    toolName: "despesas_pendentes",
     label: "Despesas Pendentes",
     description: "Lista de despesas com status pendente ordenadas por vencimento",
     category: "Financeiro",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+        limit: { type: "number", description: "Limite de resultados" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "despesas-pendentes",
-      empresa_id: "<UUID da empresa>",
-      filters: { limit: 20 },
+      empresa_id: "{{ $json.empresa_id }}",
+      limit: "{{ $json.limit }}",
     },
   },
   {
     action: "receitas-pendentes",
+    toolName: "receitas_pendentes",
     label: "Receitas Pendentes",
     description: "Lista de receitas com status pendente ordenadas por vencimento",
     category: "Financeiro",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+        limit: { type: "number", description: "Limite de resultados" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "receitas-pendentes",
-      empresa_id: "<UUID da empresa>",
-      filters: { limit: 20 },
+      empresa_id: "{{ $json.empresa_id }}",
+      limit: "{{ $json.limit }}",
     },
   },
   {
     action: "resumo-categorias",
+    toolName: "resumo_categorias",
     label: "Resumo por Categorias",
     description: "Totais de receitas e despesas agrupados por categoria",
     category: "Resumos",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+        periodo: { type: "string", description: "semana, mes, trimestre, semestre ou ano" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "resumo-categorias",
-      empresa_id: "<UUID da empresa>",
-      periodo: "<período>",
+      empresa_id: "{{ $json.empresa_id }}",
+      periodo: "{{ $json.periodo }}",
     },
   },
   {
     action: "vendas-digitais",
+    toolName: "vendas_digitais",
     label: "Vendas Digitais",
     description: "Vendas de plataformas externas com filtros por plataforma e status",
     category: "Vendas",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+        periodo: { type: "string", description: "semana, mes, trimestre, semestre ou ano" },
+        plataforma: { type: "string", description: "Nome da plataforma (ex: Hotmart, Kiwify)" },
+        status: { type: "string", description: "Status da venda (ex: aprovada, pendente)" },
+        limit: { type: "number", description: "Limite de resultados" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "vendas-digitais",
-      empresa_id: "<UUID da empresa>",
-      periodo: "<período>",
-      filters: { plataforma: "<plataforma>", status: "aprovada", limit: 50 },
+      empresa_id: "{{ $json.empresa_id }}",
+      periodo: "{{ $json.periodo }}",
+      plataforma: "{{ $json.plataforma }}",
+      status: "{{ $json.status }}",
+      limit: "{{ $json.limit }}",
     },
   },
   {
     action: "recebimentos-digitais",
+    toolName: "recebimentos_digitais",
     label: "Recebimentos Digitais",
     description: "Recebimentos vinculados a vendas digitais",
     category: "Vendas",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+        status: { type: "string", description: "Status: pendente ou recebido" },
+        limit: { type: "number", description: "Limite de resultados" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "recebimentos-digitais",
-      empresa_id: "<UUID da empresa>",
-      filters: { status: "<pendente|recebido>", limit: 20 },
+      empresa_id: "{{ $json.empresa_id }}",
+      status: "{{ $json.status }}",
+      limit: "{{ $json.limit }}",
     },
   },
   {
     action: "contas-bancarias",
+    toolName: "contas_bancarias",
     label: "Contas Bancárias",
     description: "Lista de todas as contas bancárias e seus saldos",
     category: "Cadastros",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "contas-bancarias",
-      empresa_id: "<UUID da empresa>",
+      empresa_id: "{{ $json.empresa_id }}",
     },
   },
   {
     action: "clientes",
+    toolName: "clientes",
     label: "Clientes",
     description: "Lista de clientes com filtros de busca e status",
     category: "Cadastros",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+        ativo: { type: "boolean", description: "Filtrar por status ativo" },
+        search: { type: "string", description: "Busca por nome" },
+        limit: { type: "number", description: "Limite de resultados" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "clientes",
-      empresa_id: "<UUID da empresa>",
-      filters: { ativo: true, search: "<nome parcial>", limit: 50 },
+      empresa_id: "{{ $json.empresa_id }}",
+      ativo: "{{ $json.ativo }}",
+      search: "{{ $json.search }}",
+      limit: "{{ $json.limit }}",
     },
   },
   {
     action: "fornecedores",
+    toolName: "fornecedores",
     label: "Fornecedores",
     description: "Lista de fornecedores com filtros de busca e status",
     category: "Cadastros",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+        ativo: { type: "boolean", description: "Filtrar por status ativo" },
+        search: { type: "string", description: "Busca por nome" },
+        limit: { type: "number", description: "Limite de resultados" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "fornecedores",
-      empresa_id: "<UUID da empresa>",
-      filters: { ativo: true, search: "<nome parcial>", limit: 50 },
+      empresa_id: "{{ $json.empresa_id }}",
+      ativo: "{{ $json.ativo }}",
+      search: "{{ $json.search }}",
+      limit: "{{ $json.limit }}",
     },
   },
   {
     action: "projetos",
+    toolName: "projetos",
     label: "Projetos",
     description: "Lista de projetos com filtro por status",
     category: "Cadastros",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+        status: { type: "string", description: "Status: ativo, concluido ou cancelado" },
+        limit: { type: "number", description: "Limite de resultados" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "projetos",
-      empresa_id: "<UUID da empresa>",
-      filters: { status: "<ativo|concluido|cancelado>", limit: 20 },
+      empresa_id: "{{ $json.empresa_id }}",
+      status: "{{ $json.status }}",
+      limit: "{{ $json.limit }}",
     },
   },
   {
     action: "categorias",
+    toolName: "categorias",
     label: "Categorias",
     description: "Lista de todas as categorias cadastradas",
     category: "Cadastros",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "categorias",
-      empresa_id: "<UUID da empresa>",
+      empresa_id: "{{ $json.empresa_id }}",
     },
   },
   {
     action: "formas-pagamento",
+    toolName: "formas_pagamento",
     label: "Formas de Pagamento",
     description: "Lista de formas de pagamento cadastradas",
     category: "Cadastros",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "formas-pagamento",
-      empresa_id: "<UUID da empresa>",
+      empresa_id: "{{ $json.empresa_id }}",
     },
   },
   {
     action: "fluxo-caixa",
+    toolName: "fluxo_caixa",
     label: "Fluxo de Caixa",
     description: "Comparativo mensal de receitas vs despesas",
     category: "Resumos",
-    json: {
+    schema: {
+      type: "object",
+      properties: {
+        empresa_id: { type: "string", description: "UUID da empresa" },
+        periodo: { type: "string", description: "semana, mes, trimestre, semestre ou ano" },
+      },
+      required: ["empresa_id"],
+    },
+    body: {
       action: "fluxo-caixa",
-      empresa_id: "<UUID da empresa>",
-      periodo: "<semestre|ano>",
+      empresa_id: "{{ $json.empresa_id }}",
+      periodo: "{{ $json.periodo }}",
     },
   },
 ];
@@ -181,10 +333,11 @@ const CATEGORY_COLORS: Record<string, string> = {
 const N8nJsonTemplates = () => {
   const [search, setSearch] = useState("");
   const [copiedAction, setCopiedAction] = useState<string | null>(null);
+  const [copiedType, setCopiedType] = useState<string | null>(null);
   const [expandedActions, setExpandedActions] = useState<Set<string>>(new Set());
   const [customTemplates, setCustomTemplates] = useState<ActionTemplate[]>(() => {
     try {
-      const saved = localStorage.getItem("n8n-custom-templates");
+      const saved = localStorage.getItem("n8n-custom-templates-v2");
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
@@ -201,11 +354,12 @@ const N8nJsonTemplates = () => {
     t.category.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleCopy = (template: ActionTemplate) => {
-    navigator.clipboard.writeText(JSON.stringify(template.json, null, 2));
-    setCopiedAction(template.action);
-    toast.success(`JSON "${template.label}" copiado!`);
-    setTimeout(() => setCopiedAction(null), 2000);
+  const handleCopy = (text: string, action: string, type: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedAction(action);
+    setCopiedType(type);
+    toast.success(`${type === "schema" ? "Schema" : "Body"} "${action}" copiado!`);
+    setTimeout(() => { setCopiedAction(null); setCopiedType(null); }, 2000);
   };
 
   const toggleExpand = (action: string) => {
@@ -230,14 +384,16 @@ const N8nJsonTemplates = () => {
     }
     const custom: ActionTemplate = {
       action: newTemplate.action,
+      toolName: newTemplate.action.replace(/-/g, "_"),
       label: newTemplate.label,
       description: newTemplate.description || "Template personalizado",
       category: "Personalizado",
-      json: parsedJson,
+      schema: { type: "object", properties: { empresa_id: { type: "string" } }, required: ["empresa_id"] },
+      body: parsedJson,
     };
     const updated = [...customTemplates, custom];
     setCustomTemplates(updated);
-    localStorage.setItem("n8n-custom-templates", JSON.stringify(updated));
+    localStorage.setItem("n8n-custom-templates-v2", JSON.stringify(updated));
     setNewTemplate({ action: "", label: "", description: "", json: "{}" });
     setShowAddForm(false);
     toast.success("Template personalizado adicionado!");
@@ -246,46 +402,11 @@ const N8nJsonTemplates = () => {
   const handleRemoveCustom = (action: string) => {
     const updated = customTemplates.filter(t => t.action !== action);
     setCustomTemplates(updated);
-    localStorage.setItem("n8n-custom-templates", JSON.stringify(updated));
+    localStorage.setItem("n8n-custom-templates-v2", JSON.stringify(updated));
     toast.success("Template removido.");
   };
 
-  const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/n8n-query`;
-
-  const toolSchema = JSON.stringify({
-    type: "object",
-    properties: {
-      action: {
-        type: "string",
-        description: "Ação a executar. Valores: resumo-financeiro, lancamentos, despesas-pendentes, receitas-pendentes, resumo-categorias, vendas-digitais, recebimentos-digitais, contas-bancarias, clientes, fornecedores, projetos, categorias, formas-pagamento, fluxo-caixa",
-      },
-      empresa_id: {
-        type: "string",
-        description: "UUID da empresa",
-      },
-      periodo: {
-        type: "string",
-        description: "Período de consulta: semana, mes, trimestre, semestre ou ano",
-      },
-      tipo: { type: "string", description: "Filtro: receita ou despesa" },
-      status: { type: "string", description: "Filtro: pendente, pago, aprovada, etc." },
-      categoria_id: { type: "string", description: "Filtro: UUID da categoria" },
-      plataforma: { type: "string", description: "Filtro: Nome da plataforma (ex: Hotmart, Kiwify)" },
-      ativo: { type: "boolean", description: "Filtro: status ativo" },
-      search: { type: "string", description: "Filtro: busca textual por nome" },
-      limit: { type: "number", description: "Filtro: limite de resultados" },
-    },
-    required: ["action", "empresa_id"],
-  }, null, 2);
-
-  const [copiedSchema, setCopiedSchema] = useState(false);
-
-  const handleCopySchema = () => {
-    navigator.clipboard.writeText(toolSchema);
-    setCopiedSchema(true);
-    toast.success("JSON Schema da Tool copiado!");
-    setTimeout(() => setCopiedSchema(false), 2000);
-  };
+  const realEndpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/n8n-query`;
 
   return (
     <div className="space-y-6">
@@ -298,14 +419,14 @@ const N8nJsonTemplates = () => {
               <p className="text-sm font-medium">Endpoint n8n-query</p>
               <div className="flex items-center gap-2">
                 <code className="text-xs bg-background/80 px-2 py-1 rounded border font-mono break-all">
-                  POST {endpoint}
+                  POST {realEndpoint}
                 </code>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 shrink-0"
                   onClick={() => {
-                    navigator.clipboard.writeText(endpoint);
+                    navigator.clipboard.writeText(realEndpoint);
                     toast.success("URL copiada!");
                   }}
                 >
@@ -320,30 +441,18 @@ const N8nJsonTemplates = () => {
         </CardContent>
       </Card>
 
-      {/* JSON Schema para Tool do AI Agent */}
+      {/* Instruções MCP Server Trigger */}
       <Card className="border-amber-500/30 bg-amber-500/5">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Code2 className="h-4 w-4 text-amber-600" />
-                JSON Schema para Tool do AI Agent
-              </CardTitle>
-              <CardDescription className="text-xs mt-1">
-                Cole este schema na configuração da Tool do AI Agent no n8n para evitar erros de validação
-              </CardDescription>
-            </div>
-            <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={handleCopySchema}>
-              {copiedSchema ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-              {copiedSchema ? "Copiado!" : "Copiar Schema"}
-            </Button>
-          </div>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Code2 className="h-4 w-4 text-amber-600" />
+            Configuração MCP Server Trigger
+          </CardTitle>
+          <CardDescription className="text-xs mt-1">
+            Para cada tool no MCP Server Trigger, copie o <strong>Schema</strong> para o campo de input schema do tool node
+            e o <strong>Body</strong> para o HTTP Request node correspondente.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <pre className="text-xs font-mono bg-background/80 rounded border p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
-            {toolSchema}
-          </pre>
-        </CardContent>
       </Card>
 
       {/* Search + Add */}
@@ -376,7 +485,7 @@ const N8nJsonTemplates = () => {
             <Input placeholder="Descrição" value={newTemplate.description} onChange={e => setNewTemplate(p => ({ ...p, description: e.target.value }))} />
             <textarea
               className="w-full min-h-[100px] rounded-md border bg-background px-3 py-2 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder='{"action":"minha-action","empresa_id":"<UUID>"}'
+              placeholder='{"action":"minha-action","empresa_id":"{{ $json.empresa_id }}"}'
               value={newTemplate.json}
               onChange={e => setNewTemplate(p => ({ ...p, json: e.target.value }))}
             />
@@ -398,12 +507,14 @@ const N8nJsonTemplates = () => {
               <Badge variant="secondary" className={CATEGORY_COLORS[category] || ""}>
                 {category}
               </Badge>
-              <span className="text-xs text-muted-foreground">{categoryTemplates.length} action(s)</span>
+              <span className="text-xs text-muted-foreground">{categoryTemplates.length} tool(s)</span>
             </div>
             <div className="grid gap-2">
               {categoryTemplates.map(template => {
                 const isExpanded = expandedActions.has(template.action);
                 const isCustom = customTemplates.some(c => c.action === template.action);
+                const schemaStr = JSON.stringify(template.schema, null, 2);
+                const bodyStr = JSON.stringify(template.body, null, 2);
                 return (
                   <Card key={template.action} className="overflow-hidden">
                     <div
@@ -412,16 +523,13 @@ const N8nJsonTemplates = () => {
                     >
                       {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium text-sm">{template.label}</span>
-                          <code className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{template.action}</code>
+                          <code className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{template.toolName}</code>
                         </div>
                         <p className="text-xs text-muted-foreground truncate">{template.description}</p>
                       </div>
                       <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(template)}>
-                          {copiedAction === template.action ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-                        </Button>
                         {isCustom && (
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveCustom(template.action)}>
                             <Trash2 className="h-3.5 w-3.5" />
@@ -431,9 +539,46 @@ const N8nJsonTemplates = () => {
                     </div>
                     {isExpanded && (
                       <div className="border-t bg-muted/30 px-4 py-3">
-                        <pre className="text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all">
-                          {JSON.stringify(template.json, null, 2)}
-                        </pre>
+                        <Tabs defaultValue="schema" className="w-full">
+                          <TabsList className="h-8 mb-2">
+                            <TabsTrigger value="schema" className="text-xs px-3 h-7">Schema (Tool Node)</TabsTrigger>
+                            <TabsTrigger value="body" className="text-xs px-3 h-7">Body (HTTP Request)</TabsTrigger>
+                          </TabsList>
+                          <TabsContent value="schema" className="mt-0">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[11px] text-muted-foreground">Cole no campo Input Schema do tool node no MCP Server Trigger</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 gap-1 text-xs"
+                                onClick={() => handleCopy(schemaStr, template.action, "schema")}
+                              >
+                                {copiedAction === template.action && copiedType === "schema" ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                                Copiar
+                              </Button>
+                            </div>
+                            <pre className="text-xs font-mono bg-background/80 rounded border p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[250px] overflow-y-auto">
+                              {schemaStr}
+                            </pre>
+                          </TabsContent>
+                          <TabsContent value="body" className="mt-0">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[11px] text-muted-foreground">Cole no Body (JSON) do HTTP Request node que aponta para n8n-query</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 gap-1 text-xs"
+                                onClick={() => handleCopy(bodyStr, template.action, "body")}
+                              >
+                                {copiedAction === template.action && copiedType === "body" ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                                Copiar
+                              </Button>
+                            </div>
+                            <pre className="text-xs font-mono bg-background/80 rounded border p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[250px] overflow-y-auto">
+                              {bodyStr}
+                            </pre>
+                          </TabsContent>
+                        </Tabs>
                       </div>
                     )}
                   </Card>
@@ -445,9 +590,11 @@ const N8nJsonTemplates = () => {
       })}
 
       {filtered.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground text-sm">
-          Nenhum template encontrado para "{search}"
-        </div>
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground text-sm">
+            Nenhum template encontrado para "{search}"
+          </CardContent>
+        </Card>
       )}
     </div>
   );
