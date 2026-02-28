@@ -252,6 +252,47 @@ const N8nJsonTemplates = () => {
 
   const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/n8n-query`;
 
+  const toolSchema = JSON.stringify({
+    type: "object",
+    properties: {
+      action: {
+        type: "string",
+        description: "Ação a executar. Valores: resumo-financeiro, lancamentos, despesas-pendentes, receitas-pendentes, resumo-categorias, vendas-digitais, recebimentos-digitais, contas-bancarias, clientes, fornecedores, projetos, categorias, formas-pagamento, fluxo-caixa",
+      },
+      empresa_id: {
+        type: "string",
+        description: "UUID da empresa",
+      },
+      periodo: {
+        type: "string",
+        description: "Período de consulta: semana, mes, trimestre, semestre ou ano",
+      },
+      filters: {
+        type: "object",
+        description: "Filtros opcionais para a consulta",
+        properties: {
+          tipo: { type: "string", description: "receita ou despesa" },
+          status: { type: "string", description: "pendente, pago, aprovada, etc." },
+          categoria_id: { type: "string", description: "UUID da categoria" },
+          plataforma: { type: "string", description: "Nome da plataforma (ex: Hotmart, Kiwify)" },
+          ativo: { type: "boolean", description: "Filtrar por status ativo" },
+          search: { type: "string", description: "Busca textual por nome" },
+          limit: { type: "number", description: "Limite de resultados" },
+        },
+      },
+    },
+    required: ["action", "empresa_id"],
+  }, null, 2);
+
+  const [copiedSchema, setCopiedSchema] = useState(false);
+
+  const handleCopySchema = () => {
+    navigator.clipboard.writeText(toolSchema);
+    setCopiedSchema(true);
+    toast.success("JSON Schema da Tool copiado!");
+    setTimeout(() => setCopiedSchema(false), 2000);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header info */}
@@ -282,6 +323,32 @@ const N8nJsonTemplates = () => {
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* JSON Schema para Tool do AI Agent */}
+      <Card className="border-amber-500/30 bg-amber-500/5">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Code2 className="h-4 w-4 text-amber-600" />
+                JSON Schema para Tool do AI Agent
+              </CardTitle>
+              <CardDescription className="text-xs mt-1">
+                Cole este schema na configuração da Tool do AI Agent no n8n para evitar erros de validação
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={handleCopySchema}>
+              {copiedSchema ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+              {copiedSchema ? "Copiado!" : "Copiar Schema"}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <pre className="text-xs font-mono bg-background/80 rounded border p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
+            {toolSchema}
+          </pre>
         </CardContent>
       </Card>
 
