@@ -3,13 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Building2, Upload, Loader2, User, Undo2, Check, Trash2 } from "lucide-react";
+import { Building2, Upload, Loader2, User, Undo2, Check, Trash2, Code2 } from "lucide-react";
 import InviteCodesCard from "@/components/convites/InviteCodesCard";
 import CepAddressFields, { AddressData } from "@/components/common/CepAddressFields";
 import { phoneInputMask } from "@/utils/format";
+import N8nJsonTemplates from "@/components/configuracoes/N8nJsonTemplates";
 
 const SYSTEM_PRIMARY_COLOR = "#f97316";
 
@@ -192,126 +194,141 @@ const ConfiguracoesEmpresa = () => {
         <p className="text-xs sm:text-sm text-muted-foreground">Gerencie os dados e personalização</p>
       </div>
 
-      {isPessoal && (
-        <Card className="border-dashed">
-          <CardHeader>
-            <CardTitle className="text-base">Você está no modo individual</CardTitle>
-            <CardDescription>
-              Suas finanças estão sendo gerenciadas no modo pessoal. Se quiser criar ou entrar em uma empresa, use o seletor de empresas na barra lateral.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
+      <Tabs defaultValue="geral" className="w-full">
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="geral">Geral</TabsTrigger>
+          {isSuperAdmin && <TabsTrigger value="n8n" className="gap-1.5"><Code2 className="h-3.5 w-3.5" /> n8n Templates</TabsTrigger>}
+        </TabsList>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Dados Gerais</CardTitle>
-            <CardDescription>Informações básicas da empresa</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome da Empresa *</Label>
-              <Input id="nome" value={empresa.nome} onChange={(e) => handleChange("nome", e.target.value)} disabled={!isAdmin} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cnpj">CNPJ</Label>
-              <Input id="cnpj" value={empresa.cnpj} onChange={(e) => handleChange("cnpj", e.target.value)} placeholder="00.000.000/0000-00" disabled={!isAdmin} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={empresa.email} onChange={(e) => handleChange("email", e.target.value)} disabled={!isAdmin} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="telefone">Telefone</Label>
-              <Input
-                id="telefone"
-                value={empresa.telefone}
-                onChange={(e) => {
-                  const raw = e.target.value.replace(/\D/g, "").slice(0, 11);
-                  handleChange("telefone", phoneInputMask(raw));
-                }}
-                placeholder="(00) 00000-0000"
-                disabled={!isAdmin}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Endereço</Label>
-              <CepAddressFields
-                address={address}
-                onChange={(field, value) => setAddress(prev => ({ ...prev, [field]: value }))}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="geral" className="space-y-6 mt-4">
+          {isPessoal && (
+            <Card className="border-dashed">
+              <CardHeader>
+                <CardTitle className="text-base">Você está no modo individual</CardTitle>
+                <CardDescription>
+                  Suas finanças estão sendo gerenciadas no modo pessoal. Se quiser criar ou entrar em uma empresa, use o seletor de empresas na barra lateral.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Personalização</CardTitle>
-            <CardDescription>Logo e identidade visual</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
-              <Label>Logo da Empresa</Label>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="h-20 w-20 shrink-0 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden bg-muted">
-                  {empresa.logo_url ? (
-                    <img src={empresa.logo_url} alt="Logo" className="h-full w-full object-contain" />
-                  ) : (
-                    <Building2 className="h-8 w-8 text-muted-foreground/50" />
-                  )}
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Dados Gerais</CardTitle>
+                <CardDescription>Informações básicas da empresa</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nome">Nome da Empresa *</Label>
+                  <Input id="nome" value={empresa.nome} onChange={(e) => handleChange("nome", e.target.value)} disabled={!isAdmin} />
                 </div>
-                {isAdmin && (
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Label htmlFor="logo-upload" className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
-                        {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                        {uploadingLogo ? "Enviando..." : "Enviar Logo"}
-                      </Label>
-                      {empresa.logo_url && (
-                        <Button type="button" variant="outline" size="sm" onClick={handleRemoveLogo} className="gap-1.5 text-destructive hover:text-destructive">
-                          <Trash2 className="h-3.5 w-3.5" /> Remover
-                        </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="cnpj">CNPJ</Label>
+                  <Input id="cnpj" value={empresa.cnpj} onChange={(e) => handleChange("cnpj", e.target.value)} placeholder="00.000.000/0000-00" disabled={!isAdmin} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={empresa.email} onChange={(e) => handleChange("email", e.target.value)} disabled={!isAdmin} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="telefone">Telefone</Label>
+                  <Input
+                    id="telefone"
+                    value={empresa.telefone}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "").slice(0, 11);
+                      handleChange("telefone", phoneInputMask(raw));
+                    }}
+                    placeholder="(00) 00000-0000"
+                    disabled={!isAdmin}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Endereço</Label>
+                  <CepAddressFields
+                    address={address}
+                    onChange={(field, value) => setAddress(prev => ({ ...prev, [field]: value }))}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Personalização</CardTitle>
+                <CardDescription>Logo e identidade visual</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-3">
+                  <Label>Logo da Empresa</Label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="h-20 w-20 shrink-0 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden bg-muted">
+                      {empresa.logo_url ? (
+                        <img src={empresa.logo_url} alt="Logo" className="h-full w-full object-contain" />
+                      ) : (
+                        <Building2 className="h-8 w-8 text-muted-foreground/50" />
                       )}
                     </div>
-                    <input id="logo-upload" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
-                    <p className="text-xs text-muted-foreground">PNG, JPG, WebP ou SVG. Máx 2MB.</p>
+                    {isAdmin && (
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Label htmlFor="logo-upload" className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+                            {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                            {uploadingLogo ? "Enviando..." : "Enviar Logo"}
+                          </Label>
+                          {empresa.logo_url && (
+                            <Button type="button" variant="outline" size="sm" onClick={handleRemoveLogo} className="gap-1.5 text-destructive hover:text-destructive">
+                              <Trash2 className="h-3.5 w-3.5" /> Remover
+                            </Button>
+                          )}
+                        </div>
+                        <input id="logo-upload" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
+                        <p className="text-xs text-muted-foreground">PNG, JPG, WebP ou SVG. Máx 2MB.</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label htmlFor="cor_primaria">Cor Primária</Label>
-              <div className="flex flex-wrap items-center gap-3">
-                <input type="color" id="cor_primaria" value={empresa.cor_primaria} onChange={(e) => handleColorChange(e.target.value)} className="h-10 w-14 cursor-pointer rounded border border-input" disabled={!isAdmin} />
-                <Input value={empresa.cor_primaria} onChange={(e) => handleColorChange(e.target.value)} className="w-28" placeholder={SYSTEM_PRIMARY_COLOR} disabled={!isAdmin} />
-                <div className="h-10 w-full sm:flex-1 rounded-md border" style={{ backgroundColor: empresa.cor_primaria }} />
-              </div>
-              {colorChanged && isAdmin && (
-                <div className="flex items-center gap-2 pt-1">
-                  <Button type="button" variant="outline" size="sm" onClick={handleUndoColor} className="gap-1.5">
-                    <Undo2 className="h-3.5 w-3.5" /> Desfazer
-                  </Button>
-                  <Button type="button" size="sm" onClick={handleConfirmColor} className="gap-1.5">
-                    <Check className="h-3.5 w-3.5" /> Confirmar cor
-                  </Button>
                 </div>
-              )}
+
+                <div className="space-y-3">
+                  <Label htmlFor="cor_primaria">Cor Primária</Label>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <input type="color" id="cor_primaria" value={empresa.cor_primaria} onChange={(e) => handleColorChange(e.target.value)} className="h-10 w-14 cursor-pointer rounded border border-input" disabled={!isAdmin} />
+                    <Input value={empresa.cor_primaria} onChange={(e) => handleColorChange(e.target.value)} className="w-28" placeholder={SYSTEM_PRIMARY_COLOR} disabled={!isAdmin} />
+                    <div className="h-10 w-full sm:flex-1 rounded-md border" style={{ backgroundColor: empresa.cor_primaria }} />
+                  </div>
+                  {colorChanged && isAdmin && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button type="button" variant="outline" size="sm" onClick={handleUndoColor} className="gap-1.5">
+                        <Undo2 className="h-3.5 w-3.5" /> Desfazer
+                      </Button>
+                      <Button type="button" size="sm" onClick={handleConfirmColor} className="gap-1.5">
+                        <Check className="h-3.5 w-3.5" /> Confirmar cor
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {isAdmin && (
+            <div className="flex justify-end">
+              <Button onClick={handleSave} disabled={saving || !empresa.nome.trim()}>
+                {saving ? "Salvando..." : "Salvar Configurações"}
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          )}
 
-      {isAdmin && (
-        <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={saving || !empresa.nome.trim()}>
-            {saving ? "Salvando..." : "Salvar Configurações"}
-          </Button>
-        </div>
-      )}
+          {!isPessoal && <InviteCodesCard />}
+        </TabsContent>
 
-      {!isPessoal && <InviteCodesCard />}
+        {isSuperAdmin && (
+          <TabsContent value="n8n" className="mt-4">
+            <N8nJsonTemplates />
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 };
