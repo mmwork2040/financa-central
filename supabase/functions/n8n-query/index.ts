@@ -638,6 +638,139 @@ Deno.serve(async (req) => {
         break;
       }
 
+      // ─── CRIAR FORNECEDOR ───
+      case "criar-fornecedor": {
+        const nome = sanitize(body.nome);
+        if (!nome) {
+          return new Response(JSON.stringify({ error: "nome is required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const fornecedorData: any = {
+          empresa_id,
+          nome,
+          ativo: body.ativo !== undefined ? body.ativo : true,
+        };
+        const cpf_cnpj = sanitize(body.cpf_cnpj);
+        const telefone = sanitize(body.telefone);
+        const email_forn = sanitize(body.email);
+        const cep = sanitize(body.cep);
+        const rua = sanitize(body.rua);
+        const numero = sanitize(body.numero);
+        const complemento = sanitize(body.complemento);
+        const bairro = sanitize(body.bairro);
+        const cidade = sanitize(body.cidade);
+        const estado = sanitize(body.estado);
+        if (cpf_cnpj) fornecedorData.cpf_cnpj = cpf_cnpj;
+        if (telefone) fornecedorData.telefone = telefone;
+        if (email_forn) fornecedorData.email = email_forn;
+        if (cep) fornecedorData.cep = cep;
+        if (rua) fornecedorData.rua = rua;
+        if (numero) fornecedorData.numero = numero;
+        if (complemento) fornecedorData.complemento = complemento;
+        if (bairro) fornecedorData.bairro = bairro;
+        if (cidade) fornecedorData.cidade = cidade;
+        if (estado) fornecedorData.estado = estado;
+
+        const { data: newForn, error: fornError } = await supabase
+          .from("fornecedores").insert(fornecedorData).select("*").single();
+        if (fornError) throw fornError;
+        result = newForn;
+        break;
+      }
+
+      // ─── CRIAR CATEGORIA ───
+      case "criar-categoria": {
+        const nome = sanitize(body.nome);
+        const tipo = sanitize(body.tipo) || "despesa";
+        if (!nome) {
+          return new Response(JSON.stringify({ error: "nome is required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (!["receita", "despesa", "investimento"].includes(tipo)) {
+          return new Response(JSON.stringify({ error: "tipo must be receita, despesa or investimento" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { data: newCat, error: catError } = await supabase
+          .from("categorias").insert({ empresa_id, nome, tipo }).select("*").single();
+        if (catError) throw catError;
+        result = newCat;
+        break;
+      }
+
+      // ─── CRIAR CONTA BANCÁRIA ───
+      case "criar-conta-bancaria": {
+        const nome = sanitize(body.nome);
+        if (!nome) {
+          return new Response(JSON.stringify({ error: "nome is required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const contaData: any = {
+          empresa_id,
+          nome,
+          principal: body.principal === true,
+          saldo_inicial: Number(body.saldo_inicial) || 0,
+          saldo_atual: Number(body.saldo_inicial) || 0,
+        };
+        const banco = sanitize(body.banco);
+        const agencia = sanitize(body.agencia);
+        const conta = sanitize(body.conta);
+        if (banco) contaData.banco = banco;
+        if (agencia) contaData.agencia = agencia;
+        if (conta) contaData.conta = conta;
+
+        if (contaData.principal) {
+          await supabase.from("contas_bancarias").update({ principal: false }).eq("empresa_id", empresa_id).eq("principal", true);
+        }
+        const { data: newConta, error: contaError } = await supabase
+          .from("contas_bancarias").insert(contaData).select("*").single();
+        if (contaError) throw contaError;
+        result = newConta;
+        break;
+      }
+
+      // ─── CRIAR FORMA DE PAGAMENTO ───
+      case "criar-forma-pagamento": {
+        const descricao = sanitize(body.descricao);
+        if (!descricao) {
+          return new Response(JSON.stringify({ error: "descricao is required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { data: newForma, error: formaError } = await supabase
+          .from("formas_pagamento").insert({ empresa_id, descricao }).select("*").single();
+        if (formaError) throw formaError;
+        result = newForma;
+        break;
+      }
+
+      // ─── CRIAR PROJETO ───
+      case "criar-projeto": {
+        const nome = sanitize(body.nome);
+        if (!nome) {
+          return new Response(JSON.stringify({ error: "nome is required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const projetoData: any = {
+          empresa_id,
+          nome,
+          status: sanitize(body.status) || "ativo",
+          orcamento: Number(body.orcamento) || 0,
+        };
+        const descricaoPrj = sanitize(body.descricao);
+        if (descricaoPrj) projetoData.descricao = descricaoPrj;
+
+        const { data: newProj, error: projError } = await supabase
+          .from("projetos").insert(projetoData).select("*").single();
+        if (projError) throw projError;
+        result = newProj;
+        break;
+      }
+
       // ─── LISTAR ANÚNCIOS (INTEGRAÇÕES DE ADS) ───
       case "listar-anuncios": {
         const { data: integracoes } = await supabase
@@ -716,7 +849,8 @@ Deno.serve(async (req) => {
             "resumo-financeiro", "lancamentos", "despesas-pendentes", "receitas-pendentes",
             "resumo-categorias", "vendas-digitais", "recebimentos-digitais", "contas-bancarias",
             "clientes", "fornecedores", "projetos", "categorias", "formas-pagamento", "fluxo-caixa",
-            "criar-lancamento", "atualizar-telegram-id", "atualizar-telegram-cliente",
+            "criar-lancamento", "criar-fornecedor", "criar-categoria", "criar-conta-bancaria",
+            "criar-forma-pagamento", "criar-projeto", "atualizar-telegram-id", "atualizar-telegram-cliente",
             "listar-anuncios", "listar-usuarios"
           ],
         }), {
