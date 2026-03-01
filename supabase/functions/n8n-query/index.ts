@@ -56,10 +56,12 @@ Deno.serve(async (req) => {
     const empresa_id = sanitize(body.empresa_id);
     const user_id = sanitize(body.user_id);
     const periodo = sanitize(body.periodo);
+    const data_inicio_custom = sanitize(body.data_inicio);
+    const data_fim_custom = sanitize(body.data_fim);
     
     // Suportar filtros como objeto aninhado OU como parâmetros top-level (flat)
     const filters = body.filters || {};
-    const flatFilterKeys = ["tipo", "status", "categoria_id", "plataforma", "ativo", "search", "limit"];
+    const flatFilterKeys = ["tipo", "status", "categoria_id", "plataforma", "ativo", "search", "limit", "permissao"];
     for (const key of flatFilterKeys) {
       const rawVal = body[key] !== undefined ? body[key] : filters[key];
       const cleanVal = sanitize(rawVal);
@@ -102,13 +104,34 @@ Deno.serve(async (req) => {
       return brDate;
     };
 
-    // Helper: date range from periodo (usando horário do Brasil)
+    // Helper: date range from periodo or custom dates (usando horário do Brasil)
     const getDateRange = (p?: string) => {
+      // Custom date range takes priority
+      if (data_inicio_custom && data_fim_custom) {
+        return {
+          inicio: data_inicio_custom + "T00:00:00.000-03:00",
+          fim: data_fim_custom + "T23:59:59.000-03:00",
+        };
+      }
+      if (data_inicio_custom) {
+        const now = getBrazilDate();
+        const fimDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        return {
+          inicio: data_inicio_custom + "T00:00:00.000-03:00",
+          fim: fimDate + "T23:59:59.000-03:00",
+        };
+      }
+      if (data_fim_custom) {
+        return {
+          inicio: "2000-01-01T00:00:00.000-03:00",
+          fim: data_fim_custom + "T23:59:59.000-03:00",
+        };
+      }
+
       const now = getBrazilDate();
       const year = now.getFullYear();
       const month = now.getMonth();
       const day = now.getDate();
-      // Fim do dia no horário do Brasil = 23:59:59 BRT = +03:00 do dia seguinte em UTC
       const fimDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       const fim = fimDate + "T23:59:59.000-03:00";
       let inicioDate: string;
@@ -575,6 +598,77 @@ Deno.serve(async (req) => {
         break;
       }
 
+      // ─── LISTAR ANÚNCIOS (INTEGRAÇÕES DE ADS) ───
+      case "listar-anuncios": {
+        const { data: integracoes } = await supabase
+          .from("integracoes")
+          .select("*")
+          .eq("empresa_id", empresa_id)
+          .in("plataforma", ["meta_ads", "google_ads", "facebook_ads"]);
+
+        // Also get vendas_digitais as ads performance proxy
+        const { inicio, fim } = getDateRange(periodo);
+        const { data: vendas } = await supabase
+          .from("vendas_digitais")
+          .select("*")
+          .eq("empresa_id", empresa_id)
+          .gte("data_venda", inicio)
+          .lte("data_venda", fim);
+
+        if (filters?.plataforma) {
+          const plat = filters.plataforma.toLowerCase();
+          result = {
+            integracoes: (integracoes || []).filter((i: any) => i.plataforma.toLowerCase().includes(plat)),
+            vendas_por_plataforma: (vendas || []).filter((v: any) => v.plataforma.toLowerCase().includes(plat)),
+          };
+        } else {
+          result = {
+            integracoes: integracoes || [],
+            vendas_por_plataforma: vendas || [],
+          };
+        }
+
+        const totalInvestido = (result.vendas_por_plataforma || []).reduce((s: number, v: any) => s + Number(v.taxa || 0), 0);
+        const totalReceita = (result.vendas_por_plataforma || []).reduce((s: number, v: any) => s + Number(v.valor_bruto || 0), 0);
+        result.resumo = {
+          total_integracoes: (result.integracoes || []).length,
+          total_vendas: (result.vendas_por_plataforma || []).length,
+          total_investido: totalInvestido,
+          total_receita: totalReceita,
+          roas: totalInvestido > 0 ? (totalReceita / totalInvestido).toFixed(2) : null,
+        };
+        break;
+      }
+
+      // ─── LISTAR USUÁRIOS DA EMPRESA ───
+      case "listar-usuarios": {
+        let query = supabase
+          .from("perfis")
+          .select("id, nome, email, permissao, created_at, empresa_id, foto_url, telegram_id, evolution_webhook_url")
+          .eq("empresa_id", empresa_id)
+          .order("nome", { ascending: true });
+
+        if (filters?.search) query = query.ilike("nome", `%${filters.search}%`);
+        if (filters?.permissao) query = query.eq("permissao", filters.permissao);
+        if (filters?.limit) query = query.limit(filters.limit);
+
+        const { data: perfis } = await query;
+
+        // Fetch roles for these users
+        const userIds = (perfis || []).map((p: any) => p.id);
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("user_id, role")
+          .eq("empresa_id", empresa_id)
+          .in("user_id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]);
+
+        result = (perfis || []).map((p: any) => ({
+          ...p,
+          role: (roles || []).find((r: any) => r.user_id === p.id)?.role || "leitura",
+        }));
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({
           error: "Invalid action",
@@ -582,7 +676,8 @@ Deno.serve(async (req) => {
             "resumo-financeiro", "lancamentos", "despesas-pendentes", "receitas-pendentes",
             "resumo-categorias", "vendas-digitais", "recebimentos-digitais", "contas-bancarias",
             "clientes", "fornecedores", "projetos", "categorias", "formas-pagamento", "fluxo-caixa",
-            "criar-lancamento", "atualizar-telegram-id", "atualizar-telegram-cliente"
+            "criar-lancamento", "atualizar-telegram-id", "atualizar-telegram-cliente",
+            "listar-anuncios", "listar-usuarios"
           ],
         }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
