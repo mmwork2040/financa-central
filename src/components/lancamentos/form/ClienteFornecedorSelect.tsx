@@ -1,6 +1,8 @@
 
 import { Cliente, Fornecedor } from "@/contexts/LancamentosContext";
 import { GenericSelect } from "./GenericSelect";
+import { QuickAddClienteModal } from "./QuickAddClienteModal";
+import { QuickAddFornecedorModal } from "./QuickAddFornecedorModal";
 
 interface ClienteFornecedorSelectProps {
   tipo: "despesa" | "receita" | "investimento";
@@ -34,17 +36,7 @@ export const ClienteFornecedorSelect = ({
         options={clientes}
         noneOptionValue="no-client"
         placeholder="Selecione o cliente"
-        quickAdd={onRefreshClientes ? {
-          title: "Cliente",
-          table: "clientes",
-          fields: [
-            { name: "nome", label: "Nome", required: true },
-            { name: "cpf_cnpj", label: "CPF/CNPJ", required: false },
-            { name: "telefone", label: "Telefone", required: false },
-            { name: "email", label: "Email", required: false },
-          ],
-          onSuccess: onRefreshClientes,
-        } : undefined}
+        customQuickAdd={onRefreshClientes ? <QuickAddClienteModal onSuccess={onRefreshClientes} /> : undefined}
       />
     );
   } else {
@@ -56,17 +48,7 @@ export const ClienteFornecedorSelect = ({
         options={fornecedores}
         noneOptionValue="no-supplier"
         placeholder="Selecione o fornecedor"
-        quickAdd={onRefreshFornecedores ? {
-          title: "Fornecedor",
-          table: "fornecedores",
-          fields: [
-            { name: "nome", label: "Nome", required: true },
-            { name: "cpf_cnpj", label: "CPF/CNPJ", required: false },
-            { name: "telefone", label: "Telefone", required: false },
-            { name: "email", label: "Email", required: false },
-          ],
-          onSuccess: onRefreshFornecedores,
-        } : undefined}
+        customQuickAdd={onRefreshFornecedores ? <QuickAddFornecedorModal onSuccess={onRefreshFornecedores} /> : undefined}
       />
     );
   }

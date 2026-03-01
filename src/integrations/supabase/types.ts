@@ -132,6 +132,7 @@ export type Database = {
           empresa_id: string | null
           id: string
           nome: string
+          principal: boolean
           saldo_atual: number
           saldo_inicial: number
           updated_at: string
@@ -144,6 +145,7 @@ export type Database = {
           empresa_id?: string | null
           id?: string
           nome: string
+          principal?: boolean
           saldo_atual?: number
           saldo_inicial?: number
           updated_at?: string
@@ -156,6 +158,7 @@ export type Database = {
           empresa_id?: string | null
           id?: string
           nome?: string
+          principal?: boolean
           saldo_atual?: number
           saldo_inicial?: number
           updated_at?: string
