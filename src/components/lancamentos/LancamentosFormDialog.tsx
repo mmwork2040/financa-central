@@ -14,6 +14,8 @@ import { CategoriaSelect } from "./form/CategoriaSelect";
 import { ClienteFornecedorSelect } from "./form/ClienteFornecedorSelect";
 import { GenericSelect } from "./form/GenericSelect";
 import { QuickAddContaBancariaModal } from "./form/QuickAddContaBancariaModal";
+import { QuickAddFormaPagamentoModal } from "./form/QuickAddFormaPagamentoModal";
+import { QuickAddProjetoModal } from "./form/QuickAddProjetoModal";
 
 export const LancamentosFormDialog = () => {
   const { 
@@ -184,12 +186,7 @@ export const LancamentosFormDialog = () => {
             noneOptionValue="no-payment-method"
             nameField="descricao"
             placeholder="Selecione a forma de pagamento"
-            quickAdd={{
-              title: "Forma de Pagamento",
-              table: "formas_pagamento",
-              fields: [{ name: "descricao", label: "Descrição", required: true }],
-              onSuccess: refreshFormasPagamento,
-            }}
+            customQuickAdd={refreshFormasPagamento ? <QuickAddFormaPagamentoModal onSuccess={refreshFormasPagamento} /> : undefined}
           />
           
           <GenericSelect 
@@ -210,6 +207,7 @@ export const LancamentosFormDialog = () => {
             noneOptionValue="no-project"
             nameField="nome"
             placeholder="Selecione o projeto (opcional)"
+            customQuickAdd={refreshProjetos ? <QuickAddProjetoModal onSuccess={refreshProjetos} /> : undefined}
           />
         </div>
         <DialogFooter>
