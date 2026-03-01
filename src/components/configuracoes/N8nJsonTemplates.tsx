@@ -418,6 +418,35 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     body: { action: "formas-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}" },
   },
   {
+    action: "listar-opcoes-lancamento",
+    toolName: "listar_opcoes_lancamento",
+    label: "Opções para Lançamento",
+    description: "Lista categorias, fornecedores, clientes, contas bancárias, formas de pagamento e projetos ativos",
+    toolDescription: `Retorna todas as opções disponíveis para preencher um novo lançamento financeiro.
+
+Use ANTES de criar um lançamento para obter os IDs válidos de:
+- Categorias (receita/despesa)
+- Fornecedores ativos
+- Clientes ativos
+- Contas bancárias
+- Formas de pagamento
+- Projetos ativos
+
+Use quando o usuário solicitar:
+- Registrar um lançamento (chame esta ferramenta primeiro para obter as opções)
+- Quais categorias/fornecedores/contas disponíveis
+
+Parâmetros:
+- empresa_id
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+    ],
+    body: { action: "listar-opcoes-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}" },
+  },
+  {
     action: "fluxo-caixa",
     toolName: "fluxo_caixa",
     label: "Fluxo de Caixa",
