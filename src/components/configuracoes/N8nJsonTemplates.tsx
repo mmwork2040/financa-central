@@ -644,6 +644,157 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     ],
     body: { action: "listar-usuarios", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome') }}", permissao: "{{ $fromAI('permissao', 'admin, editor ou leitura') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
+  {
+    action: "criar-fornecedor",
+    toolName: "criar_fornecedor",
+    label: "Criar Fornecedor",
+    description: "Cadastra um novo fornecedor no sistema",
+    toolDescription: `Cadastra um novo fornecedor.
+
+Use quando o usuário solicitar:
+- Cadastrar fornecedor
+- Adicionar fornecedor
+- Registrar fornecedor
+
+⚠️ IMPORTANTE: O campo "nome" é obrigatório. Os demais campos são opcionais.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- nome (obrigatório)
+- cpf_cnpj, telefone, email, cep, rua, numero, complemento, bairro, cidade, estado (opcionais)
+- ativo (padrão: true)
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "nome", type: "string", required: true, description: "Nome do fornecedor" },
+      { name: "cpf_cnpj", type: "string", required: false, description: "CPF ou CNPJ" },
+      { name: "telefone", type: "string", required: false, description: "Telefone" },
+      { name: "email", type: "string", required: false, description: "E-mail" },
+      { name: "cep", type: "string", required: false, description: "CEP" },
+      { name: "rua", type: "string", required: false, description: "Rua" },
+      { name: "numero", type: "string", required: false, description: "Número" },
+      { name: "complemento", type: "string", required: false, description: "Complemento" },
+      { name: "bairro", type: "string", required: false, description: "Bairro" },
+      { name: "cidade", type: "string", required: false, description: "Cidade" },
+      { name: "estado", type: "string", required: false, description: "Estado (UF)" },
+      { name: "ativo", type: "boolean", required: false, description: "Ativo (padrão: true)" },
+    ],
+    body: { action: "criar-fornecedor", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", nome: "{{ $fromAI('nome', 'Nome do fornecedor') }}", cpf_cnpj: "{{ $fromAI('cpf_cnpj', 'CPF ou CNPJ') }}", telefone: "{{ $fromAI('telefone', 'Telefone') }}", email: "{{ $fromAI('email', 'Email') }}", cep: "{{ $fromAI('cep', 'CEP') }}", rua: "{{ $fromAI('rua', 'Rua') }}", numero: "{{ $fromAI('numero', 'Número') }}", complemento: "{{ $fromAI('complemento', 'Complemento') }}", bairro: "{{ $fromAI('bairro', 'Bairro') }}", cidade: "{{ $fromAI('cidade', 'Cidade') }}", estado: "{{ $fromAI('estado', 'Estado UF') }}" },
+  },
+  {
+    action: "criar-categoria",
+    toolName: "criar_categoria",
+    label: "Criar Categoria",
+    description: "Cadastra uma nova categoria financeira no sistema",
+    toolDescription: `Cadastra uma nova categoria financeira.
+
+Use quando o usuário solicitar:
+- Cadastrar categoria
+- Adicionar categoria
+- Criar categoria de despesa/receita
+
+Parâmetros:
+- empresa_id (obrigatório)
+- nome (obrigatório)
+- tipo (receita, despesa ou investimento — padrão: despesa)
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "nome", type: "string", required: true, description: "Nome da categoria" },
+      { name: "tipo", type: "string", required: false, description: "receita, despesa ou investimento (padrão: despesa)" },
+    ],
+    body: { action: "criar-categoria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", nome: "{{ $fromAI('nome', 'Nome da categoria') }}", tipo: "{{ $fromAI('tipo', 'receita, despesa ou investimento') }}" },
+  },
+  {
+    action: "criar-conta-bancaria",
+    toolName: "criar_conta_bancaria",
+    label: "Criar Conta Bancária",
+    description: "Cadastra uma nova conta bancária no sistema",
+    toolDescription: `Cadastra uma nova conta bancária.
+
+Use quando o usuário solicitar:
+- Cadastrar conta bancária
+- Adicionar conta no banco
+- Registrar conta bancária
+
+Parâmetros:
+- empresa_id (obrigatório)
+- nome (obrigatório)
+- banco, agencia, conta (opcionais)
+- saldo_inicial (numérico, padrão: 0)
+- principal (boolean, padrão: false — se true, desmarca a principal anterior)
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "nome", type: "string", required: true, description: "Nome da conta" },
+      { name: "banco", type: "string", required: false, description: "Nome do banco" },
+      { name: "agencia", type: "string", required: false, description: "Número da agência" },
+      { name: "conta", type: "string", required: false, description: "Número da conta" },
+      { name: "saldo_inicial", type: "number", required: false, description: "Saldo inicial (padrão: 0)" },
+      { name: "principal", type: "boolean", required: false, description: "Conta principal (padrão: false)" },
+    ],
+    body: { action: "criar-conta-bancaria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", nome: "{{ $fromAI('nome', 'Nome da conta') }}", banco: "{{ $fromAI('banco', 'Nome do banco') }}", agencia: "{{ $fromAI('agencia', 'Número da agência') }}", conta: "{{ $fromAI('conta', 'Número da conta') }}", saldo_inicial: "{{ $fromAI('saldo_inicial', 'Saldo inicial numérico') }}", principal: "{{ $fromAI('principal', 'true ou false') }}" },
+  },
+  {
+    action: "criar-forma-pagamento",
+    toolName: "criar_forma_pagamento",
+    label: "Criar Forma de Pagamento",
+    description: "Cadastra uma nova forma de pagamento no sistema",
+    toolDescription: `Cadastra uma nova forma de pagamento.
+
+Use quando o usuário solicitar:
+- Cadastrar forma de pagamento
+- Adicionar meio de pagamento
+- Registrar forma de pagamento (ex: PIX, Boleto, Cartão)
+
+Parâmetros:
+- empresa_id (obrigatório)
+- descricao (obrigatório — ex: PIX, Boleto, Cartão de Crédito)
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "descricao", type: "string", required: true, description: "Descrição da forma de pagamento (ex: PIX, Boleto)" },
+    ],
+    body: { action: "criar-forma-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", descricao: "{{ $fromAI('descricao', 'Descrição da forma de pagamento') }}" },
+  },
+  {
+    action: "criar-projeto",
+    toolName: "criar_projeto",
+    label: "Criar Projeto",
+    description: "Cadastra um novo projeto no sistema",
+    toolDescription: `Cadastra um novo projeto.
+
+Use quando o usuário solicitar:
+- Cadastrar projeto
+- Adicionar projeto
+- Criar novo projeto
+
+Parâmetros:
+- empresa_id (obrigatório)
+- nome (obrigatório)
+- descricao (opcional)
+- status (ativo, concluido ou cancelado — padrão: ativo)
+- orcamento (numérico, padrão: 0)
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "nome", type: "string", required: true, description: "Nome do projeto" },
+      { name: "descricao", type: "string", required: false, description: "Descrição do projeto" },
+      { name: "status", type: "string", required: false, description: "ativo, concluido ou cancelado (padrão: ativo)" },
+      { name: "orcamento", type: "number", required: false, description: "Orçamento do projeto (padrão: 0)" },
+    ],
+    body: { action: "criar-projeto", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", nome: "{{ $fromAI('nome', 'Nome do projeto') }}", descricao: "{{ $fromAI('descricao', 'Descrição do projeto') }}", status: "{{ $fromAI('status', 'ativo, concluido ou cancelado') }}", orcamento: "{{ $fromAI('orcamento', 'Orçamento numérico do projeto') }}" },
+  },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
