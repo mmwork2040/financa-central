@@ -70,6 +70,7 @@ export type ContaBancaria = {
   id: string;
   created_at?: string;
   nome: string;
+  principal?: boolean;
 };
 
 type FiltrosType = {
@@ -461,6 +462,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (lancamento) {
       handleEdit(lancamento);
     } else {
+      const contaPrincipal = contasBancarias.find(c => c.principal);
       setSelectedId(null);
       setFormData({
         descricao: "",
@@ -471,7 +473,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         categoria_id: null,
         fornecedor_id: null,
         cliente_id: null,
-        conta_bancaria_id: null,
+        conta_bancaria_id: contaPrincipal?.id || null,
         forma_pagamento_id: null,
         projeto_id: null,
         recorrente: false,
