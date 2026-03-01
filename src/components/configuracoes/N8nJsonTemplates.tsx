@@ -42,17 +42,22 @@ Use quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id
-- periodo
+- periodo (semana, mes, trimestre, semestre ou ano)
+- data_inicio (YYYY-MM-DD, opcional - data específica de início)
+- data_fim (YYYY-MM-DD, opcional - data específica de fim)
 
-Se não informar período, usar "mes".
+Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
+Se não informar período nem datas, usar "mes".
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Resumos",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
+      { name: "data_inicio", type: "string", required: false, description: "Data início personalizada (YYYY-MM-DD)" },
+      { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
     ],
-    body: { action: "resumo-financeiro", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano. Padrão: mes') }}" },
+    body: { action: "resumo-financeiro", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano. Padrão: mes') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD, opcional') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD, opcional') }}" },
   },
   {
     action: "lancamentos",
@@ -69,25 +74,30 @@ Use quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id
-- periodo
+- periodo (semana, mes, trimestre, semestre ou ano)
+- data_inicio (YYYY-MM-DD, opcional - data específica de início)
+- data_fim (YYYY-MM-DD, opcional - data específica de fim)
 - tipo
 - status
 - categoria_id
 - limit
 
-Se não informar período, usar "mes".
+Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
+Se não informar período nem datas, usar "mes".
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
+      { name: "data_inicio", type: "string", required: false, description: "Data início personalizada (YYYY-MM-DD)" },
+      { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
       { name: "tipo", type: "string", required: false, description: "Filtro: receita ou despesa" },
       { name: "status", type: "string", required: false, description: "Filtro: pendente ou pago" },
       { name: "categoria_id", type: "string", required: false, description: "UUID da categoria" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "lancamentos", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa') }}", status: "{{ $fromAI('status', 'pendente ou pago') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
+    body: { action: "lancamentos", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD, opcional') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD, opcional') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa') }}", status: "{{ $fromAI('status', 'pendente ou pago') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "despesas-pendentes",
@@ -151,17 +161,22 @@ Use quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id
-- periodo
+- periodo (semana, mes, trimestre, semestre ou ano)
+- data_inicio (YYYY-MM-DD, opcional)
+- data_fim (YYYY-MM-DD, opcional)
 
-Se não informar período, usar "mes".
+Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
+Se não informar período nem datas, usar "mes".
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Resumos",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
+      { name: "data_inicio", type: "string", required: false, description: "Data início personalizada (YYYY-MM-DD)" },
+      { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
     ],
-    body: { action: "resumo-categorias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}" },
+    body: { action: "resumo-categorias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD, opcional') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD, opcional') }}" },
   },
   {
     action: "vendas-digitais",
@@ -178,12 +193,15 @@ Use quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id
-- periodo
+- periodo (semana, mes, trimestre, semestre ou ano)
+- data_inicio (YYYY-MM-DD, opcional)
+- data_fim (YYYY-MM-DD, opcional)
 - plataforma
 - status
 - limit
 
-Se não informar período, usar "mes".
+Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
+Se não informar período nem datas, usar "mes".
 
 Não usar para recebimentos pendentes.
 
@@ -192,11 +210,13 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
+      { name: "data_inicio", type: "string", required: false, description: "Data início personalizada (YYYY-MM-DD)" },
+      { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
       { name: "plataforma", type: "string", required: false, description: "Nome da plataforma (ex: Hotmart, Kiwify)" },
       { name: "status", type: "string", required: false, description: "Status da venda (ex: aprovada, pendente)" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "vendas-digitais", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", plataforma: "{{ $fromAI('plataforma', 'Nome da plataforma ex: Hotmart, Kiwify') }}", status: "{{ $fromAI('status', 'Status da venda ex: aprovada, pendente') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
+    body: { action: "vendas-digitais", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD, opcional') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD, opcional') }}", plataforma: "{{ $fromAI('plataforma', 'Nome da plataforma ex: Hotmart, Kiwify') }}", status: "{{ $fromAI('status', 'Status da venda ex: aprovada, pendente') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "recebimentos-digitais",
@@ -384,17 +404,22 @@ Use quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id
-- periodo
+- periodo (semana, mes, trimestre, semestre ou ano)
+- data_inicio (YYYY-MM-DD, opcional)
+- data_fim (YYYY-MM-DD, opcional)
 
-Se não informar período, usar "semestre".
+Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
+Se não informar período nem datas, usar "semestre".
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Resumos",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
+      { name: "data_inicio", type: "string", required: false, description: "Data início personalizada (YYYY-MM-DD)" },
+      { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
     ],
-    body: { action: "fluxo-caixa", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}" },
+    body: { action: "fluxo-caixa", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD, opcional') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD, opcional') }}" },
   },
   {
     action: "criar-lancamento",
@@ -491,6 +516,70 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "telefone", type: "string", required: false, description: "Telefone do cliente" },
     ],
     body: { action: "atualizar-telegram-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", telegram_id: "{{ $fromAI('telegram_id', 'ID do Telegram do cliente') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente') }}", email: "{{ $fromAI('email', 'Email do cliente') }}", telefone: "{{ $fromAI('telefone', 'Telefone do cliente') }}" },
+  },
+  {
+    action: "listar-anuncios",
+    toolName: "listar_anuncios",
+    label: "Listar Anúncios",
+    description: "Consulta integrações de anúncios e performance de vendas por plataforma",
+    toolDescription: `Consulta dados de anúncios e integrações de ads da empresa.
+
+Use quando o usuário solicitar:
+- Anúncios ativos
+- Performance de anúncios
+- Meta Ads / Google Ads
+- ROAS das campanhas
+- Investimento em anúncios
+
+Parâmetros:
+- empresa_id
+- periodo (semana, mes, trimestre, semestre ou ano)
+- data_inicio (YYYY-MM-DD, opcional)
+- data_fim (YYYY-MM-DD, opcional)
+- plataforma (ex: meta_ads, google_ads)
+
+Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
+Se não informar período nem datas, usar "mes".
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Vendas",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
+      { name: "data_inicio", type: "string", required: false, description: "Data início personalizada (YYYY-MM-DD)" },
+      { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
+      { name: "plataforma", type: "string", required: false, description: "Plataforma (ex: meta_ads, google_ads)" },
+    ],
+    body: { action: "listar-anuncios", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD, opcional') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD, opcional') }}", plataforma: "{{ $fromAI('plataforma', 'Plataforma ex: meta_ads, google_ads') }}" },
+  },
+  {
+    action: "listar-usuarios",
+    toolName: "listar_usuarios",
+    label: "Listar Usuários",
+    description: "Lista usuários da empresa com filtros por nome e permissão",
+    toolDescription: `Consulta usuários cadastrados na empresa.
+
+Use quando o usuário solicitar:
+- Lista de usuários
+- Quem tem acesso
+- Usuários da empresa
+- Buscar usuário
+
+Parâmetros:
+- empresa_id
+- search (busca por nome)
+- permissao (admin, editor ou leitura)
+- limit
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "search", type: "string", required: false, description: "Busca por nome" },
+      { name: "permissao", type: "string", required: false, description: "Filtro: admin, editor ou leitura" },
+      { name: "limit", type: "number", required: false, description: "Limite de resultados" },
+    ],
+    body: { action: "listar-usuarios", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome') }}", permissao: "{{ $fromAI('permissao', 'admin, editor ou leitura') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
 ];
 
@@ -602,7 +691,7 @@ const N8nJsonTemplates = () => {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Períodos: <code className="text-[11px]">semana</code> · <code className="text-[11px]">mes</code> · <code className="text-[11px]">trimestre</code> · <code className="text-[11px]">semestre</code> · <code className="text-[11px]">ano</code>
+                Períodos: <code className="text-[11px]">semana</code> · <code className="text-[11px]">mes</code> · <code className="text-[11px]">trimestre</code> · <code className="text-[11px]">semestre</code> · <code className="text-[11px]">ano</code> · ou datas personalizadas via <code className="text-[11px]">data_inicio</code> / <code className="text-[11px]">data_fim</code> (YYYY-MM-DD)
               </p>
             </div>
           </div>
