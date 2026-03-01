@@ -249,30 +249,42 @@ Deno.serve(async (req) => {
 
       // ─── DESPESAS PENDENTES ───
       case "despesas-pendentes": {
-        const { data } = await supabase
+        let query = supabase
           .from("lancamentos")
           .select("descricao, valor, data_vencimento, categoria:categoria_id(nome), fornecedor:fornecedor_id(nome)")
           .eq("empresa_id", empresa_id)
           .eq("tipo", "despesa")
-          .eq("status", "pendente")
-          .order("data_vencimento", { ascending: true })
-          .limit(filters?.limit || 20);
+          .eq("status", "pendente");
 
+        // Aplicar filtro de datas se fornecido
+        if (data_inicio_custom || data_fim_custom || periodo) {
+          const { inicio, fim } = getDateRange(periodo);
+          query = query.gte("data_vencimento", inicio).lte("data_vencimento", fim);
+        }
+
+        query = query.order("data_vencimento", { ascending: true }).limit(filters?.limit || 20);
+        const { data } = await query;
         result = data;
         break;
       }
 
       // ─── RECEITAS PENDENTES ───
       case "receitas-pendentes": {
-        const { data } = await supabase
+        let query = supabase
           .from("lancamentos")
           .select("descricao, valor, data_vencimento, categoria:categoria_id(nome), cliente:cliente_id(nome)")
           .eq("empresa_id", empresa_id)
           .eq("tipo", "receita")
-          .eq("status", "pendente")
-          .order("data_vencimento", { ascending: true })
-          .limit(filters?.limit || 20);
+          .eq("status", "pendente");
 
+        // Aplicar filtro de datas se fornecido
+        if (data_inicio_custom || data_fim_custom || periodo) {
+          const { inicio, fim } = getDateRange(periodo);
+          query = query.gte("data_vencimento", inicio).lte("data_vencimento", fim);
+        }
+
+        query = query.order("data_vencimento", { ascending: true }).limit(filters?.limit || 20);
+        const { data } = await query;
         result = data;
         break;
       }
@@ -342,9 +354,15 @@ Deno.serve(async (req) => {
           let query = supabase
             .from("recebimentos_digitais")
             .select("*, venda:venda_id(produto, plataforma, cliente)")
-            .in("venda_id", vendaIds)
-            .order("data_prevista", { ascending: true });
+            .in("venda_id", vendaIds);
 
+          // Aplicar filtro de datas se fornecido
+          if (data_inicio_custom || data_fim_custom || periodo) {
+            const { inicio, fim } = getDateRange(periodo);
+            query = query.gte("data_prevista", inicio).lte("data_prevista", fim);
+          }
+
+          query = query.order("data_prevista", { ascending: true });
           if (filters?.status) query = query.eq("status", filters.status);
           if (filters?.limit) query = query.limit(filters.limit);
 

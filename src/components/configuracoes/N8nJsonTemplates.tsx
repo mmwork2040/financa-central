@@ -113,15 +113,24 @@ Use quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id
+- periodo (semana, mes, trimestre, semestre ou ano)
+- data_inicio (YYYY-MM-DD, opcional - data específica de início)
+- data_fim (YYYY-MM-DD, opcional - data específica de fim)
 - limit
+
+Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
+Se não informar período nem datas, lista todas as pendentes.
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
+      { name: "data_inicio", type: "string", required: false, description: "Data início personalizada (YYYY-MM-DD)" },
+      { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "despesas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
+    body: { action: "despesas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD, opcional') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD, opcional') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "receitas-pendentes",
@@ -137,15 +146,24 @@ Use quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id
+- periodo (semana, mes, trimestre, semestre ou ano)
+- data_inicio (YYYY-MM-DD, opcional - data específica de início)
+- data_fim (YYYY-MM-DD, opcional - data específica de fim)
 - limit
+
+Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
+Se não informar período nem datas, lista todas as pendentes.
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
+      { name: "data_inicio", type: "string", required: false, description: "Data início personalizada (YYYY-MM-DD)" },
+      { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "receitas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
+    body: { action: "receitas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD, opcional') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD, opcional') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "resumo-categorias",
@@ -232,17 +250,26 @@ Use quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id
+- periodo (semana, mes, trimestre, semestre ou ano)
+- data_inicio (YYYY-MM-DD, opcional - data específica de início)
+- data_fim (YYYY-MM-DD, opcional - data específica de fim)
 - status
 - limit
+
+Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
+Se não informar período nem datas, lista todos os recebimentos.
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Vendas",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
+      { name: "data_inicio", type: "string", required: false, description: "Data início personalizada (YYYY-MM-DD)" },
+      { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
       { name: "status", type: "string", required: false, description: "Status: pendente ou recebido" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "recebimentos-digitais", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", status: "{{ $fromAI('status', 'pendente ou recebido') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
+    body: { action: "recebimentos-digitais", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD, opcional') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD, opcional') }}", status: "{{ $fromAI('status', 'pendente ou recebido') }}", limit: "{{ $fromAI('limit', 'Limite de resultados') }}" },
   },
   {
     action: "contas-bancarias",
