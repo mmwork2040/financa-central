@@ -484,6 +484,13 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Cria um novo lançamento financeiro (receita ou despesa)",
     toolDescription: `Cria um novo lançamento financeiro no sistema.
 
+⚠️ IMPORTANTE: ANTES de usar esta ferramenta, você DEVE chamar a ferramenta "listar_opcoes_lancamento" para obter os IDs válidos de categorias, fornecedores, clientes, contas bancárias, formas de pagamento e projetos. NUNCA invente UUIDs — use apenas os retornados por listar_opcoes_lancamento.
+
+Fluxo obrigatório:
+1. Chame listar_opcoes_lancamento com a empresa_id
+2. Apresente as opções ao usuário se necessário
+3. Use os IDs retornados para preencher este lançamento
+
 Use quando o usuário solicitar:
 - Registrar uma despesa
 - Registrar uma receita
@@ -497,7 +504,7 @@ Parâmetros:
 - data_vencimento (obrigatório, formato YYYY-MM-DD)
 - tipo (receita ou despesa, padrão: despesa)
 - status (pendente ou pago, padrão: pendente)
-- categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id (opcionais)
+- categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id (opcionais — use IDs de listar_opcoes_lancamento)
 - data_pagamento (opcional, formato YYYY-MM-DD)
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
