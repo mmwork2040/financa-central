@@ -458,6 +458,28 @@ Deno.serve(async (req) => {
         break;
       }
 
+      // ─── LISTAR OPÇÕES PARA LANÇAMENTO ───
+      case "listar-opcoes-lancamento": {
+        const [categoriasRes, fornecedoresRes, contasRes, formasRes, clientesRes, projetosRes] = await Promise.all([
+          supabase.from("categorias").select("id, nome, tipo").eq("empresa_id", empresa_id).order("nome", { ascending: true }),
+          supabase.from("fornecedores").select("id, nome").eq("empresa_id", empresa_id).eq("ativo", true).order("nome", { ascending: true }),
+          supabase.from("contas_bancarias").select("id, nome, banco, saldo_atual").eq("empresa_id", empresa_id),
+          supabase.from("formas_pagamento").select("id, descricao").eq("empresa_id", empresa_id),
+          supabase.from("clientes").select("id, nome").eq("empresa_id", empresa_id).eq("ativo", true).order("nome", { ascending: true }),
+          supabase.from("projetos").select("id, nome").eq("empresa_id", empresa_id).eq("status", "ativo").order("nome", { ascending: true }),
+        ]);
+
+        result = {
+          categorias: categoriasRes.data || [],
+          fornecedores: fornecedoresRes.data || [],
+          contas_bancarias: contasRes.data || [],
+          formas_pagamento: formasRes.data || [],
+          clientes: clientesRes.data || [],
+          projetos: projetosRes.data || [],
+        };
+        break;
+      }
+
       // ─── FLUXO DE CAIXA (comparativo mensal) ───
       case "fluxo-caixa": {
         const { inicio, fim } = getDateRange(periodo || "semestre");
