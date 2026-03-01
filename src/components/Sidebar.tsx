@@ -84,7 +84,7 @@ export const Sidebar = () => {
 
   // Auto-open submenus when on their routes
   useEffect(() => {
-    const cadastrosPaths = ["/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods", "/projetos"];
+    const cadastrosPaths = ["/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods", "/projetos", "/users"];
     const configPaths = ["/settings", "/settings/integracoes", "/settings/webhooks", "/settings/logs", "/settings/n8n-templates"];
     if (cadastrosPaths.some(p => location.pathname.startsWith(p))) setCadastrosOpen(true);
     if (configPaths.some(p => location.pathname.startsWith(p))) setConfigOpen(true);
@@ -134,6 +134,7 @@ export const Sidebar = () => {
     { name: "Contas Bancárias", icon: Building2, path: "/bank-accounts" },
     { name: "Formas de Pagamento", icon: CreditCard, path: "/payment-methods" },
     { name: "Projetos", icon: Briefcase, path: "/projetos" },
+    ...(!isPessoal ? [{ name: "Usuários", icon: Users, path: "/users" }] : []),
   ];
 
   const bottomItems = [
@@ -149,7 +150,6 @@ export const Sidebar = () => {
   ];
 
   const adminItems = [
-    { name: "Usuários", icon: Users, path: "/users" },
     { name: "Permissões", icon: ShieldCheck, path: "/permissions" },
   ];
 
