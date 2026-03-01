@@ -22,8 +22,10 @@ const ContasBancariasContent = () => {
 
   const {
     contasBancarias, loading, formData, openModal, openDeleteModal, selectedId, searchQuery,
+    showPrincipalConfirm, contaPrincipalExistente,
     handleInputChange, handleOpenModal, handleCloseModal, handleOpenDeleteModal, handleCloseDeleteModal,
     handleSave, handleDelete, handleExportCSV, handleExportPDF, handleSearchChange,
+    handleConfirmPrincipal, handleClosePrincipalConfirm,
   } = useContasBancarias();
 
   return (
@@ -80,6 +82,10 @@ const ContasBancariasContent = () => {
         formData={formData}
         handleInputChange={handleInputChange}
         isEditing={!!selectedId}
+        contaPrincipalExistente={contaPrincipalExistente}
+        showPrincipalConfirm={showPrincipalConfirm}
+        onClosePrincipalConfirm={handleClosePrincipalConfirm}
+        onConfirmPrincipal={handleConfirmPrincipal}
       />
 
       <ContaBancariaDeleteDialog

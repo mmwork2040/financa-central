@@ -11,6 +11,7 @@ export interface ContaBancariaFormData {
   agencia: string;
   conta: string;
   saldo_inicial: number;
+  principal: boolean;
 }
 
 export const useContasBancarias = () => {
@@ -19,15 +20,13 @@ export const useContasBancarias = () => {
   const [openModal, setOpenModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [formData, setFormData] = useState<ContaBancariaFormData>({
-    nome: "",
-    banco: "",
-    agencia: "",
-    conta: "",
-    saldo_inicial: 0,
+    nome: "", banco: "", agencia: "", conta: "", saldo_inicial: 0, principal: false,
   });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { empresaId } = useAuth();
+  const [showPrincipalConfirm, setShowPrincipalConfirm] = useState(false);
+  const [contaPrincipalExistente, setContaPrincipalExistente] = useState<string | null>(null);
 
   useEffect(() => {
     fetchContasBancarias();
@@ -41,7 +40,10 @@ export const useContasBancarias = () => {
         .select('*')
         .order('nome');
       if (error) throw error;
-      setContasBancarias(data || []);
+      // Sort principal first, then by name
+      const sorted = (data || []).map((d: any) => ({ ...d, principal: d.principal ?? false })) as ContaBancaria[];
+      sorted.sort((a, b) => (a.principal === b.principal ? 0 : a.principal ? -1 : 1));
+      setContasBancarias(sorted);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -55,7 +57,7 @@ export const useContasBancarias = () => {
   };
 
   const resetForm = () => {
-    setFormData({ nome: "", banco: "", agencia: "", conta: "", saldo_inicial: 0 });
+    setFormData({ nome: "", banco: "", agencia: "", conta: "", saldo_inicial: 0, principal: false });
     setSelectedId(null);
   };
 
@@ -67,6 +69,7 @@ export const useContasBancarias = () => {
         agencia: conta.agencia || "",
         conta: conta.conta || "",
         saldo_inicial: conta.saldo_inicial || 0,
+        principal: conta.principal || false,
       });
       setSelectedId(conta.id);
     } else {
@@ -79,11 +82,33 @@ export const useContasBancarias = () => {
   const handleOpenDeleteModal = (id: string) => { setSelectedId(id); setOpenDeleteModal(true); };
   const handleCloseDeleteModal = () => { setOpenDeleteModal(false); };
 
-  const handleSave = async () => {
+  const handleSave = async (forcarPrincipal?: boolean) => {
     try {
       if (!formData.nome) {
         toast.error("Nome da conta bancária é obrigatório");
         return;
+      }
+
+      // Check if there's already a principal account (and it's not the current one being edited)
+      if (formData.principal && !forcarPrincipal) {
+        const contaPrincipal = contasBancarias.find(
+          c => c.principal && c.id !== selectedId
+        );
+        if (contaPrincipal) {
+          setContaPrincipalExistente(contaPrincipal.nome);
+          setShowPrincipalConfirm(true);
+          return;
+        }
+      }
+
+      // If setting as principal, remove principal from others
+      if (formData.principal) {
+        const { error: resetError } = await (supabase
+          .from('contas_bancarias')
+          .update({ principal: false } as any) as any)
+          .eq('principal', true)
+          .neq('id', selectedId || '');
+        if (resetError) throw resetError;
       }
 
       const contaData = {
@@ -92,19 +117,20 @@ export const useContasBancarias = () => {
         agencia: formData.agencia || null,
         conta: formData.conta || null,
         saldo_inicial: formData.saldo_inicial || 0,
+        principal: formData.principal,
       };
 
       if (selectedId) {
-        const { error } = await supabase
+        const { error } = await (supabase
           .from('contas_bancarias')
-          .update(contaData)
+          .update(contaData as any) as any)
           .eq('id', selectedId);
         if (error) throw error;
         toast.success("Conta bancária atualizada com sucesso");
       } else {
         const { error } = await supabase
           .from('contas_bancarias')
-          .insert([{ ...contaData, saldo_atual: contaData.saldo_inicial, empresa_id: empresaId }]);
+          .insert([{ ...contaData, saldo_atual: contaData.saldo_inicial, empresa_id: empresaId } as any]);
         if (error) throw error;
         toast.success("Conta bancária cadastrada com sucesso");
       }
@@ -115,6 +141,15 @@ export const useContasBancarias = () => {
     } catch (error: any) {
       toast.error(error.message);
     }
+  };
+
+  const handleConfirmPrincipal = () => {
+    setShowPrincipalConfirm(false);
+    handleSave(true);
+  };
+
+  const handleClosePrincipalConfirm = () => {
+    setShowPrincipalConfirm(false);
   };
 
   const handleDelete = async () => {
@@ -136,7 +171,7 @@ export const useContasBancarias = () => {
 
   const handleExportCSV = () => {
     try {
-      const headers = "Nome,Banco,Agência,Conta,Saldo Inicial,Saldo Atual\n";
+      const headers = "Nome,Banco,Agência,Conta,Saldo Inicial,Saldo Atual,Principal\n";
       let csvContent = "data:text/csv;charset=utf-8," + headers;
       filteredContas.forEach(conta => {
         const row = [
@@ -145,7 +180,8 @@ export const useContasBancarias = () => {
           conta.agencia || "",
           conta.conta || "",
           formatCurrency(conta.saldo_inicial || 0).replace(/R\$\s?/g, ""),
-          formatCurrency(conta.saldo_atual || 0).replace(/R\$\s?/g, "")
+          formatCurrency(conta.saldo_atual || 0).replace(/R\$\s?/g, ""),
+          conta.principal ? "Sim" : "Não"
         ].map(value => `"${value}"`).join(",");
         csvContent += row + "\n";
       });
@@ -177,14 +213,16 @@ export const useContasBancarias = () => {
           .negative { color: red; }
           .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
           .text-right { text-align: right; }
+          .badge { background: #3b82f6; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
         </style>
       `;
       let tableRows = "";
       filteredContas.forEach(conta => {
         const saldoAtualClass = (conta.saldo_atual || 0) >= 0 ? 'positive' : 'negative';
+        const principalBadge = conta.principal ? ' <span class="badge">Principal</span>' : '';
         tableRows += `
           <tr>
-            <td>${conta.nome}</td>
+            <td>${conta.nome}${principalBadge}</td>
             <td>${conta.banco || '-'}</td>
             <td>${conta.agencia || '-'}</td>
             <td>${conta.conta || '-'}</td>
@@ -238,6 +276,8 @@ export const useContasBancarias = () => {
     openDeleteModal,
     selectedId,
     searchQuery,
+    showPrincipalConfirm,
+    contaPrincipalExistente,
     handleInputChange,
     handleOpenModal,
     handleCloseModal,
@@ -248,5 +288,7 @@ export const useContasBancarias = () => {
     handleExportCSV,
     handleExportPDF,
     handleSearchChange,
+    handleConfirmPrincipal,
+    handleClosePrincipalConfirm,
   };
 };
