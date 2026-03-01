@@ -84,7 +84,7 @@ export const Sidebar = () => {
 
   // Auto-open submenus when on their routes
   useEffect(() => {
-    const cadastrosPaths = ["/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods"];
+    const cadastrosPaths = ["/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods", "/projetos"];
     const configPaths = ["/settings", "/settings/integracoes", "/settings/webhooks", "/settings/logs", "/settings/n8n-templates"];
     if (cadastrosPaths.some(p => location.pathname.startsWith(p))) setCadastrosOpen(true);
     if (configPaths.some(p => location.pathname.startsWith(p))) setConfigOpen(true);
@@ -123,7 +123,6 @@ export const Sidebar = () => {
   const mainItems = [
     { name: "Dashboard", icon: Home, path: "/dashboard" },
     { name: "Lançamentos", icon: Files, path: "/transactions" },
-    { name: "Projetos", icon: Briefcase, path: "/projetos" },
     { name: "Vendas Digitais", icon: ShoppingCart, path: "/vendas-digitais" },
     { name: "Anúncios", icon: Megaphone, path: "/anuncios" },
   ];
@@ -134,6 +133,7 @@ export const Sidebar = () => {
     { name: "Categorias", icon: Tags, path: "/categorias" },
     { name: "Contas Bancárias", icon: Building2, path: "/bank-accounts" },
     { name: "Formas de Pagamento", icon: CreditCard, path: "/payment-methods" },
+    { name: "Projetos", icon: Briefcase, path: "/projetos" },
   ];
 
   const bottomItems = [

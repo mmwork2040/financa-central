@@ -128,37 +128,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       let empresasList: EmpresaInfo[] = [];
 
-      if (superAdmin) {
-        const { data: allEmpresas } = await supabase
-          .from('empresas')
-          .select('id, nome, pessoal')
-          .order('nome');
+      if (!roles || roles.length === 0) return null;
 
-        empresasList = (allEmpresas || []).map(e => {
-          const empresaRole = roles?.find(r => r.empresa_id === e.id)?.role;
-          return {
-            empresa_id: e.id,
-            role: empresaRole === 'super_admin' ? 'admin' : (empresaRole || 'admin'),
-            empresa_nome: e.nome,
-            pessoal: e.pessoal,
-          };
-        });
-      } else {
-        if (!roles || roles.length === 0) return null;
+      const empresaIds = roles.map(r => r.empresa_id);
+      const { data: empresasData } = await supabase
+        .from('empresas')
+        .select('id, nome, pessoal')
+        .in('id', empresaIds);
 
-        const empresaIds = roles.map(r => r.empresa_id);
-        const { data: empresasData } = await supabase
-          .from('empresas')
-          .select('id, nome, pessoal')
-          .in('id', empresaIds);
-
-        empresasList = roles.map(r => ({
-          empresa_id: r.empresa_id,
-          role: r.role,
-          empresa_nome: empresasData?.find(e => e.id === r.empresa_id)?.nome || 'Empresa',
-          pessoal: empresasData?.find(e => e.id === r.empresa_id)?.pessoal || false,
-        }));
-      }
+      empresasList = roles.map(r => ({
+        empresa_id: r.empresa_id,
+        role: r.role === 'super_admin' ? 'admin' : r.role,
+        empresa_nome: empresasData?.find(e => e.id === r.empresa_id)?.nome || 'Empresa',
+        pessoal: empresasData?.find(e => e.id === r.empresa_id)?.pessoal || false,
+      }));
 
       setEmpresas(empresasList);
 
