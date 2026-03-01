@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Star } from "lucide-react";
 import { formatCurrency } from "@/utils/format";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -12,6 +12,7 @@ import MobilePagination, { usePagination } from "@/components/common/MobilePagin
 import { useValuesVisibility, maskValue } from "@/contexts/ValuesVisibilityContext";
 import { useTableSort } from "@/hooks/useTableSort";
 import SortableTableHead from "@/components/common/SortableTableHead";
+import { Badge } from "@/components/ui/badge";
 
 export interface ContaBancaria {
   id: string;
@@ -21,6 +22,7 @@ export interface ContaBancaria {
   conta: string | null;
   saldo_inicial: number | null;
   saldo_atual: number | null;
+  principal: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -47,11 +49,18 @@ const ContasBancariasTable: React.FC<ContasBancariasTableProps> = ({
     return (
       <div className="space-y-3">
         {paginatedItems.map((conta) => (
-          <Card key={conta.id}>
+          <Card key={conta.id} className={conta.principal ? "border-primary" : ""}>
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-1 flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">{conta.nome}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-foreground truncate">{conta.nome}</p>
+                    {conta.principal && (
+                      <Badge variant="default" className="text-[10px] px-1.5 py-0 flex items-center gap-1">
+                        <Star className="h-3 w-3" /> Principal
+                      </Badge>
+                    )}
+                  </div>
                   {conta.banco && <p className="text-xs text-muted-foreground">{conta.banco}</p>}
                   <div className="flex gap-3 text-xs text-muted-foreground">
                     {conta.agencia && <span>Ag: {conta.agencia}</span>}
@@ -109,8 +118,17 @@ const ContasBancariasTable: React.FC<ContasBancariasTableProps> = ({
         </TableHeader>
         <TableBody>
           {paginatedItems.map((conta) => (
-            <TableRow key={conta.id}>
-              <TableCell className="font-medium">{conta.nome}</TableCell>
+            <TableRow key={conta.id} className={conta.principal ? "bg-primary/5" : ""}>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  {conta.nome}
+                  {conta.principal && (
+                    <Badge variant="default" className="text-[10px] px-1.5 py-0 flex items-center gap-1">
+                      <Star className="h-3 w-3" /> Principal
+                    </Badge>
+                  )}
+                </div>
+              </TableCell>
               <TableCell>{conta.banco || '-'}</TableCell>
               <TableCell>{conta.agencia || '-'}</TableCell>
               <TableCell>{conta.conta || '-'}</TableCell>
