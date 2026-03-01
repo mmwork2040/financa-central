@@ -13,6 +13,7 @@ import { ParcelasInput } from "./form/ParcelasInput";
 import { CategoriaSelect } from "./form/CategoriaSelect";
 import { ClienteFornecedorSelect } from "./form/ClienteFornecedorSelect";
 import { GenericSelect } from "./form/GenericSelect";
+import { QuickAddContaBancariaModal } from "./form/QuickAddContaBancariaModal";
 
 export const LancamentosFormDialog = () => {
   const { 
@@ -198,17 +199,7 @@ export const LancamentosFormDialog = () => {
             options={contasBancarias}
             noneOptionValue="no-bank-account"
             placeholder="Selecione a conta bancária"
-            quickAdd={{
-              title: "Conta Bancária",
-              table: "contas_bancarias",
-              fields: [
-                { name: "nome", label: "Nome", required: true },
-                { name: "banco", label: "Banco", required: false },
-                { name: "agencia", label: "Agência", required: false },
-                { name: "conta", label: "Conta", required: false },
-              ],
-              onSuccess: refreshContasBancarias,
-            }}
+            customQuickAdd={refreshContasBancarias ? <QuickAddContaBancariaModal onSuccess={refreshContasBancarias} /> : undefined}
           />
           
           <GenericSelect 

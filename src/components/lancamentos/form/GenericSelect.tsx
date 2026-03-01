@@ -26,6 +26,7 @@ interface GenericSelectProps {
   noneOptionValue?: string;
   nameField?: string;
   quickAdd?: QuickAddConfig;
+  customQuickAdd?: React.ReactNode;
 }
 
 export const GenericSelect = ({ 
@@ -38,6 +39,7 @@ export const GenericSelect = ({
   noneOptionValue = `no-${label.toLowerCase().replace(/\s/g, '-')}`,
   nameField = 'nome',
   quickAdd,
+  customQuickAdd,
 }: GenericSelectProps) => {
   return (
     <div className="grid grid-cols-4 items-center gap-4">
@@ -59,7 +61,7 @@ export const GenericSelect = ({
             ))}
           </SelectContent>
         </Select>
-        {quickAdd && (
+        {customQuickAdd ? customQuickAdd : quickAdd && (
           <QuickAddDialog
             title={quickAdd.title}
             table={quickAdd.table}
