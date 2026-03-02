@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import PageHeader from "@/components/common/PageHeader";
 import { useProjetos } from "@/hooks/useProjetos";
 import { ProjetosTable } from "@/components/projetos/ProjetosTable";
@@ -7,6 +7,15 @@ import { ProjetoDeleteDialog } from "@/components/projetos/ProjetoDeleteDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import ExportDropdown from "@/components/common/ExportDropdown";
+import { exportToCSV, generatePDFView } from "@/utils/exportUtils";
+import { formatCurrency } from "@/utils/format";
+
+const statusLabel = (s: string) => {
+  if (s === "ativo") return "Ativo";
+  if (s === "concluido") return "Concluído";
+  return "Cancelado";
+};
 
 const Projetos = () => {
   const {
@@ -24,6 +33,22 @@ const Projetos = () => {
     return projetos.filter((p) => p.nome.toLowerCase().includes(q));
   }, [projetos, searchQuery]);
 
+  const headers = { nome: "Nome", status: "Status", orcamento: "Orçamento", descricao: "Descrição" };
+
+  const handleExport = useCallback((format: 'csv' | 'pdf') => {
+    const exportData = filteredProjetos.map((p) => ({
+      nome: p.nome,
+      status: statusLabel(p.status),
+      orcamento: formatCurrency(p.orcamento),
+      descricao: p.descricao || "-",
+    }));
+    if (format === "csv") {
+      exportToCSV(exportData, headers, "projetos");
+    } else {
+      generatePDFView(exportData, headers, "Relatório de Projetos");
+    }
+  }, [filteredProjetos]);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -34,14 +59,19 @@ const Projetos = () => {
         showButton={canIncluir}
       />
 
-      <div className="relative w-full sm:w-3/4">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar projetos..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 w-full"
-        />
+      <div className="flex flex-col sm:flex-row gap-4 items-center">
+        <div className="w-full sm:w-3/4 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar projetos..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 w-full"
+          />
+        </div>
+        <div className="flex gap-2 w-full sm:w-auto justify-end">
+          <ExportDropdown onExport={handleExport} />
+        </div>
       </div>
 
       {loading ? (
