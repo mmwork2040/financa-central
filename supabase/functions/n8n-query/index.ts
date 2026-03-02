@@ -121,6 +121,22 @@ Deno.serve(async (req) => {
       "criar-conta-bancaria": { tela: "contas_bancarias", tipo: "pode_incluir" },
       "criar-forma-pagamento": { tela: "formas_pagamento", tipo: "pode_incluir" },
       "criar-projeto": { tela: "projetos", tipo: "pode_incluir" },
+      // Edição (pode_alterar)
+      "editar-cliente": { tela: "clientes", tipo: "pode_alterar" },
+      "editar-fornecedor": { tela: "fornecedores", tipo: "pode_alterar" },
+      "editar-categoria": { tela: "categorias", tipo: "pode_alterar" },
+      "editar-conta-bancaria": { tela: "contas_bancarias", tipo: "pode_alterar" },
+      "editar-forma-pagamento": { tela: "formas_pagamento", tipo: "pode_alterar" },
+      "editar-projeto": { tela: "projetos", tipo: "pode_alterar" },
+      "editar-lancamento": { tela: "lancamentos", tipo: "pode_alterar" },
+      // Exclusão (pode_excluir)
+      "excluir-cliente": { tela: "clientes", tipo: "pode_excluir" },
+      "excluir-fornecedor": { tela: "fornecedores", tipo: "pode_excluir" },
+      "excluir-categoria": { tela: "categorias", tipo: "pode_excluir" },
+      "excluir-conta-bancaria": { tela: "contas_bancarias", tipo: "pode_excluir" },
+      "excluir-forma-pagamento": { tela: "formas_pagamento", tipo: "pode_excluir" },
+      "excluir-projeto": { tela: "projetos", tipo: "pode_excluir" },
+      "excluir-lancamento": { tela: "lancamentos", tipo: "pode_excluir" },
     };
 
     // Check permissions if user_id is provided and action requires it
@@ -934,6 +950,264 @@ Deno.serve(async (req) => {
         break;
       }
 
+      // ─── HELPER: CHECK VINCULATION WITH PAID/RECEIVED LANCAMENTOS ───
+      // Used by edit/delete actions to block changes on records linked to settled lancamentos
+
+      // ─── EDITAR CLIENTE ───
+      case "editar-cliente": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        
+        // Check vinculation
+        const { data: vincCliente } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("cliente_id", id).in("status", ["pago", "recebido"]).limit(1);
+        if (vincCliente && vincCliente.length > 0) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este cliente possui lançamentos pagos/recebidos vinculados e não pode ser alterado." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const updateData: any = {};
+        const fields = ["nome", "email", "telefone", "cpf_cnpj", "cep", "rua", "numero", "complemento", "bairro", "cidade", "estado", "ativo"];
+        for (const f of fields) { const v = sanitize(body[f]); if (v !== undefined) updateData[f] = f === "ativo" ? body[f] === true || body[f] === "true" : v; }
+        if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+        const { data: updCli, error: updCliErr } = await supabase.from("clientes").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
+        if (updCliErr) throw updCliErr;
+        result = updCli;
+        break;
+      }
+
+      // ─── EDITAR FORNECEDOR ───
+      case "editar-fornecedor": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        
+        const { data: vincForn } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("fornecedor_id", id).in("status", ["pago", "recebido"]).limit(1);
+        if (vincForn && vincForn.length > 0) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este fornecedor possui lançamentos pagos/recebidos vinculados e não pode ser alterado." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const updateData: any = {};
+        const fields = ["nome", "email", "telefone", "cpf_cnpj", "cep", "rua", "numero", "complemento", "bairro", "cidade", "estado", "ativo"];
+        for (const f of fields) { const v = sanitize(body[f]); if (v !== undefined) updateData[f] = f === "ativo" ? body[f] === true || body[f] === "true" : v; }
+        if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+        const { data: updForn, error: updFornErr } = await supabase.from("fornecedores").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
+        if (updFornErr) throw updFornErr;
+        result = updForn;
+        break;
+      }
+
+      // ─── EDITAR CATEGORIA ───
+      case "editar-categoria": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        
+        const { data: vincCat } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("categoria_id", id).in("status", ["pago", "recebido"]).limit(1);
+        if (vincCat && vincCat.length > 0) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta categoria possui lançamentos pagos/recebidos vinculados e não pode ser alterada." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const updateData: any = {};
+        if (sanitize(body.nome)) updateData.nome = sanitize(body.nome);
+        if (sanitize(body.tipo)) updateData.tipo = sanitize(body.tipo);
+        if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+        const { data: updCat, error: updCatErr } = await supabase.from("categorias").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
+        if (updCatErr) throw updCatErr;
+        result = updCat;
+        break;
+      }
+
+      // ─── EDITAR CONTA BANCÁRIA ───
+      case "editar-conta-bancaria": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        
+        const { data: vincConta } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("conta_bancaria_id", id).in("status", ["pago", "recebido"]).limit(1);
+        if (vincConta && vincConta.length > 0) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta conta bancária possui lançamentos pagos/recebidos vinculados e não pode ser alterada." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const updateData: any = {};
+        const fields = ["nome", "banco", "agencia", "conta", "principal"];
+        for (const f of fields) { const v = sanitize(body[f]); if (v !== undefined) updateData[f] = f === "principal" ? body[f] === true || body[f] === "true" : v; }
+        if (body.saldo_atual !== undefined && sanitize(body.saldo_atual) !== undefined) updateData.saldo_atual = Number(body.saldo_atual);
+        if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+        if (updateData.principal === true) {
+          await supabase.from("contas_bancarias").update({ principal: false }).eq("empresa_id", empresa_id).eq("principal", true).neq("id", id);
+        }
+
+        const { data: updConta, error: updContaErr } = await supabase.from("contas_bancarias").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
+        if (updContaErr) throw updContaErr;
+        result = updConta;
+        break;
+      }
+
+      // ─── EDITAR FORMA DE PAGAMENTO ───
+      case "editar-forma-pagamento": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        
+        const { data: vincForma } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("forma_pagamento_id", id).in("status", ["pago", "recebido"]).limit(1);
+        if (vincForma && vincForma.length > 0) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta forma de pagamento possui lançamentos pagos/recebidos vinculados e não pode ser alterada." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const descricao = sanitize(body.descricao);
+        if (!descricao) return new Response(JSON.stringify({ error: "descricao is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+        const { data: updForma, error: updFormaErr } = await supabase.from("formas_pagamento").update({ descricao }).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
+        if (updFormaErr) throw updFormaErr;
+        result = updForma;
+        break;
+      }
+
+      // ─── EDITAR PROJETO ───
+      case "editar-projeto": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        
+        const { data: vincProj } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("projeto_id", id).in("status", ["pago", "recebido"]).limit(1);
+        if (vincProj && vincProj.length > 0) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este projeto possui lançamentos pagos/recebidos vinculados e não pode ser alterado." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const updateData: any = {};
+        if (sanitize(body.nome)) updateData.nome = sanitize(body.nome);
+        if (sanitize(body.descricao)) updateData.descricao = sanitize(body.descricao);
+        if (sanitize(body.status)) updateData.status = sanitize(body.status);
+        if (body.orcamento !== undefined && sanitize(body.orcamento) !== undefined) updateData.orcamento = Number(body.orcamento);
+        if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+        const { data: updProj, error: updProjErr } = await supabase.from("projetos").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
+        if (updProjErr) throw updProjErr;
+        result = updProj;
+        break;
+      }
+
+      // ─── EDITAR LANÇAMENTO ───
+      case "editar-lancamento": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        
+        // Check if lancamento is paid/received - block edit
+        const { data: lancExist } = await supabase.from("lancamentos").select("id, status, origem").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
+        if (!lancExist) return new Response(JSON.stringify({ error: "Lançamento não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (["pago", "recebido"].includes(lancExist.status)) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este lançamento já foi pago/recebido e não pode ser alterado." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const updateData: any = {};
+        const fields = ["descricao", "tipo", "status", "data_vencimento", "data_pagamento", "categoria_id", "cliente_id", "fornecedor_id", "conta_bancaria_id", "forma_pagamento_id", "projeto_id"];
+        for (const f of fields) { const v = sanitize(body[f]); if (v !== undefined) updateData[f] = v; }
+        if (body.valor !== undefined && sanitize(body.valor) !== undefined) updateData.valor = Number(body.valor);
+        if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+        const { data: updLanc, error: updLancErr } = await supabase.from("lancamentos").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
+        if (updLancErr) throw updLancErr;
+        result = updLanc;
+        break;
+      }
+
+      // ─── EXCLUIR CLIENTE ───
+      case "excluir-cliente": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const { data: vincDelCli } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("cliente_id", id).in("status", ["pago", "recebido"]).limit(1);
+        if (vincDelCli && vincDelCli.length > 0) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este cliente possui lançamentos pagos/recebidos vinculados e não pode ser excluído." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error: delCliErr } = await supabase.from("clientes").delete().eq("id", id).eq("empresa_id", empresa_id);
+        if (delCliErr) throw delCliErr;
+        result = { message: "Cliente excluído com sucesso", id };
+        break;
+      }
+
+      // ─── EXCLUIR FORNECEDOR ───
+      case "excluir-fornecedor": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const { data: vincDelForn } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("fornecedor_id", id).in("status", ["pago", "recebido"]).limit(1);
+        if (vincDelForn && vincDelForn.length > 0) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este fornecedor possui lançamentos pagos/recebidos vinculados e não pode ser excluído." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error: delFornErr } = await supabase.from("fornecedores").delete().eq("id", id).eq("empresa_id", empresa_id);
+        if (delFornErr) throw delFornErr;
+        result = { message: "Fornecedor excluído com sucesso", id };
+        break;
+      }
+
+      // ─── EXCLUIR CATEGORIA ───
+      case "excluir-categoria": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const { data: vincDelCat } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("categoria_id", id).in("status", ["pago", "recebido"]).limit(1);
+        if (vincDelCat && vincDelCat.length > 0) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta categoria possui lançamentos pagos/recebidos vinculados e não pode ser excluída." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error: delCatErr } = await supabase.from("categorias").delete().eq("id", id).eq("empresa_id", empresa_id);
+        if (delCatErr) throw delCatErr;
+        result = { message: "Categoria excluída com sucesso", id };
+        break;
+      }
+
+      // ─── EXCLUIR CONTA BANCÁRIA ───
+      case "excluir-conta-bancaria": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const { data: vincDelConta } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("conta_bancaria_id", id).in("status", ["pago", "recebido"]).limit(1);
+        if (vincDelConta && vincDelConta.length > 0) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta conta bancária possui lançamentos pagos/recebidos vinculados e não pode ser excluída." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error: delContaErr } = await supabase.from("contas_bancarias").delete().eq("id", id).eq("empresa_id", empresa_id);
+        if (delContaErr) throw delContaErr;
+        result = { message: "Conta bancária excluída com sucesso", id };
+        break;
+      }
+
+      // ─── EXCLUIR FORMA DE PAGAMENTO ───
+      case "excluir-forma-pagamento": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const { data: vincDelForma } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("forma_pagamento_id", id).in("status", ["pago", "recebido"]).limit(1);
+        if (vincDelForma && vincDelForma.length > 0) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta forma de pagamento possui lançamentos pagos/recebidos vinculados e não pode ser excluída." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error: delFormaErr } = await supabase.from("formas_pagamento").delete().eq("id", id).eq("empresa_id", empresa_id);
+        if (delFormaErr) throw delFormaErr;
+        result = { message: "Forma de pagamento excluída com sucesso", id };
+        break;
+      }
+
+      // ─── EXCLUIR PROJETO ───
+      case "excluir-projeto": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const { data: vincDelProj } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("projeto_id", id).in("status", ["pago", "recebido"]).limit(1);
+        if (vincDelProj && vincDelProj.length > 0) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este projeto possui lançamentos pagos/recebidos vinculados e não pode ser excluído." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error: delProjErr } = await supabase.from("projetos").delete().eq("id", id).eq("empresa_id", empresa_id);
+        if (delProjErr) throw delProjErr;
+        result = { message: "Projeto excluído com sucesso", id };
+        break;
+      }
+
+      // ─── EXCLUIR LANÇAMENTO ───
+      case "excluir-lancamento": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const { data: lancDel } = await supabase.from("lancamentos").select("id, status").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
+        if (!lancDel) return new Response(JSON.stringify({ error: "Lançamento não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (["pago", "recebido"].includes(lancDel.status)) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este lançamento já foi pago/recebido e não pode ser excluído." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error: delLancErr } = await supabase.from("lancamentos").delete().eq("id", id).eq("empresa_id", empresa_id);
+        if (delLancErr) throw delLancErr;
+        result = { message: "Lançamento excluído com sucesso", id };
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({
           error: "Invalid action",
@@ -943,7 +1217,11 @@ Deno.serve(async (req) => {
             "clientes", "fornecedores", "projetos", "categorias", "formas-pagamento", "fluxo-caixa",
             "criar-lancamento", "criar-fornecedor", "criar-categoria", "criar-conta-bancaria",
             "criar-forma-pagamento", "criar-projeto", "atualizar-telegram-id", "atualizar-telegram-cliente",
-            "listar-anuncios", "listar-usuarios"
+            "listar-anuncios", "listar-usuarios",
+            "editar-cliente", "editar-fornecedor", "editar-categoria", "editar-conta-bancaria",
+            "editar-forma-pagamento", "editar-projeto", "editar-lancamento",
+            "excluir-cliente", "excluir-fornecedor", "excluir-categoria", "excluir-conta-bancaria",
+            "excluir-forma-pagamento", "excluir-projeto", "excluir-lancamento"
           ],
         }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

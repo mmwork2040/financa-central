@@ -834,6 +834,349 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     ],
     body: { action: "criar-projeto", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", nome: "{{ $fromAI('nome', 'Nome do projeto') }}", descricao: "{{ $fromAI('descricao', 'Descrição do projeto') }}", status: "{{ $fromAI('status', 'ativo, concluido ou cancelado') }}", orcamento: "{{ $fromAI('orcamento', 'Orçamento numérico do projeto') }}" },
   },
+  // ─── EDITAR ───
+  {
+    action: "editar-cliente",
+    toolName: "editar_cliente",
+    label: "Editar Cliente",
+    description: "Altera dados de um cliente existente (bloqueado se vinculado a lançamentos pagos/recebidos)",
+    toolDescription: `Altera dados de um cliente existente.
+
+⚠️ REGRA DE SEGURANÇA: Se o cliente possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA automaticamente pelo sistema.
+
+Use quando o usuário solicitar:
+- Alterar cliente
+- Atualizar dados do cliente
+- Editar cliente
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório — UUID do cliente a editar)
+- nome, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado, ativo (opcionais — envie apenas os campos que mudarão)
+
+⚠️ NÃO é possível editar/excluir USUÁRIOS por este template. Alterações de usuários devem ser feitas pelo sistema.
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID do cliente a editar" },
+      { name: "nome", type: "string", required: false, description: "Novo nome" },
+      { name: "email", type: "string", required: false, description: "Novo e-mail" },
+      { name: "telefone", type: "string", required: false, description: "Novo telefone" },
+      { name: "cpf_cnpj", type: "string", required: false, description: "Novo CPF/CNPJ" },
+      { name: "ativo", type: "boolean", required: false, description: "true ou false" },
+    ],
+    body: { action: "editar-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do cliente a editar') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", cpf_cnpj: "{{ $fromAI('cpf_cnpj', 'Novo CPF/CNPJ. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
+  },
+  {
+    action: "editar-fornecedor",
+    toolName: "editar_fornecedor",
+    label: "Editar Fornecedor",
+    description: "Altera dados de um fornecedor existente (bloqueado se vinculado a lançamentos pagos/recebidos)",
+    toolDescription: `Altera dados de um fornecedor existente.
+
+⚠️ REGRA DE SEGURANÇA: Se o fornecedor possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório — UUID do fornecedor)
+- nome, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado, ativo (opcionais)
+
+Sempre usar a empresa_id ativa. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID do fornecedor a editar" },
+      { name: "nome", type: "string", required: false, description: "Novo nome" },
+      { name: "email", type: "string", required: false, description: "Novo e-mail" },
+      { name: "telefone", type: "string", required: false, description: "Novo telefone" },
+      { name: "ativo", type: "boolean", required: false, description: "true ou false" },
+    ],
+    body: { action: "editar-fornecedor", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do fornecedor') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
+  },
+  {
+    action: "editar-categoria",
+    toolName: "editar_categoria",
+    label: "Editar Categoria",
+    description: "Altera dados de uma categoria (bloqueado se vinculada a lançamentos pagos/recebidos)",
+    toolDescription: `Altera nome ou tipo de uma categoria existente.
+
+⚠️ REGRA DE SEGURANÇA: Se a categoria possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório)
+- nome (opcional)
+- tipo: receita, despesa ou investimento (opcional)
+
+Sempre usar a empresa_id ativa. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID da categoria" },
+      { name: "nome", type: "string", required: false, description: "Novo nome" },
+      { name: "tipo", type: "string", required: false, description: "receita, despesa ou investimento" },
+    ],
+    body: { action: "editar-categoria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da categoria') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", tipo: "{{ $fromAI('tipo', 'receita, despesa ou investimento. Deixe vazio se não mudar') }}" },
+  },
+  {
+    action: "editar-conta-bancaria",
+    toolName: "editar_conta_bancaria",
+    label: "Editar Conta Bancária",
+    description: "Altera dados de uma conta bancária (bloqueado se vinculada a lançamentos pagos/recebidos)",
+    toolDescription: `Altera dados de uma conta bancária existente.
+
+⚠️ REGRA DE SEGURANÇA: Se a conta possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório)
+- nome, banco, agencia, conta (opcionais)
+- saldo_atual (numérico, opcional)
+- principal (boolean, opcional)
+
+Sempre usar a empresa_id ativa. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID da conta bancária" },
+      { name: "nome", type: "string", required: false, description: "Novo nome" },
+      { name: "banco", type: "string", required: false, description: "Novo banco" },
+      { name: "saldo_atual", type: "number", required: false, description: "Novo saldo atual" },
+      { name: "principal", type: "boolean", required: false, description: "true ou false" },
+    ],
+    body: { action: "editar-conta-bancaria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da conta bancária') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", banco: "{{ $fromAI('banco', 'Novo banco. Deixe vazio se não mudar') }}", saldo_atual: "{{ $fromAI('saldo_atual', 'Novo saldo. Deixe vazio se não mudar') }}", principal: "{{ $fromAI('principal', 'true ou false. Deixe vazio se não mudar') }}" },
+  },
+  {
+    action: "editar-forma-pagamento",
+    toolName: "editar_forma_pagamento",
+    label: "Editar Forma de Pagamento",
+    description: "Altera descrição de uma forma de pagamento (bloqueado se vinculada a lançamentos pagos/recebidos)",
+    toolDescription: `Altera a descrição de uma forma de pagamento.
+
+⚠️ REGRA DE SEGURANÇA: Se a forma de pagamento possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório)
+- descricao (obrigatório — nova descrição)
+
+Sempre usar a empresa_id ativa. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID da forma de pagamento" },
+      { name: "descricao", type: "string", required: true, description: "Nova descrição" },
+    ],
+    body: { action: "editar-forma-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da forma de pagamento') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição') }}" },
+  },
+  {
+    action: "editar-projeto",
+    toolName: "editar_projeto",
+    label: "Editar Projeto",
+    description: "Altera dados de um projeto (bloqueado se vinculado a lançamentos pagos/recebidos)",
+    toolDescription: `Altera dados de um projeto existente.
+
+⚠️ REGRA DE SEGURANÇA: Se o projeto possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório)
+- nome, descricao, status, orcamento (opcionais)
+
+Sempre usar a empresa_id ativa. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID do projeto" },
+      { name: "nome", type: "string", required: false, description: "Novo nome" },
+      { name: "descricao", type: "string", required: false, description: "Nova descrição" },
+      { name: "status", type: "string", required: false, description: "ativo, concluido ou cancelado" },
+      { name: "orcamento", type: "number", required: false, description: "Novo orçamento" },
+    ],
+    body: { action: "editar-projeto", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do projeto') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição. Deixe vazio se não mudar') }}", status: "{{ $fromAI('status', 'ativo, concluido ou cancelado. Deixe vazio se não mudar') }}", orcamento: "{{ $fromAI('orcamento', 'Novo orçamento. Deixe vazio se não mudar') }}" },
+  },
+  {
+    action: "editar-lancamento",
+    toolName: "editar_lancamento",
+    label: "Editar Lançamento",
+    description: "Altera dados de um lançamento pendente (bloqueado se já pago/recebido)",
+    toolDescription: `Altera dados de um lançamento financeiro existente.
+
+⚠️ REGRA DE SEGURANÇA: Lançamentos com status "pago" ou "recebido" NÃO podem ser alterados.
+
+⚠️ IMPORTANTE: Use a ferramenta "listar_opcoes_lancamento" para obter IDs válidos antes de atualizar campos de relacionamento (categoria_id, fornecedor_id, etc.).
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório — UUID do lançamento)
+- descricao, valor, tipo, status, data_vencimento, data_pagamento (opcionais)
+- categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id (opcionais)
+
+Sempre usar a empresa_id ativa. Nunca inventar dados.`,
+    category: "Financeiro",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID do lançamento" },
+      { name: "descricao", type: "string", required: false, description: "Nova descrição" },
+      { name: "valor", type: "number", required: false, description: "Novo valor" },
+      { name: "tipo", type: "string", required: false, description: "receita ou despesa" },
+      { name: "status", type: "string", required: false, description: "pendente ou pago" },
+      { name: "data_vencimento", type: "string", required: false, description: "Nova data de vencimento YYYY-MM-DD" },
+      { name: "categoria_id", type: "string", required: false, description: "UUID da categoria" },
+    ],
+    body: { action: "editar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição. Deixe vazio se não mudar') }}", valor: "{{ $fromAI('valor', 'Novo valor. Deixe vazio se não mudar') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa. Deixe vazio se não mudar') }}", status: "{{ $fromAI('status', 'pendente ou pago. Deixe vazio se não mudar') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'YYYY-MM-DD. Deixe vazio se não mudar') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Deixe vazio se não mudar') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Deixe vazio se não mudar') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor. Deixe vazio se não mudar') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária. Deixe vazio se não mudar') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento. Deixe vazio se não mudar') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não mudar') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'YYYY-MM-DD. Deixe vazio se não mudar') }}" },
+  },
+  // ─── EXCLUIR ───
+  {
+    action: "excluir-cliente",
+    toolName: "excluir_cliente",
+    label: "Excluir Cliente",
+    description: "Remove um cliente (bloqueado se vinculado a lançamentos pagos/recebidos)",
+    toolDescription: `Exclui um cliente do sistema.
+
+⚠️ REGRA DE SEGURANÇA: Se o cliente possuir lançamentos com status "pago" ou "recebido", a exclusão será BLOQUEADA automaticamente.
+⚠️ NÃO é possível excluir USUÁRIOS por este template.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório — UUID do cliente)
+
+Sempre usar a empresa_id ativa. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID do cliente a excluir" },
+    ],
+    body: { action: "excluir-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do cliente a excluir') }}" },
+  },
+  {
+    action: "excluir-fornecedor",
+    toolName: "excluir_fornecedor",
+    label: "Excluir Fornecedor",
+    description: "Remove um fornecedor (bloqueado se vinculado a lançamentos pagos/recebidos)",
+    toolDescription: `Exclui um fornecedor do sistema.
+
+⚠️ REGRA DE SEGURANÇA: Se o fornecedor possuir lançamentos com status "pago" ou "recebido", a exclusão será BLOQUEADA.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório)
+
+Sempre usar a empresa_id ativa.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID do fornecedor" },
+    ],
+    body: { action: "excluir-fornecedor", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do fornecedor') }}" },
+  },
+  {
+    action: "excluir-categoria",
+    toolName: "excluir_categoria",
+    label: "Excluir Categoria",
+    description: "Remove uma categoria (bloqueado se vinculada a lançamentos pagos/recebidos)",
+    toolDescription: `Exclui uma categoria do sistema.
+
+⚠️ REGRA DE SEGURANÇA: Bloqueada se possuir lançamentos pagos/recebidos.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório)
+
+Sempre usar a empresa_id ativa.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID da categoria" },
+    ],
+    body: { action: "excluir-categoria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da categoria') }}" },
+  },
+  {
+    action: "excluir-conta-bancaria",
+    toolName: "excluir_conta_bancaria",
+    label: "Excluir Conta Bancária",
+    description: "Remove uma conta bancária (bloqueado se vinculada a lançamentos pagos/recebidos)",
+    toolDescription: `Exclui uma conta bancária do sistema.
+
+⚠️ REGRA DE SEGURANÇA: Bloqueada se possuir lançamentos pagos/recebidos.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório)
+
+Sempre usar a empresa_id ativa.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID da conta bancária" },
+    ],
+    body: { action: "excluir-conta-bancaria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da conta bancária') }}" },
+  },
+  {
+    action: "excluir-forma-pagamento",
+    toolName: "excluir_forma_pagamento",
+    label: "Excluir Forma de Pagamento",
+    description: "Remove uma forma de pagamento (bloqueado se vinculada a lançamentos pagos/recebidos)",
+    toolDescription: `Exclui uma forma de pagamento do sistema.
+
+⚠️ REGRA DE SEGURANÇA: Bloqueada se possuir lançamentos pagos/recebidos.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório)
+
+Sempre usar a empresa_id ativa.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID da forma de pagamento" },
+    ],
+    body: { action: "excluir-forma-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da forma de pagamento') }}" },
+  },
+  {
+    action: "excluir-projeto",
+    toolName: "excluir_projeto",
+    label: "Excluir Projeto",
+    description: "Remove um projeto (bloqueado se vinculado a lançamentos pagos/recebidos)",
+    toolDescription: `Exclui um projeto do sistema.
+
+⚠️ REGRA DE SEGURANÇA: Bloqueado se possuir lançamentos pagos/recebidos.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório)
+
+Sempre usar a empresa_id ativa.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID do projeto" },
+    ],
+    body: { action: "excluir-projeto", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do projeto') }}" },
+  },
+  {
+    action: "excluir-lancamento",
+    toolName: "excluir_lancamento",
+    label: "Excluir Lançamento",
+    description: "Remove um lançamento pendente (bloqueado se já pago/recebido)",
+    toolDescription: `Exclui um lançamento financeiro do sistema.
+
+⚠️ REGRA DE SEGURANÇA: Lançamentos com status "pago" ou "recebido" NÃO podem ser excluídos.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- id (obrigatório — UUID do lançamento)
+
+Sempre usar a empresa_id ativa. Nunca inventar dados.`,
+    category: "Financeiro",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "id", type: "string", required: true, description: "UUID do lançamento" },
+    ],
+    body: { action: "excluir-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento') }}" },
+  },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
