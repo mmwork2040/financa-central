@@ -465,52 +465,6 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     body: { action: "formas-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por descrição. Deixe vazio para listar todos') }}" },
   },
   {
-    action: "listar-opcoes-lancamento",
-    toolName: "listar_opcoes_lancamento",
-    label: "Opções para Lançamento",
-    description: "Lista e cadastra opções para lançamentos: categorias, fornecedores, clientes, contas bancárias, formas de pagamento e projetos",
-    toolDescription: `Retorna TODAS as opções disponíveis para preencher um lançamento E permite CADASTRAR registros faltantes na mesma chamada.
-
-⚠️ ESTA FERRAMENTA É OBRIGATÓRIA antes de criar_lancamento.
-
-FUNCIONALIDADES:
-1. LISTAR: Retorna categorias, fornecedores, clientes, contas bancárias, formas de pagamento e projetos ativos com seus UUIDs.
-2. CRIAR INLINE: Se alguma dependência estiver faltando, você pode criá-la diretamente passando o campo "criar" no body.
-3. ALERTAS: A resposta inclui "alertas" indicando quais listas estão vazias.
-
-CAMPO "criar" (opcional) — cadastra registros faltantes e retorna as listas atualizadas:
-- criar.categoria: { nome: "Nome", tipo: "receita" ou "despesa" }
-- criar.cliente: { nome: "Nome", email?: "", telefone?: "", cpf_cnpj?: "" }
-- criar.fornecedor: { nome: "Nome", email?: "", telefone?: "", cpf_cnpj?: "" }
-- criar.conta_bancaria: { nome: "Nome", banco?: "Nome do banco" }
-- criar.forma_pagamento: { descricao: "Descrição" }
-
-FLUXO CORRETO:
-1. Pergunte ao usuário: é receita ou despesa?
-2. Chame listar_opcoes_lancamento
-3. Se houver alertas de listas vazias, pergunte ao usuário os dados e chame NOVAMENTE com o campo "criar" preenchido
-4. Use os UUIDs retornados (inclusive dos registros_criados) para preencher criar_lancamento
-5. Nunca invente UUIDs — use SOMENTE os retornados por esta ferramenta
-
-EXEMPLO de chamada com cadastro inline:
-{
-  "action": "listar-opcoes-lancamento",
-  "empresa_id": "uuid",
-  "criar": {
-    "categoria": { "nome": "Alimentação", "tipo": "despesa" },
-    "forma_pagamento": { "descricao": "PIX" }
-  }
-}
-
-Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
-    category: "Financeiro",
-    params: [
-      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "criar", type: "string", required: false, description: "Objeto JSON para cadastrar registros faltantes inline (categoria, cliente, fornecedor, conta_bancaria, forma_pagamento)" },
-    ],
-    body: { action: "listar-opcoes-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", criar: "{{ $fromAI('criar', 'Objeto para cadastrar registros faltantes. Ex: {\"categoria\":{\"nome\":\"Alimentação\",\"tipo\":\"despesa\"}}. Deixe vazio se não precisa cadastrar nada.') }}" },
-  },
-  {
     action: "fluxo-caixa",
     toolName: "fluxo_caixa",
     label: "Fluxo de Caixa",
@@ -549,46 +503,55 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "criar-lancamento",
     toolName: "criar_lancamento",
     label: "Criar Lançamento",
-    description: "Cria um novo lançamento financeiro (receita ou despesa)",
-    toolDescription: `Cria um novo lançamento financeiro no sistema.
+    description: "Cria um lançamento financeiro completo — resolve dependências automaticamente por nome",
+    toolDescription: `Cria um novo lançamento financeiro no sistema. Esta ferramenta resolve TUDO automaticamente.
 
-⚠️ REGRAS OBRIGATÓRIAS — SIGA NA ORDEM:
-1. PRIMEIRO chame listar_opcoes_lancamento para obter UUIDs válidos. NUNCA invente UUIDs.
-2. Se listar_opcoes_lancamento retornou alertas de listas vazias, chame-o NOVAMENTE com o campo "criar" para cadastrar o que falta.
-3. Use os UUIDs retornados por listar_opcoes_lancamento (inclusive de "registros_criados") para preencher ESTA ferramenta.
-4. O campo "tipo" é OBRIGATÓRIO (receita ou despesa). NÃO existe padrão. Pergunte ao usuário.
-5. Se tipo = "receita": cliente_id é OBRIGATÓRIO.
-6. Se tipo = "despesa": fornecedor_id é OBRIGATÓRIO.
-7. categoria_id, forma_pagamento_id e conta_bancaria_id são SEMPRE obrigatórios.
+RESOLUÇÃO AUTOMÁTICA DE DEPENDÊNCIAS:
+- Para cada campo obrigatório (categoria, cliente, fornecedor, conta bancária, forma de pagamento), você pode enviar:
+  a) O UUID direto (_id), OU
+  b) O NOME (_nome) — o sistema buscará pelo nome. Se não existir, CADASTRARÁ automaticamente.
+- Exemplo: em vez de categoria_id, envie categoria_nome: "Alimentação". O sistema busca ou cria.
 
-FLUXO RESUMIDO:
-listar_opcoes_lancamento → (resolver alertas com "criar" se necessário) → criar_lancamento
+CAMPOS OBRIGATÓRIOS:
+- empresa_id, descricao, valor, data_vencimento, tipo (receita ou despesa)
+- categoria: envie categoria_id OU categoria_nome
+- forma_pagamento: envie forma_pagamento_id OU forma_pagamento_nome
+- conta_bancaria: envie conta_bancaria_id OU conta_bancaria_nome
+- Se tipo = "receita": envie cliente_id OU cliente_nome
+- Se tipo = "despesa": envie fornecedor_id OU fornecedor_nome
 
-Parâmetros:
-- empresa_id, descricao, valor, data_vencimento (OBRIGATÓRIOS)
-- tipo (OBRIGATÓRIO: receita ou despesa)
-- categoria_id, forma_pagamento_id, conta_bancaria_id (OBRIGATÓRIOS)
-- cliente_id (OBRIGATÓRIO se receita)
-- fornecedor_id (OBRIGATÓRIO se despesa)
+CAMPOS OPCIONAIS:
 - status (pendente ou pago, padrão: pendente)
-- projeto_id, data_pagamento (opcionais)`,
+- projeto_id, data_pagamento
+
+FLUXO SIMPLIFICADO:
+1. Pergunte ao usuário: descrição, valor, tipo (receita/despesa), data, categoria, forma de pagamento, conta bancária, e cliente/fornecedor.
+2. Chame criar_lancamento com os NOMES informados pelo usuário nos campos _nome.
+3. O sistema resolve tudo e retorna o lançamento criado + registros_criados (se houver).
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "descricao", type: "string", required: true, description: "Descrição do lançamento" },
       { name: "valor", type: "number", required: true, description: "Valor do lançamento" },
       { name: "data_vencimento", type: "string", required: true, description: "Data de vencimento (YYYY-MM-DD)" },
-      { name: "tipo", type: "string", required: true, description: "OBRIGATÓRIO: receita ou despesa. Sem padrão, o usuário deve informar." },
+      { name: "tipo", type: "string", required: true, description: "OBRIGATÓRIO: receita ou despesa" },
       { name: "status", type: "string", required: false, description: "pendente ou pago (padrão: pendente)" },
-      { name: "categoria_id", type: "string", required: true, description: "UUID da categoria (OBRIGATÓRIO)" },
-      { name: "cliente_id", type: "string", required: false, description: "UUID do cliente (OBRIGATÓRIO se tipo=receita, vazio se despesa)" },
-      { name: "fornecedor_id", type: "string", required: false, description: "UUID do fornecedor (OBRIGATÓRIO se tipo=despesa, vazio se receita)" },
-      { name: "forma_pagamento_id", type: "string", required: true, description: "UUID da forma de pagamento (OBRIGATÓRIO)" },
-      { name: "conta_bancaria_id", type: "string", required: true, description: "UUID da conta bancária (OBRIGATÓRIO)" },
+      { name: "categoria_id", type: "string", required: false, description: "UUID da categoria (use se já souber o ID)" },
+      { name: "categoria_nome", type: "string", required: false, description: "Nome da categoria (busca ou cria automaticamente)" },
+      { name: "cliente_id", type: "string", required: false, description: "UUID do cliente (obrigatório se receita)" },
+      { name: "cliente_nome", type: "string", required: false, description: "Nome do cliente (busca ou cria, obrigatório se receita)" },
+      { name: "fornecedor_id", type: "string", required: false, description: "UUID do fornecedor (obrigatório se despesa)" },
+      { name: "fornecedor_nome", type: "string", required: false, description: "Nome do fornecedor (busca ou cria, obrigatório se despesa)" },
+      { name: "forma_pagamento_id", type: "string", required: false, description: "UUID da forma de pagamento" },
+      { name: "forma_pagamento_nome", type: "string", required: false, description: "Nome da forma de pagamento (busca ou cria)" },
+      { name: "conta_bancaria_id", type: "string", required: false, description: "UUID da conta bancária" },
+      { name: "conta_bancaria_nome", type: "string", required: false, description: "Nome da conta bancária (busca ou cria)" },
       { name: "projeto_id", type: "string", required: false, description: "UUID do projeto (opcional)" },
       { name: "data_pagamento", type: "string", required: false, description: "Data de pagamento (YYYY-MM-DD)" },
     ],
-    body: { action: "criar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", descricao: "{{ $fromAI('descricao', 'Descrição do lançamento') }}", valor: "{{ $fromAI('valor', 'Valor numérico do lançamento') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'Data de vencimento YYYY-MM-DD') }}", tipo: "{{ $fromAI('tipo', 'OBRIGATÓRIO: receita ou despesa. Pergunte ao usuário.') }}", status: "{{ $fromAI('status', 'pendente ou pago. Padrão: pendente') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria - OBRIGATÓRIO') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente - OBRIGATÓRIO se receita. Vazio se despesa.') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor - OBRIGATÓRIO se despesa. Vazio se receita.') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento - OBRIGATÓRIO') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária - OBRIGATÓRIO') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não informado') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'Data de pagamento YYYY-MM-DD. Deixe vazio se não informado') }}" },
+    body: { action: "criar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", descricao: "{{ $fromAI('descricao', 'Descrição do lançamento') }}", valor: "{{ $fromAI('valor', 'Valor numérico do lançamento') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'Data de vencimento YYYY-MM-DD') }}", tipo: "{{ $fromAI('tipo', 'OBRIGATÓRIO: receita ou despesa') }}", status: "{{ $fromAI('status', 'pendente ou pago. Padrão: pendente') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Vazio se usar categoria_nome') }}", categoria_nome: "{{ $fromAI('categoria_nome', 'Nome da categoria. O sistema busca ou cria automaticamente') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Vazio se usar cliente_nome ou se for despesa') }}", cliente_nome: "{{ $fromAI('cliente_nome', 'Nome do cliente. Obrigatório se receita e sem cliente_id') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor. Vazio se usar fornecedor_nome ou se for receita') }}", fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'Nome do fornecedor. Obrigatório se despesa e sem fornecedor_id') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento. Vazio se usar forma_pagamento_nome') }}", forma_pagamento_nome: "{{ $fromAI('forma_pagamento_nome', 'Nome da forma de pagamento. Busca ou cria automaticamente') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária. Vazio se usar conta_bancaria_nome') }}", conta_bancaria_nome: "{{ $fromAI('conta_bancaria_nome', 'Nome da conta bancária. Busca ou cria automaticamente') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não informado') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'Data de pagamento YYYY-MM-DD. Deixe vazio se não informado') }}" },
   },
   {
     action: "atualizar-telegram-id",
@@ -1080,7 +1043,7 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
 
 ⚠️ REGRA DE SEGURANÇA: Lançamentos com status "pago" ou "recebido" NÃO podem ser alterados.
 
-⚠️ IMPORTANTE: Use a ferramenta "listar_opcoes_lancamento" para obter IDs válidos antes de atualizar campos de relacionamento (categoria_id, fornecedor_id, etc.).
+⚠️ IMPORTANTE: Use as ferramentas de listagem (categorias, clientes, fornecedores, etc.) para obter IDs válidos antes de atualizar campos de relacionamento.
 
 Parâmetros:
 - empresa_id (obrigatório)
