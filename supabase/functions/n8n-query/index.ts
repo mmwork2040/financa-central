@@ -97,6 +97,98 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ─── PERMISSION CHECK ───
+    // Map actions to screen keys and required permission type
+    const actionPermissionMap: Record<string, { tela: string; tipo?: "pode_incluir" | "pode_alterar" | "pode_excluir" }> = {
+      // Leitura (view)
+      "lancamentos": { tela: "lancamentos" },
+      "despesas-pendentes": { tela: "lancamentos" },
+      "receitas-pendentes": { tela: "lancamentos" },
+      "clientes": { tela: "clientes" },
+      "fornecedores": { tela: "fornecedores" },
+      "categorias": { tela: "categorias" },
+      "contas-bancarias": { tela: "contas_bancarias" },
+      "formas-pagamento": { tela: "formas_pagamento" },
+      "projetos": { tela: "projetos" },
+      "vendas-digitais": { tela: "vendas_digitais" },
+      "recebimentos-digitais": { tela: "vendas_digitais" },
+      "listar-anuncios": { tela: "anuncios" },
+      "listar-usuarios": { tela: "users" },
+      // Criação (pode_incluir)
+      "criar-lancamento": { tela: "lancamentos", tipo: "pode_incluir" },
+      "criar-fornecedor": { tela: "fornecedores", tipo: "pode_incluir" },
+      "criar-categoria": { tela: "categorias", tipo: "pode_incluir" },
+      "criar-conta-bancaria": { tela: "contas_bancarias", tipo: "pode_incluir" },
+      "criar-forma-pagamento": { tela: "formas_pagamento", tipo: "pode_incluir" },
+      "criar-projeto": { tela: "projetos", tipo: "pode_incluir" },
+    };
+
+    // Check permissions if user_id is provided and action requires it
+    const permRule = actionPermissionMap[action];
+    if (user_id && permRule) {
+      // Check if user is admin or super_admin (they have full access)
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user_id)
+        .eq("empresa_id", empresa_id)
+        .maybeSingle();
+
+      const role = userRole?.role;
+      const isAdminOrSuper = role === "admin" || role === "super_admin";
+
+      if (!isAdminOrSuper) {
+        // Check screen-level permissions
+        const { data: userPerms } = await supabase
+          .from("permissoes")
+          .select("tela, pode_incluir, pode_alterar, pode_excluir")
+          .eq("perfis_id", user_id);
+
+        const perms = userPerms || [];
+
+        // If user has permissions defined, check access
+        if (perms.length > 0) {
+          const screenPerm = perms.find((p: any) => p.tela === permRule.tela);
+
+          if (!screenPerm) {
+            // User has permissions but not for this screen → blocked
+            console.log(`🚫 [n8n-query] Acesso negado: user ${user_id} sem permissão para tela '${permRule.tela}'`);
+            return new Response(JSON.stringify({
+              error: "Acesso negado",
+              message: `Você não tem permissão para acessar '${permRule.tela}'.`,
+            }), {
+              status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+
+          // Check specific action permission (create/edit/delete)
+          if (permRule.tipo && !screenPerm[permRule.tipo]) {
+            const tipoLabel = permRule.tipo === "pode_incluir" ? "incluir" : permRule.tipo === "pode_alterar" ? "alterar" : "excluir";
+            console.log(`🚫 [n8n-query] Acesso negado: user ${user_id} sem permissão '${tipoLabel}' na tela '${permRule.tela}'`);
+            return new Response(JSON.stringify({
+              error: "Acesso negado",
+              message: `Você não tem permissão para ${tipoLabel} em '${permRule.tela}'.`,
+            }), {
+              status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        }
+        // If perms.length === 0 → no restrictions defined, allow access (view-only default)
+        // But still block creation if no explicit permission
+        if (perms.length === 0 && permRule.tipo) {
+          const tipoLabel = permRule.tipo === "pode_incluir" ? "incluir" : permRule.tipo === "pode_alterar" ? "alterar" : "excluir";
+          console.log(`🚫 [n8n-query] Acesso negado: user ${user_id} sem permissões definidas, tentou '${tipoLabel}'`);
+          return new Response(JSON.stringify({
+            error: "Acesso negado",
+            message: `Você não tem permissão para ${tipoLabel}. Solicite ao administrador.`,
+          }), {
+            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+      console.log(`✅ [n8n-query] Permissão concedida: user ${user_id}, action '${action}'`);
+    }
+
     // Helper: data atual no fuso horário do Brasil (UTC-3)
     const getBrazilDate = () => {
       const now = new Date();
