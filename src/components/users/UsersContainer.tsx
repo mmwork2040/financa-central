@@ -13,7 +13,7 @@ import { MyExitRequests } from "@/components/solicitacoes/MyExitRequests";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
 
 export const UsersContainer = () => {
-  const { user: authUser } = useAuth();
+  const { user: authUser, empresaId } = useAuth();
   const currentUserId = authUser?.id;
   const { 
     filteredUsers, 
@@ -136,6 +136,7 @@ export const UsersContainer = () => {
           requests={myRequests}
           onCancel={cancelRequest}
           loading={exitLoading}
+          currentEmpresaId={empresaId || undefined}
         />
       )}
 
