@@ -16,7 +16,11 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Aceitar body como objeto direto ou string JSON (parse automático)
-    let rawBody = await req.json();
+    let rawBody: any = {};
+    const bodyText = await req.text();
+    if (bodyText && bodyText.trim()) {
+      try { rawBody = JSON.parse(bodyText); } catch (_) { rawBody = {}; }
+    }
     // Se o n8n enviar o body como string JSON escapada, fazer parse novamente
     if (typeof rawBody === "string") {
       try { rawBody = JSON.parse(rawBody); } catch (_) { /* mantém como está */ }
