@@ -54,11 +54,12 @@ export const useSolicitacoesSaida = () => {
   }, [user]);
 
   const fetchPendingRequests = useCallback(async () => {
-    if (!user || !isAdmin) return;
+    if (!user || !isAdmin || !empresaId) return;
 
     const { data } = await queryTable()
       .select("*")
       .eq("status", "pendente")
+      .eq("empresa_id", empresaId)
       .order("created_at", { ascending: true });
 
     if (data) {
@@ -82,7 +83,7 @@ export const useSolicitacoesSaida = () => {
         empresa_nome: empresas?.find((e) => e.id === d.empresa_id)?.nome || "Empresa",
       })));
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, empresaId]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
