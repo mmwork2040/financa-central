@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Copy, Check, Search, Plus, Trash2, Code2, ChevronDown, ChevronRight } from "lucide-react";
+import { Copy, Check, Search, Plus, Trash2, Code2, ChevronDown, ChevronRight, FolderOpen, FolderClosed } from "lucide-react";
 import { toast } from "sonner";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
@@ -1196,7 +1197,9 @@ const CATEGORY_COLORS: Record<string, string> = {
 const N8nJsonTemplates = () => {
   const [search, setSearch] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [expandedActions, setExpandedActions] = useState<Set<string>>(new Set());
+  const [collapsedSubGroups, setCollapsedSubGroups] = useState<Set<string>>(new Set());
   const [customTemplates, setCustomTemplates] = useState<ActionTemplate[]>(() => {
     try {
       const saved = localStorage.getItem("n8n-custom-templates-v3");
@@ -1259,6 +1262,36 @@ const N8nJsonTemplates = () => {
       next.has(action) ? next.delete(action) : next.add(action);
       return next;
     });
+  };
+
+  const toggleCategory = (cat: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev);
+      next.has(cat) ? next.delete(cat) : next.add(cat);
+      return next;
+    });
+  };
+
+  const toggleSubGroup = (key: string) => {
+    setCollapsedSubGroups(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+
+  const getCadastroSubGroup = (action: string): string => {
+    if (action.startsWith("criar-")) return "Criar";
+    if (action.startsWith("editar-")) return "Editar";
+    if (action.startsWith("excluir-")) return "Excluir";
+    return "Listar";
+  };
+
+  const SUBGROUP_COLORS: Record<string, string> = {
+    "Listar": "bg-blue-500/10 text-blue-700 dark:text-blue-400",
+    "Criar": "bg-green-500/10 text-green-700 dark:text-green-400",
+    "Editar": "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+    "Excluir": "bg-red-500/10 text-red-700 dark:text-red-400",
   };
 
   const handleAddCustom = () => {
@@ -1407,93 +1440,147 @@ const N8nJsonTemplates = () => {
       {categories.map(category => {
         const categoryTemplates = filtered.filter(t => t.category === category);
         if (categoryTemplates.length === 0) return null;
+        const isCategoryOpen = !collapsedCategories.has(category);
+
+        const renderTemplateCard = (template: ActionTemplate) => {
+          const isExpanded = expandedActions.has(template.action);
+          const isCustom = customTemplates.some(c => c.action === template.action);
+          const bodyStr = JSON.stringify(template.body, null, 2);
+          return (
+            <Card key={template.action} className="overflow-hidden">
+              <div
+                className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => toggleExpand(template.action)}
+              >
+                {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-sm">{template.label}</span>
+                    <code className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{template.toolName}</code>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{template.description}</p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                  {isCustom && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveCustom(template.action)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              {isExpanded && (
+                <div className="border-t bg-muted/30 px-4 py-3">
+                  <Tabs defaultValue="description" className="w-full">
+                    <TabsList className="h-8 mb-3">
+                      <TabsTrigger value="description" className="text-xs px-3 h-7">Descrição</TabsTrigger>
+                      <TabsTrigger value="body" className="text-xs px-3 h-7">Body JSON</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="description" className="mt-0">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] text-muted-foreground">Cole no campo <strong>Description</strong> do HTTP Request Tool</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 gap-1 text-xs"
+                          onClick={() => handleCopy(template.toolDescription, `desc-${template.action}`)}
+                        >
+                          {copiedId === `desc-${template.action}` ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                          Copiar
+                        </Button>
+                      </div>
+                      <pre className="text-xs font-mono bg-background/80 rounded border p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
+                        {template.toolDescription}
+                      </pre>
+                    </TabsContent>
+
+                    <TabsContent value="body" className="mt-0">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] text-muted-foreground">
+                          Specify Body → <strong>"Using JSON"</strong> → cole este JSON. Os <code className="text-[10px] bg-background px-1 rounded">{"{{ $fromAI() }}"}</code> são preenchidos automaticamente pelo agente de IA:
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 gap-1 text-xs"
+                          onClick={() => handleCopy(bodyStr, `body-${template.action}`)}
+                        >
+                          {copiedId === `body-${template.action}` ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                          Copiar
+                        </Button>
+                      </div>
+                      <pre className="text-xs font-mono bg-background/80 rounded border p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[250px] overflow-y-auto">
+                        {bodyStr}
+                      </pre>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              )}
+            </Card>
+          );
+        };
+
         return (
           <div key={category} className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2 cursor-pointer select-none py-1"
+              onClick={() => toggleCategory(category)}
+            >
+              {isCategoryOpen ? (
+                <FolderOpen className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <FolderClosed className="h-4 w-4 text-muted-foreground" />
+              )}
               <Badge variant="secondary" className={CATEGORY_COLORS[category] || ""}>
                 {category}
               </Badge>
               <span className="text-xs text-muted-foreground">{categoryTemplates.length} tool(s)</span>
+              <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${isCategoryOpen ? "" : "-rotate-90"}`} />
             </div>
-            <div className="grid gap-2">
-              {categoryTemplates.map(template => {
-                const isExpanded = expandedActions.has(template.action);
-                const isCustom = customTemplates.some(c => c.action === template.action);
-                const bodyStr = JSON.stringify(template.body, null, 2);
-                return (
-                  <Card key={template.action} className="overflow-hidden">
-                    <div
-                      className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => toggleExpand(template.action)}
-                    >
-                      {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-sm">{template.label}</span>
-                          <code className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{template.toolName}</code>
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">{template.description}</p>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
-                        {isCustom && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveCustom(template.action)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    {isExpanded && (
-                      <div className="border-t bg-muted/30 px-4 py-3">
-                        <Tabs defaultValue="description" className="w-full">
-                          <TabsList className="h-8 mb-3">
-                            <TabsTrigger value="description" className="text-xs px-3 h-7">Descrição</TabsTrigger>
-                            <TabsTrigger value="body" className="text-xs px-3 h-7">Body JSON</TabsTrigger>
-                          </TabsList>
-                          
-                          <TabsContent value="description" className="mt-0">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[11px] text-muted-foreground">Cole no campo <strong>Description</strong> do HTTP Request Tool</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 gap-1 text-xs"
-                                onClick={() => handleCopy(template.toolDescription, `desc-${template.action}`)}
-                              >
-                                {copiedId === `desc-${template.action}` ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                                Copiar
-                              </Button>
-                            </div>
-                            <pre className="text-xs font-mono bg-background/80 rounded border p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
-                              {template.toolDescription}
-                            </pre>
-                          </TabsContent>
 
-                          <TabsContent value="body" className="mt-0">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[11px] text-muted-foreground">
-                                Specify Body → <strong>"Using JSON"</strong> → cole este JSON. Os <code className="text-[10px] bg-background px-1 rounded">{"{{ $fromAI() }}"}</code> são preenchidos automaticamente pelo agente de IA:
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 gap-1 text-xs"
-                                onClick={() => handleCopy(bodyStr, `body-${template.action}`)}
+            {isCategoryOpen && (
+              <div className="pl-2">
+                {category === "Cadastros" ? (
+                  // Sub-group Cadastros by Listar/Criar/Editar/Excluir
+                  (() => {
+                    const subGroups = ["Listar", "Criar", "Editar", "Excluir"];
+                    return (
+                      <div className="space-y-3">
+                        {subGroups.map(sg => {
+                          const sgTemplates = categoryTemplates.filter(t => getCadastroSubGroup(t.action) === sg);
+                          if (sgTemplates.length === 0) return null;
+                          const sgKey = `${category}-${sg}`;
+                          const isSgOpen = !collapsedSubGroups.has(sgKey);
+                          return (
+                            <div key={sg} className="space-y-1.5">
+                              <div
+                                className="flex items-center gap-2 cursor-pointer select-none py-0.5 pl-1"
+                                onClick={() => toggleSubGroup(sgKey)}
                               >
-                                {copiedId === `body-${template.action}` ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                                Copiar
-                              </Button>
+                                <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${isSgOpen ? "" : "-rotate-90"}`} />
+                                <Badge variant="outline" className={`text-[11px] px-2 py-0 h-5 ${SUBGROUP_COLORS[sg] || ""}`}>
+                                  {sg}
+                                </Badge>
+                                <span className="text-[11px] text-muted-foreground">{sgTemplates.length}</span>
+                              </div>
+                              {isSgOpen && (
+                                <div className="grid gap-2 pl-3">
+                                  {sgTemplates.map(renderTemplateCard)}
+                                </div>
+                              )}
                             </div>
-                            <pre className="text-xs font-mono bg-background/80 rounded border p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[250px] overflow-y-auto">
-                              {bodyStr}
-                            </pre>
-                          </TabsContent>
-                        </Tabs>
+                          );
+                        })}
                       </div>
-                    )}
-                  </Card>
-                );
-              })}
-            </div>
+                    );
+                  })()
+                ) : (
+                  <div className="grid gap-2">
+                    {categoryTemplates.map(renderTemplateCard)}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         );
       })}
