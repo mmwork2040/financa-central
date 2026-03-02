@@ -489,11 +489,18 @@ Deno.serve(async (req) => {
 
       // ─── CONTAS BANCÁRIAS ───
       case "contas-bancarias": {
-        const { data } = await supabase
+        let query = supabase
           .from("contas_bancarias")
           .select("*")
-          .eq("empresa_id", empresa_id);
+          .eq("empresa_id", empresa_id)
+          .order("nome", { ascending: true });
 
+        if (filters?.search) {
+          query = query.or(`nome.ilike.%${filters.search}%,banco.ilike.%${filters.search}%`);
+        }
+        if (filters?.limit) query = query.limit(filters.limit);
+
+        const { data } = await query;
         result = data;
         break;
       }
@@ -541,6 +548,7 @@ Deno.serve(async (req) => {
           .order("created_at", { ascending: false });
 
         if (filters?.status) query = query.eq("status", filters.status);
+        if (filters?.search) query = query.ilike("nome", `%${filters.search}%`);
         if (filters?.limit) query = query.limit(filters.limit);
 
         const { data } = await query;
@@ -550,23 +558,33 @@ Deno.serve(async (req) => {
 
       // ─── CATEGORIAS ───
       case "categorias": {
-        const { data } = await supabase
+        let query = supabase
           .from("categorias")
           .select("*")
           .eq("empresa_id", empresa_id)
           .order("nome", { ascending: true });
 
+        if (filters?.tipo) query = query.eq("tipo", filters.tipo);
+        if (filters?.search) query = query.ilike("nome", `%${filters.search}%`);
+        if (filters?.limit) query = query.limit(filters.limit);
+
+        const { data } = await query;
         result = data;
         break;
       }
 
       // ─── FORMAS DE PAGAMENTO ───
       case "formas-pagamento": {
-        const { data } = await supabase
+        let query = supabase
           .from("formas_pagamento")
           .select("*")
-          .eq("empresa_id", empresa_id);
+          .eq("empresa_id", empresa_id)
+          .order("descricao", { ascending: true });
 
+        if (filters?.search) query = query.ilike("descricao", `%${filters.search}%`);
+        if (filters?.limit) query = query.limit(filters.limit);
+
+        const { data } = await query;
         result = data;
         break;
       }
