@@ -21,7 +21,7 @@ const healthConfig: Record<HealthStatus, { label: string; color: string; icon: s
 };
 
 const DashboardContent = () => {
-  const { userProfile } = useAuth();
+  const { userProfile, empresaId } = useAuth();
   const { loading, summary, lancamentosRecentes, contasProximas, healthStatus } = useDashboardData();
   const { handleOpenModal } = useLancamentosContext();
   const { visible, toggle } = useValuesVisibility();
@@ -51,7 +51,7 @@ const DashboardContent = () => {
       </div>
 
       {/* Exit Requests Alert */}
-      <MyExitRequests requests={myRequests} onCancel={cancelRequest} loading={actionLoading} />
+      <MyExitRequests requests={myRequests} onCancel={cancelRequest} loading={actionLoading} currentEmpresaId={empresaId || undefined} />
 
       {/* Health Indicator with Eye toggle */}
       <div className={cn("flex items-center justify-between gap-3 rounded-lg border p-3", health.bg)}>

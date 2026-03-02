@@ -11,6 +11,7 @@ interface MyExitRequestsProps {
   requests: SolicitacaoSaida[];
   onCancel: (id: string) => Promise<boolean>;
   loading?: boolean;
+  currentEmpresaId?: string;
 }
 
 const statusConfig: Record<string, { label: string; icon: React.ReactNode; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -24,9 +25,12 @@ export const MyExitRequests = ({
   requests,
   onCancel,
   loading,
+  currentEmpresaId,
 }: MyExitRequestsProps) => {
-  // Filter out approved requests - they should not be shown
-  const visibleRequests = requests.filter((r) => r.status !== "aprovado");
+  // Only show requests for the currently active empresa
+  const visibleRequests = requests.filter(
+    (r) => r.status !== "aprovado" && (!currentEmpresaId || r.empresa_id === currentEmpresaId)
+  );
   if (visibleRequests.length === 0) return null;
 
   return (
