@@ -134,7 +134,7 @@ export const Sidebar = () => {
     { name: "Contas Bancárias", icon: Building2, path: "/bank-accounts" },
     { name: "Formas de Pagamento", icon: CreditCard, path: "/payment-methods" },
     { name: "Projetos", icon: Briefcase, path: "/projetos" },
-    ...(!isPessoal ? [{ name: "Usuários", icon: Users, path: "/users" }] : []),
+    { name: "Usuários", icon: Users, path: "/users" },
   ];
 
   const bottomItems = [
@@ -394,7 +394,7 @@ export const Sidebar = () => {
           )}
           
           {/* Admin items */}
-          {!isPessoal && adminItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
+          {adminItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
         </ul>
       </nav>
       
