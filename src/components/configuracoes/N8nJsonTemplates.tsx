@@ -1212,8 +1212,7 @@ const N8nJsonTemplates = () => {
   // Auto-inject user_id into all templates for permission control
   const injectUserId = (templates: ActionTemplate[]): ActionTemplate[] => {
     return templates.map(t => {
-      // Skip if already has user_id in body
-      if (t.body.user_id) return t;
+      const alreadyHasUserIdInBody = !!t.body.user_id;
       
       // Add user_id to params if not present
       const hasUserIdParam = t.params.some(p => p.name === "user_id");
@@ -1223,19 +1222,18 @@ const N8nJsonTemplates = () => {
         ...t.params.slice(1),
       ];
 
-      // Add user_id to body
-      const body = { ...t.body };
-      const entries = Object.entries(body);
-      // Insert user_id after empresa_id
-      const empresaIdx = entries.findIndex(([k]) => k === "empresa_id");
-      entries.splice(empresaIdx + 1, 0, ["user_id", "{{ $fromAI('user_id', 'UUID do usuário para controle de permissões') }}"]);
-      const newBody = Object.fromEntries(entries);
+      // Add user_id to body if not present
+      let newBody = t.body;
+      if (!alreadyHasUserIdInBody) {
+        const entries = Object.entries(t.body);
+        const empresaIdx = entries.findIndex(([k]) => k === "empresa_id");
+        entries.splice(empresaIdx + 1, 0, ["user_id", "{{ $fromAI('user_id', 'UUID do usuário para controle de permissões') }}"]);
+        newBody = Object.fromEntries(entries);
+      }
 
-      // Inject user_id into Parâmetros section and append permission notice
+      // Always ensure user_id is in the Parâmetros section of the description
       let toolDescription = t.toolDescription;
       
-      // Add user_id to the Parâmetros list if not already there
-      // Check specifically between "Parâmetros:" and the next double newline to avoid false positives from CONTROLE DE ACESSO section
       if (toolDescription.includes("Parâmetros:")) {
         const paramSectionMatch = toolDescription.match(/Parâmetros:[\s\S]*?(?=\n\n|$)/);
         const paramSection = paramSectionMatch ? paramSectionMatch[0] : "";
