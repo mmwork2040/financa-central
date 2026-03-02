@@ -36,12 +36,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Helper: create personal empresa for a user who has no remaining companies
-    async function createPersonalEmpresa(admin: any, userId: string): Promise<string> {
-      // Check if user already has a personal empresa
+    // Helper: find or create personal empresa for a user
+    async function findOrCreatePersonalEmpresa(admin: any, userId: string): Promise<string> {
       const { data: userRoles } = await admin.from("user_roles").select("empresa_id").eq("user_id", userId);
       const empresaIds = userRoles?.map((r: any) => r.empresa_id) || [];
-      
+
       if (empresaIds.length > 0) {
         const { data: existing } = await admin
           .from("empresas")
@@ -49,9 +48,7 @@ Deno.serve(async (req) => {
           .eq("pessoal", true)
           .in("id", empresaIds)
           .maybeSingle();
-        if (existing) {
-          return existing.id;
-        }
+        if (existing) return existing.id;
       }
 
       const { data: perfil } = await admin.from("perfis").select("nome, email").eq("id", userId).single();
@@ -69,9 +66,19 @@ Deno.serve(async (req) => {
       return newId;
     }
 
+    // Helper: switch user to their personal empresa
+    async function switchToPersonalEmpresa(admin: any, userId: string) {
+      const personalId = await findOrCreatePersonalEmpresa(admin, userId);
+      await admin
+        .from("perfis")
+        .update({ empresa_id: personalId })
+        .eq("id", userId);
+    }
+
     const { action, requestId, motivo, empresaId } = await req.json();
 
-    // check-expired doesn't require auth
+    // ─── CHECK-EXPIRED ───────────────────────────────────────────
+    // User_role already removed at create time. Just finalize: revoke codes, mark approved, log.
     if (action === "check-expired") {
       const { data: expired } = await supabaseAdmin
         .from("solicitacoes_saida")
@@ -81,32 +88,7 @@ Deno.serve(async (req) => {
 
       if (expired && expired.length > 0) {
         for (const request of expired) {
-          await supabaseAdmin
-            .from("user_roles")
-            .delete()
-            .eq("user_id", request.user_id)
-            .eq("empresa_id", request.empresa_id);
-
-          // Revoke invite codes for this user in this empresa
           await revokeInviteCodes(supabaseAdmin, request.user_id, request.empresa_id);
-
-          const { data: remaining } = await supabaseAdmin
-            .from("user_roles")
-            .select("empresa_id")
-            .eq("user_id", request.user_id);
-
-          if (remaining && remaining.length > 0) {
-            await supabaseAdmin
-              .from("perfis")
-              .update({ empresa_id: remaining[0].empresa_id })
-              .eq("id", request.user_id);
-          } else {
-            const newEmpresaId = await createPersonalEmpresa(supabaseAdmin, request.user_id);
-            await supabaseAdmin
-              .from("perfis")
-              .update({ empresa_id: newEmpresaId, permissao: "admin" })
-              .eq("id", request.user_id);
-          }
 
           await supabaseAdmin
             .from("solicitacoes_saida")
@@ -117,7 +99,6 @@ Deno.serve(async (req) => {
             })
             .eq("id", request.id);
 
-          // Log the auto-approved exit
           await logExitAction(supabaseAdmin, request.empresa_id, request.user_id, "success", "Saída auto-aprovada por expiração do prazo de 7 dias");
         }
       }
@@ -127,7 +108,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // All other actions require auth
+    // ─── AUTH ─────────────────────────────────────────────────────
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
@@ -149,11 +130,11 @@ Deno.serve(async (req) => {
     }
     const userId = claimsData.claims.sub;
 
-    // ACTION: create - user requests to leave
+    // ─── CREATE ──────────────────────────────────────────────────
+    // Immediately disconnect user from empresa and switch to personal
     if (action === "create") {
       if (!empresaId) throw new Error("empresaId é obrigatório");
 
-      // Check if trying to leave a personal empresa (not allowed)
       const { data: empresa } = await supabaseAdmin
         .from("empresas")
         .select("pessoal")
@@ -164,7 +145,6 @@ Deno.serve(async (req) => {
         throw new Error("Não é possível sair da sua conta pessoal.");
       }
 
-      // Check for existing pending request
       const { data: existing } = await supabaseAdmin
         .from("solicitacoes_saida")
         .select("id")
@@ -177,6 +157,27 @@ Deno.serve(async (req) => {
         throw new Error("Você já possui uma solicitação pendente para esta empresa.");
       }
 
+      // Get user's current role in this empresa before removing
+      const { data: currentRole } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("empresa_id", empresaId)
+        .maybeSingle();
+
+      const roleOriginal = currentRole?.role || "leitura";
+
+      // Remove user_role immediately (disconnect from empresa)
+      await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("empresa_id", empresaId);
+
+      // Switch user to personal empresa
+      await switchToPersonalEmpresa(supabaseAdmin, userId);
+
+      // Create the exit request with saved original role
       const { data, error } = await supabaseAdmin
         .from("solicitacoes_saida")
         .insert({
@@ -184,6 +185,7 @@ Deno.serve(async (req) => {
           empresa_id: empresaId,
           motivo: motivo || null,
           status: "pendente",
+          role_original: roleOriginal,
         })
         .select()
         .single();
@@ -195,45 +197,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ACTION: cancel - user cancels their own request OR admin cancels any pending request
+    // ─── CANCEL ──────────────────────────────────────────────────
+    // Restore user_role and re-enable access to the empresa
     if (action === "cancel") {
       if (!requestId) throw new Error("requestId é obrigatório");
 
-      // Check if user is admin
-      const { data: isAdminUser } = await supabaseAdmin.rpc("has_role", {
-        _user_id: userId,
-        _role: "admin",
-      });
-      const { data: isSuperAdminUser } = await supabaseAdmin.rpc("is_super_admin", {
-        _user_id: userId,
-      });
-
-      const isAdmin = isAdminUser || isSuperAdminUser;
-
-      let query = supabaseAdmin
-        .from("solicitacoes_saida")
-        .update({ status: "cancelado", updated_at: new Date().toISOString() })
-        .eq("id", requestId)
-        .eq("status", "pendente");
-
-      // Non-admins can only cancel their own requests
-      if (!isAdmin) {
-        query = query.eq("user_id", userId);
-      }
-
-      const { error } = await query;
-      if (error) throw error;
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ACTION: approve - admin approves
-    if (action === "approve") {
-      if (!requestId) throw new Error("requestId é obrigatório");
-
-      // Get the request
+      // Get the request details before updating
       const { data: request, error: fetchErr } = await supabaseAdmin
         .from("solicitacoes_saida")
         .select("*")
@@ -243,7 +212,57 @@ Deno.serve(async (req) => {
 
       if (fetchErr || !request) throw new Error("Solicitação não encontrada ou já processada.");
 
-      // Verify admin has permission
+      // Check permissions: own request or admin
+      const { data: isAdminUser } = await supabaseAdmin.rpc("has_role", {
+        _user_id: userId,
+        _role: "admin",
+      });
+      const { data: isSuperAdminUser } = await supabaseAdmin.rpc("is_super_admin", {
+        _user_id: userId,
+      });
+      const isAdmin = isAdminUser || isSuperAdminUser;
+
+      if (!isAdmin && request.user_id !== userId) {
+        throw new Error("Sem permissão para cancelar esta solicitação.");
+      }
+
+      // Restore user_role with the original role
+      const roleToRestore = request.role_original || "leitura";
+      await supabaseAdmin
+        .from("user_roles")
+        .insert({
+          user_id: request.user_id,
+          empresa_id: request.empresa_id,
+          role: roleToRestore,
+        });
+
+      // Mark as cancelled
+      await supabaseAdmin
+        .from("solicitacoes_saida")
+        .update({ status: "cancelado", updated_at: new Date().toISOString() })
+        .eq("id", requestId);
+
+      await logExitAction(supabaseAdmin, request.empresa_id, request.user_id, "success", "Solicitação de saída cancelada — acesso restaurado");
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── APPROVE ─────────────────────────────────────────────────
+    // User already disconnected at create time. Just revoke codes, log, finalize.
+    if (action === "approve") {
+      if (!requestId) throw new Error("requestId é obrigatório");
+
+      const { data: request, error: fetchErr } = await supabaseAdmin
+        .from("solicitacoes_saida")
+        .select("*")
+        .eq("id", requestId)
+        .eq("status", "pendente")
+        .single();
+
+      if (fetchErr || !request) throw new Error("Solicitação não encontrada ou já processada.");
+
       const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
         _user_id: userId,
         _role: "admin",
@@ -256,34 +275,8 @@ Deno.serve(async (req) => {
         throw new Error("Sem permissão para aprovar solicitações.");
       }
 
-      // Remove user_role for this empresa
-      await supabaseAdmin
-        .from("user_roles")
-        .delete()
-        .eq("user_id", request.user_id)
-        .eq("empresa_id", request.empresa_id);
-
-      // Revoke invite codes for this user in this empresa
+      // Revoke invite codes
       await revokeInviteCodes(supabaseAdmin, request.user_id, request.empresa_id);
-
-      // Check remaining roles
-      const { data: remaining } = await supabaseAdmin
-        .from("user_roles")
-        .select("empresa_id")
-        .eq("user_id", request.user_id);
-
-      if (remaining && remaining.length > 0) {
-        await supabaseAdmin
-          .from("perfis")
-          .update({ empresa_id: remaining[0].empresa_id })
-          .eq("id", request.user_id);
-      } else {
-        const newEmpresaId = await createPersonalEmpresa(supabaseAdmin, request.user_id);
-        await supabaseAdmin
-          .from("perfis")
-          .update({ empresa_id: newEmpresaId, permissao: "admin" })
-          .eq("id", request.user_id);
-      }
 
       // Mark as approved
       await supabaseAdmin
@@ -296,18 +289,38 @@ Deno.serve(async (req) => {
         })
         .eq("id", requestId);
 
-      // Log the approved exit
-      await logExitAction(supabaseAdmin, request.empresa_id, request.user_id, "success", `Saída aprovada pelo administrador`);
+      await logExitAction(supabaseAdmin, request.empresa_id, request.user_id, "success", "Saída aprovada pelo administrador");
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ACTION: reject - admin rejects
+    // ─── REJECT ──────────────────────────────────────────────────
+    // Restore user_role and re-enable access (same as cancel but initiated by admin)
     if (action === "reject") {
       if (!requestId) throw new Error("requestId é obrigatório");
 
+      const { data: request, error: fetchErr } = await supabaseAdmin
+        .from("solicitacoes_saida")
+        .select("*")
+        .eq("id", requestId)
+        .eq("status", "pendente")
+        .single();
+
+      if (fetchErr || !request) throw new Error("Solicitação não encontrada ou já processada.");
+
+      // Restore user_role with the original role
+      const roleToRestore = request.role_original || "leitura";
+      await supabaseAdmin
+        .from("user_roles")
+        .insert({
+          user_id: request.user_id,
+          empresa_id: request.empresa_id,
+          role: roleToRestore,
+        });
+
+      // Mark as rejected
       await supabaseAdmin
         .from("solicitacoes_saida")
         .update({
@@ -316,8 +329,9 @@ Deno.serve(async (req) => {
           respondido_em: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
-        .eq("id", requestId)
-        .eq("status", "pendente");
+        .eq("id", requestId);
+
+      await logExitAction(supabaseAdmin, request.empresa_id, request.user_id, "success", "Solicitação de saída rejeitada — acesso restaurado");
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
