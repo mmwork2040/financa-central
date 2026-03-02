@@ -1529,6 +1529,9 @@ const N8nJsonTemplates = () => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm">{template.label}</span>
                     <code className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{template.toolName}</code>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                      {Object.keys(template.body).length} campos
+                    </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{template.description}</p>
                 </div>
