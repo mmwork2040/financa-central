@@ -110,9 +110,9 @@ Deno.serve(async (req) => {
       "contas-bancarias": { tela: "contas_bancarias" },
       "formas-pagamento": { tela: "formas_pagamento" },
       "projetos": { tela: "projetos" },
-      "vendas-digitais": { tela: "vendas_digitais" },
-      "recebimentos-digitais": { tela: "vendas_digitais" },
-      "listar-anuncios": { tela: "anuncios" },
+      "vendas-digitais": { tela: "vendas_digitais", tipo: "pode_incluir" },
+      "recebimentos-digitais": { tela: "vendas_digitais", tipo: "pode_incluir" },
+      "listar-anuncios": { tela: "anuncios", tipo: "pode_incluir" },
       "listar-usuarios": { tela: "users" },
       // Criação (pode_incluir)
       "criar-lancamento": { tela: "lancamentos", tipo: "pode_incluir" },
@@ -177,9 +177,13 @@ Deno.serve(async (req) => {
             });
           }
 
-          // Check specific action permission (create/edit/delete)
+          // Check specific action permission (create/edit/delete/view)
           if (permRule.tipo && !screenPerm[permRule.tipo]) {
-            const tipoLabel = permRule.tipo === "pode_incluir" ? "incluir" : permRule.tipo === "pode_alterar" ? "alterar" : "excluir";
+            // For view-only screens (vendas_digitais, anuncios), pode_incluir means "pode visualizar"
+            const viewOnlyScreens = ["vendas_digitais", "anuncios"];
+            const tipoLabel = viewOnlyScreens.includes(permRule.tela) && permRule.tipo === "pode_incluir"
+              ? "visualizar"
+              : permRule.tipo === "pode_incluir" ? "incluir" : permRule.tipo === "pode_alterar" ? "alterar" : "excluir";
             console.log(`🚫 [n8n-query] Acesso negado: user ${user_id} sem permissão '${tipoLabel}' na tela '${permRule.tela}'`);
             return new Response(JSON.stringify({
               error: "Acesso negado",
