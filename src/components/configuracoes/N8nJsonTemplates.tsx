@@ -41,13 +41,17 @@ Use quando o usuário solicitar:
 - Visão geral das finanças
 
 Parâmetros:
-- empresa_id
-- periodo (semana, mes, trimestre, semestre ou ano)
-- data_inicio (YYYY-MM-DD, opcional - data específica de início)
-- data_fim (YYYY-MM-DD, opcional - data específica de fim)
+- empresa_id (obrigatório)
+- periodo: semana, mes, trimestre, semestre ou ano
+- data_inicio: YYYY-MM-DD
+- data_fim: YYYY-MM-DD
 
-Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
-Se não informar período nem datas, usar "mes".
+REGRAS DE PERÍODO (OBRIGATÓRIAS):
+1) Se o usuário informar data_inicio ou data_fim: preencha data_inicio e/ou data_fim. Envie periodo como "" (vazio).
+2) Se o usuário informar um período (semana, mes, etc.): preencha periodo. Envie data_inicio e data_fim como "" (vazio).
+3) Se não informar período nem datas: envie periodo como "mes". Envie data_inicio e data_fim como "" (vazio).
+
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Resumos",
@@ -73,17 +77,21 @@ Use quando o usuário solicitar:
 - Movimentações financeiras
 
 Parâmetros:
-- empresa_id
-- periodo (semana, mes, trimestre, semestre ou ano)
-- data_inicio (YYYY-MM-DD, opcional - data específica de início)
-- data_fim (YYYY-MM-DD, opcional - data específica de fim)
-- tipo
-- status
-- categoria_id
-- limit
+- empresa_id (obrigatório)
+- periodo: semana, mes, trimestre, semestre ou ano
+- data_inicio: YYYY-MM-DD
+- data_fim: YYYY-MM-DD
+- tipo: receita ou despesa (envie "" se não informado)
+- status: pendente ou pago (envie "" se não informado)
+- categoria_id: UUID da categoria (envie "" se não informado)
+- limit: número (envie "" se não informado)
 
-Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
-Se não informar período nem datas, usar "mes".
+REGRAS DE PERÍODO (OBRIGATÓRIAS):
+1) Se o usuário informar data_inicio ou data_fim: preencha data_inicio e/ou data_fim. Envie periodo como "" (vazio).
+2) Se o usuário informar um período (semana, mes, etc.): preencha periodo. Envie data_inicio e data_fim como "" (vazio).
+3) Se não informar período nem datas: envie periodo como "mes". Envie data_inicio e data_fim como "" (vazio).
+
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Financeiro",
@@ -112,14 +120,18 @@ Use quando o usuário solicitar:
 - O que preciso pagar
 
 Parâmetros:
-- empresa_id
-- periodo (semana, mes, trimestre, semestre ou ano)
-- data_inicio (YYYY-MM-DD, opcional - data específica de início)
-- data_fim (YYYY-MM-DD, opcional - data específica de fim)
-- limit
+- empresa_id (obrigatório)
+- periodo: semana, mes, trimestre, semestre ou ano
+- data_inicio: YYYY-MM-DD
+- data_fim: YYYY-MM-DD
+- limit: número (envie "" se não informado)
 
-Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
-Se não informar período nem datas, lista todas as pendentes.
+REGRAS DE PERÍODO (OBRIGATÓRIAS):
+1) Se o usuário informar data_inicio ou data_fim: preencha data_inicio e/ou data_fim. Envie periodo como "" (vazio).
+2) Se o usuário informar um período (semana, mes, etc.): preencha periodo. Envie data_inicio e data_fim como "" (vazio).
+3) Se não informar período nem datas: envie periodo como "" (vazio) para listar todas as pendentes.
+
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Financeiro",
@@ -145,14 +157,18 @@ Use quando o usuário solicitar:
 - O que tenho para receber
 
 Parâmetros:
-- empresa_id
-- periodo (semana, mes, trimestre, semestre ou ano)
-- data_inicio (YYYY-MM-DD, opcional - data específica de início)
-- data_fim (YYYY-MM-DD, opcional - data específica de fim)
-- limit
+- empresa_id (obrigatório)
+- periodo: semana, mes, trimestre, semestre ou ano
+- data_inicio: YYYY-MM-DD
+- data_fim: YYYY-MM-DD
+- limit: número (envie "" se não informado)
 
-Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
-Se não informar período nem datas, lista todas as pendentes.
+REGRAS DE PERÍODO (OBRIGATÓRIAS):
+1) Se o usuário informar data_inicio ou data_fim: preencha data_inicio e/ou data_fim. Envie periodo como "" (vazio).
+2) Se o usuário informar um período (semana, mes, etc.): preencha periodo. Envie data_inicio e data_fim como "" (vazio).
+3) Se não informar período nem datas: envie periodo como "" (vazio) para listar todas as pendentes.
+
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Financeiro",
@@ -178,13 +194,17 @@ Use quando o usuário solicitar:
 - Resumo por categoria
 
 Parâmetros:
-- empresa_id
-- periodo (semana, mes, trimestre, semestre ou ano)
-- data_inicio (YYYY-MM-DD, opcional)
-- data_fim (YYYY-MM-DD, opcional)
+- empresa_id (obrigatório)
+- periodo: semana, mes, trimestre, semestre ou ano
+- data_inicio: YYYY-MM-DD
+- data_fim: YYYY-MM-DD
 
-Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
-Se não informar período nem datas, usar "mes".
+REGRAS DE PERÍODO (OBRIGATÓRIAS):
+1) Se o usuário informar data_inicio ou data_fim: preencha data_inicio e/ou data_fim. Envie periodo como "" (vazio).
+2) Se o usuário informar um período (semana, mes, etc.): preencha periodo. Envie data_inicio e data_fim como "" (vazio).
+3) Se não informar período nem datas: envie periodo como "mes". Envie data_inicio e data_fim como "" (vazio).
+
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Resumos",
@@ -210,16 +230,20 @@ Use quando o usuário solicitar:
 - Relatório de vendas digitais
 
 Parâmetros:
-- empresa_id
-- periodo (semana, mes, trimestre, semestre ou ano)
-- data_inicio (YYYY-MM-DD, opcional)
-- data_fim (YYYY-MM-DD, opcional)
-- plataforma
-- status
-- limit
+- empresa_id (obrigatório)
+- periodo: semana, mes, trimestre, semestre ou ano
+- data_inicio: YYYY-MM-DD
+- data_fim: YYYY-MM-DD
+- plataforma: nome da plataforma (envie "" se não informado)
+- status: status da venda (envie "" se não informado)
+- limit: número (envie "" se não informado)
 
-Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
-Se não informar período nem datas, usar "mes".
+REGRAS DE PERÍODO (OBRIGATÓRIAS):
+1) Se o usuário informar data_inicio ou data_fim: preencha data_inicio e/ou data_fim. Envie periodo como "" (vazio).
+2) Se o usuário informar um período (semana, mes, etc.): preencha periodo. Envie data_inicio e data_fim como "" (vazio).
+3) Se não informar período nem datas: envie periodo como "mes". Envie data_inicio e data_fim como "" (vazio).
+
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
 Não usar para recebimentos pendentes.
 
@@ -249,15 +273,19 @@ Use quando o usuário solicitar:
 - Parcelas de vendas digitais
 
 Parâmetros:
-- empresa_id
-- periodo (semana, mes, trimestre, semestre ou ano)
-- data_inicio (YYYY-MM-DD, opcional - data específica de início)
-- data_fim (YYYY-MM-DD, opcional - data específica de fim)
-- status
-- limit
+- empresa_id (obrigatório)
+- periodo: semana, mes, trimestre, semestre ou ano
+- data_inicio: YYYY-MM-DD
+- data_fim: YYYY-MM-DD
+- status: pendente ou recebido (envie "" se não informado)
+- limit: número (envie "" se não informado)
 
-Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
-Se não informar período nem datas, lista todos os recebimentos.
+REGRAS DE PERÍODO (OBRIGATÓRIAS):
+1) Se o usuário informar data_inicio ou data_fim: preencha data_inicio e/ou data_fim. Envie periodo como "" (vazio).
+2) Se o usuário informar um período (semana, mes, etc.): preencha periodo. Envie data_inicio e data_fim como "" (vazio).
+3) Se não informar período nem datas: envie periodo como "" (vazio) para listar todos.
+
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Vendas",
@@ -459,13 +487,17 @@ Use quando o usuário solicitar:
 - Evolução financeira
 
 Parâmetros:
-- empresa_id
-- periodo (semana, mes, trimestre, semestre ou ano)
-- data_inicio (YYYY-MM-DD, opcional)
-- data_fim (YYYY-MM-DD, opcional)
+- empresa_id (obrigatório)
+- periodo: semana, mes, trimestre, semestre ou ano
+- data_inicio: YYYY-MM-DD
+- data_fim: YYYY-MM-DD
 
-Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
-Se não informar período nem datas, usar "semestre".
+REGRAS DE PERÍODO (OBRIGATÓRIAS):
+1) Se o usuário informar data_inicio ou data_fim: preencha data_inicio e/ou data_fim. Envie periodo como "" (vazio).
+2) Se o usuário informar um período (semana, mes, etc.): preencha periodo. Envie data_inicio e data_fim como "" (vazio).
+3) Se não informar período nem datas: envie periodo como "semestre". Envie data_inicio e data_fim como "" (vazio).
+
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Resumos",
@@ -595,14 +627,18 @@ Use quando o usuário solicitar:
 - Investimento em anúncios
 
 Parâmetros:
-- empresa_id
-- periodo (semana, mes, trimestre, semestre ou ano)
-- data_inicio (YYYY-MM-DD, opcional)
-- data_fim (YYYY-MM-DD, opcional)
-- plataforma (ex: meta_ads, google_ads)
+- empresa_id (obrigatório)
+- periodo: semana, mes, trimestre, semestre ou ano
+- data_inicio: YYYY-MM-DD
+- data_fim: YYYY-MM-DD
+- plataforma: meta_ads, google_ads (envie "" se não informado)
 
-Se o usuário informar datas específicas, use data_inicio e data_fim. Caso contrário, use periodo.
-Se não informar período nem datas, usar "mes".
+REGRAS DE PERÍODO (OBRIGATÓRIAS):
+1) Se o usuário informar data_inicio ou data_fim: preencha data_inicio e/ou data_fim. Envie periodo como "" (vazio).
+2) Se o usuário informar um período (semana, mes, etc.): preencha periodo. Envie data_inicio e data_fim como "" (vazio).
+3) Se não informar período nem datas: envie periodo como "mes". Envie data_inicio e data_fim como "" (vazio).
+
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Vendas",
