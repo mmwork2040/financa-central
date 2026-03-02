@@ -589,8 +589,76 @@ Deno.serve(async (req) => {
         break;
       }
 
-      // ─── LISTAR OPÇÕES PARA LANÇAMENTO ───
+      // ─── LISTAR OPÇÕES PARA LANÇAMENTO (com cadastro inline) ───
       case "listar-opcoes-lancamento": {
+        // ── Cadastro inline: criar registros faltantes antes de listar ──
+        const criar = body.criar || {};
+        const criados: Record<string, any> = {};
+
+        // Criar categoria inline
+        if (criar.categoria) {
+          const catNome = sanitize(criar.categoria.nome);
+          const catTipo = sanitize(criar.categoria.tipo) || "despesa";
+          if (catNome && ["receita", "despesa", "investimento"].includes(catTipo)) {
+            const { data: newCat } = await supabase.from("categorias").insert({ empresa_id, nome: catNome, tipo: catTipo }).select("*").single();
+            if (newCat) criados.categoria = newCat;
+          }
+        }
+
+        // Criar cliente inline
+        if (criar.cliente) {
+          const cliNome = sanitize(criar.cliente.nome);
+          if (cliNome) {
+            const cliData: any = { empresa_id, nome: cliNome, origem: "n8n" };
+            const cliEmail = sanitize(criar.cliente.email);
+            const cliTel = sanitize(criar.cliente.telefone);
+            const cliDoc = sanitize(criar.cliente.cpf_cnpj);
+            if (cliEmail) cliData.email = cliEmail;
+            if (cliTel) cliData.telefone = cliTel;
+            if (cliDoc) cliData.cpf_cnpj = cliDoc;
+            const { data: newCli } = await supabase.from("clientes").insert(cliData).select("*").single();
+            if (newCli) criados.cliente = newCli;
+          }
+        }
+
+        // Criar fornecedor inline
+        if (criar.fornecedor) {
+          const forNome = sanitize(criar.fornecedor.nome);
+          if (forNome) {
+            const forData: any = { empresa_id, nome: forNome };
+            const forEmail = sanitize(criar.fornecedor.email);
+            const forTel = sanitize(criar.fornecedor.telefone);
+            const forDoc = sanitize(criar.fornecedor.cpf_cnpj);
+            if (forEmail) forData.email = forEmail;
+            if (forTel) forData.telefone = forTel;
+            if (forDoc) forData.cpf_cnpj = forDoc;
+            const { data: newFor } = await supabase.from("fornecedores").insert(forData).select("*").single();
+            if (newFor) criados.fornecedor = newFor;
+          }
+        }
+
+        // Criar conta bancária inline
+        if (criar.conta_bancaria) {
+          const cbNome = sanitize(criar.conta_bancaria.nome);
+          if (cbNome) {
+            const cbData: any = { empresa_id, nome: cbNome, saldo_inicial: 0, saldo_atual: 0, principal: false };
+            const cbBanco = sanitize(criar.conta_bancaria.banco);
+            if (cbBanco) cbData.banco = cbBanco;
+            const { data: newCB } = await supabase.from("contas_bancarias").insert(cbData).select("*").single();
+            if (newCB) criados.conta_bancaria = newCB;
+          }
+        }
+
+        // Criar forma de pagamento inline
+        if (criar.forma_pagamento) {
+          const fpDesc = sanitize(criar.forma_pagamento.descricao);
+          if (fpDesc) {
+            const { data: newFP } = await supabase.from("formas_pagamento").insert({ empresa_id, descricao: fpDesc }).select("*").single();
+            if (newFP) criados.forma_pagamento = newFP;
+          }
+        }
+
+        // ── Agora listar tudo (incluindo recém-criados) ──
         const [categoriasRes, fornecedoresRes, contasRes, formasRes, clientesRes, projetosRes] = await Promise.all([
           supabase.from("categorias").select("id, nome, tipo").eq("empresa_id", empresa_id).order("nome", { ascending: true }),
           supabase.from("fornecedores").select("id, nome").eq("empresa_id", empresa_id).eq("ativo", true).order("nome", { ascending: true }),
@@ -613,22 +681,22 @@ Deno.serve(async (req) => {
         const categoriasReceita = categorias.filter((c: any) => c.tipo === "receita");
 
         if (categorias.length === 0) {
-          alertas.push("⚠️ Nenhuma CATEGORIA cadastrada. O usuário DEVE cadastrar pelo menos uma categoria antes de criar um lançamento. Use a ferramenta criar_categoria.");
+          alertas.push("⚠️ Nenhuma CATEGORIA cadastrada. Cadastre usando o campo 'criar.categoria' com {nome, tipo} nesta mesma ferramenta.");
         } else {
-          if (categoriasDespesa.length === 0) alertas.push("⚠️ Nenhuma categoria do tipo DESPESA cadastrada. Cadastre uma antes de criar lançamentos de despesa.");
-          if (categoriasReceita.length === 0) alertas.push("⚠️ Nenhuma categoria do tipo RECEITA cadastrada. Cadastre uma antes de criar lançamentos de receita.");
+          if (categoriasDespesa.length === 0) alertas.push("⚠️ Nenhuma categoria DESPESA. Cadastre via criar.categoria com tipo='despesa'.");
+          if (categoriasReceita.length === 0) alertas.push("⚠️ Nenhuma categoria RECEITA. Cadastre via criar.categoria com tipo='receita'.");
         }
         if (contas_bancarias.length === 0) {
-          alertas.push("⚠️ Nenhuma CONTA BANCÁRIA cadastrada. O usuário DEVE cadastrar pelo menos uma conta antes de criar um lançamento. Use a ferramenta criar_conta_bancaria.");
+          alertas.push("⚠️ Nenhuma CONTA BANCÁRIA. Cadastre via criar.conta_bancaria com {nome, banco}.");
         }
         if (formas_pagamento.length === 0) {
-          alertas.push("⚠️ Nenhuma FORMA DE PAGAMENTO cadastrada. O usuário DEVE cadastrar pelo menos uma forma de pagamento antes de criar um lançamento. Use a ferramenta criar_forma_pagamento.");
+          alertas.push("⚠️ Nenhuma FORMA DE PAGAMENTO. Cadastre via criar.forma_pagamento com {descricao}.");
         }
         if (fornecedores.length === 0) {
-          alertas.push("⚠️ Nenhum FORNECEDOR cadastrado. Para criar lançamentos de DESPESA, o usuário deve cadastrar um fornecedor. Use a ferramenta criar_fornecedor.");
+          alertas.push("⚠️ Nenhum FORNECEDOR. Para despesas, cadastre via criar.fornecedor com {nome}.");
         }
         if (clientes.length === 0) {
-          alertas.push("⚠️ Nenhum CLIENTE cadastrado. Para criar lançamentos de RECEITA, o usuário deve cadastrar um cliente. Use a ferramenta criar_cliente.");
+          alertas.push("⚠️ Nenhum CLIENTE. Para receitas, cadastre via criar.cliente com {nome}.");
         }
 
         result = {
@@ -638,6 +706,7 @@ Deno.serve(async (req) => {
             se_despesa: ["fornecedor_id"],
           },
           alertas,
+          ...(Object.keys(criados).length > 0 ? { registros_criados: criados } : {}),
           categorias: {
             despesa: categoriasDespesa,
             receita: categoriasReceita,

@@ -468,37 +468,47 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "listar-opcoes-lancamento",
     toolName: "listar_opcoes_lancamento",
     label: "Opções para Lançamento",
-    description: "Lista categorias, fornecedores, clientes, contas bancárias, formas de pagamento e projetos ativos — com indicação de obrigatoriedade",
-    toolDescription: `Retorna todas as opções disponíveis para preencher um novo lançamento financeiro, indicando quais são OBRIGATÓRIAS.
+    description: "Lista e cadastra opções para lançamentos: categorias, fornecedores, clientes, contas bancárias, formas de pagamento e projetos",
+    toolDescription: `Retorna TODAS as opções disponíveis para preencher um lançamento E permite CADASTRAR registros faltantes na mesma chamada.
 
-IMPORTANTE: Use SEMPRE antes de criar um lançamento. A resposta inclui:
-- categorias (OBRIGATÓRIO) — separadas por tipo (receita/despesa)
-- fornecedores ativos (OBRIGATÓRIO se tipo=despesa)
-- clientes ativos (OBRIGATÓRIO se tipo=receita)
-- contas_bancarias (OBRIGATÓRIO)
-- formas_pagamento (OBRIGATÓRIO)
-- projetos ativos (opcional)
+⚠️ ESTA FERRAMENTA É OBRIGATÓRIA antes de criar_lancamento.
 
-A resposta também inclui um campo "alertas" com avisos se alguma lista obrigatória estiver VAZIA.
-Se uma lista obrigatória estiver vazia, NÃO prossiga com a criação do lançamento.
-Em vez disso, informe ao usuário que ele precisa cadastrar o item faltante primeiro e ofereça ajuda para cadastrá-lo usando as ferramentas de criação (criar_categoria, criar_fornecedor, criar_cliente, criar_forma_pagamento, criar_conta_bancaria).
+FUNCIONALIDADES:
+1. LISTAR: Retorna categorias, fornecedores, clientes, contas bancárias, formas de pagamento e projetos ativos com seus UUIDs.
+2. CRIAR INLINE: Se alguma dependência estiver faltando, você pode criá-la diretamente passando o campo "criar" no body.
+3. ALERTAS: A resposta inclui "alertas" indicando quais listas estão vazias.
 
-Fluxo correto:
+CAMPO "criar" (opcional) — cadastra registros faltantes e retorna as listas atualizadas:
+- criar.categoria: { nome: "Nome", tipo: "receita" ou "despesa" }
+- criar.cliente: { nome: "Nome", email?: "", telefone?: "", cpf_cnpj?: "" }
+- criar.fornecedor: { nome: "Nome", email?: "", telefone?: "", cpf_cnpj?: "" }
+- criar.conta_bancaria: { nome: "Nome", banco?: "Nome do banco" }
+- criar.forma_pagamento: { descricao: "Descrição" }
+
+FLUXO CORRETO:
 1. Pergunte ao usuário: é receita ou despesa?
-2. Chame listar_opcoes_lancamento para ver as opções disponíveis
-3. Se houver alertas de listas vazias, ajude o usuário a cadastrar o que falta
-4. Apresente as opções ao usuário para ele escolher (categoria, conta, forma de pagamento, cliente/fornecedor)
-5. Só então crie o lançamento com todos os campos obrigatórios preenchidos
+2. Chame listar_opcoes_lancamento
+3. Se houver alertas de listas vazias, pergunte ao usuário os dados e chame NOVAMENTE com o campo "criar" preenchido
+4. Use os UUIDs retornados (inclusive dos registros_criados) para preencher criar_lancamento
+5. Nunca invente UUIDs — use SOMENTE os retornados por esta ferramenta
 
-Parâmetros:
-- empresa_id
+EXEMPLO de chamada com cadastro inline:
+{
+  "action": "listar-opcoes-lancamento",
+  "empresa_id": "uuid",
+  "criar": {
+    "categoria": { "nome": "Alimentação", "tipo": "despesa" },
+    "forma_pagamento": { "descricao": "PIX" }
+  }
+}
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "criar", type: "string", required: false, description: "Objeto JSON para cadastrar registros faltantes inline (categoria, cliente, fornecedor, conta_bancaria, forma_pagamento)" },
     ],
-    body: { action: "listar-opcoes-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}" },
+    body: { action: "listar-opcoes-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", criar: "{{ $fromAI('criar', 'Objeto para cadastrar registros faltantes. Ex: {\"categoria\":{\"nome\":\"Alimentação\",\"tipo\":\"despesa\"}}. Deixe vazio se não precisa cadastrar nada.') }}" },
   },
   {
     action: "fluxo-caixa",
@@ -542,13 +552,17 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Cria um novo lançamento financeiro (receita ou despesa)",
     toolDescription: `Cria um novo lançamento financeiro no sistema.
 
-⚠️ REGRAS OBRIGATÓRIAS:
-1. Chame listar_opcoes_lancamento ANTES para obter IDs válidos. NUNCA invente UUIDs.
-2. O campo "tipo" é OBRIGATÓRIO (receita ou despesa). NÃO existe padrão. Pergunte ao usuário.
-3. Se tipo = "receita": cliente_id é OBRIGATÓRIO. Pergunte qual cliente.
-4. Se tipo = "despesa": fornecedor_id é OBRIGATÓRIO. Pergunte qual fornecedor.
-5. categoria_id, forma_pagamento_id e conta_bancaria_id são SEMPRE obrigatórios.
-6. Se algum cadastro não existir, oriente o usuário a cadastrar antes.
+⚠️ REGRAS OBRIGATÓRIAS — SIGA NA ORDEM:
+1. PRIMEIRO chame listar_opcoes_lancamento para obter UUIDs válidos. NUNCA invente UUIDs.
+2. Se listar_opcoes_lancamento retornou alertas de listas vazias, chame-o NOVAMENTE com o campo "criar" para cadastrar o que falta.
+3. Use os UUIDs retornados por listar_opcoes_lancamento (inclusive de "registros_criados") para preencher ESTA ferramenta.
+4. O campo "tipo" é OBRIGATÓRIO (receita ou despesa). NÃO existe padrão. Pergunte ao usuário.
+5. Se tipo = "receita": cliente_id é OBRIGATÓRIO.
+6. Se tipo = "despesa": fornecedor_id é OBRIGATÓRIO.
+7. categoria_id, forma_pagamento_id e conta_bancaria_id são SEMPRE obrigatórios.
+
+FLUXO RESUMIDO:
+listar_opcoes_lancamento → (resolver alertas com "criar" se necessário) → criar_lancamento
 
 Parâmetros:
 - empresa_id, descricao, valor, data_vencimento (OBRIGATÓRIOS)
