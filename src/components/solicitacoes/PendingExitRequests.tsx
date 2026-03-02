@@ -42,10 +42,10 @@ export const PendingExitRequests = ({
           return (
             <div
               key={req.id}
-              className="flex flex-col gap-2 rounded-lg border bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-3 rounded-lg border bg-background p-3"
             >
-              <div className="space-y-1">
-                <div className="font-medium">{req.user_nome}</div>
+              <div className="space-y-1 min-w-0">
+                <div className="font-medium text-sm sm:text-base truncate">{req.user_nome}</div>
                 <div className="text-xs text-muted-foreground">{req.user_email}</div>
                 {req.empresa_nome && (
                   <Badge variant="outline" className="text-xs">
@@ -60,7 +60,7 @@ export const PendingExitRequests = ({
                   Auto-aprovação {expiresIn}
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 shrink-0 w-full sm:w-auto">
+              <div className="grid grid-cols-3 gap-2 w-full">
                 {onCancel && (
                   <Button
                     size="sm"
