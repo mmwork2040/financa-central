@@ -1120,11 +1120,6 @@ Deno.serve(async (req) => {
         const id = sanitize(body.id);
         if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         
-        const { data: vincProj } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("projeto_id", id).in("status", ["pago", "recebido"]).limit(1);
-        if (vincProj && vincProj.length > 0) {
-          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este projeto possui lançamentos pagos/recebidos vinculados e não pode ser alterado." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
         const updateData: any = {};
         if (sanitize(body.nome)) updateData.nome = sanitize(body.nome);
         if (sanitize(body.descricao)) updateData.descricao = sanitize(body.descricao);
@@ -1243,10 +1238,6 @@ Deno.serve(async (req) => {
       case "excluir-projeto": {
         const id = sanitize(body.id);
         if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        const { data: vincDelProj } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("projeto_id", id).in("status", ["pago", "recebido"]).limit(1);
-        if (vincDelProj && vincDelProj.length > 0) {
-          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este projeto possui lançamentos pagos/recebidos vinculados e não pode ser excluído." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
         const { error: delProjErr } = await supabase.from("projetos").delete().eq("id", id).eq("empresa_id", empresa_id);
         if (delProjErr) throw delProjErr;
         result = { message: "Projeto excluído com sucesso", id };

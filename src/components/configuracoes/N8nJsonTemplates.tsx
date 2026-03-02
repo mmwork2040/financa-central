@@ -1036,10 +1036,10 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-projeto",
     toolName: "editar_projeto",
     label: "Editar Projeto",
-    description: "Altera dados de um projeto (bloqueado se vinculado a lançamentos pagos/recebidos)",
+    description: "Altera dados de um projeto (sem restrições de lançamentos vinculados)",
     toolDescription: `Altera dados de um projeto existente.
 
-⚠️ REGRA DE SEGURANÇA: Se o projeto possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+Projetos são um controle à parte do usuário — podem ser editados livremente independente de lançamentos vinculados. O saldo de receitas e despesas é apenas informativo.
 
 Parâmetros:
 - empresa_id (obrigatório)
@@ -1202,10 +1202,10 @@ Sempre usar a empresa_id ativa.`,
     action: "excluir-projeto",
     toolName: "excluir_projeto",
     label: "Excluir Projeto",
-    description: "Remove um projeto (bloqueado se vinculado a lançamentos pagos/recebidos)",
+    description: "Remove um projeto (sem restrições de lançamentos vinculados)",
     toolDescription: `Exclui um projeto do sistema.
 
-⚠️ REGRA DE SEGURANÇA: Bloqueado se possuir lançamentos pagos/recebidos.
+Projetos são um controle à parte do usuário — podem ser excluídos livremente. Lançamentos vinculados NÃO são afetados, apenas perdem a referência ao projeto.
 
 Parâmetros:
 - empresa_id (obrigatório)
