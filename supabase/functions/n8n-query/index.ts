@@ -592,7 +592,17 @@ Deno.serve(async (req) => {
       // ─── LISTAR OPÇÕES PARA LANÇAMENTO (com cadastro inline) ───
       case "listar-opcoes-lancamento": {
         // ── Cadastro inline: criar registros faltantes antes de listar ──
-        const criar = body.criar || {};
+        let criarRaw = body.criar || {};
+        // Se o n8n enviou como string JSON, fazer parse
+        if (typeof criarRaw === "string") {
+          const trimmed = criarRaw.trim();
+          if (!trimmed || /^\{.*\}$/.test(trimmed) === false) {
+            criarRaw = {};
+          } else {
+            try { criarRaw = JSON.parse(trimmed); } catch (_) { criarRaw = {}; }
+          }
+        }
+        const criar = criarRaw && typeof criarRaw === "object" ? criarRaw : {};
         const criados: Record<string, any> = {};
 
         // Criar categoria inline
