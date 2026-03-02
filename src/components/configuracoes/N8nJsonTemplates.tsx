@@ -703,6 +703,46 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     body: { action: "listar-usuarios", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}", permissao: "{{ $fromAI('permissao', 'Filtro: admin, editor ou leitura. Deixe vazio para todos') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
   },
   {
+    action: "criar-cliente",
+    toolName: "criar_cliente",
+    label: "Criar Cliente",
+    description: "Cadastra um novo cliente no sistema",
+    toolDescription: `Cadastra um novo cliente no sistema. O cliente será criado com origem "manual" e poderá ser editado ou excluído normalmente.
+
+Use quando o usuário solicitar:
+- Cadastrar cliente
+- Adicionar cliente
+- Registrar cliente
+- Novo cliente
+
+⚠️ IMPORTANTE: O campo "nome" é obrigatório. Os demais campos são opcionais.
+
+Parâmetros:
+- empresa_id (obrigatório)
+- nome (obrigatório)
+- cpf_cnpj, telefone, email, cep, rua, numero, complemento, bairro, cidade, estado (opcionais)
+- ativo (padrão: true)
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Cadastros",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "nome", type: "string", required: true, description: "Nome do cliente" },
+      { name: "cpf_cnpj", type: "string", required: false, description: "CPF ou CNPJ" },
+      { name: "telefone", type: "string", required: false, description: "Telefone" },
+      { name: "email", type: "string", required: false, description: "E-mail" },
+      { name: "cep", type: "string", required: false, description: "CEP" },
+      { name: "rua", type: "string", required: false, description: "Rua" },
+      { name: "numero", type: "string", required: false, description: "Número" },
+      { name: "complemento", type: "string", required: false, description: "Complemento" },
+      { name: "bairro", type: "string", required: false, description: "Bairro" },
+      { name: "cidade", type: "string", required: false, description: "Cidade" },
+      { name: "estado", type: "string", required: false, description: "Estado (UF)" },
+      { name: "ativo", type: "boolean", required: false, description: "Ativo (padrão: true)" },
+    ],
+    body: { action: "criar-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", nome: "{{ $fromAI('nome', 'Nome do cliente') }}", cpf_cnpj: "{{ $fromAI('cpf_cnpj', 'CPF ou CNPJ') }}", telefone: "{{ $fromAI('telefone', 'Telefone') }}", email: "{{ $fromAI('email', 'Email') }}", cep: "{{ $fromAI('cep', 'CEP') }}", rua: "{{ $fromAI('rua', 'Rua') }}", numero: "{{ $fromAI('numero', 'Número') }}", complemento: "{{ $fromAI('complemento', 'Complemento') }}", bairro: "{{ $fromAI('bairro', 'Bairro') }}", cidade: "{{ $fromAI('cidade', 'Cidade') }}", estado: "{{ $fromAI('estado', 'Estado UF') }}" },
+  },
+  {
     action: "criar-fornecedor",
     toolName: "criar_fornecedor",
     label: "Criar Fornecedor",
