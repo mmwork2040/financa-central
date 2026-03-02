@@ -23,6 +23,7 @@ const routeToScreenMap: Record<string, string> = {
   "/vendas-digitais": "vendas_digitais",
   "/settings/integracoes": "integracoes",
   "/settings/webhooks": "webhooks",
+  "/anuncios": "anuncios",
 };
 
 // Screens that require admin role to access (not permission-based)
