@@ -468,20 +468,27 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "listar-opcoes-lancamento",
     toolName: "listar_opcoes_lancamento",
     label: "Opções para Lançamento",
-    description: "Lista categorias, fornecedores, clientes, contas bancárias, formas de pagamento e projetos ativos",
-    toolDescription: `Retorna todas as opções disponíveis para preencher um novo lançamento financeiro.
+    description: "Lista categorias, fornecedores, clientes, contas bancárias, formas de pagamento e projetos ativos — com indicação de obrigatoriedade",
+    toolDescription: `Retorna todas as opções disponíveis para preencher um novo lançamento financeiro, indicando quais são OBRIGATÓRIAS.
 
-Use ANTES de criar um lançamento para obter os IDs válidos de:
-- Categorias (receita/despesa)
-- Fornecedores ativos
-- Clientes ativos
-- Contas bancárias
-- Formas de pagamento
-- Projetos ativos
+IMPORTANTE: Use SEMPRE antes de criar um lançamento. A resposta inclui:
+- categorias (OBRIGATÓRIO) — separadas por tipo (receita/despesa)
+- fornecedores ativos (OBRIGATÓRIO se tipo=despesa)
+- clientes ativos (OBRIGATÓRIO se tipo=receita)
+- contas_bancarias (OBRIGATÓRIO)
+- formas_pagamento (OBRIGATÓRIO)
+- projetos ativos (opcional)
 
-Use quando o usuário solicitar:
-- Registrar um lançamento (chame esta ferramenta primeiro para obter as opções)
-- Quais categorias/fornecedores/contas disponíveis
+A resposta também inclui um campo "alertas" com avisos se alguma lista obrigatória estiver VAZIA.
+Se uma lista obrigatória estiver vazia, NÃO prossiga com a criação do lançamento.
+Em vez disso, informe ao usuário que ele precisa cadastrar o item faltante primeiro e ofereça ajuda para cadastrá-lo usando as ferramentas de criação (criar_categoria, criar_fornecedor, criar_cliente, criar_forma_pagamento, criar_conta_bancaria).
+
+Fluxo correto:
+1. Pergunte ao usuário: é receita ou despesa?
+2. Chame listar_opcoes_lancamento para ver as opções disponíveis
+3. Se houver alertas de listas vazias, ajude o usuário a cadastrar o que falta
+4. Apresente as opções ao usuário para ele escolher (categoria, conta, forma de pagamento, cliente/fornecedor)
+5. Só então crie o lançamento com todos os campos obrigatórios preenchidos
 
 Parâmetros:
 - empresa_id
