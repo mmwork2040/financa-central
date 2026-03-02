@@ -68,6 +68,9 @@ export const usePermissoes = (userId: string | null, userRole: string | null, is
     fetchPermissions();
   }, [fetchPermissions]);
 
+  // Screens that only have view permission (stored as pode_incluir)
+  const viewOnlyScreens = ["vendas_digitais", "anuncios"];
+
   /** Check if user can view a screen (has any permission for it, or it's dashboard/settings) */
   const canAccessScreen = useCallback((screenKey: string): boolean => {
     if (isSuperAdmin || userRole === "admin") return true;
@@ -80,6 +83,12 @@ export const usePermissoes = (userId: string | null, userRole: string | null, is
 
     // Check if user has any permission for this screen
     const perm = permissions.find(p => p.tela === screenKey);
+    
+    // For view-only screens, check pode_incluir as the "can view" flag
+    if (viewOnlyScreens.includes(screenKey)) {
+      return !!perm && perm.pode_incluir;
+    }
+    
     // If the screen is in the permissions list (even with all false), they can view it
     // If not in the list, they cannot access it
     return !!perm;
