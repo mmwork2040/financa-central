@@ -111,7 +111,10 @@ export const useClientes = () => {
             ativo: cliente.ativo,
             empresa_id: empresaId,
           } as any);
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505') throw new Error("Já existe um cliente com este nome.");
+          throw error;
+        }
         toast.success("Cliente cadastrado com sucesso!");
       }
       

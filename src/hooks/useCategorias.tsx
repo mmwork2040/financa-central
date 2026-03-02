@@ -92,7 +92,10 @@ export function useCategorias() {
         const { error } = await supabase
           .from('categorias')
           .insert({ nome: currentCategoria.nome, tipo: currentCategoria.tipo, empresa_id: empresaId });
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505') throw new Error("Já existe uma categoria com este nome e tipo.");
+          throw error;
+        }
         toast.success("Categoria cadastrada com sucesso!");
       }
       

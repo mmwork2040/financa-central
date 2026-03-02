@@ -46,7 +46,10 @@ export const QuickAddProjetoModal = ({ onSuccess }: QuickAddProjetoModalProps) =
         orcamento: formData.orcamento || 0,
         empresa_id: empresaId,
       } as any);
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') throw new Error("Já existe um projeto com este nome.");
+        throw error;
+      }
       toast.success("Projeto cadastrado com sucesso!");
       setOpen(false);
       onSuccess();

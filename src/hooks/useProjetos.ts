@@ -99,7 +99,10 @@ export function useProjetos() {
         const { error } = await (supabase as any)
           .from("projetos")
           .insert({ ...payload, empresa_id: empresaId });
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505') throw new Error("Já existe um projeto com este nome.");
+          throw error;
+        }
         toast.success("Projeto cadastrado com sucesso!");
       }
 

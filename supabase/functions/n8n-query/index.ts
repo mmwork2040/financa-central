@@ -868,6 +868,13 @@ Deno.serve(async (req) => {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+        // Verificar duplicata
+        const { data: cliExist } = await supabase.from("clientes").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", nome.trim()).maybeSingle();
+        if (cliExist) {
+          return new Response(JSON.stringify({ error: "Registro duplicado", message: `Já existe um cliente com o nome "${nome}".`, registro_existente: cliExist }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         const clienteData: any = {
           empresa_id,
           nome,
@@ -908,6 +915,13 @@ Deno.serve(async (req) => {
         if (!nome) {
           return new Response(JSON.stringify({ error: "nome is required" }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // Verificar duplicata
+        const { data: fornExist } = await supabase.from("fornecedores").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", nome.trim()).maybeSingle();
+        if (fornExist) {
+          return new Response(JSON.stringify({ error: "Registro duplicado", message: `Já existe um fornecedor com o nome "${nome}".`, registro_existente: fornExist }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
         const fornecedorData: any = {
@@ -957,6 +971,13 @@ Deno.serve(async (req) => {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+        // Verificar duplicata
+        const { data: catExist } = await supabase.from("categorias").select("id, nome, tipo").eq("empresa_id", empresa_id).ilike("nome", nome.trim()).eq("tipo", tipo).maybeSingle();
+        if (catExist) {
+          return new Response(JSON.stringify({ error: "Registro duplicado", message: `Já existe uma categoria "${nome}" do tipo "${tipo}".`, registro_existente: catExist }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         const { data: newCat, error: catError } = await supabase
           .from("categorias").insert({ empresa_id, nome, tipo }).select("*").single();
         if (catError) throw catError;
@@ -970,6 +991,13 @@ Deno.serve(async (req) => {
         if (!nome) {
           return new Response(JSON.stringify({ error: "nome is required" }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // Verificar duplicata
+        const { data: cbExist } = await supabase.from("contas_bancarias").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", nome.trim()).maybeSingle();
+        if (cbExist) {
+          return new Response(JSON.stringify({ error: "Registro duplicado", message: `Já existe uma conta bancária com o nome "${nome}".`, registro_existente: cbExist }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
         const contaData: any = {
@@ -1004,6 +1032,13 @@ Deno.serve(async (req) => {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+        // Verificar duplicata
+        const { data: fpExist } = await supabase.from("formas_pagamento").select("id, descricao").eq("empresa_id", empresa_id).ilike("descricao", descricao.trim()).maybeSingle();
+        if (fpExist) {
+          return new Response(JSON.stringify({ error: "Registro duplicado", message: `Já existe uma forma de pagamento "${descricao}".`, registro_existente: fpExist }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         const { data: newForma, error: formaError } = await supabase
           .from("formas_pagamento").insert({ empresa_id, descricao }).select("*").single();
         if (formaError) throw formaError;
@@ -1017,6 +1052,13 @@ Deno.serve(async (req) => {
         if (!nome) {
           return new Response(JSON.stringify({ error: "nome is required" }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // Verificar duplicata
+        const { data: projExist } = await supabase.from("projetos").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", nome.trim()).maybeSingle();
+        if (projExist) {
+          return new Response(JSON.stringify({ error: "Registro duplicado", message: `Já existe um projeto com o nome "${nome}".`, registro_existente: projExist }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
         const projetoData: any = {

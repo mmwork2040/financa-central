@@ -53,7 +53,10 @@ export const QuickAddDialog = ({ title, table, fields, onSuccess, trigger }: Qui
       });
 
       const { error } = await supabase.from(table as any).insert(insertData);
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') throw new Error("Já existe um registro com este nome/descrição.");
+        throw error;
+      }
 
       toast.success(`${title} adicionado(a).`);
       setOpen(false);

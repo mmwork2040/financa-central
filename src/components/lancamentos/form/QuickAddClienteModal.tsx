@@ -69,7 +69,10 @@ export const QuickAddClienteModal = ({ onSuccess }: QuickAddClienteModalProps) =
       };
 
       const { error } = await supabase.from("clientes").insert(clienteData as any);
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') throw new Error("Já existe um cliente com este nome.");
+        throw error;
+      }
 
       toast.success("Cliente cadastrado com sucesso!");
       setOpen(false);
