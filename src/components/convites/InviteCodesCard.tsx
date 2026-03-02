@@ -307,7 +307,9 @@ const InviteCodesCard = () => {
                       {isInactive && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
                       {isExpired && <Badge variant="destructive" className="text-xs">Expirado</Badge>}
                       {isUsedUp && !isInactive && <Badge variant="secondary" className="text-xs">Esgotado</Badge>}
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(code)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                      {!code.redeemed_by && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(code)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                      )}
                     </div>
                   </div>
                   {code.redeemed_by_name && (

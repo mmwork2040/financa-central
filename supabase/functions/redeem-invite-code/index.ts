@@ -149,9 +149,9 @@ serve(async (req) => {
       }
     }
 
-    // Increment uses and record redeemer info
+    // Increment uses and deactivate after use
     const newUses = invite.uses + 1;
-    const shouldDeactivate = invite.max_uses > 0 && newUses >= invite.max_uses;
+    const shouldDeactivate = true; // Always deactivate after redemption
 
     // Get redeemer profile info
     const { data: redeemerProfile } = await supabaseAdmin
