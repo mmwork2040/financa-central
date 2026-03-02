@@ -962,6 +962,12 @@ Deno.serve(async (req) => {
         const id = sanitize(body.id);
         if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         
+        // Check if client was added automatically
+        const { data: cliOrigem } = await supabase.from("clientes").select("origem").eq("id", id).eq("empresa_id", empresa_id).single();
+        if (cliOrigem && cliOrigem.origem !== "manual") {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este cliente foi adicionado automaticamente (via integração) e não pode ser editado. Solicite a alteração via suporte." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
         // Check vinculation
         const { data: vincCliente } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("cliente_id", id).in("status", ["pago", "recebido"]).limit(1);
         if (vincCliente && vincCliente.length > 0) {
@@ -1117,6 +1123,13 @@ Deno.serve(async (req) => {
       case "excluir-cliente": {
         const id = sanitize(body.id);
         if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        
+        // Check if client was added automatically
+        const { data: cliDelOrigem } = await supabase.from("clientes").select("origem").eq("id", id).eq("empresa_id", empresa_id).single();
+        if (cliDelOrigem && cliDelOrigem.origem !== "manual") {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este cliente foi adicionado automaticamente (via integração) e não pode ser excluído. Solicite a exclusão via suporte." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
         const { data: vincDelCli } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("cliente_id", id).in("status", ["pago", "recebido"]).limit(1);
         if (vincDelCli && vincDelCli.length > 0) {
           return new Response(JSON.stringify({ error: "Bloqueado", message: "Este cliente possui lançamentos pagos/recebidos vinculados e não pode ser excluído." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });

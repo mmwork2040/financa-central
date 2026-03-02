@@ -861,7 +861,9 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Altera dados de um cliente existente (bloqueado se vinculado a lançamentos pagos/recebidos)",
     toolDescription: `Altera dados de um cliente existente.
 
-⚠️ REGRA DE SEGURANÇA: Se o cliente possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA automaticamente pelo sistema.
+⚠️ REGRAS DE SEGURANÇA:
+1. Clientes adicionados automaticamente (via integração/webhook) NÃO podem ser editados. Somente clientes com origem "manual".
+2. Se o cliente possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA automaticamente pelo sistema.
 
 Use quando o usuário solicitar:
 - Alterar cliente
@@ -1055,7 +1057,9 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     description: "Remove um cliente (bloqueado se vinculado a lançamentos pagos/recebidos)",
     toolDescription: `Exclui um cliente do sistema.
 
-⚠️ REGRA DE SEGURANÇA: Se o cliente possuir lançamentos com status "pago" ou "recebido", a exclusão será BLOQUEADA automaticamente.
+⚠️ REGRAS DE SEGURANÇA:
+1. Clientes adicionados automaticamente (via integração/webhook) NÃO podem ser excluídos. Somente clientes com origem "manual".
+2. Se o cliente possuir lançamentos com status "pago" ou "recebido", a exclusão será BLOQUEADA automaticamente.
 ⚠️ NÃO é possível excluir USUÁRIOS por este template.
 
 Parâmetros:
