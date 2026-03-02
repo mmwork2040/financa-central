@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
       "recebimentos-digitais": { tela: "vendas_digitais", tipo: "pode_incluir" },
       "listar-anuncios": { tela: "anuncios", tipo: "pode_incluir" },
       "listar-usuarios": { tela: "users" },
-      "listar-opcoes-lancamento": { tela: "lancamentos", tipo: "pode_incluir" },
+      
       // Criação (pode_incluir)
       "criar-lancamento": { tela: "lancamentos", tipo: "pode_incluir" },
       "criar-cliente": { tela: "clientes", tipo: "pode_incluir" },
@@ -594,146 +594,6 @@ Deno.serve(async (req) => {
         break;
       }
 
-      // ─── LISTAR OPÇÕES PARA LANÇAMENTO (com cadastro inline) ───
-      case "listar-opcoes-lancamento": {
-        // ── Cadastro inline: criar registros faltantes antes de listar ──
-        let criarRaw = body.criar || {};
-        // Se o n8n enviou como string JSON, fazer parse
-        if (typeof criarRaw === "string") {
-          const trimmed = criarRaw.trim();
-          if (!trimmed || /^\{.*\}$/.test(trimmed) === false) {
-            criarRaw = {};
-          } else {
-            try { criarRaw = JSON.parse(trimmed); } catch (_) { criarRaw = {}; }
-          }
-        }
-        const criar = criarRaw && typeof criarRaw === "object" ? criarRaw : {};
-        const criados: Record<string, any> = {};
-
-        // Criar categoria inline
-        if (criar.categoria) {
-          const catNome = sanitize(criar.categoria.nome);
-          const catTipo = sanitize(criar.categoria.tipo) || "despesa";
-          if (catNome && ["receita", "despesa", "investimento"].includes(catTipo)) {
-            const { data: newCat } = await supabase.from("categorias").insert({ empresa_id, nome: catNome, tipo: catTipo }).select("*").single();
-            if (newCat) criados.categoria = newCat;
-          }
-        }
-
-        // Criar cliente inline
-        if (criar.cliente) {
-          const cliNome = sanitize(criar.cliente.nome);
-          if (cliNome) {
-            const cliData: any = { empresa_id, nome: cliNome, origem: "n8n" };
-            const cliEmail = sanitize(criar.cliente.email);
-            const cliTel = sanitize(criar.cliente.telefone);
-            const cliDoc = sanitize(criar.cliente.cpf_cnpj);
-            if (cliEmail) cliData.email = cliEmail;
-            if (cliTel) cliData.telefone = cliTel;
-            if (cliDoc) cliData.cpf_cnpj = cliDoc;
-            const { data: newCli } = await supabase.from("clientes").insert(cliData).select("*").single();
-            if (newCli) criados.cliente = newCli;
-          }
-        }
-
-        // Criar fornecedor inline
-        if (criar.fornecedor) {
-          const forNome = sanitize(criar.fornecedor.nome);
-          if (forNome) {
-            const forData: any = { empresa_id, nome: forNome };
-            const forEmail = sanitize(criar.fornecedor.email);
-            const forTel = sanitize(criar.fornecedor.telefone);
-            const forDoc = sanitize(criar.fornecedor.cpf_cnpj);
-            if (forEmail) forData.email = forEmail;
-            if (forTel) forData.telefone = forTel;
-            if (forDoc) forData.cpf_cnpj = forDoc;
-            const { data: newFor } = await supabase.from("fornecedores").insert(forData).select("*").single();
-            if (newFor) criados.fornecedor = newFor;
-          }
-        }
-
-        // Criar conta bancária inline
-        if (criar.conta_bancaria) {
-          const cbNome = sanitize(criar.conta_bancaria.nome);
-          if (cbNome) {
-            const cbData: any = { empresa_id, nome: cbNome, saldo_inicial: 0, saldo_atual: 0, principal: false };
-            const cbBanco = sanitize(criar.conta_bancaria.banco);
-            if (cbBanco) cbData.banco = cbBanco;
-            const { data: newCB } = await supabase.from("contas_bancarias").insert(cbData).select("*").single();
-            if (newCB) criados.conta_bancaria = newCB;
-          }
-        }
-
-        // Criar forma de pagamento inline
-        if (criar.forma_pagamento) {
-          const fpDesc = sanitize(criar.forma_pagamento.descricao);
-          if (fpDesc) {
-            const { data: newFP } = await supabase.from("formas_pagamento").insert({ empresa_id, descricao: fpDesc }).select("*").single();
-            if (newFP) criados.forma_pagamento = newFP;
-          }
-        }
-
-        // ── Agora listar tudo (incluindo recém-criados) ──
-        const [categoriasRes, fornecedoresRes, contasRes, formasRes, clientesRes, projetosRes] = await Promise.all([
-          supabase.from("categorias").select("id, nome, tipo").eq("empresa_id", empresa_id).order("nome", { ascending: true }),
-          supabase.from("fornecedores").select("id, nome").eq("empresa_id", empresa_id).eq("ativo", true).order("nome", { ascending: true }),
-          supabase.from("contas_bancarias").select("id, nome, banco, saldo_atual").eq("empresa_id", empresa_id),
-          supabase.from("formas_pagamento").select("id, descricao").eq("empresa_id", empresa_id),
-          supabase.from("clientes").select("id, nome").eq("empresa_id", empresa_id).eq("ativo", true).order("nome", { ascending: true }),
-          supabase.from("projetos").select("id, nome").eq("empresa_id", empresa_id).eq("status", "ativo").order("nome", { ascending: true }),
-        ]);
-
-        const categorias = categoriasRes.data || [];
-        const fornecedores = fornecedoresRes.data || [];
-        const clientes = clientesRes.data || [];
-        const contas_bancarias = contasRes.data || [];
-        const formas_pagamento = formasRes.data || [];
-        const projetos = projetosRes.data || [];
-
-        // Gerar alertas para listas obrigatórias vazias
-        const alertas: string[] = [];
-        const categoriasDespesa = categorias.filter((c: any) => c.tipo === "despesa");
-        const categoriasReceita = categorias.filter((c: any) => c.tipo === "receita");
-
-        if (categorias.length === 0) {
-          alertas.push("⚠️ Nenhuma CATEGORIA cadastrada. Cadastre usando o campo 'criar.categoria' com {nome, tipo} nesta mesma ferramenta.");
-        } else {
-          if (categoriasDespesa.length === 0) alertas.push("⚠️ Nenhuma categoria DESPESA. Cadastre via criar.categoria com tipo='despesa'.");
-          if (categoriasReceita.length === 0) alertas.push("⚠️ Nenhuma categoria RECEITA. Cadastre via criar.categoria com tipo='receita'.");
-        }
-        if (contas_bancarias.length === 0) {
-          alertas.push("⚠️ Nenhuma CONTA BANCÁRIA. Cadastre via criar.conta_bancaria com {nome, banco}.");
-        }
-        if (formas_pagamento.length === 0) {
-          alertas.push("⚠️ Nenhuma FORMA DE PAGAMENTO. Cadastre via criar.forma_pagamento com {descricao}.");
-        }
-        if (fornecedores.length === 0) {
-          alertas.push("⚠️ Nenhum FORNECEDOR. Para despesas, cadastre via criar.fornecedor com {nome}.");
-        }
-        if (clientes.length === 0) {
-          alertas.push("⚠️ Nenhum CLIENTE. Para receitas, cadastre via criar.cliente com {nome}.");
-        }
-
-        result = {
-          campos_obrigatorios: {
-            sempre: ["tipo (receita/despesa)", "categoria_id", "forma_pagamento_id", "conta_bancaria_id", "descricao", "valor", "data_vencimento"],
-            se_receita: ["cliente_id"],
-            se_despesa: ["fornecedor_id"],
-          },
-          alertas,
-          ...(Object.keys(criados).length > 0 ? { registros_criados: criados } : {}),
-          categorias: {
-            despesa: categoriasDespesa,
-            receita: categoriasReceita,
-          },
-          fornecedores,
-          clientes,
-          contas_bancarias,
-          formas_pagamento,
-          projetos,
-        };
-        break;
-      }
 
       // ─── FLUXO DE CAIXA (comparativo mensal) ───
       case "fluxo-caixa": {
@@ -760,20 +620,29 @@ Deno.serve(async (req) => {
         break;
       }
 
-      // ─── CRIAR LANÇAMENTO (RECEITA OU DESPESA) ───
+      // ─── CRIAR LANÇAMENTO (RECEITA OU DESPESA) — com resolução automática de dependências ───
       case "criar-lancamento": {
         const descricao = sanitize(body.descricao);
         const valor = body.valor;
         const tipo = sanitize(body.tipo);
         const status_lanc = sanitize(body.status) || "pendente";
         const data_vencimento = sanitize(body.data_vencimento);
-        const categoria_id = sanitize(body.categoria_id);
-        const cliente_id = sanitize(body.cliente_id);
-        const fornecedor_id = sanitize(body.fornecedor_id);
-        const conta_bancaria_id = sanitize(body.conta_bancaria_id);
-        const forma_pagamento_id = sanitize(body.forma_pagamento_id);
         const projeto_id = sanitize(body.projeto_id);
         const data_pagamento = sanitize(body.data_pagamento);
+
+        // Campos que podem vir como UUID ou como nome para resolução automática
+        let categoria_id = sanitize(body.categoria_id);
+        let cliente_id = sanitize(body.cliente_id);
+        let fornecedor_id = sanitize(body.fornecedor_id);
+        let conta_bancaria_id = sanitize(body.conta_bancaria_id);
+        let forma_pagamento_id = sanitize(body.forma_pagamento_id);
+
+        // Nomes para buscar/criar automaticamente
+        const categoria_nome = sanitize(body.categoria_nome);
+        const cliente_nome = sanitize(body.cliente_nome);
+        const fornecedor_nome = sanitize(body.fornecedor_nome);
+        const conta_bancaria_nome = sanitize(body.conta_bancaria_nome);
+        const forma_pagamento_nome = sanitize(body.forma_pagamento_nome);
 
         if (!descricao || valor === undefined || valor === null) {
           return new Response(JSON.stringify({ error: "descricao and valor are required" }), {
@@ -794,24 +663,76 @@ Deno.serve(async (req) => {
           });
         }
 
+        // ── Helper: buscar por nome ou criar se não existir ──
+        const resolveOrCreate = async (
+          table: string, nameField: string, nameValue: string, extraInsert: Record<string, any> = {}
+        ): Promise<string | null> => {
+          if (!nameValue) return null;
+          // Buscar existente por nome (ilike)
+          const { data: existing } = await supabase
+            .from(table)
+            .select("id")
+            .eq("empresa_id", empresa_id)
+            .ilike(nameField, nameValue.trim())
+            .limit(1)
+            .maybeSingle();
+          if (existing) return existing.id;
+          // Criar novo
+          const insertPayload: any = { empresa_id, [nameField]: nameValue.trim(), ...extraInsert };
+          const { data: created } = await supabase.from(table).insert(insertPayload).select("id").single();
+          return created?.id || null;
+        };
+
+        const registros_criados: Record<string, any> = {};
+
+        // ── Resolver categoria ──
+        if (!categoria_id && categoria_nome) {
+          const catId = await resolveOrCreate("categorias", "nome", categoria_nome, { tipo });
+          if (catId) { categoria_id = catId; registros_criados.categoria = { id: catId, nome: categoria_nome }; }
+        }
+
+        // ── Resolver cliente (para receita) ──
+        if (!cliente_id && cliente_nome && tipo === "receita") {
+          const cliId = await resolveOrCreate("clientes", "nome", cliente_nome, { origem: "n8n" });
+          if (cliId) { cliente_id = cliId; registros_criados.cliente = { id: cliId, nome: cliente_nome }; }
+        }
+
+        // ── Resolver fornecedor (para despesa) ──
+        if (!fornecedor_id && fornecedor_nome && tipo === "despesa") {
+          const forId = await resolveOrCreate("fornecedores", "nome", fornecedor_nome);
+          if (forId) { fornecedor_id = forId; registros_criados.fornecedor = { id: forId, nome: fornecedor_nome }; }
+        }
+
+        // ── Resolver conta bancária ──
+        if (!conta_bancaria_id && conta_bancaria_nome) {
+          const cbId = await resolveOrCreate("contas_bancarias", "nome", conta_bancaria_nome, { saldo_inicial: 0, saldo_atual: 0, principal: false });
+          if (cbId) { conta_bancaria_id = cbId; registros_criados.conta_bancaria = { id: cbId, nome: conta_bancaria_nome }; }
+        }
+
+        // ── Resolver forma de pagamento ──
+        if (!forma_pagamento_id && forma_pagamento_nome) {
+          const fpId = await resolveOrCreate("formas_pagamento", "descricao", forma_pagamento_nome);
+          if (fpId) { forma_pagamento_id = fpId; registros_criados.forma_pagamento = { id: fpId, descricao: forma_pagamento_nome }; }
+        }
+
         // Validação condicional: receita exige cliente, despesa exige fornecedor
         const camposObrigatorios: { campo: string; valor: string | null; label: string }[] = [
-          { campo: "categoria_id", valor: categoria_id, label: "Categoria" },
-          { campo: "forma_pagamento_id", valor: forma_pagamento_id, label: "Forma de Pagamento" },
-          { campo: "conta_bancaria_id", valor: conta_bancaria_id, label: "Conta Bancária" },
+          { campo: "categoria_id", valor: categoria_id, label: "Categoria (envie categoria_id ou categoria_nome)" },
+          { campo: "forma_pagamento_id", valor: forma_pagamento_id, label: "Forma de Pagamento (envie forma_pagamento_id ou forma_pagamento_nome)" },
+          { campo: "conta_bancaria_id", valor: conta_bancaria_id, label: "Conta Bancária (envie conta_bancaria_id ou conta_bancaria_nome)" },
         ];
 
         if (tipo === "receita") {
-          camposObrigatorios.push({ campo: "cliente_id", valor: cliente_id, label: "Cliente (obrigatório para receita)" });
+          camposObrigatorios.push({ campo: "cliente_id", valor: cliente_id, label: "Cliente (envie cliente_id ou cliente_nome)" });
         } else {
-          camposObrigatorios.push({ campo: "fornecedor_id", valor: fornecedor_id, label: "Fornecedor (obrigatório para despesa)" });
+          camposObrigatorios.push({ campo: "fornecedor_id", valor: fornecedor_id, label: "Fornecedor (envie fornecedor_id ou fornecedor_nome)" });
         }
 
         const faltando = camposObrigatorios.filter(c => !c.valor).map(c => c.label);
         if (faltando.length > 0) {
           return new Response(JSON.stringify({ 
             error: "Campos obrigatórios não informados", 
-            message: `Para criar um lançamento do tipo '${tipo}', é obrigatório informar: ${faltando.join(", ")}. Use a ferramenta listar_opcoes_lancamento para obter os IDs disponíveis ou cadastre antes de prosseguir.`,
+            message: `Para criar um lançamento do tipo '${tipo}', informe: ${faltando.join(", ")}. Você pode enviar o UUID (_id) ou o nome (_nome) — se o nome não existir, será cadastrado automaticamente.`,
             campos_faltando: faltando 
           }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
@@ -819,7 +740,6 @@ Deno.serve(async (req) => {
         // Parse valor: handle Brazilian format "3.000,00" → 3000.00
         let valorNumerico: number;
         if (typeof valor === "string") {
-          // Remove R$, spaces, dots (thousands), replace comma with dot (decimal)
           const cleaned = valor.replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
           valorNumerico = parseFloat(cleaned);
         } else {
@@ -855,7 +775,10 @@ Deno.serve(async (req) => {
           .single();
 
         if (insertError) throw insertError;
-        result = newLanc;
+        result = {
+          lancamento: newLanc,
+          ...(Object.keys(registros_criados).length > 0 ? { registros_criados } : {}),
+        };
         break;
       }
 
