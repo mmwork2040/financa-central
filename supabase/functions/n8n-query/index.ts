@@ -645,6 +645,21 @@ Deno.serve(async (req) => {
           });
         }
 
+        const camposObrigatorios: { campo: string; valor: string | null; label: string }[] = [
+          { campo: "categoria_id", valor: categoria_id, label: "Categoria" },
+          { campo: "fornecedor_id", valor: fornecedor_id, label: "Fornecedor" },
+          { campo: "forma_pagamento_id", valor: forma_pagamento_id, label: "Forma de Pagamento" },
+          { campo: "conta_bancaria_id", valor: conta_bancaria_id, label: "Conta Bancária" },
+        ];
+        const faltando = camposObrigatorios.filter(c => !c.valor).map(c => c.label);
+        if (faltando.length > 0) {
+          return new Response(JSON.stringify({ 
+            error: "Campos obrigatórios não informados", 
+            message: `Para criar um lançamento, é obrigatório informar: ${faltando.join(", ")}. Use a ferramenta listar_opcoes_lancamento para obter os IDs disponíveis ou cadastre antes de prosseguir.`,
+            campos_faltando: faltando 
+          }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
         const insertData: any = {
           empresa_id,
           descricao,
