@@ -317,16 +317,19 @@ Use quando o usuário solicitar:
 - Saldo das contas
 - Contas bancárias
 - Quanto tenho no banco
+- Buscar conta bancária
 
 Parâmetros:
 - empresa_id
+- search (busca por nome)
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "search", type: "string", required: false, description: "Busca por nome" },
     ],
-    body: { action: "contas-bancarias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}" },
+    body: { action: "contas-bancarias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}" },
   },
   {
     action: "clientes",
@@ -395,9 +398,11 @@ Use quando o usuário solicitar:
 - Lista de projetos
 - Projetos ativos
 - Status dos projetos
+- Buscar projeto
 
 Parâmetros:
 - empresa_id
+- search (busca por nome)
 - status
 - limit
 
@@ -405,10 +410,11 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "search", type: "string", required: false, description: "Busca por nome" },
       { name: "status", type: "string", required: false, description: "Status: ativo, concluido ou cancelado" },
       { name: "limit", type: "number", required: false, description: "Limite de resultados" },
     ],
-    body: { action: "projetos", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", status: "{{ $fromAI('status', 'Status: ativo, concluido ou cancelado. Deixe vazio para todos') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: { action: "projetos", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}", status: "{{ $fromAI('status', 'Status: ativo, concluido ou cancelado. Deixe vazio para todos') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
   },
   {
     action: "categorias",
@@ -420,16 +426,19 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 Use quando o usuário solicitar:
 - Lista de categorias
 - Categorias disponíveis
+- Buscar categoria
 
 Parâmetros:
 - empresa_id
+- search (busca por nome)
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "search", type: "string", required: false, description: "Busca por nome" },
     ],
-    body: { action: "categorias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}" },
+    body: { action: "categorias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}" },
   },
   {
     action: "formas-pagamento",
@@ -441,16 +450,19 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 Use quando o usuário solicitar:
 - Formas de pagamento
 - Meios de pagamento disponíveis
+- Buscar forma de pagamento
 
 Parâmetros:
 - empresa_id
+- search (busca por descrição)
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "search", type: "string", required: false, description: "Busca por descrição" },
     ],
-    body: { action: "formas-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}" },
+    body: { action: "formas-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por descrição. Deixe vazio para listar todos') }}" },
   },
   {
     action: "listar-opcoes-lancamento",
