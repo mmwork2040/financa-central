@@ -1234,12 +1234,17 @@ const N8nJsonTemplates = () => {
       // Inject user_id into Parâmetros section and append permission notice
       let toolDescription = t.toolDescription;
       
-      // Add user_id to the Parâmetros list if present
-      if (toolDescription.includes("Parâmetros:") && !toolDescription.includes("user_id")) {
-        toolDescription = toolDescription.replace(
-          /- empresa_id(\s*\(obrigatório\))?/,
-          `- empresa_id$1\n- user_id (obrigatório — UUID do usuário para controle de permissões)`
-        );
+      // Add user_id to the Parâmetros list if not already there
+      // Check specifically between "Parâmetros:" and the next double newline to avoid false positives from CONTROLE DE ACESSO section
+      if (toolDescription.includes("Parâmetros:")) {
+        const paramSectionMatch = toolDescription.match(/Parâmetros:[\s\S]*?(?=\n\n|$)/);
+        const paramSection = paramSectionMatch ? paramSectionMatch[0] : "";
+        if (!paramSection.includes("user_id")) {
+          toolDescription = toolDescription.replace(
+            /- empresa_id(\s*\(obrigatório\))?/,
+            `- empresa_id$1\n- user_id (obrigatório — UUID do usuário para controle de permissões)`
+          );
+        }
       }
       
       // Append permission notice
