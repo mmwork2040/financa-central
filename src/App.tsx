@@ -60,7 +60,7 @@ const App = () => {
                 <Route path="/settings/logs" element={<AppLayout><LogsIntegracoes /></AppLayout>} />
                 <Route path="/settings/n8n-templates" element={<AppLayout><N8nTemplates /></AppLayout>} />
                 <Route path="/vendas-digitais" element={<AppLayout><VendasDigitais /></AppLayout>} />
-                <Route path="/anuncios" element={<AppLayout><AnunciosDigitais /></AppLayout>} />
+                <Route path="/anuncios" element={<ProtectedRoute path="/anuncios"><AppLayout><AnunciosDigitais /></AppLayout></ProtectedRoute>} />
                 
                 {/* Permission-protected routes */}
                 <Route path="/users" element={<ProtectedRoute path="/users"><AppLayout><Users /></AppLayout></ProtectedRoute>} />

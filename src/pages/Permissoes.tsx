@@ -52,6 +52,9 @@ const screens: Screen[] = [
   { name: "Formas de Pagamento", value: "formas_pagamento", description: "Cadastro de formas de pagamento" },
   { name: "Lançamentos", value: "lancamentos", description: "Lançamentos financeiros" },
   { name: "Relatórios", value: "relatorios", description: "Visualização de relatórios" },
+  { name: "Projetos", value: "projetos", description: "Gerenciamento de projetos" },
+  { name: "Vendas Digitais", value: "vendas_digitais", description: "Vendas de plataformas digitais" },
+  { name: "Anúncios Digitais", value: "anuncios", description: "Gerenciamento de anúncios" },
 ];
 
 const Permissoes = () => {
