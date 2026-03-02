@@ -582,13 +582,53 @@ Deno.serve(async (req) => {
           supabase.from("projetos").select("id, nome").eq("empresa_id", empresa_id).eq("status", "ativo").order("nome", { ascending: true }),
         ]);
 
+        const categorias = categoriasRes.data || [];
+        const fornecedores = fornecedoresRes.data || [];
+        const clientes = clientesRes.data || [];
+        const contas_bancarias = contasRes.data || [];
+        const formas_pagamento = formasRes.data || [];
+        const projetos = projetosRes.data || [];
+
+        // Gerar alertas para listas obrigatórias vazias
+        const alertas: string[] = [];
+        const categoriasDespesa = categorias.filter((c: any) => c.tipo === "despesa");
+        const categoriasReceita = categorias.filter((c: any) => c.tipo === "receita");
+
+        if (categorias.length === 0) {
+          alertas.push("⚠️ Nenhuma CATEGORIA cadastrada. O usuário DEVE cadastrar pelo menos uma categoria antes de criar um lançamento. Use a ferramenta criar_categoria.");
+        } else {
+          if (categoriasDespesa.length === 0) alertas.push("⚠️ Nenhuma categoria do tipo DESPESA cadastrada. Cadastre uma antes de criar lançamentos de despesa.");
+          if (categoriasReceita.length === 0) alertas.push("⚠️ Nenhuma categoria do tipo RECEITA cadastrada. Cadastre uma antes de criar lançamentos de receita.");
+        }
+        if (contas_bancarias.length === 0) {
+          alertas.push("⚠️ Nenhuma CONTA BANCÁRIA cadastrada. O usuário DEVE cadastrar pelo menos uma conta antes de criar um lançamento. Use a ferramenta criar_conta_bancaria.");
+        }
+        if (formas_pagamento.length === 0) {
+          alertas.push("⚠️ Nenhuma FORMA DE PAGAMENTO cadastrada. O usuário DEVE cadastrar pelo menos uma forma de pagamento antes de criar um lançamento. Use a ferramenta criar_forma_pagamento.");
+        }
+        if (fornecedores.length === 0) {
+          alertas.push("⚠️ Nenhum FORNECEDOR cadastrado. Para criar lançamentos de DESPESA, o usuário deve cadastrar um fornecedor. Use a ferramenta criar_fornecedor.");
+        }
+        if (clientes.length === 0) {
+          alertas.push("⚠️ Nenhum CLIENTE cadastrado. Para criar lançamentos de RECEITA, o usuário deve cadastrar um cliente. Use a ferramenta criar_cliente.");
+        }
+
         result = {
-          categorias: categoriasRes.data || [],
-          fornecedores: fornecedoresRes.data || [],
-          contas_bancarias: contasRes.data || [],
-          formas_pagamento: formasRes.data || [],
-          clientes: clientesRes.data || [],
-          projetos: projetosRes.data || [],
+          campos_obrigatorios: {
+            sempre: ["tipo (receita/despesa)", "categoria_id", "forma_pagamento_id", "conta_bancaria_id", "descricao", "valor", "data_vencimento"],
+            se_receita: ["cliente_id"],
+            se_despesa: ["fornecedor_id"],
+          },
+          alertas,
+          categorias: {
+            despesa: categoriasDespesa,
+            receita: categoriasReceita,
+          },
+          fornecedores,
+          clientes,
+          contas_bancarias,
+          formas_pagamento,
+          projetos,
         };
         break;
       }
