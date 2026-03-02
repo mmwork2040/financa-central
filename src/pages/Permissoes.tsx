@@ -40,6 +40,7 @@ type Screen = {
   name: string;
   value: string;
   description: string;
+  viewOnly?: boolean;
 };
 
 const screens: Screen[] = [
@@ -53,8 +54,8 @@ const screens: Screen[] = [
   { name: "Lançamentos", value: "lancamentos", description: "Lançamentos financeiros" },
   { name: "Relatórios", value: "relatorios", description: "Visualização de relatórios" },
   { name: "Projetos", value: "projetos", description: "Gerenciamento de projetos" },
-  { name: "Vendas Digitais", value: "vendas_digitais", description: "Vendas de plataformas digitais" },
-  { name: "Anúncios Digitais", value: "anuncios", description: "Gerenciamento de anúncios" },
+  { name: "Vendas Digitais", value: "vendas_digitais", description: "Dados gerados automaticamente — apenas visualização", viewOnly: true },
+  { name: "Anúncios Digitais", value: "anuncios", description: "Dados gerados automaticamente — apenas visualização", viewOnly: true },
 ];
 
 const Permissoes = () => {
@@ -272,23 +273,28 @@ const Permissoes = () => {
                               pode_alterar: false,
                               pode_excluir: false
                             };
-                            const allRowChecked = permission.pode_incluir && permission.pode_alterar && permission.pode_excluir;
+                            const isViewOnly = screen.viewOnly === true;
+                            const allRowChecked = !isViewOnly && permission.pode_incluir && permission.pode_alterar && permission.pode_excluir;
                             
                             return (
                               <tr key={screen.value} className="border-t hover:bg-muted/50">
                                 <td className="px-3 py-2">
                                   <div className="flex items-center gap-2">
-                                    <Checkbox
-                                      checked={allRowChecked}
-                                      onCheckedChange={(checked) => {
-                                        const val = !!checked;
-                                        setPermissions(permissions.map(p =>
-                                          p.tela === screen.value
-                                            ? { ...p, pode_incluir: val, pode_alterar: val, pode_excluir: val }
-                                            : p
-                                        ));
-                                      }}
-                                    />
+                                    {isViewOnly ? (
+                                      <Checkbox checked disabled className="opacity-50" />
+                                    ) : (
+                                      <Checkbox
+                                        checked={allRowChecked}
+                                        onCheckedChange={(checked) => {
+                                          const val = !!checked;
+                                          setPermissions(permissions.map(p =>
+                                            p.tela === screen.value
+                                              ? { ...p, pode_incluir: val, pode_alterar: val, pode_excluir: val }
+                                              : p
+                                          ));
+                                        }}
+                                      />
+                                    )}
                                     <div>
                                       <p className="font-medium text-sm">{screen.name}</p>
                                       <p className="text-xs text-muted-foreground hidden sm:block">{screen.description}</p>
@@ -296,28 +302,40 @@ const Permissoes = () => {
                                   </div>
                                 </td>
                                 <td className="px-2 py-2 text-center">
-                                  <div className="flex justify-center">
-                                    <Checkbox
-                                      checked={permission.pode_incluir}
-                                      onCheckedChange={(checked) => handlePermissionChange(screen.value, 'pode_incluir', !!checked)}
-                                    />
-                                  </div>
+                                  {isViewOnly ? (
+                                    <span className="text-xs text-muted-foreground">—</span>
+                                  ) : (
+                                    <div className="flex justify-center">
+                                      <Checkbox
+                                        checked={permission.pode_incluir}
+                                        onCheckedChange={(checked) => handlePermissionChange(screen.value, 'pode_incluir', !!checked)}
+                                      />
+                                    </div>
+                                  )}
                                 </td>
                                 <td className="px-2 py-2 text-center">
-                                  <div className="flex justify-center">
-                                    <Checkbox
-                                      checked={permission.pode_alterar}
-                                      onCheckedChange={(checked) => handlePermissionChange(screen.value, 'pode_alterar', !!checked)}
-                                    />
-                                  </div>
+                                  {isViewOnly ? (
+                                    <span className="text-xs text-muted-foreground">—</span>
+                                  ) : (
+                                    <div className="flex justify-center">
+                                      <Checkbox
+                                        checked={permission.pode_alterar}
+                                        onCheckedChange={(checked) => handlePermissionChange(screen.value, 'pode_alterar', !!checked)}
+                                      />
+                                    </div>
+                                  )}
                                 </td>
                                 <td className="px-2 py-2 text-center">
-                                  <div className="flex justify-center">
-                                    <Checkbox
-                                      checked={permission.pode_excluir}
-                                      onCheckedChange={(checked) => handlePermissionChange(screen.value, 'pode_excluir', !!checked)}
-                                    />
-                                  </div>
+                                  {isViewOnly ? (
+                                    <span className="text-xs text-muted-foreground">—</span>
+                                  ) : (
+                                    <div className="flex justify-center">
+                                      <Checkbox
+                                        checked={permission.pode_excluir}
+                                        onCheckedChange={(checked) => handlePermissionChange(screen.value, 'pode_excluir', !!checked)}
+                                      />
+                                    </div>
+                                  )}
                                 </td>
                               </tr>
                             );
