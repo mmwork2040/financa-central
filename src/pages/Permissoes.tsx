@@ -62,6 +62,7 @@ const Permissoes = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [visibleScreens, setVisibleScreens] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   
@@ -75,6 +76,7 @@ const Permissoes = () => {
       fetchPermissions(selectedUser);
     } else {
       setPermissions([]);
+      setVisibleScreens(new Set());
     }
   }, [selectedUser]);
 
@@ -110,8 +112,9 @@ const Permissoes = () => {
         throw error;
       }
 
-      // Garantir que todas as telas tenham permissões
       const existingScreens = (data || []).map(p => p.tela);
+      const visible = new Set<string>(existingScreens);
+      
       const allPermissions = [...(data || [])];
       
       screens.forEach(screen => {
@@ -128,6 +131,7 @@ const Permissoes = () => {
       });
       
       setPermissions(allPermissions);
+      setVisibleScreens(visible);
     } catch (error: any) {
       toast.error(error.message || "Erro ao carregar permissões");
     } finally {
@@ -141,45 +145,71 @@ const Permissoes = () => {
     ));
   };
 
+  const handleVisibilityChange = (tela: string, checked: boolean) => {
+    const newVisible = new Set(visibleScreens);
+    if (checked) {
+      newVisible.add(tela);
+    } else {
+      newVisible.delete(tela);
+      // Reset all permissions when disabling visibility
+      setPermissions(permissions.map(p =>
+        p.tela === tela ? { ...p, pode_incluir: false, pode_alterar: false, pode_excluir: false } : p
+      ));
+    }
+    setVisibleScreens(newVisible);
+  };
+
   const savePermissions = async () => {
     if (!selectedUser) return;
     
     try {
       setIsSaving(true);
       
-      // Para cada permissão, verificar se já existe ou precisa ser criada
       for (const permission of permissions) {
+        const isVisible = visibleScreens.has(permission.tela);
+        
         if (permission.id.startsWith('temp-')) {
-          // Criar nova permissão
-          const { error } = await supabase
-            .from('permissoes')
-            .insert([{
-              perfis_id: selectedUser,
-              tela: permission.tela,
-              pode_incluir: permission.pode_incluir,
-              pode_alterar: permission.pode_alterar,
-              pode_excluir: permission.pode_excluir
-            }]);
-            
-          if (error) throw error;
+          // Only create if visible
+          if (isVisible) {
+            const { error } = await supabase
+              .from('permissoes')
+              .insert([{
+                perfis_id: selectedUser,
+                tela: permission.tela,
+                pode_incluir: permission.pode_incluir,
+                pode_alterar: permission.pode_alterar,
+                pode_excluir: permission.pode_excluir
+              }]);
+              
+            if (error) throw error;
+          }
         } else {
-          // Atualizar permissão existente
-          const { error } = await supabase
-            .from('permissoes')
-            .update({
-              pode_incluir: permission.pode_incluir,
-              pode_alterar: permission.pode_alterar,
-              pode_excluir: permission.pode_excluir
-            })
-            .eq('id', permission.id);
-            
-          if (error) throw error;
+          if (!isVisible) {
+            // Delete if not visible
+            const { error } = await supabase
+              .from('permissoes')
+              .delete()
+              .eq('id', permission.id);
+              
+            if (error) throw error;
+          } else {
+            // Update existing
+            const { error } = await supabase
+              .from('permissoes')
+              .update({
+                pode_incluir: permission.pode_incluir,
+                pode_alterar: permission.pode_alterar,
+                pode_excluir: permission.pode_excluir
+              })
+              .eq('id', permission.id);
+              
+            if (error) throw error;
+          }
         }
       }
       
       toast.success("Permissões atualizadas com sucesso.");
       
-      // Recarregar permissões
       fetchPermissions(selectedUser);
     } catch (error: any) {
       toast.error(error.message || "Erro ao salvar permissões");
@@ -244,22 +274,45 @@ const Permissoes = () => {
                           size="sm"
                           className="text-xs h-7"
                           onClick={() => {
-                            const allChecked = permissions.every(p => p.pode_incluir && p.pode_alterar && p.pode_excluir);
-                            setPermissions(permissions.map(p => ({
-                              ...p,
-                              pode_incluir: !allChecked,
-                              pode_alterar: !allChecked,
-                              pode_excluir: !allChecked,
-                            })));
+                            const allVisible = screens.every(s => visibleScreens.has(s.value));
+                            const allChecked = allVisible && permissions.every(p => p.pode_incluir && p.pode_alterar && p.pode_excluir);
+                            if (allChecked) {
+                              // Uncheck all
+                              setVisibleScreens(new Set());
+                              setPermissions(permissions.map(p => ({
+                                ...p,
+                                pode_incluir: false,
+                                pode_alterar: false,
+                                pode_excluir: false,
+                              })));
+                            } else {
+                              // Check all
+                              const allScreens = new Set(screens.map(s => s.value));
+                              setVisibleScreens(allScreens);
+                              setPermissions(permissions.map(p => {
+                                const screen = screens.find(s => s.value === p.tela);
+                                if (screen?.viewOnly) {
+                                  return { ...p, pode_incluir: true };
+                                }
+                                return {
+                                  ...p,
+                                  pode_incluir: true,
+                                  pode_alterar: true,
+                                  pode_excluir: true,
+                                };
+                              }));
+                            }
                           }}
                         >
-                          {permissions.every(p => p.pode_incluir && p.pode_alterar && p.pode_excluir) ? "Desmarcar Tudo" : "Selecionar Tudo"}
+                          {screens.every(s => visibleScreens.has(s.value)) && permissions.every(p => p.pode_incluir && p.pode_alterar && p.pode_excluir)
+                            ? "Desmarcar Tudo" : "Selecionar Tudo"}
                         </Button>
                       </div>
-                      <table className="w-full table-auto min-w-[400px]">
+                      <table className="w-full table-auto min-w-[500px]">
                         <thead className="bg-muted/50">
                           <tr>
                             <th className="px-3 py-2 text-left text-sm">Tela</th>
+                            <th className="px-2 py-2 text-center text-sm">Visualizar</th>
                             <th className="px-2 py-2 text-center text-sm">Incluir</th>
                             <th className="px-2 py-2 text-center text-sm">Alterar</th>
                             <th className="px-2 py-2 text-center text-sm">Excluir</th>
@@ -274,41 +327,33 @@ const Permissoes = () => {
                               pode_excluir: false
                             };
                             const isViewOnly = screen.viewOnly === true;
-                            const allRowChecked = !isViewOnly && permission.pode_incluir && permission.pode_alterar && permission.pode_excluir;
+                            const isVisible = visibleScreens.has(screen.value);
                             
                              return (
                               <tr key={screen.value} className="border-t hover:bg-muted/50">
                                 <td className="px-3 py-2">
-                                  <div className="flex items-center gap-2">
-                                    {isViewOnly ? (
-                                      <Checkbox
-                                        checked={permission.pode_incluir}
-                                        onCheckedChange={(checked) => {
-                                          handlePermissionChange(screen.value, 'pode_incluir', !!checked);
-                                        }}
-                                      />
-                                    ) : (
-                                      <Checkbox
-                                        checked={allRowChecked}
-                                        onCheckedChange={(checked) => {
-                                          const val = !!checked;
-                                          setPermissions(permissions.map(p =>
-                                            p.tela === screen.value
-                                              ? { ...p, pode_incluir: val, pode_alterar: val, pode_excluir: val }
-                                              : p
-                                          ));
-                                        }}
-                                      />
-                                    )}
-                                    <div>
-                                      <p className="font-medium text-sm">{screen.name}</p>
-                                      <p className="text-xs text-muted-foreground hidden sm:block">{screen.description}</p>
-                                    </div>
+                                  <div>
+                                    <p className="font-medium text-sm">{screen.name}</p>
+                                    <p className="text-xs text-muted-foreground hidden sm:block">{screen.description}</p>
+                                  </div>
+                                </td>
+                                <td className="px-2 py-2 text-center">
+                                  <div className="flex justify-center">
+                                    <Checkbox
+                                      checked={isVisible}
+                                      onCheckedChange={(checked) => {
+                                        handleVisibilityChange(screen.value, !!checked);
+                                        // For viewOnly screens, also set pode_incluir
+                                        if (isViewOnly && checked) {
+                                          handlePermissionChange(screen.value, 'pode_incluir', true);
+                                        }
+                                      }}
+                                    />
                                   </div>
                                 </td>
                                 {isViewOnly ? (
                                   <td colSpan={3} className="px-2 py-2 text-center">
-                                    <span className="text-xs text-muted-foreground">Somente visualização — marque ao lado para permitir acesso</span>
+                                    <span className="text-xs text-muted-foreground">Somente visualização</span>
                                   </td>
                                 ) : (
                                   <>
@@ -316,6 +361,7 @@ const Permissoes = () => {
                                       <div className="flex justify-center">
                                         <Checkbox
                                           checked={permission.pode_incluir}
+                                          disabled={!isVisible}
                                           onCheckedChange={(checked) => handlePermissionChange(screen.value, 'pode_incluir', !!checked)}
                                         />
                                       </div>
@@ -324,6 +370,7 @@ const Permissoes = () => {
                                       <div className="flex justify-center">
                                         <Checkbox
                                           checked={permission.pode_alterar}
+                                          disabled={!isVisible}
                                           onCheckedChange={(checked) => handlePermissionChange(screen.value, 'pode_alterar', !!checked)}
                                         />
                                       </div>
@@ -332,6 +379,7 @@ const Permissoes = () => {
                                       <div className="flex justify-center">
                                         <Checkbox
                                           checked={permission.pode_excluir}
+                                          disabled={!isVisible}
                                           onCheckedChange={(checked) => handlePermissionChange(screen.value, 'pode_excluir', !!checked)}
                                         />
                                       </div>

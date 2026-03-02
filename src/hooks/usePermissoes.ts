@@ -27,7 +27,7 @@ const routeToScreenMap: Record<string, string> = {
 };
 
 // Screens that require admin role to access (not permission-based)
-const adminOnlyScreens = ["users", "permissions"];
+const adminOnlyScreens = ["permissions"];
 
 export const usePermissoes = (userId: string | null, userRole: string | null, isSuperAdmin: boolean) => {
   const [permissions, setPermissions] = useState<ScreenPermission[]>([]);
