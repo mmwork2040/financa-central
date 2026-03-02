@@ -118,6 +118,7 @@ Deno.serve(async (req) => {
       "recebimentos-digitais": { tela: "vendas_digitais", tipo: "pode_incluir" },
       "listar-anuncios": { tela: "anuncios", tipo: "pode_incluir" },
       "listar-usuarios": { tela: "users" },
+      "listar-opcoes-lancamento": { tela: "lancamentos", tipo: "pode_incluir" },
       // Criação (pode_incluir)
       "criar-lancamento": { tela: "lancamentos", tipo: "pode_incluir" },
       "criar-cliente": { tela: "clientes", tipo: "pode_incluir" },
