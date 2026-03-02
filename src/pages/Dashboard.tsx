@@ -51,7 +51,7 @@ const DashboardContent = () => {
       </div>
 
       {/* Exit Requests Alert */}
-      <MyExitRequests requests={myRequests} onCancel={cancelRequest} loading={actionLoading} currentEmpresaId={empresaId || undefined} />
+      <MyExitRequests requests={myRequests} onCancel={cancelRequest} loading={actionLoading} />
 
       {/* Health Indicator with Eye toggle */}
       <div className={cn("flex items-center justify-between gap-3 rounded-lg border p-3", health.bg)}>

@@ -60,13 +60,14 @@ export const PendingExitRequests = ({
                   Auto-aprovação {expiresIn}
                 </div>
               </div>
-              <div className="flex gap-2 shrink-0">
+              <div className="flex flex-wrap gap-2 shrink-0 w-full sm:w-auto">
                 {onCancel && (
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => onCancel(req.id)}
                     disabled={loading}
+                    className="flex-1 sm:flex-none"
                   >
                     <Ban className="h-4 w-4 mr-1" />
                     Cancelar
@@ -77,7 +78,7 @@ export const PendingExitRequests = ({
                   variant="outline"
                   onClick={() => onReject(req.id)}
                   disabled={loading}
-                  className="text-destructive hover:text-destructive"
+                  className="text-destructive hover:text-destructive flex-1 sm:flex-none"
                 >
                   <X className="h-4 w-4 mr-1" />
                   Rejeitar
@@ -86,6 +87,7 @@ export const PendingExitRequests = ({
                   size="sm"
                   onClick={() => onApprove(req.id)}
                   disabled={loading}
+                  className="flex-1 sm:flex-none"
                 >
                   <Check className="h-4 w-4 mr-1" />
                   Aprovar
