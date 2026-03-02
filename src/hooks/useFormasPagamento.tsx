@@ -59,7 +59,10 @@ export const useFormasPagamento = () => {
         const { error } = await supabase
           .from('formas_pagamento')
           .insert([{ descricao, empresa_id: empresaId }]);
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505') throw new Error("Já existe uma forma de pagamento com esta descrição.");
+          throw error;
+        }
         toast.success("Forma de pagamento cadastrada com sucesso");
       }
 

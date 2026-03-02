@@ -63,7 +63,10 @@ export const QuickAddContaBancariaModal = ({ onSuccess }: QuickAddContaBancariaM
         principal: formData.principal,
         empresa_id: empresaId,
       } as any]);
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') throw new Error("Já existe uma conta bancária com este nome.");
+        throw error;
+      }
 
       toast.success("Conta bancária cadastrada com sucesso!");
       setOpen(false);

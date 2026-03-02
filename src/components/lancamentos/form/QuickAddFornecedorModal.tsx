@@ -66,7 +66,10 @@ export const QuickAddFornecedorModal = ({ onSuccess }: QuickAddFornecedorModalPr
       };
 
       const { error } = await supabase.from("fornecedores").insert(fornecedorData as any);
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') throw new Error("Já existe um fornecedor com este nome.");
+        throw error;
+      }
 
       toast.success("Fornecedor cadastrado com sucesso!");
       setOpen(false);

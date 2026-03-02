@@ -44,7 +44,10 @@ export const CategoriaSelect = ({ value, onChange, categorias, tipo, onRefresh }
         tipo,
         empresa_id: empresaId,
       } as any);
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') throw new Error("Já existe uma categoria com este nome e tipo.");
+        throw error;
+      }
       toast.success("Categoria cadastrada com sucesso!");
       setOpen(false);
       setNome("");

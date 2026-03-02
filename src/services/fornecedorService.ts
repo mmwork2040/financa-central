@@ -62,7 +62,10 @@ export const saveFornecedor = async (fornecedor: Fornecedor, empresaId?: string 
           empresa_id: empresaId,
         });
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') throw new Error("Já existe um fornecedor com este nome.");
+        throw error;
+      }
       return { success: true, message: "Fornecedor cadastrado com sucesso!" };
     }
   } catch (error: any) {
