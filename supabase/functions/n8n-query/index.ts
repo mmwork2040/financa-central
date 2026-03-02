@@ -116,6 +116,7 @@ Deno.serve(async (req) => {
       "listar-usuarios": { tela: "users" },
       // Criação (pode_incluir)
       "criar-lancamento": { tela: "lancamentos", tipo: "pode_incluir" },
+      "criar-cliente": { tela: "clientes", tipo: "pode_incluir" },
       "criar-fornecedor": { tela: "fornecedores", tipo: "pode_incluir" },
       "criar-categoria": { tela: "categorias", tipo: "pode_incluir" },
       "criar-conta-bancaria": { tela: "contas_bancarias", tipo: "pode_incluir" },
@@ -750,6 +751,48 @@ Deno.serve(async (req) => {
         break;
       }
 
+      // ─── CRIAR CLIENTE ───
+      case "criar-cliente": {
+        const nome = sanitize(body.nome);
+        if (!nome) {
+          return new Response(JSON.stringify({ error: "nome is required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const clienteData: any = {
+          empresa_id,
+          nome,
+          origem: "manual",
+          ativo: body.ativo !== undefined ? body.ativo : true,
+        };
+        const cli_cpf_cnpj = sanitize(body.cpf_cnpj);
+        const cli_telefone = sanitize(body.telefone);
+        const cli_email = sanitize(body.email);
+        const cli_cep = sanitize(body.cep);
+        const cli_rua = sanitize(body.rua);
+        const cli_numero = sanitize(body.numero);
+        const cli_complemento = sanitize(body.complemento);
+        const cli_bairro = sanitize(body.bairro);
+        const cli_cidade = sanitize(body.cidade);
+        const cli_estado = sanitize(body.estado);
+        if (cli_cpf_cnpj) clienteData.cpf_cnpj = cli_cpf_cnpj;
+        if (cli_telefone) clienteData.telefone = cli_telefone;
+        if (cli_email) clienteData.email = cli_email;
+        if (cli_cep) clienteData.cep = cli_cep;
+        if (cli_rua) clienteData.rua = cli_rua;
+        if (cli_numero) clienteData.numero = cli_numero;
+        if (cli_complemento) clienteData.complemento = cli_complemento;
+        if (cli_bairro) clienteData.bairro = cli_bairro;
+        if (cli_cidade) clienteData.cidade = cli_cidade;
+        if (cli_estado) clienteData.estado = cli_estado;
+
+        const { data: newCli, error: cliError } = await supabase
+          .from("clientes").insert(clienteData).select("*").single();
+        if (cliError) throw cliError;
+        result = newCli;
+        break;
+      }
+
       // ─── CRIAR FORNECEDOR ───
       case "criar-fornecedor": {
         const nome = sanitize(body.nome);
@@ -1232,7 +1275,7 @@ Deno.serve(async (req) => {
             "resumo-financeiro", "lancamentos", "despesas-pendentes", "receitas-pendentes",
             "resumo-categorias", "vendas-digitais", "recebimentos-digitais", "contas-bancarias",
             "clientes", "fornecedores", "projetos", "categorias", "formas-pagamento", "fluxo-caixa",
-            "criar-lancamento", "criar-fornecedor", "criar-categoria", "criar-conta-bancaria",
+            "criar-lancamento", "criar-cliente", "criar-fornecedor", "criar-categoria", "criar-conta-bancaria",
             "criar-forma-pagamento", "criar-projeto", "atualizar-telegram-id", "atualizar-telegram-cliente",
             "listar-anuncios", "listar-usuarios",
             "editar-cliente", "editar-fornecedor", "editar-categoria", "editar-conta-bancaria",
