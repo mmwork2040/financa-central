@@ -625,7 +625,7 @@ Deno.serve(async (req) => {
         const descricao = sanitize(body.descricao);
         const valor = body.valor;
         const tipo = sanitize(body.tipo);
-        const status_lanc = sanitize(body.status) || "pendente";
+        let status_lanc = sanitize(body.status);
         const data_vencimento = sanitize(body.data_vencimento);
         const projeto_id = sanitize(body.projeto_id);
         const data_pagamento = sanitize(body.data_pagamento);
@@ -703,10 +703,42 @@ Deno.serve(async (req) => {
           if (forId) { fornecedor_id = forId; registros_criados.fornecedor = { id: forId, nome: fornecedor_nome }; }
         }
 
-        // ── Resolver conta bancária ──
+        // ── Resolver conta bancária (buscar por nome OU banco) ──
         if (!conta_bancaria_id && conta_bancaria_nome) {
-          const cbId = await resolveOrCreate("contas_bancarias", "nome", conta_bancaria_nome, { saldo_inicial: 0, saldo_atual: 0, principal: false });
-          if (cbId) { conta_bancaria_id = cbId; registros_criados.conta_bancaria = { id: cbId, nome: conta_bancaria_nome }; }
+          // Primeiro buscar por nome
+          const { data: cbByNome } = await supabase
+            .from("contas_bancarias")
+            .select("id")
+            .eq("empresa_id", empresa_id)
+            .ilike("nome", conta_bancaria_nome.trim())
+            .limit(1)
+            .maybeSingle();
+          if (cbByNome) {
+            conta_bancaria_id = cbByNome.id;
+            registros_criados.conta_bancaria = { id: cbByNome.id, nome: conta_bancaria_nome, encontrado_por: "nome" };
+          } else {
+            // Buscar por campo banco
+            const { data: cbByBanco } = await supabase
+              .from("contas_bancarias")
+              .select("id, nome")
+              .eq("empresa_id", empresa_id)
+              .ilike("banco", conta_bancaria_nome.trim())
+              .limit(1)
+              .maybeSingle();
+            if (cbByBanco) {
+              conta_bancaria_id = cbByBanco.id;
+              registros_criados.conta_bancaria = { id: cbByBanco.id, nome: cbByBanco.nome, encontrado_por: "banco" };
+            } else {
+              // Criar nova conta bancária
+              const { data: created } = await supabase.from("contas_bancarias")
+                .insert({ empresa_id, nome: conta_bancaria_nome.trim(), saldo_inicial: 0, saldo_atual: 0, principal: false })
+                .select("id").single();
+              if (created) {
+                conta_bancaria_id = created.id;
+                registros_criados.conta_bancaria = { id: created.id, nome: conta_bancaria_nome, criado: true };
+              }
+            }
+          }
         }
 
         // ── Resolver forma de pagamento ──
@@ -737,11 +769,44 @@ Deno.serve(async (req) => {
           }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
+        // ── Auto-definir status quando data_pagamento é informada ──
+        if (!status_lanc) {
+          if (data_pagamento) {
+            status_lanc = tipo === "receita" ? "recebido" : "pago";
+          } else {
+            status_lanc = "pendente";
+          }
+        }
+
         // Parse valor: handle Brazilian format "3.000,00" → 3000.00
+        // Also handle plain number like 500 or 500.00 (already numeric)
         let valorNumerico: number;
-        if (typeof valor === "string") {
-          const cleaned = valor.replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
-          valorNumerico = parseFloat(cleaned);
+        if (typeof valor === "number") {
+          valorNumerico = valor;
+        } else if (typeof valor === "string") {
+          const trimmed = valor.replace(/[R$\s]/g, "").trim();
+          // Detect format: if has both dot and comma, it's Brazilian "3.000,00"
+          // If has only comma, it could be "500,00" (Brazilian decimal)
+          // If has only dot, it could be "500.00" (standard decimal) or "3.000" (Brazilian thousands)
+          const hasDot = trimmed.includes(".");
+          const hasComma = trimmed.includes(",");
+          if (hasComma) {
+            // Brazilian format: dots are thousands separators, comma is decimal
+            const cleaned = trimmed.replace(/\./g, "").replace(",", ".");
+            valorNumerico = parseFloat(cleaned);
+          } else if (hasDot) {
+            // Check if dot is thousands separator (e.g. "3.000") or decimal (e.g. "500.00")
+            const parts = trimmed.split(".");
+            if (parts.length === 2 && parts[1].length === 3) {
+              // "3.000" → thousands separator, no decimals
+              valorNumerico = parseFloat(trimmed.replace(/\./g, ""));
+            } else {
+              // "500.00" → standard decimal
+              valorNumerico = parseFloat(trimmed);
+            }
+          } else {
+            valorNumerico = parseFloat(trimmed);
+          }
         } else {
           valorNumerico = Number(valor);
         }

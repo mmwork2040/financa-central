@@ -511,6 +511,7 @@ RESOLUÇÃO AUTOMÁTICA DE DEPENDÊNCIAS:
   a) O UUID direto (_id), OU
   b) O NOME (_nome) — o sistema buscará pelo nome. Se não existir, CADASTRARÁ automaticamente.
 - Exemplo: em vez de categoria_id, envie categoria_nome: "Alimentação". O sistema busca ou cria.
+- conta_bancaria_nome busca pelo campo "nome" E pelo campo "banco" (ex: "Santander" encontra a conta cujo banco é Santander).
 
 CAMPOS OBRIGATÓRIOS:
 - empresa_id, descricao, valor, data_vencimento, tipo (receita ou despesa)
@@ -520,8 +521,19 @@ CAMPOS OBRIGATÓRIOS:
 - Se tipo = "receita": envie cliente_id OU cliente_nome
 - Se tipo = "despesa": envie fornecedor_id OU fornecedor_nome
 
+VALOR:
+- Envie SEMPRE como número puro (ex: 500, 3000.50). NÃO use formato brasileiro "3.000,00".
+- Exemplos corretos: 500, 1500.99, 250
+- Exemplos ERRADOS: "R$ 500,00", "3.000,00"
+
+STATUS AUTOMÁTICO:
+- Se data_pagamento for informada e status não for enviado, o sistema define automaticamente:
+  - receita → "recebido"
+  - despesa → "pago"
+- Se data_pagamento NÃO for informada, status padrão = "pendente"
+
 CAMPOS OPCIONAIS:
-- status (pendente ou pago, padrão: pendente)
+- status (pendente, pago, recebido — se não informado, é calculado automaticamente conforme regra acima)
 - projeto_id, data_pagamento
 
 FLUXO SIMPLIFICADO:
@@ -534,10 +546,10 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas.`,
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "descricao", type: "string", required: true, description: "Descrição do lançamento" },
-      { name: "valor", type: "number", required: true, description: "Valor do lançamento" },
+      { name: "valor", type: "number", required: true, description: "Valor numérico puro (ex: 500, 1500.99). NÃO use formato brasileiro" },
       { name: "data_vencimento", type: "string", required: true, description: "Data de vencimento (YYYY-MM-DD)" },
       { name: "tipo", type: "string", required: true, description: "OBRIGATÓRIO: receita ou despesa" },
-      { name: "status", type: "string", required: false, description: "pendente ou pago (padrão: pendente)" },
+      { name: "status", type: "string", required: false, description: "pendente, pago ou recebido. Se omitido: auto-definido pela data_pagamento" },
       { name: "categoria_id", type: "string", required: false, description: "UUID da categoria (use se já souber o ID)" },
       { name: "categoria_nome", type: "string", required: false, description: "Nome da categoria (busca ou cria automaticamente)" },
       { name: "cliente_id", type: "string", required: false, description: "UUID do cliente (obrigatório se receita)" },
@@ -547,11 +559,11 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas.`,
       { name: "forma_pagamento_id", type: "string", required: false, description: "UUID da forma de pagamento" },
       { name: "forma_pagamento_nome", type: "string", required: false, description: "Nome da forma de pagamento (busca ou cria)" },
       { name: "conta_bancaria_id", type: "string", required: false, description: "UUID da conta bancária" },
-      { name: "conta_bancaria_nome", type: "string", required: false, description: "Nome da conta bancária (busca ou cria)" },
+      { name: "conta_bancaria_nome", type: "string", required: false, description: "Nome ou banco da conta bancária (busca por nome E por banco)" },
       { name: "projeto_id", type: "string", required: false, description: "UUID do projeto (opcional)" },
-      { name: "data_pagamento", type: "string", required: false, description: "Data de pagamento (YYYY-MM-DD)" },
+      { name: "data_pagamento", type: "string", required: false, description: "Data de pagamento (YYYY-MM-DD). Se informada, status será auto-definido como pago/recebido" },
     ],
-    body: { action: "criar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", descricao: "{{ $fromAI('descricao', 'Descrição do lançamento') }}", valor: "{{ $fromAI('valor', 'Valor numérico do lançamento') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'Data de vencimento YYYY-MM-DD') }}", tipo: "{{ $fromAI('tipo', 'OBRIGATÓRIO: receita ou despesa') }}", status: "{{ $fromAI('status', 'pendente ou pago. Padrão: pendente') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Vazio se usar categoria_nome') }}", categoria_nome: "{{ $fromAI('categoria_nome', 'Nome da categoria. O sistema busca ou cria automaticamente') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Vazio se usar cliente_nome ou se for despesa') }}", cliente_nome: "{{ $fromAI('cliente_nome', 'Nome do cliente. Obrigatório se receita e sem cliente_id') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor. Vazio se usar fornecedor_nome ou se for receita') }}", fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'Nome do fornecedor. Obrigatório se despesa e sem fornecedor_id') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento. Vazio se usar forma_pagamento_nome') }}", forma_pagamento_nome: "{{ $fromAI('forma_pagamento_nome', 'Nome da forma de pagamento. Busca ou cria automaticamente') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária. Vazio se usar conta_bancaria_nome') }}", conta_bancaria_nome: "{{ $fromAI('conta_bancaria_nome', 'Nome da conta bancária. Busca ou cria automaticamente') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não informado') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'Data de pagamento YYYY-MM-DD. Deixe vazio se não informado') }}" },
+    body: { action: "criar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", descricao: "{{ $fromAI('descricao', 'Descrição do lançamento') }}", valor: "{{ $fromAI('valor', 'Valor numérico puro. Ex: 500, 1500.99. NUNCA use formato brasileiro') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'Data de vencimento YYYY-MM-DD') }}", tipo: "{{ $fromAI('tipo', 'OBRIGATÓRIO: receita ou despesa') }}", status: "{{ $fromAI('status', 'pendente, pago ou recebido. Deixe vazio para auto-definir pela data_pagamento') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Vazio se usar categoria_nome') }}", categoria_nome: "{{ $fromAI('categoria_nome', 'Nome da categoria. O sistema busca ou cria automaticamente') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Vazio se usar cliente_nome ou se for despesa') }}", cliente_nome: "{{ $fromAI('cliente_nome', 'Nome do cliente. Obrigatório se receita e sem cliente_id') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor. Vazio se usar fornecedor_nome ou se for receita') }}", fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'Nome do fornecedor. Obrigatório se despesa e sem fornecedor_id') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento. Vazio se usar forma_pagamento_nome') }}", forma_pagamento_nome: "{{ $fromAI('forma_pagamento_nome', 'Nome da forma de pagamento. Busca ou cria automaticamente') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária. Vazio se usar conta_bancaria_nome') }}", conta_bancaria_nome: "{{ $fromAI('conta_bancaria_nome', 'Nome ou banco da conta bancária. Busca por nome E banco. Ex: Santander') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não informado') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'Data de pagamento YYYY-MM-DD. Se informada, status auto-definido como pago/recebido') }}" },
   },
   {
     action: "atualizar-telegram-id",
