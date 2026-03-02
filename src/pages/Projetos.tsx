@@ -6,7 +6,7 @@ import { ProjetoForm } from "@/components/projetos/ProjetoForm";
 import { ProjetoDeleteDialog } from "@/components/projetos/ProjetoDeleteDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, FolderKanban } from "lucide-react";
 import ExportDropdown from "@/components/common/ExportDropdown";
 import { exportToCSV, generatePDFView } from "@/utils/exportUtils";
 import { formatCurrency } from "@/utils/format";
@@ -57,6 +57,7 @@ const Projetos = () => {
         buttonLabel={canIncluir ? "Novo Projeto" : undefined}
         onButtonClick={canIncluir ? () => openModal() : undefined}
         showButton={canIncluir}
+        icon={FolderKanban}
       />
 
       <div className="flex flex-col sm:flex-row gap-4 items-center">
