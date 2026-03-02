@@ -535,28 +535,30 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Cria um novo lançamento financeiro (receita ou despesa)",
     toolDescription: `Cria um novo lançamento financeiro no sistema.
 
-⚠️ IMPORTANTE: ANTES de usar esta ferramenta, você DEVE chamar a ferramenta "listar_opcoes_lancamento" para obter os IDs válidos de categorias, fornecedores, clientes, contas bancárias, formas de pagamento e projetos. NUNCA invente UUIDs — use apenas os retornados por listar_opcoes_lancamento.
+⚠️ IMPORTANTE: ANTES de usar esta ferramenta, você DEVE chamar "listar_opcoes_lancamento" para obter os IDs válidos. NUNCA invente UUIDs.
+
+⚠️ CAMPOS OBRIGATÓRIOS: categoria_id, fornecedor_id, forma_pagamento_id e conta_bancaria_id são OBRIGATÓRIOS. Se o usuário não informar algum desses, solicite que ele escolha ou cadastre antes de prosseguir. O sistema BLOQUEARÁ a criação se faltar qualquer um desses campos.
 
 Fluxo obrigatório:
 1. Chame listar_opcoes_lancamento com a empresa_id
-2. Apresente as opções ao usuário se necessário
-3. Use os IDs retornados para preencher este lançamento
-
-Use quando o usuário solicitar:
-- Registrar uma despesa
-- Registrar uma receita
-- Lançar uma conta
-- Adicionar um gasto
+2. Verifique se existem categorias, fornecedores, formas de pagamento e contas bancárias cadastradas
+3. Se algum não existir, oriente o usuário a cadastrar antes
+4. Solicite ao usuário que escolha cada campo obrigatório
+5. Use os IDs retornados para preencher o lançamento
 
 Parâmetros:
 - empresa_id (obrigatório)
 - descricao (obrigatório)
 - valor (obrigatório)
-- data_vencimento (obrigatório, formato YYYY-MM-DD)
+- data_vencimento (obrigatório, YYYY-MM-DD)
 - tipo (receita ou despesa, padrão: despesa)
 - status (pendente ou pago, padrão: pendente)
-- categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id (opcionais — use IDs de listar_opcoes_lancamento)
-- data_pagamento (opcional, formato YYYY-MM-DD)
+- categoria_id (OBRIGATÓRIO)
+- fornecedor_id (OBRIGATÓRIO)
+- forma_pagamento_id (OBRIGATÓRIO)
+- conta_bancaria_id (OBRIGATÓRIO)
+- cliente_id, projeto_id (opcionais)
+- data_pagamento (opcional, YYYY-MM-DD)
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Financeiro",
@@ -567,15 +569,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "data_vencimento", type: "string", required: true, description: "Data de vencimento (YYYY-MM-DD)" },
       { name: "tipo", type: "string", required: false, description: "receita ou despesa (padrão: despesa)" },
       { name: "status", type: "string", required: false, description: "pendente ou pago (padrão: pendente)" },
-      { name: "categoria_id", type: "string", required: false, description: "UUID da categoria" },
+      { name: "categoria_id", type: "string", required: true, description: "UUID da categoria (OBRIGATÓRIO)" },
+      { name: "fornecedor_id", type: "string", required: true, description: "UUID do fornecedor (OBRIGATÓRIO)" },
+      { name: "forma_pagamento_id", type: "string", required: true, description: "UUID da forma de pagamento (OBRIGATÓRIO)" },
+      { name: "conta_bancaria_id", type: "string", required: true, description: "UUID da conta bancária (OBRIGATÓRIO)" },
       { name: "cliente_id", type: "string", required: false, description: "UUID do cliente" },
-      { name: "fornecedor_id", type: "string", required: false, description: "UUID do fornecedor" },
-      { name: "conta_bancaria_id", type: "string", required: false, description: "UUID da conta bancária" },
-      { name: "forma_pagamento_id", type: "string", required: false, description: "UUID da forma de pagamento" },
       { name: "projeto_id", type: "string", required: false, description: "UUID do projeto" },
       { name: "data_pagamento", type: "string", required: false, description: "Data de pagamento (YYYY-MM-DD)" },
     ],
-    body: { action: "criar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", descricao: "{{ $fromAI('descricao', 'Descrição do lançamento') }}", valor: "{{ $fromAI('valor', 'Valor numérico do lançamento') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'Data de vencimento YYYY-MM-DD') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa. Padrão: despesa') }}", status: "{{ $fromAI('status', 'pendente ou pago. Padrão: pendente') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Deixe vazio se não informado') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Deixe vazio se não informado') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor. Deixe vazio se não informado') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária. Deixe vazio se não informado') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento. Deixe vazio se não informado') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não informado') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'Data de pagamento YYYY-MM-DD. Deixe vazio se não informado') }}" },
+    body: { action: "criar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", descricao: "{{ $fromAI('descricao', 'Descrição do lançamento') }}", valor: "{{ $fromAI('valor', 'Valor numérico do lançamento') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'Data de vencimento YYYY-MM-DD') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa. Padrão: despesa') }}", status: "{{ $fromAI('status', 'pendente ou pago. Padrão: pendente') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria - OBRIGATÓRIO') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor - OBRIGATÓRIO') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento - OBRIGATÓRIO') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária - OBRIGATÓRIO') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Deixe vazio se não informado') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não informado') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'Data de pagamento YYYY-MM-DD. Deixe vazio se não informado') }}" },
   },
   {
     action: "atualizar-telegram-id",
