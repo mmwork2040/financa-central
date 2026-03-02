@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Clock, CheckCircle, XCircle, Ban } from "lucide-react";
+import { X, Clock, CheckCircle, XCircle, Ban, AlertTriangle } from "lucide-react";
 import { SolicitacaoSaida } from "@/hooks/useSolicitacoesSaida";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -30,9 +30,12 @@ export const MyExitRequests = ({
   if (visibleRequests.length === 0) return null;
 
   return (
-    <Card>
+    <Card className="border-red-300 bg-red-50/60">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Minhas Solicitações de Saída</CardTitle>
+        <CardTitle className="text-base text-red-700 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4" />
+          Minhas Solicitações de Saída
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {visibleRequests.map((req) => {
