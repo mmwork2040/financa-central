@@ -1231,9 +1231,22 @@ const N8nJsonTemplates = () => {
       entries.splice(empresaIdx + 1, 0, ["user_id", "{{ $fromAI('user_id', 'UUID do usuário para controle de permissões') }}"]);
       const newBody = Object.fromEntries(entries);
 
-      // Append permission notice to toolDescription
+      // Inject user_id into Parâmetros section and append permission notice
+      let toolDescription = t.toolDescription;
+      
+      // Add user_id to the Parâmetros list if present
+      if (toolDescription.includes("Parâmetros:") && !toolDescription.includes("user_id")) {
+        toolDescription = toolDescription.replace(
+          /- empresa_id(\s*\(obrigatório\))?/,
+          `- empresa_id$1\n- user_id (obrigatório — UUID do usuário para controle de permissões)`
+        );
+      }
+      
+      // Append permission notice
       const permNotice = `\n\nCONTROLE DE ACESSO: Sempre envie o user_id para que o sistema valide as permissões do usuário antes de executar a ação.`;
-      const toolDescription = t.toolDescription.includes("CONTROLE DE ACESSO") ? t.toolDescription : t.toolDescription + permNotice;
+      if (!toolDescription.includes("CONTROLE DE ACESSO")) {
+        toolDescription = toolDescription + permNotice;
+      }
 
       return { ...t, params, body: newBody, toolDescription };
     });
