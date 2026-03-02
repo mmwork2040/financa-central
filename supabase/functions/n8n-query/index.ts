@@ -815,10 +815,25 @@ Deno.serve(async (req) => {
           }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
+        // Parse valor: handle Brazilian format "3.000,00" → 3000.00
+        let valorNumerico: number;
+        if (typeof valor === "string") {
+          // Remove R$, spaces, dots (thousands), replace comma with dot (decimal)
+          const cleaned = valor.replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
+          valorNumerico = parseFloat(cleaned);
+        } else {
+          valorNumerico = Number(valor);
+        }
+        if (isNaN(valorNumerico) || valorNumerico <= 0) {
+          return new Response(JSON.stringify({ error: "Valor inválido", message: "O campo 'valor' deve ser um número positivo. Exemplo: 3000.00 ou '3.000,00'" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         const insertData: any = {
           empresa_id,
           descricao,
-          valor: Number(valor),
+          valor: valorNumerico,
           tipo,
           status: status_lanc,
           data_vencimento,
