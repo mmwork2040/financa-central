@@ -42,6 +42,7 @@ Use quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id (obrigatório)
+- user_id (obrigatório — UUID do usuário para controle de permissões)
 - periodo: semana, mes, trimestre, semestre ou ano
 - data_inicio: YYYY-MM-DD
 - data_fim: YYYY-MM-DD
@@ -52,16 +53,18 @@ REGRAS DE PERÍODO (OBRIGATÓRIAS):
 3) Se não informar período nem datas: envie periodo como "mes". Envie data_inicio e data_fim como "" (vazio).
 
 IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
+CONTROLE DE ACESSO: Sempre envie o user_id para que o sistema valide as permissões do usuário.
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Resumos",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
       { name: "data_inicio", type: "string", required: false, description: "Data início personalizada (YYYY-MM-DD)" },
       { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
     ],
-    body: { action: "resumo-financeiro", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Padrão: mes') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado') }}" },
+    body: { action: "resumo-financeiro", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário para controle de permissões') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Padrão: mes') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado') }}" },
   },
   {
     action: "lancamentos",
@@ -854,7 +857,37 @@ const N8nJsonTemplates = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTemplate, setNewTemplate] = useState({ action: "", label: "", description: "", json: "{}" });
 
-  const allTemplates = [...DEFAULT_TEMPLATES, ...customTemplates];
+  // Auto-inject user_id into all templates for permission control
+  const injectUserId = (templates: ActionTemplate[]): ActionTemplate[] => {
+    return templates.map(t => {
+      // Skip if already has user_id in body
+      if (t.body.user_id) return t;
+      
+      // Add user_id to params if not present
+      const hasUserIdParam = t.params.some(p => p.name === "user_id");
+      const params = hasUserIdParam ? t.params : [
+        t.params[0], // empresa_id always first
+        { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
+        ...t.params.slice(1),
+      ];
+
+      // Add user_id to body
+      const body = { ...t.body };
+      const entries = Object.entries(body);
+      // Insert user_id after empresa_id
+      const empresaIdx = entries.findIndex(([k]) => k === "empresa_id");
+      entries.splice(empresaIdx + 1, 0, ["user_id", "{{ $fromAI('user_id', 'UUID do usuário para controle de permissões') }}"]);
+      const newBody = Object.fromEntries(entries);
+
+      // Append permission notice to toolDescription
+      const permNotice = `\n\nCONTROLE DE ACESSO: Sempre envie o user_id para que o sistema valide as permissões do usuário antes de executar a ação.`;
+      const toolDescription = t.toolDescription.includes("CONTROLE DE ACESSO") ? t.toolDescription : t.toolDescription + permNotice;
+
+      return { ...t, params, body: newBody, toolDescription };
+    });
+  };
+
+  const allTemplates = injectUserId([...DEFAULT_TEMPLATES, ...customTemplates]);
   const categories = [...new Set(allTemplates.map(t => t.category))];
 
   const filtered = allTemplates.filter(t =>
