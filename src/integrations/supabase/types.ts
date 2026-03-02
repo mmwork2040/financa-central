@@ -946,6 +946,7 @@ export type Database = {
           motivo: string | null
           respondido_em: string | null
           respondido_por: string | null
+          role_original: string | null
           status: string
           updated_at: string
           user_id: string
@@ -959,6 +960,7 @@ export type Database = {
           motivo?: string | null
           respondido_em?: string | null
           respondido_por?: string | null
+          role_original?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -972,6 +974,7 @@ export type Database = {
           motivo?: string | null
           respondido_em?: string | null
           respondido_por?: string | null
+          role_original?: string | null
           status?: string
           updated_at?: string
           user_id?: string
