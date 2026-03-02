@@ -622,7 +622,7 @@ Deno.serve(async (req) => {
       case "criar-lancamento": {
         const descricao = sanitize(body.descricao);
         const valor = body.valor;
-        const tipo = sanitize(body.tipo) || "despesa";
+        const tipo = sanitize(body.tipo);
         const status_lanc = sanitize(body.status) || "pendente";
         const data_vencimento = sanitize(body.data_vencimento);
         const categoria_id = sanitize(body.categoria_id);
@@ -639,23 +639,37 @@ Deno.serve(async (req) => {
           });
         }
 
+        if (!tipo || !["receita", "despesa"].includes(tipo)) {
+          return new Response(JSON.stringify({ 
+            error: "Tipo obrigatório", 
+            message: "O campo 'tipo' é obrigatório e deve ser 'receita' ou 'despesa'. Pergunte ao usuário qual o tipo do lançamento." 
+          }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
         if (!data_vencimento) {
           return new Response(JSON.stringify({ error: "data_vencimento is required (YYYY-MM-DD)" }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
+        // Validação condicional: receita exige cliente, despesa exige fornecedor
         const camposObrigatorios: { campo: string; valor: string | null; label: string }[] = [
           { campo: "categoria_id", valor: categoria_id, label: "Categoria" },
-          { campo: "fornecedor_id", valor: fornecedor_id, label: "Fornecedor" },
           { campo: "forma_pagamento_id", valor: forma_pagamento_id, label: "Forma de Pagamento" },
           { campo: "conta_bancaria_id", valor: conta_bancaria_id, label: "Conta Bancária" },
         ];
+
+        if (tipo === "receita") {
+          camposObrigatorios.push({ campo: "cliente_id", valor: cliente_id, label: "Cliente (obrigatório para receita)" });
+        } else {
+          camposObrigatorios.push({ campo: "fornecedor_id", valor: fornecedor_id, label: "Fornecedor (obrigatório para despesa)" });
+        }
+
         const faltando = camposObrigatorios.filter(c => !c.valor).map(c => c.label);
         if (faltando.length > 0) {
           return new Response(JSON.stringify({ 
             error: "Campos obrigatórios não informados", 
-            message: `Para criar um lançamento, é obrigatório informar: ${faltando.join(", ")}. Use a ferramenta listar_opcoes_lancamento para obter os IDs disponíveis ou cadastre antes de prosseguir.`,
+            message: `Para criar um lançamento do tipo '${tipo}', é obrigatório informar: ${faltando.join(", ")}. Use a ferramenta listar_opcoes_lancamento para obter os IDs disponíveis ou cadastre antes de prosseguir.`,
             campos_faltando: faltando 
           }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
