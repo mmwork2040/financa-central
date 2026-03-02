@@ -1489,14 +1489,13 @@ Deno.serve(async (req) => {
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabase = createClient(supabaseUrl, serviceRoleKey);
-      const body2 = await req.clone().json().catch(() => ({}));
-      await supabase.from("logs_integracoes").insert({
-        empresa_id: body2.empresa_id || "00000000-0000-0000-0000-000000000000",
+      const sbLog = createClient(supabaseUrl, serviceRoleKey);
+      await sbLog.from("logs_integracoes").insert({
+        empresa_id: empresa_id || "00000000-0000-0000-0000-000000000000",
         plataforma: "n8n-query",
-        evento: body2.action || "unknown",
+        evento: action || "unknown",
         status: "erro",
-        payload: { error: error.message, request: body2 },
+        payload: { error: error.message, stack: error.stack?.substring(0, 500), request: { action, empresa_id, user_id, periodo, filters } },
       });
     } catch (_) { /* ignore */ }
 
