@@ -16,6 +16,26 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
+    // Helper: deactivate invite codes for user in a specific empresa
+    async function revokeInviteCodes(admin: any, userId: string, empresaId: string) {
+      await admin
+        .from("invite_codes")
+        .update({ active: false })
+        .eq("redeemed_by", userId)
+        .eq("empresa_id", empresaId);
+    }
+
+    // Helper: log exit request action to logs_integracoes
+    async function logExitAction(admin: any, empresaId: string, userId: string, resultado: string, detalhes: string) {
+      await admin.from("logs_integracoes").insert({
+        empresa_id: empresaId,
+        plataforma: "sistema",
+        evento: "saida_empresa",
+        status: resultado,
+        payload: { user_id: userId, detalhes },
+      });
+    }
+
     // Helper: create personal empresa for a user who has no remaining companies
     async function createPersonalEmpresa(admin: any, userId: string): Promise<string> {
       // Check if user already has a personal empresa
@@ -67,18 +87,20 @@ Deno.serve(async (req) => {
             .eq("user_id", request.user_id)
             .eq("empresa_id", request.empresa_id);
 
+          // Revoke invite codes for this user in this empresa
+          await revokeInviteCodes(supabaseAdmin, request.user_id, request.empresa_id);
+
           const { data: remaining } = await supabaseAdmin
             .from("user_roles")
             .select("empresa_id")
             .eq("user_id", request.user_id);
 
-      if (remaining && remaining.length > 0) {
+          if (remaining && remaining.length > 0) {
             await supabaseAdmin
               .from("perfis")
               .update({ empresa_id: remaining[0].empresa_id })
               .eq("id", request.user_id);
           } else {
-            // Create personal empresa for user with no remaining companies
             const newEmpresaId = await createPersonalEmpresa(supabaseAdmin, request.user_id);
             await supabaseAdmin
               .from("perfis")
@@ -94,6 +116,9 @@ Deno.serve(async (req) => {
               updated_at: new Date().toISOString(),
             })
             .eq("id", request.id);
+
+          // Log the auto-approved exit
+          await logExitAction(supabaseAdmin, request.empresa_id, request.user_id, "success", "Saída auto-aprovada por expiração do prazo de 7 dias");
         }
       }
 
@@ -238,6 +263,9 @@ Deno.serve(async (req) => {
         .eq("user_id", request.user_id)
         .eq("empresa_id", request.empresa_id);
 
+      // Revoke invite codes for this user in this empresa
+      await revokeInviteCodes(supabaseAdmin, request.user_id, request.empresa_id);
+
       // Check remaining roles
       const { data: remaining } = await supabaseAdmin
         .from("user_roles")
@@ -245,13 +273,11 @@ Deno.serve(async (req) => {
         .eq("user_id", request.user_id);
 
       if (remaining && remaining.length > 0) {
-        // Switch to first remaining empresa
         await supabaseAdmin
           .from("perfis")
           .update({ empresa_id: remaining[0].empresa_id })
           .eq("id", request.user_id);
       } else {
-        // Create personal empresa for user with no remaining companies
         const newEmpresaId = await createPersonalEmpresa(supabaseAdmin, request.user_id);
         await supabaseAdmin
           .from("perfis")
@@ -269,6 +295,9 @@ Deno.serve(async (req) => {
           updated_at: new Date().toISOString(),
         })
         .eq("id", requestId);
+
+      // Log the approved exit
+      await logExitAction(supabaseAdmin, request.empresa_id, request.user_id, "success", `Saída aprovada pelo administrador`);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
