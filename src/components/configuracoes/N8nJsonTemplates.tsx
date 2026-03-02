@@ -1197,9 +1197,9 @@ const CATEGORY_COLORS: Record<string, string> = {
 const N8nJsonTemplates = () => {
   const [search, setSearch] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(() => new Set(["Resumos", "Financeiro", "Vendas", "Cadastros", "Personalizado"]));
   const [expandedActions, setExpandedActions] = useState<Set<string>>(new Set());
-  const [collapsedSubGroups, setCollapsedSubGroups] = useState<Set<string>>(new Set());
+  const [collapsedSubGroups, setCollapsedSubGroups] = useState<Set<string>>(() => new Set(["Cadastros-Listar", "Cadastros-Criar", "Cadastros-Editar", "Cadastros-Excluir"]));
   const [customTemplates, setCustomTemplates] = useState<ActionTemplate[]>(() => {
     try {
       const saved = localStorage.getItem("n8n-custom-templates-v3");
