@@ -36,6 +36,7 @@ export const useSolicitacoesSaida = () => {
     const { data } = await queryTable()
       .select("*")
       .eq("user_id", user.id)
+      .eq("status", "pendente")
       .order("created_at", { ascending: false });
 
     if (data) {
