@@ -10,6 +10,8 @@ import { LancamentosProvider, useLancamentosContext } from "@/contexts/Lancament
 import { useDashboardData, HealthStatus } from "@/hooks/useDashboardData";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import { ValuesVisibilityProvider, useValuesVisibility, maskValue } from "@/contexts/ValuesVisibilityContext";
+import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
+import { MyExitRequests } from "@/components/solicitacoes/MyExitRequests";
 import { cn } from "@/lib/utils";
 
 const healthConfig: Record<HealthStatus, { label: string; color: string; icon: string; bg: string }> = {
@@ -23,6 +25,7 @@ const DashboardContent = () => {
   const { loading, summary, lancamentosRecentes, contasProximas, healthStatus } = useDashboardData();
   const { handleOpenModal } = useLancamentosContext();
   const { visible, toggle } = useValuesVisibility();
+  const { myRequests, cancelRequest, actionLoading } = useSolicitacoesSaida();
 
   const health = healthConfig[healthStatus];
 
@@ -46,6 +49,9 @@ const DashboardContent = () => {
         </div>
         <p className="text-xs sm:text-sm text-muted-foreground">Aqui está o resumo do seu financeiro</p>
       </div>
+
+      {/* Exit Requests Alert */}
+      <MyExitRequests requests={myRequests} onCancel={cancelRequest} loading={actionLoading} />
 
       {/* Health Indicator with Eye toggle */}
       <div className={cn("flex items-center justify-between gap-3 rounded-lg border p-3", health.bg)}>
