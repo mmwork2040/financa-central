@@ -11,7 +11,6 @@ interface MyExitRequestsProps {
   requests: SolicitacaoSaida[];
   onCancel: (id: string) => Promise<boolean>;
   loading?: boolean;
-  currentEmpresaId?: string;
 }
 
 const statusConfig: Record<string, { label: string; icon: React.ReactNode; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -25,11 +24,10 @@ export const MyExitRequests = ({
   requests,
   onCancel,
   loading,
-  currentEmpresaId,
 }: MyExitRequestsProps) => {
-  // Only show requests for the currently active empresa
+  // Show all non-approved requests so the user always knows their status
   const visibleRequests = requests.filter(
-    (r) => r.status !== "aprovado" && (!currentEmpresaId || r.empresa_id === currentEmpresaId)
+    (r) => r.status !== "aprovado"
   );
   if (visibleRequests.length === 0) return null;
 
@@ -48,21 +46,21 @@ export const MyExitRequests = ({
           return (
             <div
               key={req.id}
-              className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{req.empresa_nome}</span>
-                  <Badge variant={config.variant} className="gap-1">
+              <div className="space-y-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium text-sm sm:text-base truncate">{req.empresa_nome}</span>
+                  <Badge variant={config.variant} className="gap-1 text-xs shrink-0">
                     {config.icon}
                     {config.label}
                     {req.auto_aprovado && " (auto)"}
                   </Badge>
                 </div>
                 {req.motivo && (
-                  <p className="text-sm text-muted-foreground">Motivo: {req.motivo}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Motivo: {req.motivo}</p>
                 )}
-                <div className="text-xs text-muted-foreground">
+                <div className="text-[10px] sm:text-xs text-muted-foreground">
                   {format(new Date(req.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                 </div>
               </div>
@@ -72,6 +70,7 @@ export const MyExitRequests = ({
                   variant="outline"
                   onClick={() => onCancel(req.id)}
                   disabled={loading}
+                  className="w-full sm:w-auto shrink-0"
                 >
                   <X className="h-4 w-4 mr-1" />
                   Cancelar

@@ -134,9 +134,8 @@ export const UsersContainer = () => {
       {myRequests.length > 0 && (
         <MyExitRequests
           requests={myRequests}
-          onCancel={cancelRequest}
+           onCancel={cancelRequest}
           loading={exitLoading}
-          currentEmpresaId={empresaId || undefined}
         />
       )}
 
