@@ -494,7 +494,7 @@ Parâmetros:
 - empresa_id
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
-    category: "Cadastros",
+    category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
     ],
