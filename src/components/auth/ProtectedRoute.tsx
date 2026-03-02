@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-const PESSOAL_BLOCKED_ROUTES = ["/users", "/permissions"];
+const PESSOAL_BLOCKED_ROUTES: string[] = [];
 
 export const ProtectedRoute = ({ path, children }: ProtectedRouteProps) => {
   const { canAccessRoute, loading, isAuthenticated, isPessoal, needsPhone, user, userProfile, refreshProfile } = useAuth();
