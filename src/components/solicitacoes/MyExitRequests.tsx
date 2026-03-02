@@ -25,7 +25,9 @@ export const MyExitRequests = ({
   onCancel,
   loading,
 }: MyExitRequestsProps) => {
-  if (requests.length === 0) return null;
+  // Filter out approved requests - they should not be shown
+  const visibleRequests = requests.filter((r) => r.status !== "aprovado");
+  if (visibleRequests.length === 0) return null;
 
   return (
     <Card>
@@ -33,7 +35,7 @@ export const MyExitRequests = ({
         <CardTitle className="text-base">Minhas Solicitações de Saída</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {requests.map((req) => {
+        {visibleRequests.map((req) => {
           const config = statusConfig[req.status] || statusConfig.pendente;
 
           return (
