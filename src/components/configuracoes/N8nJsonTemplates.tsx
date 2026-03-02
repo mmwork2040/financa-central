@@ -613,7 +613,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
       { name: "plataforma", type: "string", required: false, description: "Plataforma (ex: meta_ads, google_ads)" },
     ],
-    body: { action: "listar-anuncios", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'semana, mes, trimestre, semestre ou ano') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD, opcional') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD, opcional') }}", plataforma: "{{ $fromAI('plataforma', 'Plataforma ex: meta_ads, google_ads') }}" },
+    body: { action: "listar-anuncios", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Padrão: mes') }}" },
   },
   {
     action: "listar-usuarios",
