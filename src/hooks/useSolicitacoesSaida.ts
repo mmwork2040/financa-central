@@ -110,10 +110,8 @@ export const useSolicitacoesSaida = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success("Você foi desconectado da empresa. Aguarde a resposta do administrador.");
+      toast.success("Solicitação de saída enviada. Aguarde a resposta do administrador.");
       window.dispatchEvent(new Event("exit-requests-changed"));
-      // Reload to reflect empresa switch (user is now on personal)
-      window.location.reload();
       return true;
     } catch (error: any) {
       toast.error(error.message);
@@ -131,9 +129,8 @@ export const useSolicitacoesSaida = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success("Solicitação cancelada — acesso restaurado.");
+      toast.success("Solicitação cancelada.");
       window.dispatchEvent(new Event("exit-requests-changed"));
-      window.location.reload();
       return true;
     } catch (error: any) {
       toast.error(error.message);
@@ -151,7 +148,7 @@ export const useSolicitacoesSaida = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success("O usuário foi removido da empresa.");
+      toast.success("Solicitação aprovada — usuário removido da empresa.");
       await fetchAll();
       window.dispatchEvent(new Event("exit-requests-changed"));
       return true;
@@ -171,7 +168,7 @@ export const useSolicitacoesSaida = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success("Solicitação rejeitada");
+      toast.success("Solicitação rejeitada — usuário permanece na empresa.");
       await fetchAll();
       window.dispatchEvent(new Event("exit-requests-changed"));
       return true;
