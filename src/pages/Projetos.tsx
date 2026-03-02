@@ -75,10 +75,22 @@ const Projetos = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-10 text-muted-foreground">Carregando...</div>
+        <div className="flex h-40 items-center justify-center">
+          <p className="text-muted-foreground">Carregando projetos...</p>
+        </div>
+      ) : filteredProjetos.length === 0 ? (
+        <div className="flex h-40 items-center justify-center rounded-lg border border-dashed">
+          <p className="text-muted-foreground">Nenhum projeto encontrado</p>
+        </div>
       ) : (
         <ProjetosTable projetos={filteredProjetos} onEdit={openModal} onDelete={confirmDelete} />
       )}
+
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">
+          Total: {filteredProjetos.length} projetos
+        </p>
+      </div>
 
       <ProjetoForm
         isOpen={isModalOpen}

@@ -60,8 +60,8 @@ export const ProjetosTable = ({ projetos, onEdit, onDelete }: Props) => {
   };
 
   return (
-    <div className="rounded-md border overflow-hidden">
-      <Table>
+    <div className="rounded-md border overflow-x-auto">
+      <Table className="min-w-[600px]">
         <TableHeader>
           <TableRow>
             <TableHead>Nome</TableHead>
