@@ -190,10 +190,11 @@ const PLATAFORMAS: Plataforma[] = [
     site: "https://ads.google.com/aw/apicenter", doc: "https://developers.google.com/google-ads/api/docs/start",
     events: ["ad_spend_update", "campaign_status_change"],
     steps: [
-      "Crie uma conta de gerenciador (MCC) em ads.google.com/home/tools/manager-accounts",
-      "Vincule sua conta de anunciante ao MCC",
-      "No MCC, acesse Ferramentas → Centro de API e copie o Developer Token",
-      "Copie também o Customer ID (número da conta, formato XXX-XXX-XXXX, sem hífens)",
+      "Acesse console.cloud.google.com → APIs → Ative a Google Ads API",
+      "Crie credenciais OAuth2 (Client ID e Client Secret)",
+      "No MCC (ads.google.com), copie o Developer Token (Ferramentas → Centro de API)",
+      "Gere o Refresh Token usando o OAuth Playground (developers.google.com/oauthplayground)",
+      "Copie o Customer ID (número da conta, formato XXX-XXX-XXXX, sem hífens)",
     ],
     needsSecret: true, usesWebhook: false, skipAutoTest: true, keyValidation: { hint: "Developer Token do MCC (ex: AbCdEfG...)" },
     categoria: "anuncios",
@@ -309,6 +310,9 @@ const Integracoes = () => {
   const [wizardStep, setWizardStep] = useState(0);
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
+  const [googleClientId, setGoogleClientId] = useState("");
+  const [googleClientSecret, setGoogleClientSecret] = useState("");
+  const [googleRefreshToken, setGoogleRefreshToken] = useState("");
   const [ambiente, setAmbiente] = useState("producao");
   const [saving, setSaving] = useState(false);
   const [keyError, setKeyError] = useState("");
@@ -437,6 +441,9 @@ const Integracoes = () => {
     setWizardStep(isEdit ? 1 : 0);
     setApiKey("");
     setApiSecret("");
+    setGoogleClientId("");
+    setGoogleClientSecret("");
+    setGoogleRefreshToken("");
     const integ = integracoes.find((i: any) => i.plataforma === platId);
     setAmbiente(integ?.ambiente || "producao");
     setSelectedModel(integ?.webhook_secret || LLM_MODELS[platId]?.[0]?.value || '');
@@ -449,6 +456,9 @@ const Integracoes = () => {
     setWizardStep(0);
     setApiKey("");
     setApiSecret("");
+    setGoogleClientId("");
+    setGoogleClientSecret("");
+    setGoogleRefreshToken("");
     setKeyError("");
   };
 
@@ -520,8 +530,29 @@ const Integracoes = () => {
       toast.error("A URL do servidor é obrigatória para a Evolution API");
       return;
     }
+    // Google Ads requires OAuth2 credentials
+    if (currentPlat.id === 'google_ads') {
+      if (!googleClientId.trim() || !googleClientSecret.trim() || !googleRefreshToken.trim()) {
+        toast.error("Client ID, Client Secret e Refresh Token são obrigatórios para o Google Ads");
+        return;
+      }
+      if (!apiSecret.trim()) {
+        toast.error("Customer ID é obrigatório para o Google Ads");
+        return;
+      }
+    }
     setSaving(true);
     try {
+      // For Google Ads, store OAuth2 credentials as JSON in webhook_secret
+      let webhookSecretValue = currentPlat.categoria === 'ia' && selectedModel ? selectedModel : (apiSecret.trim() || null);
+      if (currentPlat.id === 'google_ads') {
+        webhookSecretValue = JSON.stringify({
+          client_id: googleClientId.trim(),
+          client_secret: googleClientSecret.trim(),
+          refresh_token: googleRefreshToken.trim(),
+        });
+      }
+
       const { error } = await (supabase as any)
         .from('integracoes')
         .upsert({
@@ -529,7 +560,7 @@ const Integracoes = () => {
           plataforma: connectDialog,
           api_key_encrypted: isWebhookOnly ? 'webhook_only' : apiKey.trim(),
           api_secret_encrypted: apiSecret.trim() || null,
-          webhook_secret: currentPlat.categoria === 'ia' && selectedModel ? selectedModel : (apiSecret.trim() || null),
+          webhook_secret: webhookSecretValue,
           ambiente,
           ativo: true,
         }, { onConflict: 'empresa_id,plataforma' });
@@ -1094,6 +1125,45 @@ const Integracoes = () => {
                     <p className="text-xs text-muted-foreground mt-1">Número da conta no canto superior direito do Google Ads (remova os hífens)</p>
                   )}
                 </div>
+              )}
+              {/* Google Ads OAuth2 fields */}
+              {currentPlat.id === 'google_ads' && (
+                <>
+                  <div>
+                    <Label>Client ID (OAuth2) *</Label>
+                    <Input
+                      value={googleClientId}
+                      onChange={e => setGoogleClientId(e.target.value)}
+                      placeholder="Ex: 123456789-abc.apps.googleusercontent.com"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Credencial OAuth2 do Google Cloud Console</p>
+                  </div>
+                  <div>
+                    <Label>Client Secret (OAuth2) *</Label>
+                    <Input
+                      type="password"
+                      value={googleClientSecret}
+                      onChange={e => setGoogleClientSecret(e.target.value)}
+                      placeholder="Cole o Client Secret aqui"
+                    />
+                  </div>
+                  <div>
+                    <Label>Refresh Token *</Label>
+                    <Input
+                      type="password"
+                      value={googleRefreshToken}
+                      onChange={e => setGoogleRefreshToken(e.target.value)}
+                      placeholder="Cole o Refresh Token gerado no OAuth Playground"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Gere em{" "}
+                      <a href="https://developers.google.com/oauthplayground" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                        OAuth Playground
+                      </a>
+                      {" "}com scope ads.readonly
+                    </p>
+                  </div>
+                </>
               )}
               {/* Model selector for IA platforms on step 1 */}
               {currentPlat.categoria === 'ia' && LLM_MODELS[currentPlat.id] && (

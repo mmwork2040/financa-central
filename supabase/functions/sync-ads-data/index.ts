@@ -134,18 +134,106 @@ async function fetchMetaAdsData(apiKey: string, periodo: number): Promise<Platfo
   };
 }
 
-async function fetchGoogleAdsData(apiKey: string, _periodo: number): Promise<PlatformMetrics> {
-  // Google Ads requires OAuth + developer token + customer ID
-  // This is a placeholder that returns empty data until properly configured
+async function getGoogleAccessToken(clientId: string, clientSecret: string, refreshToken: string): Promise<string> {
+  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    }),
+  });
+  const tokenData = await tokenRes.json();
+  if (tokenData.error) {
+    throw new Error(`Google OAuth2: ${tokenData.error_description || tokenData.error}`);
+  }
+  return tokenData.access_token;
+}
+
+async function fetchGoogleAdsData(
+  developerToken: string,
+  customerId: string,
+  clientId: string,
+  clientSecret: string,
+  refreshToken: string,
+  periodo: number
+): Promise<PlatformMetrics> {
+  const accessToken = await getGoogleAccessToken(clientId, clientSecret, refreshToken);
+
+  const dateFrom = new Date();
+  dateFrom.setDate(dateFrom.getDate() - periodo);
+  const since = dateFrom.toISOString().split("T")[0].replace(/-/g, "");
+  const until = new Date().toISOString().split("T")[0].replace(/-/g, "");
+
+  // Use Google Ads REST API (v17) with GAQL query
+  const query = `SELECT campaign.name, metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.conversions, metrics.conversions_value FROM campaign WHERE segments.date BETWEEN '${since.slice(0,4)}-${since.slice(4,6)}-${since.slice(6,8)}' AND '${until.slice(0,4)}-${until.slice(4,6)}-${until.slice(6,8)}' AND campaign.status != 'REMOVED'`;
+
+  const cleanCustomerId = customerId.replace(/-/g, "");
+
+  const res = await fetch(
+    `https://googleads.googleapis.com/v17/customers/${cleanCustomerId}/googleAds:searchStream`,
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "developer-token": developerToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query }),
+    }
+  );
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new Error(`Google Ads API (${res.status}): ${errBody.slice(0, 300)}`);
+  }
+
+  const results = await res.json();
+  
+  let totalGasto = 0;
+  let totalCliques = 0;
+  let totalImpressoes = 0;
+  let totalConversoes = 0;
+  let totalReceita = 0;
+  const campanhas: CampaignData[] = [];
+
+  // searchStream returns an array of result batches
+  for (const batch of results || []) {
+    for (const row of batch.results || []) {
+      const gasto = (Number(row.metrics?.costMicros || 0)) / 1000000;
+      const impressoes = Number(row.metrics?.impressions || 0);
+      const cliques = Number(row.metrics?.clicks || 0);
+      const conversoes = Number(row.metrics?.conversions || 0);
+      const receita = Number(row.metrics?.conversionsValue || 0);
+
+      totalGasto += gasto;
+      totalCliques += cliques;
+      totalImpressoes += impressoes;
+      totalConversoes += conversoes;
+      totalReceita += receita;
+
+      campanhas.push({
+        nome: row.campaign?.name || "Sem nome",
+        gasto,
+        impressoes,
+        cliques,
+        conversoes,
+        receita,
+      });
+    }
+  }
+
   return {
     plataforma: "Google Ads",
-    totalGasto: 0,
-    totalReceita: 0,
-    totalCliques: 0,
-    totalImpressoes: 0,
-    totalConversoes: 0,
-    roas: 0,
-    campanhas: [],
+    totalGasto,
+    totalReceita,
+    totalCliques,
+    totalImpressoes,
+    totalConversoes,
+    roas: totalGasto > 0 ? totalReceita / totalGasto : 0,
+    campanhas,
   };
 }
 
@@ -190,7 +278,7 @@ Deno.serve(async (req) => {
 
     const { data: integracoes, error: fetchError } = await adminSupabase
       .from("integracoes")
-      .select("plataforma, api_key_encrypted, api_secret_encrypted, ambiente")
+      .select("plataforma, api_key_encrypted, api_secret_encrypted, webhook_secret, ambiente")
       .eq("empresa_id", empresa_id)
       .eq("ativo", true)
       .in("plataforma", ["meta_ads", "google_ads"]);
@@ -208,7 +296,29 @@ Deno.serve(async (req) => {
         if (integ.plataforma === "meta_ads") {
           metrics = await fetchMetaAdsData(apiKey, periodo);
         } else if (integ.plataforma === "google_ads") {
-          metrics = await fetchGoogleAdsData(apiKey, periodo);
+          // Parse OAuth2 credentials from webhook_secret
+          let oauth2: { client_id: string; client_secret: string; refresh_token: string } | null = null;
+          try {
+            oauth2 = JSON.parse(integ.webhook_secret || "{}");
+          } catch { oauth2 = null; }
+
+          if (!oauth2?.client_id || !oauth2?.client_secret || !oauth2?.refresh_token) {
+            throw new Error("Credenciais OAuth2 (Client ID, Client Secret, Refresh Token) não configuradas");
+          }
+
+          const customerId = integ.api_secret_encrypted || "";
+          if (!customerId) {
+            throw new Error("Customer ID não configurado");
+          }
+
+          metrics = await fetchGoogleAdsData(
+            apiKey, // developer token
+            customerId,
+            oauth2.client_id,
+            oauth2.client_secret,
+            oauth2.refresh_token,
+            periodo
+          );
         } else {
           continue;
         }
