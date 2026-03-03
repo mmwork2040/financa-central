@@ -2,11 +2,12 @@
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { AppLayout } from "@/layouts/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import PageTransition from "@/components/common/PageTransition";
 
 // Pages
 import LandingPage from "./pages/LandingPage";
@@ -46,10 +47,10 @@ const App = () => {
               <Sonner />
               <Routes>
                 {/* Public routes */}
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/install" element={<Install />} />
+                <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+                <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+                <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
+                <Route path="/install" element={<PageTransition><Install /></PageTransition>} />
 
                 {/* Protected routes */}
                 <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
