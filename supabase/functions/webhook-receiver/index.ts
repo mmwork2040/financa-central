@@ -284,6 +284,29 @@ Deno.serve(async (req) => {
       // Create lancamento (receita) automatically if approved
       if (saleData.status === "aprovada") {
         const dataVenda = String(saleData.data_venda).split("T")[0] || new Date().toISOString().split("T")[0];
+
+        // Find principal bank account (or single account) for the empresa
+        let contaBancariaId: string | null = null;
+        const { data: contaPrincipal } = await supabase
+          .from("contas_bancarias")
+          .select("id")
+          .eq("empresa_id", empresaId)
+          .eq("principal", true)
+          .maybeSingle();
+
+        if (contaPrincipal) {
+          contaBancariaId = contaPrincipal.id;
+        } else {
+          // If no principal, use the only account if there's exactly one
+          const { data: todasContas } = await supabase
+            .from("contas_bancarias")
+            .select("id")
+            .eq("empresa_id", empresaId);
+          if (todasContas && todasContas.length === 1) {
+            contaBancariaId = todasContas[0].id;
+          }
+        }
+
         const { data: lancamento, error: lancError } = await supabase
           .from("lancamentos")
           .insert({
@@ -296,6 +319,7 @@ Deno.serve(async (req) => {
             status: "pago",
             origem: "integracao",
             ...(clienteId ? { cliente_id: clienteId } : {}),
+            ...(contaBancariaId ? { conta_bancaria_id: contaBancariaId } : {}),
           })
           .select("id")
           .single();
@@ -304,6 +328,32 @@ Deno.serve(async (req) => {
           console.error("Erro ao inserir lançamento:", lancError);
         } else {
           lancamentoId = lancamento.id;
+
+          // Update bank account balance (credit for receita)
+          if (contaBancariaId) {
+            const { error: saldoError } = await supabase.rpc("update_saldo_conta", {
+              _conta_id: contaBancariaId,
+              _valor: saleData.valor_liquido,
+              _tipo: "receita",
+            });
+
+            // Fallback: direct update if RPC doesn't exist
+            if (saldoError) {
+              console.warn("RPC update_saldo_conta não encontrada, atualizando diretamente:", saldoError.message);
+              const { data: contaAtual } = await supabase
+                .from("contas_bancarias")
+                .select("saldo_atual")
+                .eq("id", contaBancariaId)
+                .single();
+
+              if (contaAtual) {
+                await supabase
+                  .from("contas_bancarias")
+                  .update({ saldo_atual: contaAtual.saldo_atual + saleData.valor_liquido })
+                  .eq("id", contaBancariaId);
+              }
+            }
+          }
         }
       }
     }
