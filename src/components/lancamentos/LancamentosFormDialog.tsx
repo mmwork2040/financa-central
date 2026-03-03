@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import { TipoSelect } from "./form/TipoSelect";
@@ -16,6 +17,7 @@ import { GenericSelect } from "./form/GenericSelect";
 import { QuickAddContaBancariaModal } from "./form/QuickAddContaBancariaModal";
 import { QuickAddFormaPagamentoModal } from "./form/QuickAddFormaPagamentoModal";
 import { QuickAddProjetoModal } from "./form/QuickAddProjetoModal";
+import { formatCurrency } from "@/utils/formatters";
 
 export const LancamentosFormDialog = () => {
   const { 
@@ -42,6 +44,7 @@ export const LancamentosFormDialog = () => {
 
   const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita" | "investimento">(formData.tipo || "despesa");
   const [selectedStatus, setSelectedStatus] = useState<"pendente" | "pago" | "recebido" | "cancelado">(formData.status || "pendente");
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     setSelectedTipo(formData.tipo || "despesa");
@@ -214,11 +217,37 @@ export const LancamentosFormDialog = () => {
           <Button variant="outline" onClick={() => setOpenModal(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={!formData.descricao || !formData.data_vencimento}>
+          <Button onClick={() => setConfirmOpen(true)} disabled={!formData.descricao || !formData.data_vencimento}>
             {selectedId ? "Atualizar" : "Cadastrar"}
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar {selectedId ? "atualização" : "cadastro"}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>Deseja {selectedId ? "atualizar" : "registrar"} o seguinte lançamento?</p>
+                <div className="rounded-lg border bg-muted/50 p-3 space-y-1">
+                  <p><strong>Descrição:</strong> {formData.descricao}</p>
+                  <p><strong>Tipo:</strong> {selectedTipo === "receita" ? "Receita" : selectedTipo === "investimento" ? "Investimento" : "Despesa"}</p>
+                  <p><strong>Valor:</strong> {formatCurrency(formData.valor || 0)}</p>
+                  <p><strong>Vencimento:</strong> {formData.data_vencimento ? new Date(formData.data_vencimento + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</p>
+                  <p><strong>Status:</strong> {selectedStatus === "pendente" ? "Pendente" : selectedStatus === "pago" ? "Pago" : selectedStatus === "recebido" ? "Recebido" : "Cancelado"}</p>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmOpen(false); handleSave(); }}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
