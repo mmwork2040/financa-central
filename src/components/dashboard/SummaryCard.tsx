@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
 import { useValuesVisibility, maskValue } from "@/contexts/ValuesVisibilityContext";
 
@@ -10,6 +10,7 @@ interface SummaryCardProps {
   description: string;
   icon: LucideIcon;
   iconColor: string;
+  iconBg?: string;
   isCurrency?: boolean;
 }
 
@@ -19,6 +20,7 @@ export const SummaryCard = ({
   description,
   icon: Icon,
   iconColor,
+  iconBg = "bg-primary/10",
   isCurrency = false,
 }: SummaryCardProps) => {
   const { visible } = useValuesVisibility();
@@ -26,13 +28,15 @@ export const SummaryCard = ({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-6 pb-1 sm:pb-2">
-        <CardTitle className="text-xs sm:text-sm font-medium truncate pr-2">{title}</CardTitle>
-        <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 ${iconColor}`} />
-      </CardHeader>
-      <CardContent className="p-3 sm:p-6 pt-0">
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`flex items-center justify-center h-10 w-10 rounded-full ${iconBg}`}>
+            <Icon className={`h-5 w-5 ${iconColor}`} />
+          </div>
+          <span className="text-xs sm:text-sm text-muted-foreground font-medium">{title}</span>
+        </div>
         <div className={`text-lg sm:text-2xl font-bold ${iconColor} truncate`}>{displayValue}</div>
-        <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">{description}</p>
+        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 hidden sm:block">{description}</p>
       </CardContent>
     </Card>
   );

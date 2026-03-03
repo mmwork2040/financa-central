@@ -212,19 +212,19 @@ export const Sidebar = () => {
             <img src={companyLogo} alt="Logo" className="h-7 w-7 rounded object-contain shrink-0" />
           ) : null}
           {showExpanded && (
-            <h1 className="text-base font-bold text-sidebar-foreground truncate">Finança Central</h1>
+            <h1 className="text-base font-bold font-heading text-foreground truncate">Contabiliza AI</h1>
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <NotificacoesDropdown />
           {isMobile ? (
-            <button onClick={() => setMobileOpen(false)} className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all">
+            <button onClick={() => setMobileOpen(false)} className="rounded-full p-1 text-foreground hover:bg-accent transition-all">
               <X size={18} />
             </button>
           ) : (
             <button
               onClick={toggle}
-              className="rounded-full p-1.5 text-sidebar-foreground bg-sidebar-accent/50 hover:bg-sidebar-accent transition-all"
+              className="rounded-full p-1.5 text-muted-foreground bg-accent/50 hover:bg-accent transition-all"
               aria-label={isExpanded ? "Recolher menu" : "Expandir menu"}
             >
               {isExpanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
@@ -234,18 +234,18 @@ export const Sidebar = () => {
       </div>
       
       {/* Company switcher */}
-      <div className="border-t border-b border-sidebar-border px-3 py-2.5">
+      <div className="border-t border-b border-border px-3 py-2.5">
         {showExpanded ? (
           <div className="space-y-1.5">
             <Link to="/profile" className="block hover:opacity-80 transition-opacity">
-              <div className="text-sidebar-foreground text-sm font-medium truncate">{userProfile?.nome || "Usuário"}</div>
-              <div className="text-sidebar-foreground/60 text-[10px] truncate">
+              <div className="text-foreground text-sm font-medium truncate">{userProfile?.nome || "Usuário"}</div>
+              <div className="text-muted-foreground text-[10px] truncate">
                 {isSuperAdmin ? "Super Admin" : activeEmpresa?.role === 'admin' ? "Administrador" : activeEmpresa?.role === 'usuario' ? "Usuário" : activeEmpresa?.role === 'leitura' ? "Leitura" : "Usuário"}
               </div>
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex w-full items-center justify-between rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2.5 py-1.5 text-xs text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
+                <button className="flex w-full items-center justify-between rounded-xl border border-border bg-accent/50 px-2.5 py-1.5 text-xs text-foreground hover:bg-accent transition-colors">
                   <div className="flex items-center gap-1.5 truncate">
                     <Building2 size={13} />
                     <span className="truncate">{activeEmpresa?.empresa_nome || "Sem empresa"}</span>
@@ -295,7 +295,7 @@ export const Sidebar = () => {
           <div className="flex justify-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="rounded-md p-1.5 text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
+                <button className="rounded-xl p-1.5 text-foreground hover:bg-accent transition-colors">
                   <Building2 size={18} />
                 </button>
               </DropdownMenuTrigger>
@@ -399,7 +399,7 @@ export const Sidebar = () => {
       </nav>
       
       {/* Logout */}
-      <div className="px-2 py-3 border-t border-sidebar-border">
+      <div className="px-2 py-3 border-t border-border">
         <button 
           onClick={handleLogout}
           className={cn("sidebar-link w-full", !showExpanded && "justify-center")}
@@ -432,7 +432,8 @@ export const Sidebar = () => {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar border-r border-sidebar-border shadow-lg transition-all duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r transition-all duration-300 ease-in-out",
+          "bg-card/80 backdrop-blur-xl border-border shadow-lg",
           isMobile
             ? cn("w-72", mobileOpen ? "translate-x-0" : "-translate-x-full")
             : isExpanded ? "w-60" : "w-14"
