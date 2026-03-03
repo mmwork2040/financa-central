@@ -670,36 +670,61 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 
 IMPORTANTE: O Google Ads requer autenticação OAuth2, portanto a conexão é feita diretamente no n8n (não via API Key no sistema).
 
-Passos para configurar no n8n:
-1. Adicione o nó "Google Ads" ao seu workflow
-2. Configure as credenciais OAuth2 do Google Ads no n8n (Client ID, Client Secret, Developer Token)
-3. Selecione a campanha ou use "Get All" para buscar todas
-4. Conecte a saída ao nó "HTTP Request" abaixo para enviar os dados ao sistema
+Configuração do nó Google Ads no n8n:
+1. Adicione o nó "Google Ads" ao workflow
+2. Configure as credenciais OAuth2 (Client ID, Client Secret, Developer Token)
+3. Resource: "Campaign"
+4. Operation: "Get Many"
+5. Preencha o "Manager Customer ID" (ID da conta MCC, ex: 5230333372)
+6. Preencha o "Client Customer ID" (ID da conta do cliente, sem hifens)
 
-O nó HTTP Request envia os dados processados para o endpoint n8n-query com a action "registrar-anuncios-google".
+⚠️ ATENÇÃO: Valores monetários retornados pelo Google Ads estão em MICROS (millionths). 
+Divida todos os campos de valor (cost_micros, etc.) por 1.000.000 para obter o valor real.
+Exemplo: cost_micros = 5230000 → gasto real = R$ 5,23
+
+Processamento dos dados (nó Code/Function entre Google Ads e HTTP Request):
+\`\`\`javascript
+// Exemplo de código para processar os dados do Google Ads
+return items.map(item => {
+  const campaign = item.json;
+  return {
+    json: {
+      nome: campaign.campaign?.name || campaign.name,
+      gasto: (campaign.metrics?.cost_micros || 0) / 1000000,
+      impressoes: parseInt(campaign.metrics?.impressions || "0"),
+      cliques: parseInt(campaign.metrics?.clicks || "0"),
+      conversoes: parseInt(campaign.metrics?.conversions || "0"),
+      receita: (campaign.metrics?.conversions_value || 0),
+    }
+  };
+});
+\`\`\`
+
+Após processar, agrupe em array e envie via HTTP Request para o endpoint n8n-query com a action "registrar-anuncios-google".
 
 Campos enviados por campanha:
 - nome: nome da campanha
-- gasto: valor gasto (número)
+- gasto: valor gasto em reais (já dividido por 1.000.000)
 - impressoes: total de impressões
 - cliques: total de cliques
 - conversoes: total de conversões
-- receita: receita gerada
+- receita: receita gerada pelas conversões
 
 Parâmetros:
 - empresa_id (obrigatório)
 - user_id (obrigatório)
-- campanhas: array JSON com dados das campanhas
+- campanhas: array JSON com dados das campanhas processadas
 
 REGRAS:
 - Use o nó nativo do Google Ads no n8n para autenticação OAuth2
-- Processe os dados no n8n antes de enviar ao sistema
+- SEMPRE divida valores em micros por 1.000.000 antes de enviar
+- Processe os dados com um nó Code/Function antes do HTTP Request
 - Envie os dados consolidados via HTTP Request para o endpoint n8n-query`,
     category: "Anúncios",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "user_id", type: "string", required: true, description: "UUID do usuário" },
-      { name: "campanhas", type: "json", required: true, description: "Array de campanhas com métricas (nome, gasto, impressoes, cliques, conversoes, receita)" },
+      { name: "campanhas", type: "json", required: true, description: "Array de campanhas processadas (valores já divididos por 1M). Campos: nome, gasto, impressoes, cliques, conversoes, receita" },
     ],
     body: { action: "registrar-anuncios-google", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", campanhas: "{{ $json.campanhas }}" },
   },
