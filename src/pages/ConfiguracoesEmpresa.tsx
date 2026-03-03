@@ -13,7 +13,17 @@ import CepAddressFields, { AddressData } from "@/components/common/CepAddressFie
 import { phoneInputMask } from "@/utils/format";
 
 
-const SYSTEM_PRIMARY_COLOR = "#f97316";
+const SYSTEM_PRIMARY_COLOR = "#0891B2";
+
+function getContrastColor(hex: string): string {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return "#ffffff";
+  const r = parseInt(result[1], 16);
+  const g = parseInt(result[2], 16);
+  const b = parseInt(result[3], 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55 ? "#0f172a" : "#ffffff";
+}
 
 const ConfiguracoesEmpresa = () => {
   const { empresaId, userRole, isSuperAdmin } = useAuth();
@@ -286,10 +296,15 @@ const ConfiguracoesEmpresa = () => {
             <div className="space-y-3">
               <Label htmlFor="cor_primaria">Cor Primária</Label>
               <div className="flex flex-wrap items-center gap-3">
-                <input type="color" id="cor_primaria" value={empresa.cor_primaria} onChange={(e) => handleColorChange(e.target.value)} className="h-10 w-14 cursor-pointer rounded border border-input" disabled={!isAdmin} />
+                <input type="color" id="cor_primaria" value={empresa.cor_primaria} onChange={(e) => handleColorChange(e.target.value)} className="h-10 w-14 cursor-pointer rounded-xl border border-input" disabled={!isAdmin} />
                 <Input value={empresa.cor_primaria} onChange={(e) => handleColorChange(e.target.value)} className="w-28" placeholder={SYSTEM_PRIMARY_COLOR} disabled={!isAdmin} />
-                <div className="h-10 w-full sm:flex-1 rounded-md border" style={{ backgroundColor: empresa.cor_primaria }} />
+                <div className="h-10 w-full sm:flex-1 rounded-xl border flex items-center justify-center text-sm font-semibold" style={{ backgroundColor: empresa.cor_primaria, color: getContrastColor(empresa.cor_primaria) }}>
+                  Texto de exemplo
+                </div>
               </div>
+              <p className="text-xs text-muted-foreground">
+                A cor será aplicada em botões, links e destaques. Os textos se adaptam automaticamente para garantir contraste.
+              </p>
               {colorChanged && isAdmin && (
                 <div className="flex items-center gap-2 pt-1">
                   <Button type="button" variant="outline" size="sm" onClick={handleUndoColor} className="gap-1.5">
