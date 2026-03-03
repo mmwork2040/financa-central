@@ -14,6 +14,7 @@ export const LancamentosContainer = () => {
   return (
     <>
       <LancamentosHeader />
+      <LancamentosSummary />
       
       {loading ? (
         <div className="flex h-40 items-center justify-center">
@@ -24,10 +25,7 @@ export const LancamentosContainer = () => {
           <p className="text-muted-foreground">Nenhum lançamento encontrado</p>
         </div>
       ) : (
-        <>
-          <LancamentosTable />
-          <LancamentosSummary />
-        </>
+        <LancamentosTable />
       )}
 
       <LancamentosFormDialog />
