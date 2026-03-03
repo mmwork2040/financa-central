@@ -1460,35 +1460,42 @@ const N8nJsonTemplates = () => {
       </Card>
 
       {/* Instruções do HTTP Request Tool */}
-      <Card className="border-amber-500/30 bg-amber-500/5">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Code2 className="h-4 w-4 text-amber-600" />
-            Como configurar cada HTTP Request Tool
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-xs text-muted-foreground">
-          <div className="space-y-1">
-            <p className="font-semibold text-foreground">No nó HTTP Request Tool (Parameters):</p>
-            <ol className="list-decimal list-inside ml-2 space-y-0.5">
-              <li><strong>Description:</strong> Copie da aba <em>"Descrição"</em> abaixo</li>
-              <li><strong>Method:</strong> POST</li>
-              <li><strong>URL:</strong> Cole o endpoint acima</li>
-              <li><strong>Send Query Parameters:</strong> OFF (não necessário)</li>
-              <li><strong>Send Headers:</strong> ON → Name: <code className="text-[11px] bg-background px-1 rounded">apikey</code> · Value: sua anon key</li>
-              <li><strong>Send Body:</strong> ON</li>
-              <li><strong>Body Content Type:</strong> JSON</li>
-              <li><strong>Specify Body:</strong> <strong>"Using JSON"</strong></li>
-              <li><strong>JSON:</strong> Cole da aba <em>"Body JSON"</em> abaixo (os <code className="text-[11px] bg-background px-1 rounded">{"{{ $fromAI() }}"}</code> serão preenchidos pelo agente)</li>
-            </ol>
-          </div>
-          <div className="mt-2 p-2 rounded border border-red-500/20 bg-red-500/5">
-            <p className="text-xs text-red-600 dark:text-red-400 font-medium">
-              ⚠️ NÃO use "Defined automatically by the model" no Specify Body — o campo <code className="text-[11px]">action</code> ficará ausente e causará erro.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <Collapsible>
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CollapsibleTrigger asChild>
+            <CardHeader className="pb-3 cursor-pointer hover:bg-amber-500/10 transition-colors">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Code2 className="h-4 w-4 text-amber-600" />
+                Como configurar cada HTTP Request Tool
+                <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto transition-transform [[data-state=open]_&]:rotate-180" />
+              </CardTitle>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="space-y-3 text-xs text-muted-foreground pt-0">
+              <div className="space-y-1">
+                <p className="font-semibold text-foreground">No nó HTTP Request Tool (Parameters):</p>
+                <ol className="list-decimal list-inside ml-2 space-y-0.5">
+                  <li><strong>Description:</strong> Copie da aba <em>"Descrição"</em> abaixo</li>
+                  <li><strong>Method:</strong> POST</li>
+                  <li><strong>URL:</strong> Cole o endpoint acima</li>
+                  <li><strong>Send Query Parameters:</strong> OFF (não necessário)</li>
+                  <li><strong>Send Headers:</strong> ON → Name: <code className="text-[11px] bg-background px-1 rounded">apikey</code> · Value: sua anon key</li>
+                  <li><strong>Send Body:</strong> ON</li>
+                  <li><strong>Body Content Type:</strong> JSON</li>
+                  <li><strong>Specify Body:</strong> <strong>"Using JSON"</strong></li>
+                  <li><strong>JSON:</strong> Cole da aba <em>"Body JSON"</em> abaixo (os <code className="text-[11px] bg-background px-1 rounded">{"{{ $fromAI() }}"}</code> serão preenchidos pelo agente)</li>
+                </ol>
+              </div>
+              <div className="mt-2 p-2 rounded border border-red-500/20 bg-red-500/5">
+                <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+                  ⚠️ NÃO use "Defined automatically by the model" no Specify Body — o campo <code className="text-[11px]">action</code> ficará ausente e causará erro.
+                </p>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Search + Add */}
       <div className="flex flex-col sm:flex-row gap-2">
