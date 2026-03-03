@@ -21,6 +21,7 @@ import CategoryDataTable from "@/components/relatorios/CategoryDataTable";
 import ExportDropdown from "@/components/common/ExportDropdown";
 import PredictiveAnalysis from "@/components/relatorios/PredictiveAnalysis";
 import ReconciliationView from "@/components/relatorios/ReconciliationView";
+import CaixaView from "@/components/relatorios/CaixaView";
 
 // Importando o hook personalizado
 import { useRelatoriosData } from "@/hooks/useRelatoriosData";
@@ -387,6 +388,7 @@ const RelatoriosContent = () => {
             <TabsTrigger value="receitas">Receitas</TabsTrigger>
             <TabsTrigger value="despesas">Despesas</TabsTrigger>
             <TabsTrigger value="preditivo">Preditivo</TabsTrigger>
+            <TabsTrigger value="caixa">Caixa</TabsTrigger>
             <TabsTrigger value="conciliacao">Conciliação</TabsTrigger>
           </TabsList>
           
@@ -444,6 +446,10 @@ const RelatoriosContent = () => {
               pendingDespesas={0}
               saldoAtual={totalReceitas - totalDespesas}
             />
+          </TabsContent>
+
+          <TabsContent value="caixa" className="space-y-4">
+            <CaixaView />
           </TabsContent>
 
           <TabsContent value="conciliacao" className="space-y-4">
