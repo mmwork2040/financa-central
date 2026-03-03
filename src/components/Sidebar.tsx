@@ -32,6 +32,8 @@ import {
   Megaphone,
   ScrollText,
   Briefcase,
+  Moon,
+  Sun,
   Code2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -62,6 +64,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NotificacoesDropdown from "@/components/common/NotificacoesDropdown";
+import { useTheme } from "@/contexts/ThemeContext";
+
+const ThemeToggleButton = ({ showExpanded }: { showExpanded: boolean }) => {
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  return (
+    <button
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className={cn("sidebar-link w-full", !showExpanded && "justify-center")}
+      title={isDark ? "Modo claro" : "Modo escuro"}
+    >
+      {isDark ? <Sun size={18} /> : <Moon size={18} />}
+      {showExpanded && <span className="text-sm">{isDark ? "Modo Claro" : "Modo Escuro"}</span>}
+    </button>
+  );
+};
 
 export const Sidebar = () => {
   const { isExpanded, toggle } = useSidebar();
@@ -398,8 +416,9 @@ export const Sidebar = () => {
         </ul>
       </nav>
       
-      {/* Logout */}
-      <div className="px-2 py-3 border-t border-sidebar-border">
+      {/* Theme toggle + Logout */}
+      <div className="px-2 py-3 border-t border-sidebar-border space-y-0.5">
+        <ThemeToggleButton showExpanded={showExpanded} />
         <button 
           onClick={handleLogout}
           className={cn("sidebar-link w-full", !showExpanded && "justify-center")}

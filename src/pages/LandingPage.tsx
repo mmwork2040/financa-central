@@ -126,7 +126,7 @@ const LandingPage = () => {
               Multi-empresa, multi-usuário, totalmente personalizável.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-              <Button size="lg" onClick={() => navigate("/register")} className="text-base px-8">
+              <Button size="lg" variant="gradient" onClick={() => navigate("/register")} className="text-base px-8">
                 Começar Gratuitamente
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -231,7 +231,7 @@ const LandingPage = () => {
           <p className="text-muted-foreground text-lg">
             Crie sua conta em segundos e comece a usar agora. Sem cartão de crédito, sem compromisso.
           </p>
-          <Button size="lg" onClick={() => navigate("/register")} className="text-base px-10">
+          <Button size="lg" variant="gradient" onClick={() => navigate("/register")} className="text-base px-10">
             Criar Conta Gratuitamente
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
