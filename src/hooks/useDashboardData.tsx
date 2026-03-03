@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMonthFilter } from "@/contexts/MonthFilterContext";
 import { startOfMonth, endOfMonth, addMonths, format } from "date-fns";
+import { simularFluxoCaixa } from "@/utils/cashFlowProjection";
 
 interface DashboardSummary {
   totalReceitas: number;
@@ -195,20 +196,25 @@ export const useDashboardData = () => {
       
       const caixaPrevisto = caixaAtual + nextReceitas - nextDespesas;
 
-      // 3. Meses de caixa (runway) = caixa / avg monthly expenses (last 3 months paid)
-      const tresMesesAtras = new Date(hoje);
-      tresMesesAtras.setMonth(tresMesesAtras.getMonth() - 3);
-      const { data: despesasHistorico } = await supabase
+      // 3. Meses de caixa (runway) — simulação mês a mês com recorrências
+      const { data: lancFuturos } = await supabase
         .from('lancamentos')
-        .select('valor')
-        .eq('tipo', 'despesa')
-        .eq('status', 'pago')
-        .gte('data_vencimento', format(tresMesesAtras, 'yyyy-MM-dd'))
-        .lte('data_vencimento', format(hoje, 'yyyy-MM-dd'));
+        .select('tipo, valor, data_vencimento, status, descricao, recorrente, total_parcelas, recorrencia_fim')
+        .in('status', ['pendente', 'aberto'])
+        .gte('data_vencimento', format(hoje, 'yyyy-MM-dd'));
 
-      const totalDespesas3m = despesasHistorico?.reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
-      const mediaMensal = totalDespesas3m / 3;
-      const mesesDeCaixa = mediaMensal > 0 ? Math.round((caixaAtual / mediaMensal) * 10) / 10 : 99;
+      const { data: recorrentes } = await supabase
+        .from('lancamentos')
+        .select('tipo, valor, data_vencimento, status, descricao, recorrente, total_parcelas, recorrencia_fim')
+        .eq('recorrente', true)
+        .is('total_parcelas', null);
+
+      const { mesesDeCaixa } = simularFluxoCaixa(
+        caixaAtual,
+        (lancFuturos || []) as any,
+        (recorrentes || []) as any,
+        12
+      );
 
       setCaixa({ caixaAtual, caixaPrevisto, mesesDeCaixa });
 
@@ -252,8 +258,10 @@ export const useDashboardData = () => {
         ?.filter(l => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto'))
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
 
+      const tresMesesAtrasHealth = new Date(hoje);
+      tresMesesAtrasHealth.setMonth(tresMesesAtrasHealth.getMonth() - 3);
       const receitasRecentes = todosLancamentos
-        ?.filter(l => l.tipo === 'receita' && (l.status === 'pago' || l.status === 'recebido') && new Date(l.data_vencimento) >= tresMesesAtras)
+        ?.filter(l => l.tipo === 'receita' && (l.status === 'pago' || l.status === 'recebido') && new Date(l.data_vencimento) >= tresMesesAtrasHealth)
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
       const mediaReceitaMensal = receitasRecentes / 3;
 
