@@ -381,6 +381,7 @@ export type Database = {
           api_secret_encrypted: string | null
           ativo: boolean
           created_at: string
+          dias_recebimento: number
           empresa_id: string
           id: string
           plataforma: string
@@ -393,6 +394,7 @@ export type Database = {
           api_secret_encrypted?: string | null
           ativo?: boolean
           created_at?: string
+          dias_recebimento?: number
           empresa_id: string
           id?: string
           plataforma: string
@@ -405,6 +407,7 @@ export type Database = {
           api_secret_encrypted?: string | null
           ativo?: boolean
           created_at?: string
+          dias_recebimento?: number
           empresa_id?: string
           id?: string
           plataforma?: string
