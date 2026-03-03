@@ -81,15 +81,22 @@ const LandingPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Aurora background */}
+      <div className="aurora-bg">
+        <div className="aurora-blob aurora-blob-1" />
+        <div className="aurora-blob aurora-blob-2" />
+        <div className="aurora-blob aurora-blob-3" />
+      </div>
+
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="sticky top-0 z-50 border-b border-border dark:border-white/[0.07] bg-background/80 dark:bg-background/60 backdrop-blur-xl">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
               <BarChart3 className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">Contabiliza AI</span>
+            <span className="text-xl font-bold gradient-text">Contabiliza AI</span>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => navigate("/login")}>
@@ -103,17 +110,16 @@ const LandingPage = () => {
       </nav>
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
-        <div className="container mx-auto px-4 py-24 md:py-32 relative">
+      <section className="relative">
+        <div className="container mx-auto px-4 py-24 md:py-32 relative z-10">
           <div className="max-w-3xl mx-auto text-center space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border bg-muted px-4 py-1.5 text-sm text-muted-foreground">
-              <Zap className="h-4 w-4 text-primary" />
-              Gestão financeira simplificada
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm text-primary font-medium">
+              <Zap className="h-4 w-4" />
+              Gestão financeira com IA
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
               Controle suas finanças com{" "}
-              <span className="text-primary">clareza e eficiência</span>
+              <span className="gradient-text">clareza e eficiência</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               Plataforma completa para gerenciar receitas, despesas, contas bancárias e equipe.
@@ -135,7 +141,7 @@ const LandingPage = () => {
       </section>
 
       {/* Stats */}
-      <section className="border-y bg-muted/30">
+      <section className="border-y border-border dark:border-white/[0.07] bg-muted/30 dark:bg-white/[0.02]">
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
@@ -145,7 +151,7 @@ const LandingPage = () => {
             { value: "∞", label: "Lançamentos" }].
             map((stat) =>
             <div key={stat.label}>
-                <div className="text-3xl md:text-4xl font-bold text-primary">{stat.value}</div>
+                <div className="text-3xl md:text-4xl font-bold gradient-text">{stat.value}</div>
                 <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
               </div>
             )}
@@ -154,7 +160,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features */}
-      <section id="features" className="container mx-auto px-4 py-20">
+      <section id="features" className="container mx-auto px-4 py-20 relative z-10">
         <div className="text-center mb-14">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">
             Tudo que você precisa em um só lugar
@@ -165,9 +171,9 @@ const LandingPage = () => {
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) =>
-          <Card key={feature.title} className="group hover:border-primary/50 hover:shadow-lg transition-all duration-300">
+          <Card key={feature.title} className="group hover:border-primary/30">
               <CardContent className="p-6 space-y-3">
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:glow-sm transition-all duration-300">
                   <feature.icon className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">{feature.title}</h3>
@@ -179,7 +185,7 @@ const LandingPage = () => {
       </section>
 
       {/* Highlights */}
-      <section className="bg-muted/30 border-y">
+      <section className="bg-muted/30 dark:bg-white/[0.02] border-y border-border dark:border-white/[0.07]">
         <div className="container mx-auto px-4 py-20">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
@@ -217,7 +223,7 @@ const LandingPage = () => {
       </section>
 
       {/* CTA */}
-      <section className="container mx-auto px-4 py-20">
+      <section className="container mx-auto px-4 py-20 relative z-10">
         <div className="max-w-2xl mx-auto text-center space-y-6">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">
             Pronto para organizar suas finanças?
@@ -233,14 +239,14 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-muted/20">
+      <footer className="border-t border-border dark:border-white/[0.07] bg-muted/20 dark:bg-white/[0.02]">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded bg-primary flex items-center justify-center">
+              <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <BarChart3 className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold text-foreground">Cntabiliza AI</span>
+              <span className="font-semibold gradient-text">Contabiliza AI</span>
             </div>
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} ContabilizaAI. Todos os direitos reservados.
