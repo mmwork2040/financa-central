@@ -193,7 +193,7 @@ const PLATAFORMAS: Plataforma[] = [
       "Acesse console.cloud.google.com → APIs → Ative a Google Ads API",
       "Crie credenciais OAuth2 (Client ID e Client Secret)",
       "No MCC (ads.google.com), copie o Developer Token (Ferramentas → Centro de API)",
-      "Gere o Refresh Token usando o OAuth Playground (developers.google.com/oauthplayground)",
+      "No OAuth Playground (developers.google.com/oauthplayground): selecione 'Google Ads API' na lista OU cole o scope https://www.googleapis.com/auth/adwords → Authorize → Exchange code → copie o Refresh Token",
       "Copie o Customer ID (número da conta, formato XXX-XXX-XXXX, sem hífens)",
     ],
     needsSecret: true, usesWebhook: false, skipAutoTest: true, keyValidation: { hint: "Developer Token do MCC (ex: AbCdEfG...)" },
@@ -1160,7 +1160,7 @@ const Integracoes = () => {
                       <a href="https://developers.google.com/oauthplayground" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                         OAuth Playground
                       </a>
-                      {" "}com scope ads.readonly
+                      {" "}→ selecione "Google Ads API" ou cole o scope <code className="text-xs bg-muted px-1 rounded">https://www.googleapis.com/auth/adwords</code>
                     </p>
                   </div>
                 </>
