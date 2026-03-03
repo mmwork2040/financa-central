@@ -549,8 +549,9 @@ const Integracoes = () => {
       const savedPlataforma = connectDialog;
       closeWizard();
       fetchIntegracoes();
-      // Auto-test connection after saving (only for non-webhook-only platforms)
-      if (!isWebhookOnly) {
+      // Auto-test connection after saving (only for non-webhook-only and non-skipAutoTest platforms)
+      const platConfig = PLATAFORMAS.find(p => p.id === savedPlataforma);
+      if (!isWebhookOnly && !platConfig?.skipAutoTest) {
         setTimeout(() => handleTestConnection(savedPlataforma), 500);
       }
     } catch (error: any) {
@@ -778,6 +779,7 @@ const Integracoes = () => {
                   <div className="mt-3 flex items-center gap-1.5">
                     {status === 'connected' ? (
                       <TooltipProvider delayDuration={200}>
+                        {!plat.skipAutoTest && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -792,6 +794,7 @@ const Integracoes = () => {
                           </TooltipTrigger>
                           <TooltipContent><p>Testar Conexão</p></TooltipContent>
                         </Tooltip>
+                        )}
                         {MOCK_WEBHOOKS[plat.id] && (
                           <Tooltip>
                             <TooltipTrigger asChild>
