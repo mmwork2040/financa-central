@@ -59,7 +59,9 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="mb-4 glass-card rounded-xl px-2 py-2">
               <MonthCarousel />
             </div>
-            {children}
+            <div className="animate-fade-in">
+              {children}
+            </div>
           </div>
         </main>
         <MobileBottomNav />
