@@ -1,57 +1,31 @@
 
 
-## Plano: Caixa da Empresa no Dashboard/Relatórios + Receitas/Despesas Previstas vs Executadas em Lançamentos
+## Plano: Remover personalização de cores e manter apenas Light/Dark mode
 
-### Conceito de "Caixa"
+### Objetivo
+Eliminar a possibilidade do usuário alterar a cor primária do sistema. A cor será sempre a do design system (#22C55E verde). Apenas alternância Light/Dark mode será permitida.
 
-O **Caixa** é o saldo consolidado de todas as contas bancárias da empresa (`sum(saldo_atual)` da tabela `contas_bancarias`). Diferente do "saldo do mês" (receitas - despesas do mês), o caixa representa o dinheiro real disponível.
+### Alterações
 
-### 1. Dashboard — Novos Cards de Caixa
+**1. `src/hooks/useCompanyTheme.ts`** — Simplificar drasticamente
+- Remover toda a lógica de buscar `cor_primaria` do banco e aplicar dinamicamente
+- O hook retorna `themeReady: true` imediatamente (sem fetch)
+- As cores CSS padrão definidas em `index.css` serão usadas sem override
 
-Adicionar 2 novos cards no grid de resumo do Dashboard:
+**2. `src/pages/ConfiguracoesEmpresa.tsx`** — Remover seção de cor
+- Remover o bloco inteiro de "Cor Primária" (linhas 286-303): color picker, input hex, preview, botões Desfazer/Confirmar
+- Remover states relacionados: `originalColor`, `colorChanged`
+- Remover funções: `handleColorChange`, `handleUndoColor`, `handleConfirmColor`
+- Remover `cor_primaria` do `handleSave` (não enviar mais para o banco)
+- Remover import `Undo2`, `Check` se não usados em outro lugar
 
-- **Caixa Atual**: soma de `saldo_atual` de todas as `contas_bancarias`. Ícone `Landmark`, cor azul.
-- **Caixa Previsto (Mês Seguinte)**: Caixa Atual + receitas pendentes do mês seguinte - despesas pendentes do mês seguinte. Ícone `TrendingUp`, cor verde/vermelho conforme positivo/negativo.
-- **Meses de Caixa**: Caixa Atual / média mensal de despesas (últimos 3 meses pagos). Exibe "X meses" como indicador de runway. Ícone `Calendar`.
+**3. `src/index.css`** — Já está correto
+- As variáveis CSS de light e dark mode já definem `--primary: 142 71% 45%` (verde #22C55E). Nenhuma alteração necessária.
 
-Esses dados serão calculados no `useDashboardData.tsx`, buscando `contas_bancarias` e lançamentos do mês seguinte.
-
-### 2. Relatórios — Seção de Caixa
-
-No `Relatorios.tsx`, adicionar uma nova aba **"Caixa"** com:
-- Card de Caixa Atual (soma saldos bancários)
-- Projeção de caixa mês a mês (gráfico de linha: caixa atual + receitas previstas - despesas previstas para os próximos 3 meses)
-- Indicador de "Meses de Caixa" (runway)
-
-### 3. Lançamentos — Previsto vs Executado
-
-No `LancamentosSummary.tsx`, separar os totais em **Executado** (status pago/recebido) e **Previsto** (status pendente/aberto):
-
-```text
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│ Receitas     │  │ Despesas     │  │ Receitas     │  │ Despesas     │
-│ Executadas   │  │ Executadas   │  │ Previstas    │  │ Previstas    │
-│ R$ X.XXX     │  │ R$ X.XXX     │  │ R$ X.XXX     │  │ R$ X.XXX     │
-└─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘
-```
-
-Na `LancamentosTable`, adicionar um badge visual indicando se o lançamento já foi **Executado** (✓ verde) ou é **Previsto** (🕐 amarelo), baseado no status.
-
-### Arquivos a editar
+### Arquivos
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/hooks/useDashboardData.tsx` | Buscar `contas_bancarias`, calcular caixa atual, caixa previsto mês seguinte, meses de caixa |
-| `src/pages/Dashboard.tsx` | Adicionar 3 cards de caixa no grid (Caixa Atual, Previsto, Meses de Caixa) |
-| `src/components/lancamentos/LancamentosSummary.tsx` | Separar totais em Executado vs Previsto (6 cards) |
-| `src/components/lancamentos/LancamentosTable.tsx` | Adicionar badge Executado/Previsto na coluna de status |
-| `src/pages/Relatorios.tsx` | Adicionar aba "Caixa" com card + projeção |
-| `src/components/relatorios/CaixaView.tsx` | **Criar** — componente da aba Caixa nos relatórios |
-
-### Dados necessários (sem migração)
-
-Todos os dados já existem:
-- `contas_bancarias.saldo_atual` — caixa real
-- `lancamentos` com filtro por mês seguinte e status pendente — previsões
-- `lancamentos` dos últimos 3 meses com status pago — média de despesas para calcular runway
+| `src/hooks/useCompanyTheme.ts` | Simplificar: retornar `true` sem fetch/apply |
+| `src/pages/ConfiguracoesEmpresa.tsx` | Remover seção de cor primária e lógica associada |
 
