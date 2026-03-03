@@ -328,6 +328,7 @@ Deno.serve(async (req) => {
       "recebimentos-digitais": { tela: "vendas_digitais", tipo: "pode_incluir" },
       "listar-anuncios": { tela: "anuncios", tipo: "pode_incluir" },
       "listar-usuarios": { tela: "users" },
+      "extrato-conta": { tela: "contas_bancarias" },
       
       // Criação (pode_incluir)
       "criar-lancamento": { tela: "lancamentos", tipo: "pode_incluir" },
@@ -337,6 +338,7 @@ Deno.serve(async (req) => {
       "criar-conta-bancaria": { tela: "contas_bancarias", tipo: "pode_incluir" },
       "criar-forma-pagamento": { tela: "formas_pagamento", tipo: "pode_incluir" },
       "criar-projeto": { tela: "projetos", tipo: "pode_incluir" },
+      "transferir-entre-contas": { tela: "contas_bancarias", tipo: "pode_alterar" },
       // Edição (pode_alterar)
       "editar-cliente": { tela: "clientes", tipo: "pode_alterar" },
       "editar-fornecedor": { tela: "fornecedores", tipo: "pode_alterar" },
@@ -957,6 +959,24 @@ Deno.serve(async (req) => {
           if (fpId) { forma_pagamento_id = fpId; registros_criados.forma_pagamento = { id: fpId, descricao: forma_pagamento_nome }; }
         }
 
+        // ── Fallback para conta bancária: principal ou única ──
+        if (!conta_bancaria_id) {
+          const { data: allContas } = await supabase
+            .from("contas_bancarias")
+            .select("id, nome, principal")
+            .eq("empresa_id", empresa_id);
+          const contas = allContas || [];
+          const principal = contas.find((c: any) => c.principal);
+          if (principal) {
+            conta_bancaria_id = principal.id;
+            registros_criados.conta_bancaria_fallback = { id: principal.id, nome: principal.nome, motivo: "conta_principal" };
+          } else if (contas.length === 1) {
+            conta_bancaria_id = contas[0].id;
+            registros_criados.conta_bancaria_fallback = { id: contas[0].id, nome: contas[0].nome, motivo: "unica_conta" };
+          }
+          // Se múltiplas contas e nenhuma principal, conta_bancaria_id permanece null
+        }
+
         // Validação condicional: receita exige cliente, despesa exige fornecedor
         const camposObrigatorios: { campo: string; valor: string | null; label: string }[] = [
           { campo: "categoria_id", valor: categoria_id, label: "Categoria (envie categoria_id ou categoria_nome)" },
@@ -1050,6 +1070,24 @@ Deno.serve(async (req) => {
           .single();
 
         if (insertError) throw insertError;
+
+        // ── Atualizar saldo da conta bancária ──
+        if (conta_bancaria_id && ["pago", "recebido"].includes(status_lanc || "")) {
+          const delta = tipo === "receita" ? valorNumerico : -valorNumerico;
+          const { data: contaAtual } = await supabase
+            .from("contas_bancarias")
+            .select("saldo_atual")
+            .eq("id", conta_bancaria_id)
+            .single();
+          if (contaAtual) {
+            const novoSaldo = Number(contaAtual.saldo_atual) + delta;
+            await supabase
+              .from("contas_bancarias")
+              .update({ saldo_atual: novoSaldo })
+              .eq("id", conta_bancaria_id);
+          }
+        }
+
         result = {
           lancamento: newLanc,
           ...(Object.keys(registros_criados).length > 0 ? { registros_criados } : {}),
@@ -1715,6 +1753,176 @@ Deno.serve(async (req) => {
         break;
       }
 
+      // ─── EXTRATO DE CONTA BANCÁRIA ───
+      case "extrato-conta": {
+        const conta_id = sanitize(body.conta_bancaria_id);
+        const conta_nome = normalizeText(sanitize(body.conta_bancaria_nome), "nome");
+        let target_conta_id = conta_id;
+
+        // Resolver por nome se não tiver ID
+        if (!target_conta_id && conta_nome) {
+          const { data: cb } = await supabase
+            .from("contas_bancarias")
+            .select("id")
+            .eq("empresa_id", empresa_id)
+            .ilike("nome", conta_nome.trim())
+            .limit(1)
+            .maybeSingle();
+          if (cb) target_conta_id = cb.id;
+          else {
+            // Buscar por banco
+            const { data: cbBanco } = await supabase
+              .from("contas_bancarias")
+              .select("id")
+              .eq("empresa_id", empresa_id)
+              .ilike("banco", conta_nome.trim())
+              .limit(1)
+              .maybeSingle();
+            if (cbBanco) target_conta_id = cbBanco.id;
+          }
+        }
+
+        // Se nenhuma conta especificada, usar principal ou única
+        if (!target_conta_id) {
+          const { data: allContas } = await supabase
+            .from("contas_bancarias")
+            .select("id, nome, principal")
+            .eq("empresa_id", empresa_id);
+          const contas = allContas || [];
+          const principal = contas.find((c: any) => c.principal);
+          if (principal) target_conta_id = principal.id;
+          else if (contas.length === 1) target_conta_id = contas[0].id;
+          else {
+            return new Response(JSON.stringify({ error: "Conta não identificada", message: "Informe conta_bancaria_id ou conta_bancaria_nome. Há múltiplas contas sem principal definida.", contas_disponiveis: contas.map((c: any) => ({ id: c.id, nome: c.nome })) }), {
+              status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        }
+
+        const { inicio, fim } = getDateRange(periodo);
+
+        // Dados da conta
+        const { data: contaInfo } = await supabase
+          .from("contas_bancarias")
+          .select("*")
+          .eq("id", target_conta_id)
+          .eq("empresa_id", empresa_id)
+          .single();
+
+        // Lançamentos da conta no período
+        const { data: lancExtrato } = await supabase
+          .from("lancamentos")
+          .select("id, descricao, valor, tipo, status, data_vencimento, data_pagamento, categoria:categoria_id(nome), cliente:cliente_id(nome), fornecedor:fornecedor_id(nome)")
+          .eq("empresa_id", empresa_id)
+          .eq("conta_bancaria_id", target_conta_id)
+          .gte("data_vencimento", inicio)
+          .lte("data_vencimento", fim)
+          .order("data_vencimento", { ascending: false });
+
+        const movimentacoes = lancExtrato || [];
+        const totalEntradas = movimentacoes.filter((l: any) => l.tipo === "receita").reduce((s: number, l: any) => s + Number(l.valor), 0);
+        const totalSaidas = movimentacoes.filter((l: any) => l.tipo === "despesa").reduce((s: number, l: any) => s + Number(l.valor), 0);
+
+        result = {
+          conta: contaInfo,
+          periodo: { inicio, fim },
+          resumo: {
+            total_entradas: totalEntradas,
+            total_saidas: totalSaidas,
+            saldo_periodo: totalEntradas - totalSaidas,
+            total_movimentacoes: movimentacoes.length,
+          },
+          movimentacoes,
+        };
+        break;
+      }
+
+      // ─── TRANSFERÊNCIA ENTRE CONTAS ───
+      case "transferir-entre-contas": {
+        const conta_origem_id = sanitize(body.conta_origem_id);
+        const conta_destino_id = sanitize(body.conta_destino_id);
+        const conta_origem_nome = normalizeText(sanitize(body.conta_origem_nome), "nome");
+        const conta_destino_nome = normalizeText(sanitize(body.conta_destino_nome), "nome");
+        const valor_transf = body.valor;
+        const descricao_transf = normalizeText(sanitize(body.descricao), "descricao") || "Transferência entre contas";
+
+        if (!valor_transf || Number(valor_transf) <= 0) {
+          return new Response(JSON.stringify({ error: "valor é obrigatório e deve ser positivo" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const valorTransf = Number(valor_transf);
+
+        // Resolver contas por nome
+        const resolveContaId = async (id: string | undefined, nome: string | undefined): Promise<string | null> => {
+          if (id) return id;
+          if (!nome) return null;
+          const { data: cb } = await supabase.from("contas_bancarias").select("id").eq("empresa_id", empresa_id).ilike("nome", nome.trim()).limit(1).maybeSingle();
+          if (cb) return cb.id;
+          const { data: cbBanco } = await supabase.from("contas_bancarias").select("id").eq("empresa_id", empresa_id).ilike("banco", nome.trim()).limit(1).maybeSingle();
+          return cbBanco?.id || null;
+        };
+
+        const origemId = await resolveContaId(conta_origem_id, conta_origem_nome);
+        const destinoId = await resolveContaId(conta_destino_id, conta_destino_nome);
+
+        if (!origemId || !destinoId) {
+          return new Response(JSON.stringify({ error: "Contas não identificadas", message: "Informe conta_origem e conta_destino (por ID ou nome)." }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (origemId === destinoId) {
+          return new Response(JSON.stringify({ error: "Conta origem e destino não podem ser iguais" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Buscar saldos atuais
+        const { data: contaOrigem } = await supabase.from("contas_bancarias").select("id, nome, saldo_atual").eq("id", origemId).single();
+        const { data: contaDestino } = await supabase.from("contas_bancarias").select("id, nome, saldo_atual").eq("id", destinoId).single();
+
+        if (!contaOrigem || !contaDestino) {
+          return new Response(JSON.stringify({ error: "Conta não encontrada" }), {
+            status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Atualizar saldos
+        const novoSaldoOrigem = Number(contaOrigem.saldo_atual) - valorTransf;
+        const novoSaldoDestino = Number(contaDestino.saldo_atual) + valorTransf;
+
+        await supabase.from("contas_bancarias").update({ saldo_atual: novoSaldoOrigem }).eq("id", origemId);
+        await supabase.from("contas_bancarias").update({ saldo_atual: novoSaldoDestino }).eq("id", destinoId);
+
+        // Criar 2 lançamentos: saída da origem e entrada no destino
+        const dataHoje = getBrazilDate();
+        const dataStr = `${dataHoje.getFullYear()}-${String(dataHoje.getMonth() + 1).padStart(2, "0")}-${String(dataHoje.getDate()).padStart(2, "0")}`;
+
+        const { data: lancSaida } = await supabase.from("lancamentos").insert({
+          empresa_id, descricao: `${descricao_transf} → ${contaDestino.nome}`, valor: valorTransf,
+          tipo: "despesa", status: "pago", data_vencimento: dataStr, data_pagamento: dataStr,
+          conta_bancaria_id: origemId, origem: "transferencia",
+        }).select("id").single();
+
+        const { data: lancEntrada } = await supabase.from("lancamentos").insert({
+          empresa_id, descricao: `${descricao_transf} ← ${contaOrigem.nome}`, valor: valorTransf,
+          tipo: "receita", status: "recebido", data_vencimento: dataStr, data_pagamento: dataStr,
+          conta_bancaria_id: destinoId, origem: "transferencia",
+        }).select("id").single();
+
+        result = {
+          transferencia: {
+            origem: { id: origemId, nome: contaOrigem.nome, saldo_anterior: Number(contaOrigem.saldo_atual), saldo_novo: novoSaldoOrigem },
+            destino: { id: destinoId, nome: contaDestino.nome, saldo_anterior: Number(contaDestino.saldo_atual), saldo_novo: novoSaldoDestino },
+            valor: valorTransf,
+            descricao: descricao_transf,
+            lancamento_saida_id: lancSaida?.id,
+            lancamento_entrada_id: lancEntrada?.id,
+          },
+        };
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({
           error: "Invalid action",
@@ -1728,7 +1936,8 @@ Deno.serve(async (req) => {
             "editar-cliente", "editar-fornecedor", "editar-categoria", "editar-conta-bancaria",
             "editar-forma-pagamento", "editar-projeto", "editar-lancamento",
             "excluir-cliente", "excluir-fornecedor", "excluir-categoria", "excluir-conta-bancaria",
-            "excluir-forma-pagamento", "excluir-projeto", "excluir-lancamento"
+            "excluir-forma-pagamento", "excluir-projeto", "excluir-lancamento",
+            "extrato-conta", "transferir-entre-contas"
           ],
         }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

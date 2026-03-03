@@ -1,11 +1,13 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useContasBancarias } from "@/hooks/useContasBancarias";
-import { Landmark } from "lucide-react";
+import { Landmark, ArrowRightLeft, FileText } from "lucide-react";
 import ContasBancariasTable from "@/components/contas-bancarias/ContasBancariasTable";
 import ContaBancariaForm from "@/components/contas-bancarias/ContaBancariaForm";
 import ContaBancariaDeleteDialog from "@/components/contas-bancarias/ContaBancariaDeleteDialog";
 import ContasBancariasSearch from "@/components/contas-bancarias/ContasBancariasSearch";
+import TransferenciaDialog from "@/components/contas-bancarias/TransferenciaDialog";
+import ExtratoDialog from "@/components/contas-bancarias/ExtratoDialog";
 import PageHeader from "@/components/common/PageHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { ValuesVisibilityProvider } from "@/contexts/ValuesVisibilityContext";
@@ -14,11 +16,13 @@ import { Button } from "@/components/ui/button";
 import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 
 const ContasBancariasContent = () => {
-  const { canPerformAction } = useAuth();
+  const { canPerformAction, empresaId } = useAuth();
   const canIncluir = canPerformAction("contas_bancarias", "pode_incluir");
   const canAlterar = canPerformAction("contas_bancarias", "pode_alterar");
   const canExcluir = canPerformAction("contas_bancarias", "pode_excluir");
   const { visible, toggle } = useValuesVisibility();
+  const [openTransferencia, setOpenTransferencia] = useState(false);
+  const [openExtrato, setOpenExtrato] = useState(false);
 
   const {
     contasBancarias, loading, formData, openModal, openDeleteModal, selectedId, searchQuery,
@@ -27,6 +31,10 @@ const ContasBancariasContent = () => {
     handleSave, handleDelete, handleExportCSV, handleExportPDF, handleSearchChange,
     handleConfirmPrincipal, handleClosePrincipalConfirm,
   } = useContasBancarias();
+
+  const contasParaDialog = contasBancarias.map(c => ({
+    id: c.id, nome: c.nome, banco: c.banco, saldo_atual: c.saldo_atual || 0,
+  }));
 
   return (
     <div className="space-y-6">
@@ -46,9 +54,21 @@ const ContasBancariasContent = () => {
           onExportCSV={handleExportCSV}
           onExportPDF={handleExportPDF}
         />
-        <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground self-end sm:self-auto" title={visible ? "Ocultar valores" : "Exibir valores"}>
-          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </Button>
+        <div className="flex items-center gap-1 self-end sm:self-auto">
+          <Button variant="outline" size="sm" onClick={() => setOpenExtrato(true)} className="gap-1.5 text-xs">
+            <FileText className="h-3.5 w-3.5" />
+            Extrato
+          </Button>
+          {canAlterar && contasBancarias.length >= 2 && (
+            <Button variant="outline" size="sm" onClick={() => setOpenTransferencia(true)} className="gap-1.5 text-xs">
+              <ArrowRightLeft className="h-3.5 w-3.5" />
+              Transferir
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground" title={visible ? "Ocultar valores" : "Exibir valores"}>
+            {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
       
       {loading ? (
@@ -92,6 +112,21 @@ const ContasBancariasContent = () => {
         open={openDeleteModal}
         onClose={handleCloseDeleteModal}
         onDelete={handleDelete}
+      />
+
+      <TransferenciaDialog
+        open={openTransferencia}
+        onClose={() => setOpenTransferencia(false)}
+        contas={contasParaDialog}
+        onSuccess={() => window.location.reload()}
+        empresaId={empresaId}
+      />
+
+      <ExtratoDialog
+        open={openExtrato}
+        onClose={() => setOpenExtrato(false)}
+        contas={contasParaDialog}
+        empresaId={empresaId}
       />
     </div>
   );
