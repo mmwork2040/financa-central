@@ -220,7 +220,7 @@ const RelatoriosContent = () => {
         </div>
       ) : (
         <Tabs defaultValue="fluxo" className="space-y-4">
-          <TabsList className="mb-4 flex-wrap h-auto">
+          <TabsList className="mb-4 flex flex-wrap h-auto gap-1">
             <TabsTrigger value="fluxo" className="text-xs sm:text-sm">Fluxo de Caixa</TabsTrigger>
             <TabsTrigger value="receitas" className="text-xs sm:text-sm">Receitas</TabsTrigger>
             <TabsTrigger value="despesas" className="text-xs sm:text-sm">Despesas</TabsTrigger>
