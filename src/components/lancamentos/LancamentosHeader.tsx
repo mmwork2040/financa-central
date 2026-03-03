@@ -2,19 +2,17 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Filter, Plus, Receipt, RefreshCw, Search, Upload } from "lucide-react";
+import { Eye, EyeOff, Filter, Plus, Receipt, RefreshCw, Search } from "lucide-react";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import ExportDropdown from "@/components/common/ExportDropdown";
-import ExportLancamentosDialog from "@/components/lancamentos/ExportLancamentosDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 import { cn } from "@/lib/utils";
 
 export const LancamentosHeader = () => {
-  const { canPerformAction, isSuperAdmin } = useAuth();
+  const { canPerformAction } = useAuth();
   const canIncluir = canPerformAction("lancamentos", "pode_incluir");
   const { visible, toggle } = useValuesVisibility();
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   const { 
     handleOpenModal, 
@@ -78,13 +76,6 @@ export const LancamentosHeader = () => {
             className="pl-9 h-8 text-sm"
           />
         </div>
-        {isSuperAdmin && (
-          <Button variant="outline" size="sm" onClick={() => setExportDialogOpen(true)}>
-            <Upload className="mr-1.5 h-4 w-4" />
-            <span className="hidden sm:inline">Exportar p/ Empresa</span>
-            <span className="sm:hidden">Exportar</span>
-          </Button>
-        )}
         {canIncluir && (
           <Button size="sm" onClick={() => handleOpenModal()} className="ml-auto">
             <Plus className="mr-1.5 h-4 w-4" />
@@ -93,11 +84,6 @@ export const LancamentosHeader = () => {
           </Button>
         )}
       </div>
-
-      <ExportLancamentosDialog
-        isOpen={exportDialogOpen}
-        onClose={() => setExportDialogOpen(false)}
-      />
     </div>
   );
 };

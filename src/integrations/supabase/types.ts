@@ -424,6 +424,30 @@ export type Database = {
           },
         ]
       }
+      integracoes_disponiveis: {
+        Row: {
+          disponivel: boolean
+          id: string
+          plataforma: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          disponivel?: boolean
+          id?: string
+          plataforma: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          disponivel?: boolean
+          id?: string
+          plataforma?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       invite_code_permissoes: {
         Row: {
           id: string
