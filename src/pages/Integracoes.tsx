@@ -613,22 +613,36 @@ const Integracoes = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Não autenticado");
-      
-      const res = await supabase.functions.invoke("test-integration", {
-        body: { plataforma, empresa_id: empresaId },
-      });
-      
-      if (res.error) throw res.error;
-      const result = res.data;
-      setTestResults(prev => ({ ...prev, [plataforma]: { status: result.status, message: result.message } }));
-      
-      if (!silent) {
-        if (result.status === "success") {
-          toast.success(result.message);
-        } else if (result.status === "warning") {
-          toast.warning(result.message);
+
+      // Google Ads uses sync-ads-data to validate credentials
+      if (plataforma === "google_ads") {
+        const res = await supabase.functions.invoke("sync-ads-data", {
+          body: { empresa_id: empresaId, periodo: 1 },
+        });
+        if (res.error) throw res.error;
+        const result = res.data;
+        if (result.success && result.data?.length > 0) {
+          const gads = result.data[0];
+          const msg = `Google Ads conectado! ${gads.campanhas?.length || 0} campanha(s) encontrada(s)`;
+          setTestResults(prev => ({ ...prev, [plataforma]: { status: "success", message: msg } }));
+          if (!silent) toast.success(msg);
+        } else if (result.success) {
+          setTestResults(prev => ({ ...prev, [plataforma]: { status: "warning", message: "Conectado, mas nenhuma campanha encontrada no período" } }));
+          if (!silent) toast.warning("Conectado, mas nenhuma campanha encontrada");
         } else {
-          toast.error(result.message);
+          throw new Error(result.error || "Erro desconhecido");
+        }
+      } else {
+        const res = await supabase.functions.invoke("test-integration", {
+          body: { plataforma, empresa_id: empresaId },
+        });
+        if (res.error) throw res.error;
+        const result = res.data;
+        setTestResults(prev => ({ ...prev, [plataforma]: { status: result.status, message: result.message } }));
+        if (!silent) {
+          if (result.status === "success") toast.success(result.message);
+          else if (result.status === "warning") toast.warning(result.message);
+          else toast.error(result.message);
         }
       }
     } catch (error: any) {
@@ -810,7 +824,7 @@ const Integracoes = () => {
                   <div className="mt-3 flex items-center gap-1.5">
                     {status === 'connected' ? (
                       <TooltipProvider delayDuration={200}>
-                        {!plat.skipAutoTest && (
+                        {(!plat.skipAutoTest || plat.id === 'google_ads') && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
