@@ -17,11 +17,23 @@ const MonthCarousel = () => {
     return Array.from({ length: 19 }, (_, i) => addMonths(now, i - 6));
   }, []);
 
-  useEffect(() => {
-    if (activeRef.current) {
-      activeRef.current.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  const centerActive = React.useCallback(() => {
+    if (activeRef.current && scrollRef.current) {
+      const container = scrollRef.current;
+      const el = activeRef.current;
+      const scrollLeft = el.offsetLeft - container.offsetWidth / 2 + el.offsetWidth / 2;
+      container.scrollTo({ left: scrollLeft, behavior: "smooth" });
     }
-  }, [selectedMonth]);
+  }, []);
+
+  useEffect(() => {
+    centerActive();
+  }, [selectedMonth, centerActive]);
+
+  useEffect(() => {
+    window.addEventListener("resize", centerActive);
+    return () => window.removeEventListener("resize", centerActive);
+  }, [centerActive]);
 
   const scroll = (dir: number) => {
     if (scrollRef.current) {
