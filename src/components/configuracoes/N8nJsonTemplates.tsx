@@ -662,52 +662,6 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     body: { action: "listar-anuncios", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário solicitante') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Padrão: mes') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado') }}", plataforma: "{{ $fromAI('plataforma', 'Plataforma ex: meta_ads, google_ads. Deixe vazio para todas') }}" },
   },
   {
-    action: "sync-google-ads",
-    toolName: "sync_google_ads",
-    label: "Sincronizar Google Ads",
-    description: "Workflow n8n: Google Ads → Code (processar micros) → HTTP Request para registrar campanhas",
-    toolDescription: `Workflow para sincronizar dados de campanhas do Google Ads com o sistema financeiro.
-
-Este template NÃO é uma ferramenta do AI Agent. É um workflow independente no n8n com 3 nós:
-
-═══ NÓ 1: Google Ads (Get Many Campaigns) ═══
-- Resource: Campaign | Operation: Get Many
-- Credenciais: OAuth2 configurado no n8n
-- Manager Customer ID: ID da conta MCC (sem hifens, ex: 5230333372)
-- Client Customer ID: use o MESMO ID do Manager se for conta única (sem MCC separada)
-
-═══ NÓ 2: Code (Processar dados) ═══
-⚠️ Valores monetários do Google Ads vêm em MICROS → dividir por 1.000.000
-
-const campanhas = items.map(item => {
-  const c = item.json;
-  return {
-    nome: c.campaign?.name || c.campaignName || "Sem nome",
-    gasto: (Number(c.metrics?.costMicros || c.cost_micros || 0)) / 1000000,
-    impressoes: Number(c.metrics?.impressions || c.impressions || 0),
-    cliques: Number(c.metrics?.clicks || c.clicks || 0),
-    conversoes: Number(c.metrics?.conversions || c.conversions || 0),
-    receita: Number(c.metrics?.conversionsValue || c.conversions_value || 0),
-  };
-});
-return [{ json: { campanhas } }];
-
-═══ NÓ 3: HTTP Request ═══
-- Method: POST
-- URL: {{SUPABASE_URL}}/functions/v1/n8n-query
-- Headers: apikey + Authorization (Service Role Key)
-- Body JSON (abaixo)
-
-Campos por campanha: nome, gasto (R$, já dividido), impressoes, cliques, conversoes, receita`,
-    category: "Anúncios",
-    params: [
-      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "user_id", type: "string", required: true, description: "UUID do usuário" },
-      { name: "campanhas", type: "json", required: true, description: "Array de campanhas (saída do nó Code). Campos: nome, gasto, impressoes, cliques, conversoes, receita" },
-    ],
-    body: { action: "registrar-anuncios-google", empresa_id: "SEU_EMPRESA_ID", user_id: "SEU_USER_ID", campanhas: "{{ $json.campanhas }}" },
-  },
-  {
     action: "listar-usuarios",
     toolName: "listar_usuarios",
     label: "Listar Usuários",
