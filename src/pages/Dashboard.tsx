@@ -143,7 +143,7 @@ const DashboardContent = () => {
             <p className={cn("text-lg sm:text-xl font-bold", caixa.caixaPrevisto >= 0 ? "text-primary" : "text-destructive")}>
               {maskValue(formatCurrency(caixa.caixaPrevisto), visible)}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-1">Projeção para o mês seguinte</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Previsão para o mês atual</p>
           </CardContent>
         </Card>
         <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-amber-500">
