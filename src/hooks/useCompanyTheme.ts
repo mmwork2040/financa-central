@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-const SYSTEM_PRIMARY_COLOR = "#f97316";
+const SYSTEM_PRIMARY_COLOR = "#22C55E";
 
 function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -57,11 +57,9 @@ function applyHex(hex: string) {
   root.style.setProperty("--ring", primaryHsl);
 
   const sv = generateSidebarVariants(h, s, l);
-  root.style.setProperty("--sidebar-background", sv.sidebar);
-  root.style.setProperty("--sidebar-primary", sv.sidebarPrimary);
-  root.style.setProperty("--sidebar-accent", sv.sidebarAccent);
-  root.style.setProperty("--sidebar-border", sv.sidebarBorder);
-  root.style.setProperty("--sidebar-ring", sv.sidebarRing);
+  // Keep sidebar as glass white — only update primary/ring/accent colors
+  root.style.setProperty("--sidebar-primary", primaryHsl);
+  root.style.setProperty("--sidebar-ring", primaryHsl);
 }
 
 export function useCompanyTheme() {

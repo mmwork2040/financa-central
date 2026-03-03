@@ -212,7 +212,7 @@ export const Sidebar = () => {
             <img src={companyLogo} alt="Logo" className="h-7 w-7 rounded object-contain shrink-0" />
           ) : null}
           {showExpanded && (
-            <h1 className="text-base font-bold text-sidebar-foreground truncate">Finança Central</h1>
+            <h1 className="text-base font-bold text-sidebar-foreground truncate">Contabiliza AI</h1>
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
@@ -416,7 +416,7 @@ export const Sidebar = () => {
       {isMobile && (
         <button
           onClick={() => setMobileOpen(true)}
-          className="fixed top-3 left-3 z-50 rounded-lg bg-primary p-2 text-primary-foreground shadow-lg"
+          className="fixed top-3 left-3 z-50 rounded-full bg-primary p-2 text-primary-foreground shadow-lg"
           aria-label="Abrir menu"
         >
           <Menu size={22} />
@@ -432,7 +432,8 @@ export const Sidebar = () => {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar border-r border-sidebar-border shadow-lg transition-all duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border shadow-lg transition-all duration-300 ease-in-out",
+          "bg-white/72 backdrop-blur-[14px] dark:bg-slate-900/80",
           isMobile
             ? cn("w-72", mobileOpen ? "translate-x-0" : "-translate-x-full")
             : isExpanded ? "w-60" : "w-14"

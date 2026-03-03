@@ -11,14 +11,14 @@ interface DonutChartProps {
 }
 
 const COLORS = [
-  "hsl(142, 71%, 45%)",
-  "hsl(0, 84%, 60%)",
+  "hsl(var(--primary))",
+  "hsl(var(--destructive))",
 ];
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border bg-card p-2 shadow-lg text-xs">
+    <div className="glass-card rounded-xl p-2 text-xs">
       <span className="font-medium">{payload[0].name}: </span>
       <span>{formatCurrency(payload[0].value)}</span>
     </div>
@@ -65,7 +65,7 @@ export const DashboardDonutChart = ({ receitas, despesas, saldo }: DonutChartPro
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-[10px] text-muted-foreground">Saldo</span>
-              <span className={`text-sm font-bold ${saldo >= 0 ? "text-green-600" : "text-red-600"}`}>
+              <span className={`text-sm font-bold ${saldo >= 0 ? "text-primary" : "text-destructive"}`}>
                 {maskValue(formatCurrency(saldo), visible)}
               </span>
             </div>
@@ -74,14 +74,14 @@ export const DashboardDonutChart = ({ receitas, despesas, saldo }: DonutChartPro
         <div className="w-full space-y-2">
           <div className="flex items-center justify-between text-xs">
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[0] }} />
+              <span className="h-2.5 w-2.5 rounded-full bg-primary" />
               Receitas
             </span>
             <span className="font-medium">{maskValue(formatCurrency(receitas), visible)}</span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[1] }} />
+              <span className="h-2.5 w-2.5 rounded-full bg-destructive" />
               Despesas
             </span>
             <span className="font-medium">{maskValue(formatCurrency(despesas), visible)}</span>

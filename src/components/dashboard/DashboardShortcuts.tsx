@@ -39,7 +39,7 @@ export const DashboardShortcuts = () => {
           <button
             key={s.label}
             onClick={() => handleClick(s)}
-            className="flex flex-col items-center gap-2 rounded-2xl border bg-card/80 backdrop-blur-sm p-4 transition-all hover:shadow-md hover:scale-[1.03] hover:bg-primary/5 active:scale-[0.97]"
+            className="glass-card flex flex-col items-center gap-2 rounded-2xl p-4 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97]"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
               <Icon className="h-5 w-5 text-primary" />

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/utils/formatters";
 import { useValuesVisibility, maskValue } from "@/contexts/ValuesVisibilityContext";
 
@@ -18,7 +18,7 @@ interface DashboardChartProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload) return null;
   return (
-    <div className="rounded-xl border bg-card p-3 shadow-lg text-sm">
+    <div className="glass-card rounded-xl p-3 text-sm">
       <p className="font-semibold mb-1.5 text-foreground">{label}</p>
       {payload.map((entry: any, i: number) => (
         <div key={i} className="flex items-center gap-2">
@@ -46,15 +46,15 @@ export const DashboardChart = ({ data, saldoAtual }: DashboardChartProps) => {
         </div>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[hsl(142,71%,45%)]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-primary" />
             Receitas
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[hsl(0,84%,60%)]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-destructive" />
             Despesas
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[hsl(217,91%,60%)]" />
+            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "hsl(217, 91%, 60%)" }} />
             Investimentos
           </span>
         </div>
@@ -84,9 +84,9 @@ export const DashboardChart = ({ data, saldoAtual }: DashboardChartProps) => {
                 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.5)" }} />
-              <Bar dataKey="receitas" name="Receitas" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="despesas" name="Despesas" fill="hsl(0, 84%, 60%)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="investimentos" name="Investimentos" fill="hsl(217, 91%, 60%)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="receitas" name="Receitas" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="despesas" name="Despesas" fill="hsl(var(--destructive))" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="investimentos" name="Investimentos" fill="hsl(217, 91%, 60%)" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
