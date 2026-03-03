@@ -1,13 +1,11 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 210 20% 96%;
+    --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -16,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 24 96% 53%;
+    --primary: 24 96% 53%; /* Orange as primary */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -35,19 +33,16 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 24 96% 53%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222.2 47.4% 11.2%;
-    --sidebar-primary: 24 96% 53%;
+    --sidebar-background: 24 96% 53%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 24 96% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96.1%;
-    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 24 96% 53%;
-
-    /* Landing page */
-    --landing-bg: 210 30% 86%;
+    --sidebar-accent: 24 96% 45%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 24 96% 60%;
+    --sidebar-ring: 24 96% 45%;
   }
 
   .dark {
@@ -60,7 +55,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 24 96% 53%;
+    --primary: 24 96% 53%; /* Keep orange as primary */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -79,14 +74,14 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 24 96% 53%;
 
-    --sidebar-background: 222.2 84% 6%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 24 96% 53%;
+    --sidebar-background: 24 96% 53%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 24 96% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 24 96% 53%;
+    --sidebar-accent: 24 96% 45%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 24 96% 60%;
+    --sidebar-ring: 24 96% 45%;
   }
 }
 
@@ -101,8 +96,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, sans-serif;
+    @apply bg-background text-foreground font-sans;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -117,99 +111,8 @@
 }
 
 @layer components {
-  /* ========== Glassmorphism Surfaces ========== */
-  .glass-surface {
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .glass-surface-strong {
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-  }
-
-  .glass-shadow {
-    box-shadow:
-      0 8px 32px 0 rgba(31, 38, 135, 0.07),
-      0 2px 8px 0 rgba(0, 0, 0, 0.04);
-  }
-
-  .glass-shadow-lg {
-    box-shadow:
-      rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset,
-      rgba(50, 50, 93, 0.25) 0px 50px 100px -20px,
-      rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
-  }
-
-  .glass-card {
-    @apply rounded-2xl;
-    background: #f1f2f3;
-  }
-
-  /* ========== Landing Page Background ========== */
-  .landing-bg {
-    background-color: #cfddea;
-  }
-
-  /* ========== Pill Buttons ========== */
-  .btn-pill-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-8 py-3 text-sm font-semibold transition-all duration-300;
-    background: #000;
-    color: #fff;
-    box-shadow:
-      0 4px 14px 0 rgba(0, 0, 0, 0.25),
-      0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  }
-  .btn-pill-primary:hover {
-    transform: scale(1.05);
-    box-shadow:
-      0 8px 25px 0 rgba(0, 0, 0, 0.3),
-      0 2px 6px 0 rgba(0, 0, 0, 0.15);
-  }
-
-  .btn-pill-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border px-8 py-3 text-sm font-semibold transition-all duration-300;
-    background: #fff;
-    color: #000;
-    border-color: hsl(var(--border));
-  }
-  .btn-pill-secondary:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
-  }
-
-  .btn-pill-sm {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold transition-all duration-300;
-  }
-
-  /* ========== Animation delays ========== */
-  .animate-delay-200 { animation-delay: 0.2s; animation-fill-mode: both; }
-  .animate-delay-400 { animation-delay: 0.4s; animation-fill-mode: both; }
-  .animate-delay-600 { animation-delay: 0.6s; animation-fill-mode: both; }
-  .animate-delay-800 { animation-delay: 0.8s; animation-fill-mode: both; }
-
-  /* ========== Sidebar ========== */
-  .sidebar-link {
-    @apply flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all duration-200;
-    color: hsl(var(--sidebar-foreground));
-  }
-  .sidebar-link:hover {
-    background: hsl(var(--sidebar-accent));
-    color: hsl(var(--sidebar-accent-foreground));
-  }
-  .sidebar-link.active {
-    background: hsl(var(--primary) / 0.1);
-    color: hsl(var(--primary));
-    font-weight: 500;
-  }
-
-  /* ========== Existing component classes ========== */
   .card-dashboard {
-    @apply rounded-2xl border bg-card text-card-foreground shadow-sm p-6;
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm p-6;
   }
   
   .card-success {
@@ -223,13 +126,23 @@
   .card-warning {
     @apply border-amber-200 bg-amber-50 text-amber-800;
   }
+  
+  .sidebar-link {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent;
+  }
+  
+  .sidebar-link.active {
+    @apply bg-sidebar-accent font-medium;
+  }
 
+  /* Input masks */
   .currency-input {
     @apply text-right;
   }
 
+  /* Custom table styles */
   .table-container {
-    @apply w-full overflow-x-auto rounded-2xl border;
+    @apply w-full overflow-x-auto rounded-md border;
   }
   
   .table-responsive {
