@@ -344,6 +344,8 @@ const Integracoes = () => {
   const [settingDefault, setSettingDefault] = useState<string | null>(null);
   const [savingModel, setSavingModel] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState("");
+  const [diasRecebimento, setDiasRecebimento] = useState<number>(30);
+  const [savingDias, setSavingDias] = useState<string | null>(null);
 
   const getSelectedModel = (plataformaId: string): string => {
     const integ = integracoes.find((i: any) => i.plataforma === plataformaId);
@@ -367,6 +369,25 @@ const Integracoes = () => {
       toast.error(error.message || "Erro ao salvar modelo");
     } finally {
       setSavingModel(null);
+    }
+  };
+
+  const handleSaveDiasRecebimento = async (plataformaId: string, dias: number) => {
+    if (!empresaId) return;
+    setSavingDias(plataformaId);
+    try {
+      const { error } = await (supabase as any)
+        .from('integracoes')
+        .update({ dias_recebimento: dias })
+        .eq('empresa_id', empresaId)
+        .eq('plataforma', plataformaId);
+      if (error) throw error;
+      setIntegracoes(prev => prev.map(i => i.plataforma === plataformaId ? { ...i, dias_recebimento: dias } : i));
+      toast.success(`Prazo de recebimento atualizado para ${dias} dias!`);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao salvar prazo");
+    } finally {
+      setSavingDias(null);
     }
   };
 
@@ -506,7 +527,7 @@ const Integracoes = () => {
     try {
       const { data, error } = await (supabase as any)
         .from('integracoes')
-        .select('plataforma, ativo, ambiente, created_at, webhook_secret, api_key_encrypted, api_secret_encrypted');
+        .select('plataforma, ativo, ambiente, created_at, webhook_secret, api_key_encrypted, api_secret_encrypted, dias_recebimento');
       if (error) throw error;
       setIntegracoes(data || []);
     } catch (error) {
@@ -998,6 +1019,36 @@ const Integracoes = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                  )}
+                  {/* Dias recebimento for connected sales platforms */}
+                  {status === 'connected' && plat.categoria === 'vendas' && (
+                    <div className="mt-2 space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Prazo de recebimento (dias)</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          max={365}
+                          className="h-8 text-xs w-24"
+                          defaultValue={integracoes.find((i: any) => i.plataforma === plat.id)?.dias_recebimento ?? 30}
+                          onBlur={(e) => {
+                            const dias = Math.max(0, Math.min(365, parseInt(e.target.value) || 30));
+                            e.target.value = String(dias);
+                            const current = integracoes.find((i: any) => i.plataforma === plat.id)?.dias_recebimento ?? 30;
+                            if (dias !== current) handleSaveDiasRecebimento(plat.id, dias);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                          }}
+                          disabled={savingDias === plat.id}
+                        />
+                        <span className="text-[10px] text-muted-foreground">dias</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        Vendas aprovadas ficam como receita prevista e são contabilizadas automaticamente após este prazo.
+                        {' '}Use 0 para contabilizar imediatamente.
+                      </p>
                     </div>
                   )}
                   {testResults[plat.id] && (
