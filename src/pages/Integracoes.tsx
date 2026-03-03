@@ -466,11 +466,7 @@ const Integracoes = () => {
             if (autoTestErrorsShownRef.current) return;
             autoTestErrorsShownRef.current = true;
             setTestResults(current => {
-              const errors = Object.entries(current).filter(([_, r]) => r.status === 'error');
-              if (errors.length > 0) {
-                const names = errors.map(([id]) => PLATAFORMAS.find(p => p.id === id)?.name || id).join(', ');
-                toast.error(`⚠️ Problema de conexão detectado em: ${names}. Verifique as credenciais.`, { duration: 8000 });
-              }
+              // Errors are shown via badge status on each card, no toast needed
               return current;
             });
           }, 500);
