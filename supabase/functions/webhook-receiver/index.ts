@@ -320,6 +320,9 @@ Deno.serve(async (req) => {
       if (saleData.status === "aprovada" || saleData.status === "reembolsada" || saleData.status === "chargeback") {
         const dataVenda = String(saleData.data_venda).split("T")[0] || new Date().toISOString().split("T")[0];
 
+        // Get dias_recebimento from integration config (default 30)
+        const diasRecebimento = integration.dias_recebimento ?? 30;
+
         // Find principal bank account (or single account) for the empresa
         let contaBancariaId: string | null = null;
         const { data: contaPrincipal } = await supabase
@@ -350,6 +353,25 @@ Deno.serve(async (req) => {
             ? "REEMBOLSO"
             : saleData.plataforma.charAt(0).toUpperCase() + saleData.plataforma.slice(1);
 
+        // For approved sales with dias_recebimento > 0: create as pending with future vencimento
+        // For refunds/chargebacks: create as paid immediately
+        const isApproved = saleData.status === "aprovada";
+        let lancamentoStatus: string;
+        let dataVencimento: string;
+        let dataPagamento: string | null;
+
+        if (isApproved && diasRecebimento > 0) {
+          const vencDate = new Date(saleData.data_venda);
+          vencDate.setDate(vencDate.getDate() + diasRecebimento);
+          dataVencimento = vencDate.toISOString().split("T")[0];
+          dataPagamento = null;
+          lancamentoStatus = "pendente";
+        } else {
+          dataVencimento = dataVenda;
+          dataPagamento = dataVenda;
+          lancamentoStatus = isEstorno ? "pago" : "recebido";
+        }
+
         const { data: lancamento, error: lancError } = await supabase
           .from("lancamentos")
           .insert({
@@ -357,9 +379,9 @@ Deno.serve(async (req) => {
             descricao: `${prefixo} - ${saleData.produto || "Venda digital"}${saleData.cliente ? ` (${saleData.cliente})` : ""}`,
             tipo: tipoLancamento,
             valor: saleData.valor_liquido,
-            data_vencimento: dataVenda,
-            data_pagamento: dataVenda,
-            status: "pago",
+            data_vencimento: dataVencimento,
+            data_pagamento: dataPagamento,
+            status: lancamentoStatus,
             origem: "integracao",
             ...(clienteId ? { cliente_id: clienteId } : {}),
             ...(contaBancariaId ? { conta_bancaria_id: contaBancariaId } : {}),
@@ -372,8 +394,9 @@ Deno.serve(async (req) => {
         } else {
           lancamentoId = lancamento.id;
 
-          // Update bank account balance
-          if (contaBancariaId) {
+          // Only update bank balance immediately for estornos (refunds/chargebacks)
+          // For approved sales with dias_recebimento, balance is updated later by process-digital-receipts
+          if (contaBancariaId && (isEstorno || lancamentoStatus !== "pendente")) {
             const rpcTipo = isEstorno ? "despesa" : "receita";
             const { error: saldoError } = await supabase.rpc("update_saldo_conta", {
               _conta_id: contaBancariaId,

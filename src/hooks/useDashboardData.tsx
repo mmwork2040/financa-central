@@ -73,6 +73,9 @@ export const useDashboardData = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+
+      // Silently process mature digital receipts (auto-convert pending → received)
+      supabase.functions.invoke("process-digital-receipts").catch(() => {});
       
       // Fetch recent transactions
       const { data: lancamentos, error: lancamentosError } = await supabase
