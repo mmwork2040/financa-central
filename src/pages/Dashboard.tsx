@@ -104,13 +104,14 @@ const DashboardContent = () => {
             <p className={cn("text-lg sm:text-xl font-bold", summary.saldoAtual >= 0 ? "text-blue-600" : "text-destructive")}>
               {maskValue(formatCurrency(summary.saldoAtual), visible)}
             </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Caixa + recebido − pago</p>
           </CardContent>
         </Card>
         <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-amber-100 p-1.5"><AlertTriangle className="h-4 w-4 text-amber-600" /></div>
-              <span className="text-xs text-muted-foreground">Contas próximas</span>
+              <span className="text-xs text-muted-foreground">Contas a Pagar</span>
             </div>
             <p className="text-lg sm:text-xl font-bold text-amber-600">{summary.contasProximas}</p>
             {summary.emAtraso > 0 && (
@@ -126,12 +127,12 @@ const DashboardContent = () => {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-blue-100 p-1.5"><Landmark className="h-4 w-4 text-blue-600" /></div>
-              <span className="text-xs text-muted-foreground">Caixa Atual</span>
+              <span className="text-xs text-muted-foreground">Saldo Investido</span>
             </div>
-            <p className={cn("text-lg sm:text-xl font-bold", caixa.caixaAtual >= 0 ? "text-blue-600" : "text-destructive")}>
-              {maskValue(formatCurrency(caixa.caixaAtual), visible)}
+            <p className={cn("text-lg sm:text-xl font-bold", caixa.saldoInvestido > 0 ? "text-blue-600" : "text-muted-foreground")}>
+              {maskValue(formatCurrency(caixa.saldoInvestido), visible)}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-1">Soma de todas as contas bancárias</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Investimentos realizados no mês</p>
           </CardContent>
         </Card>
         <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-primary">
@@ -178,13 +179,13 @@ const DashboardContent = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Clock className="h-4 w-4 text-amber-500" />
-              Próximos 7 dias
+              Contas a Pagar
             </CardTitle>
           </CardHeader>
           <CardContent>
             {contasProximas.length === 0 ? (
               <div className="flex h-32 items-center justify-center rounded-xl border border-dashed">
-                <p className="text-sm text-muted-foreground">Nenhuma conta nos próximos 7 dias</p>
+                <p className="text-sm text-muted-foreground">Nenhuma conta a pagar neste mês</p>
               </div>
             ) : (
               <div className="space-y-2">
