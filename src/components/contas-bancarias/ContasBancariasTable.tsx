@@ -47,7 +47,7 @@ const ContasBancariasTable: React.FC<ContasBancariasTableProps> = ({
 
   if (isMobile) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 glass-surface rounded-2xl p-3">
         {paginatedItems.map((conta) => (
           <Card key={conta.id} className={conta.principal ? "border-primary" : ""}>
             <CardContent className="p-4">
@@ -103,7 +103,7 @@ const ContasBancariasTable: React.FC<ContasBancariasTableProps> = ({
   }
 
   return (
-    <div className="rounded-md border overflow-hidden">
+    <div className="glass-card rounded-2xl overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>

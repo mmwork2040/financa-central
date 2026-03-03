@@ -30,7 +30,7 @@ const FormasPagamentoTable: React.FC<FormasPagamentoTableProps> = ({
 
   if (isMobile) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 glass-surface rounded-2xl p-3">
         {paginatedItems.map((forma) => (
           <Card key={forma.id}>
             <CardContent className="p-4 flex items-center justify-between">
@@ -58,7 +58,7 @@ const FormasPagamentoTable: React.FC<FormasPagamentoTableProps> = ({
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="glass-card rounded-2xl overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
