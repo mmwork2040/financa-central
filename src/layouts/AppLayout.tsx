@@ -9,6 +9,7 @@ import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
 import { useCompanyTheme } from "@/hooks/useCompanyTheme";
 import { useIsMobile } from "@/hooks/use-mobile";
 import FloatingChatButton from "@/components/common/FloatingChatButton";
+import MobileBottomNav from "@/components/common/MobileBottomNav";
 import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
@@ -51,10 +52,11 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
           isMobile ? "ml-0 pt-14" : isExpanded ? "ml-60" : "ml-14"
         )}
       >
-        <div className="w-full px-3 py-4 md:px-4 md:py-6 max-w-full">
+        <div className="w-full px-3 py-4 md:px-4 md:py-6 max-w-full pb-20 md:pb-6">
           {children}
         </div>
       </main>
+      <MobileBottomNav />
       <FloatingChatButton />
     </div>
   );
