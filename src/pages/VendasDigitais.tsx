@@ -146,7 +146,7 @@ const VendasDigitais = () => {
           {disconnectedPlatforms.length > 0 && (
             <p className="text-[11px] text-muted-foreground mt-2">
               {disconnectedPlatforms.length} plataforma(s) não conectada(s).{" "}
-              <button onClick={() => navigate("/integracoes")} className="text-primary underline hover:no-underline">
+              <button onClick={() => navigate("/settings/integracoes")} className="text-primary underline hover:no-underline">
                 Configurar integrações
               </button>
             </p>
