@@ -732,7 +732,15 @@ const Integracoes = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                         <h3 className="font-semibold text-sm">{plat.name}</h3>
-                        {status === 'connected' && <Badge variant="outline" className="border-green-300 text-green-700 text-[10px] px-1.5">Conectado</Badge>}
+                        {status === 'connected' && testResults[plat.id]?.status === 'error' && (
+                          <Badge variant="outline" className="border-red-300 text-red-600 text-[10px] px-1.5">Erro</Badge>
+                        )}
+                        {status === 'connected' && testResults[plat.id]?.status === 'warning' && (
+                          <Badge variant="outline" className="border-yellow-300 text-yellow-700 text-[10px] px-1.5">Instável</Badge>
+                        )}
+                        {status === 'connected' && (!testResults[plat.id] || testResults[plat.id]?.status === 'success') && (
+                          <Badge variant="outline" className="border-green-300 text-green-700 text-[10px] px-1.5">Conectado</Badge>
+                        )}
                         {status === 'disconnected' && <Badge variant="outline" className="border-red-300 text-red-600 text-[10px] px-1.5">Desconectado</Badge>}
                         {plat.categoria === 'ia' && llmPadrao === plat.id && (
                           <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5">⭐ Padrão</Badge>
