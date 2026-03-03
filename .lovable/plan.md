@@ -1,106 +1,57 @@
 
 
-## Adicionar Projetos ao Sistema Financeiro
+## Plano: Redesign do Dashboard com Atalhos e Dados Visuais
 
-### Objetivo
-Permitir que o usuario crie projetos e associe lancamentos (receitas e despesas) a projetos especificos, possibilitando acompanhar o financeiro por projeto.
+Baseado na imagem de referência (dashboard estilo moderno com cards de resumo, gráfico de fluxo de caixa, atalhos rápidos e lista de transações recentes), vou reestruturar o dashboard atual.
 
-### Funcionalidades
-- CRUD completo de projetos (nome, descricao, status ativo/concluido/cancelado, orcamento previsto)
-- Associar lancamentos a projetos (campo opcional)
-- Pagina dedicada para listar projetos com resumo financeiro (total receitas, despesas, saldo)
-- Filtro por projeto na tela de lancamentos
+### Estrutura do Novo Dashboard
 
-### Alteracoes necessarias
-
-#### 1. Banco de dados -- nova tabela `projetos`
-
-Criar tabela `projetos` com:
-- `id` (uuid, PK)
-- `nome` (text, NOT NULL)
-- `descricao` (text, nullable)
-- `status` (text, default 'ativo') -- ativo, concluido, cancelado
-- `orcamento` (numeric, default 0)
-- `empresa_id` (uuid, NOT NULL)
-- `created_at`, `updated_at` (timestamps)
-
-Politicas RLS identicas as demais tabelas tenant-scoped (SELECT/INSERT/UPDATE/DELETE usando `get_user_empresa_id`).
-
-Adicionar coluna `projeto_id` (uuid, nullable) na tabela `lancamentos` para associar lancamentos a projetos.
-
-#### 2. Pagina de Projetos (`src/pages/Projetos.tsx`)
-
-Nova pagina com:
-- Header com titulo, botao "Novo Projeto"
-- Tabela/cards listando projetos com nome, status, orcamento, total receitas, total despesas, saldo
-- Modal de criacao/edicao de projeto
-- Dialog de confirmacao de exclusao
-
-#### 3. Hook `src/hooks/useProjetos.ts`
-
-Hook para CRUD de projetos via Supabase, seguindo o padrao dos outros hooks (useCategorias, useFornecedores, etc).
-
-#### 4. Formulario de Lancamentos
-
-Adicionar select de "Projeto" no `LancamentosFormDialog.tsx` usando o componente `GenericSelect`, permitindo associar um lancamento a um projeto (campo opcional).
-
-Atualizar `LancamentosContext.tsx`:
-- Adicionar `projeto_id` ao tipo `Lancamento` e `LancamentoFormData`
-- Adicionar `projeto_id` ao `FiltrosType`
-- Buscar e expor lista de projetos
-- Incluir `projeto_id` nos filtros da query
-
-#### 5. Navegacao e Rotas
-
-- Adicionar rota `/projetos` no `App.tsx` (protegida por permissao)
-- Adicionar item "Projetos" no menu lateral (`Sidebar.tsx`) com icone `Briefcase`
-- Adicionar `projetos` ao mapa de permissoes em `usePermissoes.ts`
-
-#### 6. Tabela de Lancamentos
-
-Exibir nome do projeto na tabela de lancamentos (join com tabela `projetos`).
-
-### Secao tecnica
-
-**Migracao SQL:**
-```sql
-CREATE TABLE public.projetos (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  nome text NOT NULL,
-  descricao text,
-  status text NOT NULL DEFAULT 'ativo',
-  orcamento numeric NOT NULL DEFAULT 0,
-  empresa_id uuid NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.projetos ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "projetos_select" ON public.projetos FOR SELECT USING (empresa_id = get_user_empresa_id(auth.uid()));
-CREATE POLICY "projetos_insert" ON public.projetos FOR INSERT WITH CHECK (empresa_id = get_user_empresa_id(auth.uid()));
-CREATE POLICY "projetos_update" ON public.projetos FOR UPDATE USING (empresa_id = get_user_empresa_id(auth.uid()));
-CREATE POLICY "projetos_delete" ON public.projetos FOR DELETE USING (empresa_id = get_user_empresa_id(auth.uid()));
-
-CREATE TRIGGER update_projetos_updated_at BEFORE UPDATE ON public.projetos
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-ALTER TABLE public.lancamentos ADD COLUMN projeto_id uuid REFERENCES public.projetos(id) ON DELETE SET NULL;
+```text
+┌─────────────────────────────────────────────────────┐
+│  Header: Saudação + Saúde Financeira + Eye toggle   │
+├──────────┬──────────┬──────────┬─────────────────────┤
+│ Receitas │ Despesas │  Saldo   │  Contas Próximas    │
+│  (card)  │  (card)  │  (card)  │     (card)          │
+├──────────┴──────────┴──────────┴─────────────────────┤
+│  Atalhos Rápidos (grid de botões com ícones)         │
+│  [+ Lançamento] [Clientes] [Fornecedores]            │
+│  [Relatórios] [Contas Bancárias] [Vendas Digitais]   │
+├─────────────────────────┬───────────────────────────-┤
+│  Gráfico Fluxo de Caixa │  Resumo Totais + Donut    │
+│  (BarChart 6 meses)     │  por Tipo (receita/desp)  │
+├─────────────────────────┴───────────────────────────-┤
+│  Próximos 7 dias          │  Últimas Movimentações   │
+│  (contas a vencer)        │  (transações recentes)   │
+└───────────────────────────┴──────────────────────────┘
 ```
 
-**Arquivos a criar:**
-- `src/pages/Projetos.tsx` -- pagina principal
-- `src/hooks/useProjetos.ts` -- hook CRUD
-- `src/components/projetos/ProjetoForm.tsx` -- formulario
-- `src/components/projetos/ProjetosTable.tsx` -- tabela
-- `src/components/projetos/ProjetoDeleteDialog.tsx` -- dialog exclusao
+### O que será implementado
 
-**Arquivos a modificar:**
-- `src/App.tsx` -- nova rota `/projetos`
-- `src/components/Sidebar.tsx` -- item de menu "Projetos"
-- `src/hooks/usePermissoes.ts` -- adicionar `/projetos` ao mapa de rotas
-- `src/contexts/LancamentosContext.tsx` -- tipo Lancamento + formData + filtros + fetch projetos + projeto_id
-- `src/components/lancamentos/LancamentosFormDialog.tsx` -- select de projeto
-- `src/components/lancamentos/LancamentosFilterDialog.tsx` -- filtro por projeto
-- `src/components/lancamentos/LancamentosTable.tsx` -- coluna projeto
+1. **Seção de Atalhos Rápidos** (novo componente `DashboardShortcuts.tsx`)
+   - Grid de 6 botões-atalho com ícones e labels
+   - Navegação para: Novo Lançamento, Clientes, Fornecedores, Relatórios, Contas Bancárias, Vendas Digitais
+   - Estilo pill/glassmorphism seguindo o design system do projeto
+   - O atalho "Novo Lançamento" abre o modal de criação diretamente
+
+2. **Gráfico Donut de Distribuição** (novo componente `DashboardDonutChart.tsx`)
+   - PieChart (Recharts) mostrando proporção receitas vs despesas vs investimentos
+   - Integrado ao lado do card de totais, substituindo o card simples atual
+
+3. **Layout side-by-side para Próximos 7 dias e Últimas Movimentações**
+   - Reorganizar as duas seções em grid 2 colunas no desktop
+
+4. **Ajustes no Dashboard.tsx**
+   - Integrar os novos componentes
+   - Reorganizar layout em grid responsivo
+   - Manter todos os dados e funcionalidades existentes
+
+5. **Hook `useDashboardData`** -- sem alterações necessárias, já fornece todos os dados
+
+### Arquivos a criar/editar
+
+| Arquivo | Ação |
+|---------|------|
+| `src/components/dashboard/DashboardShortcuts.tsx` | Criar |
+| `src/components/dashboard/DashboardDonutChart.tsx` | Criar |
+| `src/pages/Dashboard.tsx` | Editar layout |
 
