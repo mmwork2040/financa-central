@@ -852,8 +852,11 @@ Deno.serve(async (req) => {
         // Nomes para buscar/criar automaticamente (normalizar para Title Case pt-BR)
         const categoria_nome = normalizeText(sanitize(body.categoria_nome), "nome");
         const cliente_nome = normalizeText(sanitize(body.cliente_nome), "nome");
+        const cliente_cpf_cnpj = sanitize(body.cliente_cpf_cnpj);
         const fornecedor_nome = normalizeText(sanitize(body.fornecedor_nome), "nome");
+        const fornecedor_cpf_cnpj = sanitize(body.fornecedor_cpf_cnpj);
         const conta_bancaria_nome = normalizeText(sanitize(body.conta_bancaria_nome), "nome");
+        const conta_bancaria_banco = sanitize(body.conta_bancaria_banco);
         const conta_bancaria_agencia = sanitize(body.conta_bancaria_agencia);
         const conta_bancaria_conta = sanitize(body.conta_bancaria_conta);
         const forma_pagamento_nome = normalizeText(sanitize(body.forma_pagamento_nome), "descricao");
@@ -907,14 +910,18 @@ Deno.serve(async (req) => {
 
         // ── Resolver cliente (para receita) ──
         if (!cliente_id && cliente_nome && tipo === "receita") {
-          const cliId = await resolveOrCreate("clientes", "nome", cliente_nome, { origem: "n8n" });
-          if (cliId) { cliente_id = cliId; registros_criados.cliente = { id: cliId, nome: cliente_nome }; }
+          const extraCliente: Record<string, any> = { origem: "n8n" };
+          if (cliente_cpf_cnpj) extraCliente.cpf_cnpj = cliente_cpf_cnpj;
+          const cliId = await resolveOrCreate("clientes", "nome", cliente_nome, extraCliente);
+          if (cliId) { cliente_id = cliId; registros_criados.cliente = { id: cliId, nome: cliente_nome, cpf_cnpj: cliente_cpf_cnpj || null }; }
         }
 
         // ── Resolver fornecedor (para despesa) ──
         if (!fornecedor_id && fornecedor_nome && tipo === "despesa") {
-          const forId = await resolveOrCreate("fornecedores", "nome", fornecedor_nome);
-          if (forId) { fornecedor_id = forId; registros_criados.fornecedor = { id: forId, nome: fornecedor_nome }; }
+          const extraFornecedor: Record<string, any> = {};
+          if (fornecedor_cpf_cnpj) extraFornecedor.cpf_cnpj = fornecedor_cpf_cnpj;
+          const forId = await resolveOrCreate("fornecedores", "nome", fornecedor_nome, extraFornecedor);
+          if (forId) { fornecedor_id = forId; registros_criados.fornecedor = { id: forId, nome: fornecedor_nome, cpf_cnpj: fornecedor_cpf_cnpj || null }; }
         }
 
         // ── Resolver conta bancária (buscar por nome OU banco) ──
@@ -947,10 +954,14 @@ Deno.serve(async (req) => {
               const insertData: any = { empresa_id, nome: conta_bancaria_nome.trim(), saldo_inicial: 0, saldo_atual: 0, principal: false };
               if (conta_bancaria_agencia) insertData.agencia = conta_bancaria_agencia;
               if (conta_bancaria_conta) insertData.conta = conta_bancaria_conta;
-              // Se o nome parece ser um banco, salvar também no campo banco
-              const bancos = ["santander", "itaú", "itau", "bradesco", "nubank", "inter", "caixa", "bb", "banco do brasil", "sicoob", "sicredi", "c6", "original", "safra", "btg"];
-              if (bancos.some(b => conta_bancaria_nome.trim().toLowerCase().includes(b))) {
-                insertData.banco = conta_bancaria_nome.trim();
+              // Use conta_bancaria_banco if provided, otherwise detect from name
+              if (conta_bancaria_banco) {
+                insertData.banco = conta_bancaria_banco.trim();
+              } else {
+                const bancos = ["santander", "itaú", "itau", "bradesco", "nubank", "inter", "caixa", "bb", "banco do brasil", "sicoob", "sicredi", "c6", "original", "safra", "btg"];
+                if (bancos.some(b => conta_bancaria_nome.trim().toLowerCase().includes(b))) {
+                  insertData.banco = conta_bancaria_nome.trim();
+                }
               }
               const { data: created } = await supabase.from("contas_bancarias")
                 .insert(insertData)
