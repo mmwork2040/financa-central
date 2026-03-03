@@ -29,6 +29,7 @@ interface Plataforma {
   steps: string[];
   needsSecret: boolean;
   webhookOnly?: boolean;
+  skipAutoTest?: boolean;
   usesWebhook?: boolean;
   keyValidation?: { prefix?: string; hint: string };
   categoria: PlataformaCategoria;
@@ -194,7 +195,7 @@ const PLATAFORMAS: Plataforma[] = [
       "No MCC, acesse Ferramentas → Centro de API e copie o Developer Token",
       "Copie também o Customer ID (número da conta, formato XXX-XXX-XXXX, sem hífens)",
     ],
-    needsSecret: true, usesWebhook: false, keyValidation: { hint: "Developer Token do MCC (ex: AbCdEfG...)" },
+    needsSecret: true, usesWebhook: false, skipAutoTest: true, keyValidation: { hint: "Developer Token do MCC (ex: AbCdEfG...)" },
     categoria: "anuncios",
   },
   // --- Comunicação ---
@@ -402,7 +403,7 @@ const Integracoes = () => {
     const activeIntegracoes = integracoes.filter((i: any) => i.ativo);
     const testable = activeIntegracoes.filter((i: any) => {
       const plat = PLATAFORMAS.find(p => p.id === i.plataforma);
-      return plat && !plat.webhookOnly;
+      return plat && !plat.webhookOnly && !plat.skipAutoTest;
     });
     if (testable.length === 0) return;
     setAutoTestDone(true);
