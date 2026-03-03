@@ -55,6 +55,106 @@ Deno.serve(async (req) => {
       return val;
     };
 
+    // ─── Helper: normalizar texto conforme norma culta pt-BR ───
+    const normalizeText = (text: string | undefined | null, type: "nome" | "descricao" | "endereco" | "estado" = "nome"): string | undefined => {
+      if (!text || typeof text !== "string") return undefined;
+      let s = text.trim().replace(/\s{2,}/g, " "); // remover espaços extras
+
+      if (type === "estado") {
+        // Estados: sempre maiúsculo (UF de 2 chars ou nome por extenso)
+        if (s.length === 2) return s.toUpperCase();
+        // Nome de estado por extenso: Title Case
+        return s.toLowerCase().replace(/(?:^|\s)\S/g, (c) => c.toUpperCase());
+      }
+
+      // Artigos, preposições e conjunções que permanecem minúsculas (exceto início)
+      const minusculas = new Set([
+        "da", "de", "do", "das", "dos", "e", "em", "na", "no", "nas", "nos",
+        "para", "por", "com", "sem", "a", "o", "as", "os", "à", "ao", "às", "aos",
+        "um", "uma", "uns", "umas", "que", "ou",
+      ]);
+
+      // Title Case inteligente
+      const titleCase = (str: string): string => {
+        return str.toLowerCase().split(" ").map((word, index) => {
+          if (!word) return word;
+          // Primeira palavra sempre capitalizada
+          if (index === 0) return word.charAt(0).toUpperCase() + word.slice(1);
+          // Preposições/artigos ficam minúsculas
+          if (minusculas.has(word)) return word;
+          // Siglas comuns (2-4 chars all consonants or known acronyms)
+          if (word.length <= 4 && /^[A-Z]+$/i.test(word) && !/[aeiouáéíóúâêîôû]/i.test(word)) return word.toUpperCase();
+          // Capitalizar
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        }).join(" ");
+      };
+
+      // Correções ortográficas comuns
+      const correcoes: Record<string, string> = {
+        "recebimento": "Recebimento", "pagamento": "Pagamento",
+        "transferencia": "Transferência", "transferência": "Transferência",
+        "cartao": "Cartão", "cartão": "Cartão",
+        "credito": "Crédito", "crédito": "Crédito",
+        "debito": "Débito", "débito": "Débito",
+        "pix": "Pix", "PIX": "Pix",
+        "boleto": "Boleto",
+        "dinheiro": "Dinheiro",
+        "alimentacao": "Alimentação", "alimentação": "Alimentação",
+        "educacao": "Educação", "educação": "Educação",
+        "habitacao": "Habitação", "habitação": "Habitação",
+        "comunicacao": "Comunicação", "comunicação": "Comunicação",
+        "manutencao": "Manutenção", "manutenção": "Manutenção",
+        "comissao": "Comissão", "comissão": "Comissão",
+        "servico": "Serviço", "serviço": "Serviço",
+        "servicos": "Serviços", "serviços": "Serviços",
+        "eletronico": "Eletrônico", "eletrônico": "Eletrônico",
+        "eletronicos": "Eletrônicos", "eletrônicos": "Eletrônicos",
+        "veiculo": "Veículo", "veículo": "Veículo",
+        "automovel": "Automóvel", "automóvel": "Automóvel",
+        "numero": "Número", "telefone": "Telefone",
+        "salario": "Salário", "salário": "Salário",
+        "comissoes": "Comissões", "lucro": "Lucro",
+        "investimento": "Investimento", "emprestimo": "Empréstimo",
+        "imposto": "Imposto", "impostos": "Impostos",
+        "seguro": "Seguro", "seguros": "Seguros",
+        "aluguel": "Aluguel", "alugueis": "Aluguéis",
+        "energia": "Energia", "agua": "Água",
+        "internet": "Internet", "telefonia": "Telefonia",
+        "escritorio": "Escritório", "escritório": "Escritório",
+        "consultoria": "Consultoria", "assessoria": "Assessoria",
+        "contabil": "Contábil", "contábil": "Contábil",
+        "juridico": "Jurídico", "jurídico": "Jurídico",
+        "logistica": "Logística", "logística": "Logística",
+        "propaganda": "Propaganda", "publicidade": "Publicidade",
+        "marketing": "Marketing", "vendas": "Vendas",
+        "recepcao": "Recepção", "recepção": "Recepção",
+        "administracao": "Administração", "administração": "Administração",
+        "producao": "Produção", "produção": "Produção",
+      };
+
+      if (type === "nome" || type === "descricao") {
+        s = titleCase(s);
+        // Aplicar correções de acentuação em palavras individuais
+        s = s.split(" ").map((word) => {
+          const lower = word.toLowerCase();
+          return correcoes[lower] || word;
+        }).join(" ");
+      }
+
+      if (type === "endereco") {
+        s = titleCase(s);
+        // Abreviações de endereço padrão
+        s = s.replace(/\b(rua|r\.)\b/i, "Rua")
+          .replace(/\b(avenida|av\.)\b/i, "Avenida")
+          .replace(/\b(travessa|tv\.)\b/i, "Travessa")
+          .replace(/\b(praca|praça|pç\.)\b/i, "Praça")
+          .replace(/\b(alameda|al\.)\b/i, "Alameda")
+          .replace(/\b(rodovia|rod\.)\b/i, "Rodovia");
+      }
+
+      return s;
+    };
+
     const body = rawBody;
     const action = sanitize(body.action) || body.action;
     const empresa_id = sanitize(body.empresa_id);
@@ -622,7 +722,7 @@ Deno.serve(async (req) => {
 
       // ─── CRIAR LANÇAMENTO (RECEITA OU DESPESA) — com resolução automática de dependências ───
       case "criar-lancamento": {
-        const descricao = sanitize(body.descricao);
+        const descricao = normalizeText(sanitize(body.descricao), "descricao");
         const valor = body.valor;
         const tipo = sanitize(body.tipo);
         let status_lanc = sanitize(body.status);
@@ -637,12 +737,12 @@ Deno.serve(async (req) => {
         let conta_bancaria_id = sanitize(body.conta_bancaria_id);
         let forma_pagamento_id = sanitize(body.forma_pagamento_id);
 
-        // Nomes para buscar/criar automaticamente
-        const categoria_nome = sanitize(body.categoria_nome);
-        const cliente_nome = sanitize(body.cliente_nome);
-        const fornecedor_nome = sanitize(body.fornecedor_nome);
-        const conta_bancaria_nome = sanitize(body.conta_bancaria_nome);
-        const forma_pagamento_nome = sanitize(body.forma_pagamento_nome);
+        // Nomes para buscar/criar automaticamente (normalizar para Title Case pt-BR)
+        const categoria_nome = normalizeText(sanitize(body.categoria_nome), "nome");
+        const cliente_nome = normalizeText(sanitize(body.cliente_nome), "nome");
+        const fornecedor_nome = normalizeText(sanitize(body.fornecedor_nome), "nome");
+        const conta_bancaria_nome = normalizeText(sanitize(body.conta_bancaria_nome), "nome");
+        const forma_pagamento_nome = normalizeText(sanitize(body.forma_pagamento_nome), "descricao");
 
         if (!descricao || valor === undefined || valor === null) {
           return new Response(JSON.stringify({ error: "descricao and valor are required" }), {
@@ -927,7 +1027,7 @@ Deno.serve(async (req) => {
 
       // ─── CRIAR CLIENTE ───
       case "criar-cliente": {
-        const nome = sanitize(body.nome);
+        const nome = normalizeText(sanitize(body.nome), "nome");
         if (!nome) {
           return new Response(JSON.stringify({ error: "nome is required" }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -950,12 +1050,12 @@ Deno.serve(async (req) => {
         const cli_telefone = sanitize(body.telefone);
         const cli_email = sanitize(body.email);
         const cli_cep = sanitize(body.cep);
-        const cli_rua = sanitize(body.rua);
+        const cli_rua = normalizeText(sanitize(body.rua), "endereco");
         const cli_numero = sanitize(body.numero);
-        const cli_complemento = sanitize(body.complemento);
-        const cli_bairro = sanitize(body.bairro);
-        const cli_cidade = sanitize(body.cidade);
-        const cli_estado = sanitize(body.estado);
+        const cli_complemento = normalizeText(sanitize(body.complemento), "endereco");
+        const cli_bairro = normalizeText(sanitize(body.bairro), "nome");
+        const cli_cidade = normalizeText(sanitize(body.cidade), "nome");
+        const cli_estado = normalizeText(sanitize(body.estado), "estado");
         if (cli_cpf_cnpj) clienteData.cpf_cnpj = cli_cpf_cnpj;
         if (cli_telefone) clienteData.telefone = cli_telefone;
         if (cli_email) clienteData.email = cli_email;
@@ -976,7 +1076,7 @@ Deno.serve(async (req) => {
 
       // ─── CRIAR FORNECEDOR ───
       case "criar-fornecedor": {
-        const nome = sanitize(body.nome);
+        const nome = normalizeText(sanitize(body.nome), "nome");
         if (!nome) {
           return new Response(JSON.stringify({ error: "nome is required" }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -998,12 +1098,12 @@ Deno.serve(async (req) => {
         const telefone = sanitize(body.telefone);
         const email_forn = sanitize(body.email);
         const cep = sanitize(body.cep);
-        const rua = sanitize(body.rua);
+        const rua = normalizeText(sanitize(body.rua), "endereco");
         const numero = sanitize(body.numero);
-        const complemento = sanitize(body.complemento);
-        const bairro = sanitize(body.bairro);
-        const cidade = sanitize(body.cidade);
-        const estado = sanitize(body.estado);
+        const complemento = normalizeText(sanitize(body.complemento), "endereco");
+        const bairro = normalizeText(sanitize(body.bairro), "nome");
+        const cidade = normalizeText(sanitize(body.cidade), "nome");
+        const estado = normalizeText(sanitize(body.estado), "estado");
         if (cpf_cnpj) fornecedorData.cpf_cnpj = cpf_cnpj;
         if (telefone) fornecedorData.telefone = telefone;
         if (email_forn) fornecedorData.email = email_forn;
@@ -1024,7 +1124,7 @@ Deno.serve(async (req) => {
 
       // ─── CRIAR CATEGORIA ───
       case "criar-categoria": {
-        const nome = sanitize(body.nome);
+        const nome = normalizeText(sanitize(body.nome), "nome");
         const tipo = sanitize(body.tipo) || "despesa";
         if (!nome) {
           return new Response(JSON.stringify({ error: "nome is required" }), {
@@ -1052,7 +1152,7 @@ Deno.serve(async (req) => {
 
       // ─── CRIAR CONTA BANCÁRIA ───
       case "criar-conta-bancaria": {
-        const nome = sanitize(body.nome);
+        const nome = normalizeText(sanitize(body.nome), "nome");
         if (!nome) {
           return new Response(JSON.stringify({ error: "nome is required" }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1075,7 +1175,7 @@ Deno.serve(async (req) => {
         const banco = sanitize(body.banco);
         const agencia = sanitize(body.agencia);
         const conta = sanitize(body.conta);
-        if (banco) contaData.banco = banco;
+        if (banco) contaData.banco = normalizeText(banco, "nome");
         if (agencia) contaData.agencia = agencia;
         if (conta) contaData.conta = conta;
 
@@ -1091,7 +1191,7 @@ Deno.serve(async (req) => {
 
       // ─── CRIAR FORMA DE PAGAMENTO ───
       case "criar-forma-pagamento": {
-        const descricao = sanitize(body.descricao);
+        const descricao = normalizeText(sanitize(body.descricao), "descricao");
         if (!descricao) {
           return new Response(JSON.stringify({ error: "descricao is required" }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1113,7 +1213,7 @@ Deno.serve(async (req) => {
 
       // ─── CRIAR PROJETO ───
       case "criar-projeto": {
-        const nome = sanitize(body.nome);
+        const nome = normalizeText(sanitize(body.nome), "nome");
         if (!nome) {
           return new Response(JSON.stringify({ error: "nome is required" }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1234,8 +1334,18 @@ Deno.serve(async (req) => {
         }
 
         const updateData: any = {};
+        const textNormFields: Record<string, "nome" | "descricao" | "endereco" | "estado"> = {
+          nome: "nome", rua: "endereco", complemento: "endereco", bairro: "nome", cidade: "nome", estado: "estado",
+        };
         const fields = ["nome", "email", "telefone", "cpf_cnpj", "cep", "rua", "numero", "complemento", "bairro", "cidade", "estado", "ativo"];
-        for (const f of fields) { const v = sanitize(body[f]); if (v !== undefined) updateData[f] = f === "ativo" ? body[f] === true || body[f] === "true" : v; }
+        for (const f of fields) {
+          const v = sanitize(body[f]);
+          if (v !== undefined) {
+            if (f === "ativo") updateData[f] = body[f] === true || body[f] === "true";
+            else if (textNormFields[f]) updateData[f] = normalizeText(v, textNormFields[f]);
+            else updateData[f] = v;
+          }
+        }
         if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
         const { data: updCli, error: updCliErr } = await supabase.from("clientes").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
@@ -1255,8 +1365,18 @@ Deno.serve(async (req) => {
         }
 
         const updateData: any = {};
+        const textNormFields: Record<string, "nome" | "descricao" | "endereco" | "estado"> = {
+          nome: "nome", rua: "endereco", complemento: "endereco", bairro: "nome", cidade: "nome", estado: "estado",
+        };
         const fields = ["nome", "email", "telefone", "cpf_cnpj", "cep", "rua", "numero", "complemento", "bairro", "cidade", "estado", "ativo"];
-        for (const f of fields) { const v = sanitize(body[f]); if (v !== undefined) updateData[f] = f === "ativo" ? body[f] === true || body[f] === "true" : v; }
+        for (const f of fields) {
+          const v = sanitize(body[f]);
+          if (v !== undefined) {
+            if (f === "ativo") updateData[f] = body[f] === true || body[f] === "true";
+            else if (textNormFields[f]) updateData[f] = normalizeText(v, textNormFields[f]);
+            else updateData[f] = v;
+          }
+        }
         if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
         const { data: updForn, error: updFornErr } = await supabase.from("fornecedores").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
@@ -1276,7 +1396,7 @@ Deno.serve(async (req) => {
         }
 
         const updateData: any = {};
-        if (sanitize(body.nome)) updateData.nome = sanitize(body.nome);
+        if (sanitize(body.nome)) updateData.nome = normalizeText(sanitize(body.nome), "nome");
         if (sanitize(body.tipo)) updateData.tipo = sanitize(body.tipo);
         if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -1298,7 +1418,14 @@ Deno.serve(async (req) => {
 
         const updateData: any = {};
         const fields = ["nome", "banco", "agencia", "conta", "principal"];
-        for (const f of fields) { const v = sanitize(body[f]); if (v !== undefined) updateData[f] = f === "principal" ? body[f] === true || body[f] === "true" : v; }
+        for (const f of fields) {
+          const v = sanitize(body[f]);
+          if (v !== undefined) {
+            if (f === "principal") updateData[f] = body[f] === true || body[f] === "true";
+            else if (f === "nome" || f === "banco") updateData[f] = normalizeText(v, "nome");
+            else updateData[f] = v;
+          }
+        }
         if (body.saldo_atual !== undefined && sanitize(body.saldo_atual) !== undefined) updateData.saldo_atual = Number(body.saldo_atual);
         if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -1322,7 +1449,7 @@ Deno.serve(async (req) => {
           return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta forma de pagamento possui lançamentos pagos/recebidos vinculados e não pode ser alterada." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
-        const descricao = sanitize(body.descricao);
+        const descricao = normalizeText(sanitize(body.descricao), "descricao");
         if (!descricao) return new Response(JSON.stringify({ error: "descricao is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
         const { data: updForma, error: updFormaErr } = await supabase.from("formas_pagamento").update({ descricao }).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
@@ -1337,8 +1464,8 @@ Deno.serve(async (req) => {
         if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         
         const updateData: any = {};
-        if (sanitize(body.nome)) updateData.nome = sanitize(body.nome);
-        if (sanitize(body.descricao)) updateData.descricao = sanitize(body.descricao);
+        if (sanitize(body.nome)) updateData.nome = normalizeText(sanitize(body.nome), "nome");
+        if (sanitize(body.descricao)) updateData.descricao = normalizeText(sanitize(body.descricao), "descricao");
         if (sanitize(body.status)) updateData.status = sanitize(body.status);
         if (body.orcamento !== undefined && sanitize(body.orcamento) !== undefined) updateData.orcamento = Number(body.orcamento);
         if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -1363,7 +1490,10 @@ Deno.serve(async (req) => {
 
         const updateData: any = {};
         const fields = ["descricao", "tipo", "status", "data_vencimento", "data_pagamento", "categoria_id", "cliente_id", "fornecedor_id", "conta_bancaria_id", "forma_pagamento_id", "projeto_id"];
-        for (const f of fields) { const v = sanitize(body[f]); if (v !== undefined) updateData[f] = v; }
+        for (const f of fields) {
+          const v = sanitize(body[f]);
+          if (v !== undefined) updateData[f] = f === "descricao" ? normalizeText(v, "descricao") : v;
+        }
         if (body.valor !== undefined && sanitize(body.valor) !== undefined) updateData.valor = Number(body.valor);
         if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
