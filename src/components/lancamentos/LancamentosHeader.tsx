@@ -1,7 +1,8 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Filter, Plus, Receipt, RefreshCw, Upload } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Eye, EyeOff, Filter, Plus, Receipt, RefreshCw, Search, Upload } from "lucide-react";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import ExportDropdown from "@/components/common/ExportDropdown";
 import ExportLancamentosDialog from "@/components/lancamentos/ExportLancamentosDialog";
@@ -22,6 +23,8 @@ export const LancamentosHeader = () => {
     exportToPDF,
     refreshLancamentos,
     loading,
+    searchQuery,
+    setSearchQuery,
   } = useLancamentosContext();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -66,6 +69,15 @@ export const LancamentosHeader = () => {
           <span className="hidden sm:inline">Atualizar</span>
         </Button>
         <ExportDropdown onExport={handleExport} />
+        <div className="relative flex-1 min-w-[140px] max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar lançamentos..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-8 text-sm"
+          />
+        </div>
         {isSuperAdmin && (
           <Button variant="outline" size="sm" onClick={() => setExportDialogOpen(true)}>
             <Upload className="mr-1.5 h-4 w-4" />

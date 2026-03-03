@@ -15,7 +15,7 @@ import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 import SupportDeleteDialog from "@/components/common/SupportDeleteDialog";
 import { useSolicitacoesSuporte } from "@/hooks/useSolicitacoesSuporte";
 
-export const LancamentosTable = () => {
+export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?: any[] } = {}) => {
   const { canPerformAction, isSuperAdmin } = useAuth();
   const canAlterar = canPerformAction("lancamentos", "pode_alterar");
   const canExcluir = canPerformAction("lancamentos", "pode_excluir");
@@ -46,10 +46,11 @@ export const LancamentosTable = () => {
   }, []);
 
   const { 
-    lancamentos, handleSort, handleOpenModal, handleOpenDeleteModal, handleUpdateStatus,
+    lancamentos: contextLancamentos, handleSort, handleOpenModal, handleOpenDeleteModal, handleUpdateStatus,
     getStatusBadgeClass, getStatusLabel, getTipoBadgeClass
   } = useLancamentosContext();
 
+  const lancamentos = lancamentosOverride || contextLancamentos;
   const showActions = canAlterar || canExcluir;
   const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(lancamentos);
 
