@@ -281,8 +281,8 @@ Deno.serve(async (req) => {
         vendaId = venda.id;
       }
 
-      // Create lancamento (receita) automatically if approved
-      if (saleData.status === "aprovada") {
+      // Create lancamento automatically if approved or refunded
+      if (saleData.status === "aprovada" || saleData.status === "reembolsada") {
         const dataVenda = String(saleData.data_venda).split("T")[0] || new Date().toISOString().split("T")[0];
 
         // Find principal bank account (or single account) for the empresa
@@ -297,7 +297,6 @@ Deno.serve(async (req) => {
         if (contaPrincipal) {
           contaBancariaId = contaPrincipal.id;
         } else {
-          // If no principal, use the only account if there's exactly one
           const { data: todasContas } = await supabase
             .from("contas_bancarias")
             .select("id")
@@ -307,16 +306,21 @@ Deno.serve(async (req) => {
           }
         }
 
+        const isReembolso = saleData.status === "reembolsada";
+        const tipoLancamento = isReembolso ? "despesa" : "receita";
+        const statusLancamento = isReembolso ? "pago" : "pago";
+        const prefixo = isReembolso ? "REEMBOLSO" : saleData.plataforma.charAt(0).toUpperCase() + saleData.plataforma.slice(1);
+
         const { data: lancamento, error: lancError } = await supabase
           .from("lancamentos")
           .insert({
             empresa_id: empresaId,
-            descricao: `${saleData.plataforma.charAt(0).toUpperCase() + saleData.plataforma.slice(1)} - ${saleData.produto || "Venda digital"}${saleData.cliente ? ` (${saleData.cliente})` : ""}`,
-            tipo: "receita",
+            descricao: `${prefixo} - ${saleData.produto || "Venda digital"}${saleData.cliente ? ` (${saleData.cliente})` : ""}`,
+            tipo: tipoLancamento,
             valor: saleData.valor_liquido,
             data_vencimento: dataVenda,
             data_pagamento: dataVenda,
-            status: "pago",
+            status: statusLancamento,
             origem: "integracao",
             ...(clienteId ? { cliente_id: clienteId } : {}),
             ...(contaBancariaId ? { conta_bancaria_id: contaBancariaId } : {}),
@@ -329,15 +333,15 @@ Deno.serve(async (req) => {
         } else {
           lancamentoId = lancamento.id;
 
-          // Update bank account balance (credit for receita)
+          // Update bank account balance
           if (contaBancariaId) {
+            const rpcTipo = isReembolso ? "despesa" : "receita";
             const { error: saldoError } = await supabase.rpc("update_saldo_conta", {
               _conta_id: contaBancariaId,
               _valor: saleData.valor_liquido,
-              _tipo: "receita",
+              _tipo: rpcTipo,
             });
 
-            // Fallback: direct update if RPC doesn't exist
             if (saldoError) {
               console.warn("RPC update_saldo_conta não encontrada, atualizando diretamente:", saldoError.message);
               const { data: contaAtual } = await supabase
@@ -347,13 +351,24 @@ Deno.serve(async (req) => {
                 .single();
 
               if (contaAtual) {
+                const novoSaldo = isReembolso
+                  ? contaAtual.saldo_atual - saleData.valor_liquido
+                  : contaAtual.saldo_atual + saleData.valor_liquido;
                 await supabase
                   .from("contas_bancarias")
-                  .update({ saldo_atual: contaAtual.saldo_atual + saleData.valor_liquido })
+                  .update({ saldo_atual: novoSaldo })
                   .eq("id", contaBancariaId);
               }
             }
           }
+        }
+
+        // If refund, also update the venda_digital status
+        if (isReembolso && vendaId) {
+          await supabase
+            .from("vendas_digitais")
+            .update({ status: "reembolsada" })
+            .eq("id", vendaId);
         }
       }
     }
