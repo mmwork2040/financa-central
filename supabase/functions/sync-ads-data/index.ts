@@ -360,6 +360,7 @@ Deno.serve(async (req) => {
           totalConversoes: 0,
           roas: 0,
           campanhas: [],
+          erro: err.message,
         });
       }
     }

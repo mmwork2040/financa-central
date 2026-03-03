@@ -1398,6 +1398,23 @@ Deno.serve(async (req) => {
           .eq("empresa_id", empresa_id)
           .in("plataforma", ["meta_ads", "google_ads", "facebook_ads"]);
 
+        // Check last sync status for each integration from logs
+        const { data: lastLogs } = await supabase
+          .from("logs_integracoes")
+          .select("plataforma, status, payload, created_at")
+          .eq("empresa_id", empresa_id)
+          .eq("evento", "sync_ads_data")
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        const errosPorPlataforma: Record<string, string> = {};
+        for (const integ of integracoes || []) {
+          const lastLog = (lastLogs || []).find((l: any) => l.plataforma === integ.plataforma);
+          if (lastLog && (lastLog.status === "error" || lastLog.status === "erro")) {
+            errosPorPlataforma[integ.plataforma] = (lastLog.payload as any)?.error || "Erro de conexão desconhecido";
+          }
+        }
+
         // Also get vendas_digitais as ads performance proxy
         const { inicio, fim } = getDateRange(periodo);
         const { data: vendas } = await supabase
@@ -1420,14 +1437,28 @@ Deno.serve(async (req) => {
           };
         }
 
+        // Add connection status per integration
+        result.integracoes = (result.integracoes || []).map((i: any) => ({
+          plataforma: i.plataforma,
+          ativo: i.ativo,
+          ambiente: i.ambiente,
+          erro: errosPorPlataforma[i.plataforma] || null,
+          status_conexao: errosPorPlataforma[i.plataforma] ? "erro" : "ok",
+        }));
+
         const totalInvestido = (result.vendas_por_plataforma || []).reduce((s: number, v: any) => s + Number(v.taxa || 0), 0);
         const totalReceita = (result.vendas_por_plataforma || []).reduce((s: number, v: any) => s + Number(v.valor_bruto || 0), 0);
+        
+        const errosAtivos = Object.entries(errosPorPlataforma);
         result.resumo = {
           total_integracoes: (result.integracoes || []).length,
           total_vendas: (result.vendas_por_plataforma || []).length,
           total_investido: totalInvestido,
           total_receita: totalReceita,
           roas: totalInvestido > 0 ? (totalReceita / totalInvestido).toFixed(2) : null,
+          erros_conexao: errosAtivos.length > 0
+            ? errosAtivos.map(([plat, erro]) => `${plat}: ${erro}`).join("; ")
+            : null,
         };
         break;
       }
