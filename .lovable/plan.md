@@ -1,31 +1,34 @@
 
 
-## Plano: Remover personalização de cores e manter apenas Light/Dark mode
+## Plano: Meses de Caixa com Projeção Fiel (Recorrências + Parcelas)
 
-### Objetivo
-Eliminar a possibilidade do usuário alterar a cor primária do sistema. A cor será sempre a do design system (#22C55E verde). Apenas alternância Light/Dark mode será permitida.
+### Problema Atual
+O cálculo de "Meses de Caixa" usa apenas a média histórica de despesas pagas nos últimos 3 meses (`caixa / mediaMensalDespesas`). Isso ignora despesas e receitas futuras já previstas — parcelas, recorrências e lançamentos pendentes.
 
-### Alterações
+### Nova Lógica
 
-**1. `src/hooks/useCompanyTheme.ts`** — Simplificar drasticamente
-- Remover toda a lógica de buscar `cor_primaria` do banco e aplicar dinamicamente
-- O hook retorna `themeReady: true` imediatamente (sem fetch)
-- As cores CSS padrão definidas em `index.css` serão usadas sem override
+Em vez de dividir caixa pela média histórica, simular mês a mês o fluxo de caixa futuro considerando:
 
-**2. `src/pages/ConfiguracoesEmpresa.tsx`** — Remover seção de cor
-- Remover o bloco inteiro de "Cor Primária" (linhas 286-303): color picker, input hex, preview, botões Desfazer/Confirmar
-- Remover states relacionados: `originalColor`, `colorChanged`
-- Remover funções: `handleColorChange`, `handleUndoColor`, `handleConfirmColor`
-- Remover `cor_primaria` do `handleSave` (não enviar mais para o banco)
-- Remover import `Undo2`, `Check` se não usados em outro lugar
+1. **Lançamentos reais futuros** — buscar todos os lançamentos com `data_vencimento` futura e status pendente/aberto (inclui parcelas já criadas no banco)
+2. **Recorrências sem parcelas** — buscar lançamentos com `recorrente = true` e sem `total_parcelas`, projetar virtualmente para cada mês futuro até `recorrencia_fim` (ou até 12 meses se indefinido)
+3. **Simulação mês a mês**: começar com `caixaAtual`, somar receitas e subtrair despesas de cada mês. Contar quantos meses o caixa permanece positivo = "meses de caixa"
 
-**3. `src/index.css`** — Já está correto
-- As variáveis CSS de light e dark mode já definem `--primary: 142 71% 45%` (verde #22C55E). Nenhuma alteração necessária.
+### Arquivos a Editar
 
-### Arquivos
+**`src/hooks/useDashboardData.tsx`** — Reescrever o bloco de cálculo de `mesesDeCaixa` (linhas 198-211):
+- Buscar todos os lançamentos futuros pendentes (sem limite de mês)
+- Buscar lançamentos recorrentes ativos (sem `total_parcelas`)
+- Criar função `calcularFluxoMensal(mes)` que soma lançamentos reais + projeções de recorrências para aquele mês
+- Iterar até 12 meses no futuro: `runningCaixa += receitasMes - despesasMes`. Quando `runningCaixa <= 0`, parar e retornar o número de meses
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/hooks/useCompanyTheme.ts` | Simplificar: retornar `true` sem fetch/apply |
-| `src/pages/ConfiguracoesEmpresa.tsx` | Remover seção de cor primária e lógica associada |
+**`src/components/relatorios/CaixaView.tsx`** — Mesma lógica para o cálculo de `mesesDeCaixa` (linhas 30-44) e para a projeção do gráfico (linhas 46-73):
+- Usar a mesma abordagem de simulação mês a mês com recorrências virtuais
+- O gráfico de projeção já itera mês a mês, mas não inclui recorrências — adicionar projeção de recorrências em cada mês
+
+### Detalhes da Projeção de Recorrências
+
+Para cada lançamento com `recorrente = true` e `total_parcelas = null`:
+- Verificar se o mês sendo calculado está entre `data_vencimento` (início) e `recorrencia_fim` (fim, ou +12 meses se null)
+- Se sim, adicionar `valor` como despesa ou receita projetada naquele mês
+- Verificar se já existe um lançamento real naquele mês com mesma descrição para evitar duplicidade
 
