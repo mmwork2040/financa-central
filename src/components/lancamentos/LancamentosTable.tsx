@@ -71,7 +71,7 @@ export const LancamentosTable = () => {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Registro: {new Date(l.created_at).toLocaleDateString()}
+                    Registro: {new Date(l.created_at).toLocaleDateString()} {new Date(l.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     {' · '}Venc: {new Date(l.data_vencimento).toLocaleDateString()}
                     {l.categoria?.nome ? ` · ${l.categoria.nome}` : ''}
                   </p>
@@ -191,7 +191,12 @@ export const LancamentosTable = () => {
         <TableBody>
           {lancamentos.map((lancamento) => (
             <TableRow key={lancamento.id} className={hasPendingRequest("lancamentos", lancamento.id!) ? "bg-destructive/5 border-l-4 border-l-destructive" : ""}>
-              <TableCell>{new Date(lancamento.created_at).toLocaleDateString()}</TableCell>
+              <TableCell>
+                <div className="leading-tight">
+                  <span>{new Date(lancamento.created_at).toLocaleDateString()}</span>
+                  <span className="block text-[10px] text-muted-foreground">{new Date(lancamento.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </TableCell>
               <TableCell className="font-medium">
                 {lancamento.descricao}
                 <div className="text-xs text-muted-foreground">
