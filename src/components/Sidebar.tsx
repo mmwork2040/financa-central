@@ -433,7 +433,7 @@ export const Sidebar = () => {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border shadow-lg transition-all duration-300 ease-in-out",
-          "bg-white/72 backdrop-blur-[14px] dark:bg-slate-900/80",
+          "bg-white dark:bg-slate-900",
           isMobile
             ? cn("w-72", mobileOpen ? "translate-x-0" : "-translate-x-full")
             : isExpanded ? "w-60" : "w-14"
