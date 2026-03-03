@@ -51,6 +51,13 @@ const TEST_ENDPOINTS: Record<string, { url: string; method: string; headers: (ke
       "X-Consumer-Key": key,
     }),
   },
+  kiwify: {
+    url: "https://api.kiwify.com.br/v1/transactions?page=1&limit=1",
+    method: "GET",
+    headers: (key) => ({
+      "Authorization": `Bearer ${key}`,
+    }),
+  },
   meta_ads: {
     url: "https://graph.facebook.com/v19.0/me",
     method: "GET",
