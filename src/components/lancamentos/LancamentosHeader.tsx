@@ -1,12 +1,13 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Filter, Plus, Receipt, Upload } from "lucide-react";
+import { Eye, EyeOff, Filter, Plus, Receipt, RefreshCw, Upload } from "lucide-react";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import ExportDropdown from "@/components/common/ExportDropdown";
 import ExportLancamentosDialog from "@/components/lancamentos/ExportLancamentosDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
+import { cn } from "@/lib/utils";
 
 export const LancamentosHeader = () => {
   const { canPerformAction, isSuperAdmin } = useAuth();
@@ -18,8 +19,17 @@ export const LancamentosHeader = () => {
     handleOpenModal, 
     setOpenFilterModal, 
     exportToCSV, 
-    exportToPDF 
+    exportToPDF,
+    refreshLancamentos,
+    loading,
   } = useLancamentosContext();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshLancamentos();
+    setRefreshing(false);
+  };
 
   const handleExport = (format: 'csv' | 'pdf') => {
     if (format === 'csv') {
@@ -50,6 +60,10 @@ export const LancamentosHeader = () => {
           <Filter className="mr-1.5 h-4 w-4" />
           <span className="hidden sm:inline">Filtros</span>
           <span className="sm:hidden">Filtrar</span>
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing || loading}>
+          <RefreshCw className={cn("mr-1.5 h-4 w-4", (refreshing || loading) && "animate-spin")} />
+          <span className="hidden sm:inline">Atualizar</span>
         </Button>
         <ExportDropdown onExport={handleExport} />
         {isSuperAdmin && (

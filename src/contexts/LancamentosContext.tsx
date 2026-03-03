@@ -132,6 +132,7 @@ interface LancamentosContextType {
   refreshFormasPagamento: () => void;
   refreshContasBancarias: () => void;
   refreshProjetos: () => void;
+  refreshLancamentos: () => void;
 }
 
 const LancamentosContext = createContext<LancamentosContextType | undefined>(
@@ -788,6 +789,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         refreshFormasPagamento: fetchFormasPagamento,
         refreshContasBancarias: fetchContasBancarias,
         refreshProjetos: fetchProjetos,
+        refreshLancamentos: fetchLancamentos,
       }}
     >
       {children}
