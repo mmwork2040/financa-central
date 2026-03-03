@@ -313,7 +313,8 @@ const Integracoes = () => {
   const [keyError, setKeyError] = useState("");
   const [testing, setTesting] = useState<string | null>(null);
   const [testingWebhook, setTestingWebhook] = useState<string | null>(null);
-  const [testResult, setTestResult] = useState<{ plataforma: string; status: string; message: string } | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, { status: string; message: string }>>({});
+  const [autoTestDone, setAutoTestDone] = useState(false);
   const [webhookExpanded, setWebhookExpanded] = useState<string | null>(null);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportTargetEmpresa, setExportTargetEmpresa] = useState("");
@@ -393,6 +394,21 @@ const Integracoes = () => {
       autoConnectLovableAI();
     }
   }, [loading, integracoes.length]);
+
+  // Auto-test all active non-webhook-only integrations on page load
+  useEffect(() => {
+    if (loading || autoTestDone || integracoes.length === 0) return;
+    const activeIntegracoes = integracoes.filter((i: any) => i.ativo);
+    const testable = activeIntegracoes.filter((i: any) => {
+      const plat = PLATAFORMAS.find(p => p.id === i.plataforma);
+      return plat && !plat.webhookOnly;
+    });
+    if (testable.length === 0) return;
+    setAutoTestDone(true);
+    testable.forEach((i: any) => {
+      handleTestConnection(i.plataforma, true);
+    });
+  }, [loading, integracoes, autoTestDone]);
 
   const currentPlat = PLATAFORMAS.find(p => p.id === connectDialog);
 
@@ -542,17 +558,16 @@ const Integracoes = () => {
         .eq('plataforma', plataforma);
       if (error) throw error;
       toast.success("Integração desconectada.");
-      setTestResult(null);
+      setTestResults(prev => { const n = { ...prev }; delete n[plataforma]; return n; });
       fetchIntegracoes();
     } catch (error: any) {
       toast.error(error.message || "Erro ao desconectar");
     }
   };
 
-  const handleTestConnection = async (plataforma: string) => {
+  const handleTestConnection = async (plataforma: string, silent = false) => {
     if (!empresaId) return;
     setTesting(plataforma);
-    setTestResult(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Não autenticado");
@@ -563,19 +578,21 @@ const Integracoes = () => {
       
       if (res.error) throw res.error;
       const result = res.data;
-      setTestResult({ plataforma, status: result.status, message: result.message });
+      setTestResults(prev => ({ ...prev, [plataforma]: { status: result.status, message: result.message } }));
       
-      if (result.status === "success") {
-        toast.success(result.message);
-      } else if (result.status === "warning") {
-        toast.warning(result.message);
-      } else {
-        toast.error(result.message);
+      if (!silent) {
+        if (result.status === "success") {
+          toast.success(result.message);
+        } else if (result.status === "warning") {
+          toast.warning(result.message);
+        } else {
+          toast.error(result.message);
+        }
       }
     } catch (error: any) {
       const msg = error.message || "Erro ao testar conexão";
-      setTestResult({ plataforma, status: "error", message: msg });
-      toast.error(msg);
+      setTestResults(prev => ({ ...prev, [plataforma]: { status: "error", message: msg } }));
+      if (!silent) toast.error(msg);
     } finally {
       setTesting(null);
     }
@@ -609,7 +626,7 @@ const Integracoes = () => {
   const handleTestWebhook = async (plataforma: string) => {
     if (!empresaId) return;
     setTestingWebhook(plataforma);
-    setTestResult(null);
+    
     try {
       const webhookUrl = getWebhookUrl(plataforma);
       const mockData = MOCK_WEBHOOKS[plataforma];
@@ -624,14 +641,14 @@ const Integracoes = () => {
       });
       const result = await res.json();
       if (result.success) {
-        setTestResult({ plataforma, status: "success", message: `Webhook simulado! Venda registrada (ID: ${result.venda_id?.slice(0, 8)}...)` });
+        setTestResults(prev => ({ ...prev, [plataforma]: { status: "success", message: `Webhook simulado! Venda registrada (ID: ${result.venda_id?.slice(0, 8)}...)` } }));
         toast.success("Webhook de teste processado com sucesso! Venda registrada.");
       } else {
-        setTestResult({ plataforma, status: "error", message: result.error || "Erro ao processar webhook" });
+        setTestResults(prev => ({ ...prev, [plataforma]: { status: "error", message: result.error || "Erro ao processar webhook" } }));
         toast.error(result.error || "Erro ao processar webhook de teste");
       }
     } catch (error: any) {
-      setTestResult({ plataforma, status: "error", message: error.message });
+      setTestResults(prev => ({ ...prev, [plataforma]: { status: "error", message: error.message } }));
       toast.error("Erro ao enviar webhook de teste: " + error.message);
     } finally {
       setTestingWebhook(null);
@@ -876,16 +893,16 @@ const Integracoes = () => {
                       </Select>
                     </div>
                   )}
-                  {testResult && testResult.plataforma === plat.id && (
+                  {testResults[plat.id] && (
                     <div className={`mt-2 flex items-center gap-2 text-xs rounded-md p-2 ${
-                      testResult.status === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400' :
-                      testResult.status === 'warning' ? 'bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400' :
+                      testResults[plat.id].status === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400' :
+                      testResults[plat.id].status === 'warning' ? 'bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400' :
                       'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400'
                     }`}>
-                      {testResult.status === 'success' ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> :
-                       testResult.status === 'warning' ? <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> :
+                      {testResults[plat.id].status === 'success' ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> :
+                       testResults[plat.id].status === 'warning' ? <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> :
                        <XCircle className="h-3.5 w-3.5 shrink-0" />}
-                      <span>{testResult.message}</span>
+                      <span>{testResults[plat.id].message}</span>
                     </div>
                   )}
                 </CardContent>
