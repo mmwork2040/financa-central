@@ -1331,6 +1331,25 @@ const N8nJsonTemplates = () => {
         toolDescription = toolDescription + permNotice;
       }
 
+      // Append JSON schema to description
+      if (!toolDescription.includes("Schema (JSON):")) {
+        const schemaObj: Record<string, string> = {};
+        for (const [key, val] of Object.entries(newBody)) {
+          if (key === "action") {
+            schemaObj[key] = String(val);
+          } else {
+            const param = params.find(p => p.name === key);
+            if (param) {
+              schemaObj[key] = param.required ? `<${param.description}>` : `<opcional>`;
+            } else {
+              schemaObj[key] = "<opcional>";
+            }
+          }
+        }
+        const schemaJson = JSON.stringify(schemaObj, null, 2);
+        toolDescription = toolDescription + `\n\nSchema (JSON):\n${schemaJson}`;
+      }
+
       return { ...t, params, body: newBody, toolDescription };
     });
   };
