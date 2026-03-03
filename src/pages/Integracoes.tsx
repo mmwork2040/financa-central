@@ -439,15 +439,42 @@ const Integracoes = () => {
     setConnectDialog(platId);
     setEditMode(isEdit);
     setWizardStep(isEdit ? 1 : 0);
-    setApiKey("");
-    setApiSecret("");
-    setGoogleClientId("");
-    setGoogleClientSecret("");
-    setGoogleRefreshToken("");
+    setKeyError("");
+
     const integ = integracoes.find((i: any) => i.plataforma === platId);
     setAmbiente(integ?.ambiente || "producao");
-    setSelectedModel(integ?.webhook_secret || LLM_MODELS[platId]?.[0]?.value || '');
-    setKeyError("");
+
+    if (isEdit && integ) {
+      // Load existing data into form fields
+      setApiKey(integ.api_key_encrypted || "");
+      setApiSecret(integ.api_secret_encrypted || "");
+
+      if (platId === "google_ads") {
+        try {
+          const oauth2 = JSON.parse(integ.webhook_secret || "{}");
+          setGoogleClientId(oauth2.client_id || "");
+          setGoogleClientSecret(oauth2.client_secret || "");
+          setGoogleRefreshToken(oauth2.refresh_token || "");
+        } catch {
+          setGoogleClientId("");
+          setGoogleClientSecret("");
+          setGoogleRefreshToken("");
+        }
+      } else {
+        setGoogleClientId("");
+        setGoogleClientSecret("");
+        setGoogleRefreshToken("");
+      }
+
+      setSelectedModel(integ.webhook_secret || LLM_MODELS[platId]?.[0]?.value || '');
+    } else {
+      setApiKey("");
+      setApiSecret("");
+      setGoogleClientId("");
+      setGoogleClientSecret("");
+      setGoogleRefreshToken("");
+      setSelectedModel(LLM_MODELS[platId]?.[0]?.value || '');
+    }
   };
 
   const closeWizard = () => {
@@ -466,7 +493,7 @@ const Integracoes = () => {
     try {
       const { data, error } = await (supabase as any)
         .from('integracoes')
-        .select('plataforma, ativo, ambiente, created_at, webhook_secret');
+        .select('plataforma, ativo, ambiente, created_at, webhook_secret, api_key_encrypted, api_secret_encrypted');
       if (error) throw error;
       setIntegracoes(data || []);
     } catch (error) {
