@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
@@ -25,7 +24,7 @@ export const SummaryCard = ({
   const displayValue = isCurrency ? maskValue(value, visible) : value;
 
   return (
-    <Card>
+    <Card className="glass-card hover:-translate-y-0.5 transition-transform duration-200">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-6 pb-1 sm:pb-2">
         <CardTitle className="text-xs sm:text-sm font-medium truncate pr-2">{title}</CardTitle>
         <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 ${iconColor}`} />

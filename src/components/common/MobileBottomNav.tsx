@@ -23,7 +23,7 @@ const MobileBottomNav = () => {
   const visibleItems = navItems.filter(item => canAccessRoute(item.path));
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/40 glass-card pb-[env(safe-area-inset-bottom)]">
       <div className="flex items-center justify-around h-14">
         {visibleItems.map(item => {
           const isActive = location.pathname === item.path || 
