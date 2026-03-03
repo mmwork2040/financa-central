@@ -649,7 +649,7 @@ const Integracoes = () => {
 
   const handleTestConnection = async (plataforma: string, silent = false) => {
     if (!empresaId) return;
-    setTesting(plataforma);
+    if (!silent) setTesting(plataforma);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Não autenticado");
@@ -661,16 +661,16 @@ const Integracoes = () => {
         });
         if (res.error) throw res.error;
         const result = res.data;
-        if (result.success && result.data?.length > 0) {
+        if (result?.success && result?.data?.length > 0) {
           const gads = result.data[0];
           const msg = `Google Ads conectado! ${gads.campanhas?.length || 0} campanha(s) encontrada(s)`;
           setTestResults(prev => ({ ...prev, [plataforma]: { status: "success", message: msg } }));
           if (!silent) toast.success(msg);
-        } else if (result.success) {
+        } else if (result?.success) {
           setTestResults(prev => ({ ...prev, [plataforma]: { status: "warning", message: "Conectado, mas nenhuma campanha encontrada no período" } }));
           if (!silent) toast.warning("Conectado, mas nenhuma campanha encontrada");
         } else {
-          throw new Error(result.error || "Erro desconhecido");
+          throw new Error(result?.error || "Erro desconhecido");
         }
       } else {
         const res = await supabase.functions.invoke("test-integration", {
@@ -678,7 +678,8 @@ const Integracoes = () => {
         });
         if (res.error) throw res.error;
         const result = res.data;
-        setTestResults(prev => ({ ...prev, [plataforma]: { status: result.status, message: result.message } }));
+        if (!result || typeof result !== 'object') throw new Error("Resposta inválida do servidor");
+        setTestResults(prev => ({ ...prev, [plataforma]: { status: result.status || "error", message: result.message || "Sem resposta" } }));
         if (!silent) {
           if (result.status === "success") toast.success(result.message);
           else if (result.status === "warning") toast.warning(result.message);
@@ -686,11 +687,11 @@ const Integracoes = () => {
         }
       }
     } catch (error: any) {
-      const msg = error.message || "Erro ao testar conexão";
+      const msg = error?.message || "Erro ao testar conexão";
       setTestResults(prev => ({ ...prev, [plataforma]: { status: "error", message: msg } }));
       if (!silent) toast.error(msg);
     } finally {
-      setTesting(null);
+      if (!silent) setTesting(null);
     }
   };
 
