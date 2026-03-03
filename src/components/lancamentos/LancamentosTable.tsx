@@ -189,7 +189,7 @@ export const LancamentosTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {lancamentos.map((lancamento) => (
+          {paginatedItems.map((lancamento) => (
             <TableRow key={lancamento.id} className={hasPendingRequest("lancamentos", lancamento.id!) ? "bg-destructive/5 border-l-4 border-l-destructive" : ""}>
               <TableCell>
                 <div className="leading-tight">
@@ -290,6 +290,7 @@ export const LancamentosTable = () => {
           ))}
         </TableBody>
       </Table>
+      <MobilePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
       <SupportDeleteDialog
         isOpen={supportDialogOpen}
