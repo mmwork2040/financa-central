@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from "react";
-import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, Share2, MessageCircle, Send, Brain, Star, StarOff } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, Share2, MessageCircle, Send, Brain, Star, StarOff, Eye, EyeOff, ShieldAlert } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -346,6 +347,9 @@ const Integracoes = () => {
   const [selectedModel, setSelectedModel] = useState("");
   const [diasRecebimento, setDiasRecebimento] = useState<number>(30);
   const [savingDias, setSavingDias] = useState<string | null>(null);
+  const [disponibilidade, setDisponibilidade] = useState<Record<string, boolean>>({});
+  const [togglingDisp, setTogglingDisp] = useState<string | null>(null);
+  const autoTestErrorsShownRef = useRef(false);
 
   const getSelectedModel = (plataformaId: string): string => {
     const integ = integracoes.find((i: any) => i.plataforma === plataformaId);
@@ -426,6 +430,7 @@ const Integracoes = () => {
   useEffect(() => {
     fetchIntegracoes();
     fetchLlmPadrao();
+    fetchDisponibilidade();
   }, []);
 
   // Auto-connect Lovable AI after integracoes are loaded
@@ -447,6 +452,10 @@ const Integracoes = () => {
     setAutoTestDone(true);
     const platformIds = new Set(testable.map((i: any) => i.plataforma));
     setAutoTestingPlatforms(platformIds);
+    
+    let completedCount = 0;
+    const totalCount = testable.length;
+    
     testable.forEach((i: any) => {
       handleTestConnection(i.plataforma, true).finally(() => {
         setAutoTestingPlatforms(prev => {
@@ -454,6 +463,22 @@ const Integracoes = () => {
           next.delete(i.plataforma);
           return next;
         });
+        completedCount++;
+        // When all tests complete, show summary alert for errors
+        if (completedCount === totalCount) {
+          setTimeout(() => {
+            if (autoTestErrorsShownRef.current) return;
+            autoTestErrorsShownRef.current = true;
+            setTestResults(current => {
+              const errors = Object.entries(current).filter(([_, r]) => r.status === 'error');
+              if (errors.length > 0) {
+                const names = errors.map(([id]) => PLATAFORMAS.find(p => p.id === id)?.name || id).join(', ');
+                toast.error(`⚠️ Problema de conexão detectado em: ${names}. Verifique as credenciais.`, { duration: 8000 });
+              }
+              return current;
+            });
+          }, 500);
+        }
       });
     });
   }, [loading, integracoes, autoTestDone]);
@@ -549,6 +574,59 @@ const Integracoes = () => {
     } catch (error) {
       console.error("Erro ao buscar LLM padrão:", error);
     }
+  };
+
+  const fetchDisponibilidade = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('integracoes_disponiveis')
+        .select('plataforma, disponivel');
+      if (error) throw error;
+      const map: Record<string, boolean> = {};
+      (data || []).forEach((d: any) => { map[d.plataforma] = d.disponivel; });
+      setDisponibilidade(map);
+    } catch (error) {
+      console.error("Erro ao buscar disponibilidade:", error);
+    }
+  };
+
+  const handleToggleDisponibilidade = async (plataformaId: string, disponivel: boolean) => {
+    setTogglingDisp(plataformaId);
+    try {
+      // Check if any empresa has this integration active
+      if (!disponivel) {
+        const { data: activeIntegrations } = await (supabase as any)
+          .from('integracoes')
+          .select('id, empresa_id')
+          .eq('plataforma', plataformaId)
+          .eq('ativo', true);
+        if (activeIntegrations && activeIntegrations.length > 0) {
+          toast.error(`Não é possível desabilitar: ${activeIntegrations.length} empresa(s) possui(em) esta integração ativa.`);
+          setTogglingDisp(null);
+          return;
+        }
+      }
+      const { error } = await (supabase as any)
+        .from('integracoes_disponiveis')
+        .upsert({
+          plataforma: plataformaId,
+          disponivel,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'plataforma' });
+      if (error) throw error;
+      setDisponibilidade(prev => ({ ...prev, [plataformaId]: disponivel }));
+      toast.success(disponivel ? "Integração habilitada para todos os usuários." : "Integração desabilitada para todos os usuários.");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao alterar disponibilidade");
+    } finally {
+      setTogglingDisp(null);
+    }
+  };
+
+  const isPlataformaDisponivel = (plataformaId: string): boolean => {
+    if (isSuperAdmin) return true; // super admin always sees all
+    if (disponibilidade[plataformaId] === undefined) return true; // default available
+    return disponibilidade[plataformaId];
   };
 
   const handleSetDefaultLlm = async (plataforma: string) => {
@@ -813,7 +891,7 @@ const Integracoes = () => {
             {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => {
               const info = CATEGORIAS_INFO[cat];
               const CatIcon = info.icon;
-              const filteredPlats = PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin));
+              const filteredPlats = PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin) && isPlataformaDisponivel(p.id));
               const count = filteredPlats.length;
               const connectedCount = filteredPlats.filter(p => getStatus(p.id) === 'connected').length;
               return (
@@ -831,9 +909,11 @@ const Integracoes = () => {
           {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => (
             <TabsContent key={cat} value={cat}>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin)).map(plat => {
+                {PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin) && isPlataformaDisponivel(p.id)).map(plat => {
             const status = getStatus(plat.id);
             const Icon = plat.icon;
+            const platDisponivel = disponibilidade[plat.id] !== false;
+            const hasActiveUsers = integracoes.some((i: any) => i.plataforma === plat.id && i.ativo);
             return (
               <Card key={plat.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
@@ -877,6 +957,32 @@ const Integracoes = () => {
                       </div>
                     </div>
                   </div>
+                  {/* Super Admin: Toggle availability */}
+                  {isSuperAdmin && (
+                    <div className="mt-2 flex items-center justify-between p-2 rounded-md bg-muted/50 border border-dashed">
+                      <div className="flex items-center gap-1.5">
+                        <ShieldAlert className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-[10px] text-muted-foreground font-medium">Disponível para usuários</span>
+                      </div>
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div>
+                              <Switch
+                                checked={platDisponivel}
+                                onCheckedChange={(checked) => handleToggleDisponibilidade(plat.id, checked)}
+                                disabled={togglingDisp === plat.id || (!platDisponivel && hasActiveUsers)}
+                                className="scale-75"
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{hasActiveUsers && platDisponivel ? 'Não pode desabilitar: há usuários com integração ativa' : platDisponivel ? 'Desabilitar para todos' : 'Habilitar para todos'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  )}
                   <div className="mt-3 flex items-center gap-1.5">
                     {status === 'connected' ? (
                       <TooltipProvider delayDuration={200}>
