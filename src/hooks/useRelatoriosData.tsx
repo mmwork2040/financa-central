@@ -2,91 +2,106 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, addMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export interface RelatorioData {
   dataReceitas: {name: string; value: number}[];
   dataDespesas: {name: string; value: number}[];
   dataFluxo: {name: string; receitas: number; despesas: number}[];
+  topReceitas: {name: string; value: number; percent: number}[];
+  topDespesas: {name: string; value: number; percent: number}[];
 }
 
-export const useRelatoriosData = (periodo: string) => {
+type Periodo = 'mes' | 'trimestre' | 'semestre' | 'ano' | 'proximo_mes' | 'proximos_3' | 'proximos_6' | 'proximos_12' | 'personalizado';
+
+function calcDateRange(periodo: Periodo, customStart?: Date, customEnd?: Date): { dataInicio: Date; dataFim: Date } {
+  const hoje = new Date();
+
+  switch (periodo) {
+    case 'mes':
+      return { dataInicio: addMonths(hoje, -1), dataFim: hoje };
+    case 'trimestre':
+      return { dataInicio: addMonths(hoje, -3), dataFim: hoje };
+    case 'semestre':
+      return { dataInicio: addMonths(hoje, -6), dataFim: hoje };
+    case 'ano':
+      return { dataInicio: addMonths(hoje, -12), dataFim: hoje };
+    case 'proximo_mes':
+      return { dataInicio: hoje, dataFim: addMonths(hoje, 1) };
+    case 'proximos_3':
+      return { dataInicio: hoje, dataFim: addMonths(hoje, 3) };
+    case 'proximos_6':
+      return { dataInicio: hoje, dataFim: addMonths(hoje, 6) };
+    case 'proximos_12':
+      return { dataInicio: hoje, dataFim: addMonths(hoje, 12) };
+    case 'personalizado':
+      return {
+        dataInicio: customStart || addMonths(hoje, -1),
+        dataFim: customEnd || hoje,
+      };
+    default:
+      return { dataInicio: addMonths(hoje, -1), dataFim: hoje };
+  }
+}
+
+export const useRelatoriosData = (periodo: string, customStart?: Date, customEnd?: Date) => {
   const [loading, setLoading] = useState(true);
   const [dataReceitas, setDataReceitas] = useState<{name: string; value: number}[]>([]);
   const [dataDespesas, setDataDespesas] = useState<{name: string; value: number}[]>([]);
   const [dataFluxo, setDataFluxo] = useState<{name: string; receitas: number; despesas: number}[]>([]);
+  const [topReceitas, setTopReceitas] = useState<{name: string; value: number; percent: number}[]>([]);
+  const [topDespesas, setTopDespesas] = useState<{name: string; value: number; percent: number}[]>([]);
   
   const fetchRelatoriosData = async () => {
     try {
       setLoading(true);
-      console.log("Buscando dados para o período:", periodo);
       
-      // Determine date range based on period
-      const hoje = new Date();
-      let dataInicio;
+      const { dataInicio, dataFim } = calcDateRange(periodo as Periodo, customStart, customEnd);
+      const dataInicioStr = format(dataInicio, 'yyyy-MM-dd');
+      const dataFimStr = format(dataFim, 'yyyy-MM-dd');
       
-      switch (periodo) {
-        case 'mes':
-          dataInicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, hoje.getDate());
-          break;
-        case 'trimestre':
-          dataInicio = new Date(hoje.getFullYear(), hoje.getMonth() - 3, hoje.getDate());
-          break;
-        case 'semestre':
-          dataInicio = new Date(hoje.getFullYear(), hoje.getMonth() - 6, hoje.getDate());
-          break;
-        case 'ano':
-          dataInicio = new Date(hoje.getFullYear() - 1, hoje.getMonth(), hoje.getDate());
-          break;
-        default:
-          dataInicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, hoje.getDate());
-      }
-      
-      // Format dates for Supabase query - importante: em português do Brasil é DD/MM/YYYY
-      const dataInicioStr = dataInicio.toISOString().split('T')[0];
-      const hojeStr = hoje.toISOString().split('T')[0];
-      
-      console.log("Período de busca:", dataInicioStr, "até", hojeStr);
-      
-      // Fetch all transactions for the period - CORREÇÃO NA QUERY PARA BUSCAR TODOS OS LANÇAMENTOS
-      // Removemos o filtro de data para debug e verificamos os dados existentes
       const { data: lancamentos, error } = await supabase
         .from('lancamentos')
-        .select(`
-          *,
-          categoria:categoria_id(nome)
-        `);
+        .select(`*, categoria:categoria_id(nome)`)
+        .gte('data_vencimento', dataInicioStr)
+        .lte('data_vencimento', dataFimStr);
       
-      if (error) {
-        console.error("Erro ao buscar lançamentos:", error);
-        throw error;
-      }
-      
-      console.log("Total de lançamentos encontrados:", lancamentos?.length || 0);
-      console.log("Primeiros 5 lançamentos:", lancamentos?.slice(0, 5));
+      if (error) throw error;
       
       if (lancamentos && lancamentos.length > 0) {
-        // Process data for receipts by category
-        const receitasPorCategoria = processarLancamentosPorCategoria(lancamentos, 'receita');
-        console.log("Receitas por categoria:", receitasPorCategoria);
+        const receitasPorCategoria = processarPorCategoria(lancamentos, 'receita');
         setDataReceitas(receitasPorCategoria);
         
-        // Process data for expenses by category
-        const despesasPorCategoria = processarLancamentosPorCategoria(lancamentos, 'despesa');
-        console.log("Despesas por categoria:", despesasPorCategoria);
+        const despesasPorCategoria = processarPorCategoria(lancamentos, 'despesa');
         setDataDespesas(despesasPorCategoria);
         
-        // Process data for cash flow
-        const fluxoCaixa = processarFluxoCaixa(lancamentos, periodo);
-        console.log("Fluxo de caixa:", fluxoCaixa);
-        setDataFluxo(fluxoCaixa);
+        const fluxo = processarFluxoPorMes(lancamentos);
+        setDataFluxo(fluxo);
+
+        // Top 5
+        const totalRec = receitasPorCategoria.reduce((s, i) => s + i.value, 0);
+        setTopReceitas(
+          [...receitasPorCategoria]
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5)
+            .map(i => ({ ...i, percent: totalRec > 0 ? (i.value / totalRec) * 100 : 0 }))
+        );
+
+        const totalDesp = despesasPorCategoria.reduce((s, i) => s + i.value, 0);
+        setTopDespesas(
+          [...despesasPorCategoria]
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5)
+            .map(i => ({ ...i, percent: totalDesp > 0 ? (i.value / totalDesp) * 100 : 0 }))
+        );
       } else {
-        // Reset data if no transactions found
         setDataReceitas([]);
         setDataDespesas([]);
         setDataFluxo([]);
-        console.log("Nenhum lançamento encontrado para o período selecionado");
+        setTopReceitas([]);
+        setTopDespesas([]);
       }
-      
     } catch (error: any) {
       console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar dados do relatório");
@@ -95,62 +110,52 @@ export const useRelatoriosData = (periodo: string) => {
     }
   };
   
-  // Process transactions by category
-  const processarLancamentosPorCategoria = (lancamentos: any[], tipo: 'receita' | 'despesa'): {name: string; value: number}[] => {
-    const lancamentosFiltrados = lancamentos?.filter(l => l.tipo === tipo) || [];
-    console.log(`Lançamentos filtrados (${tipo}):`, lancamentosFiltrados.length);
-    
-    // Group by category
+  const processarPorCategoria = (lancamentos: any[], tipo: 'receita' | 'despesa') => {
+    const filtrados = lancamentos.filter(l => l.tipo === tipo);
     const categorias: Record<string, number> = {};
-    
-    lancamentosFiltrados.forEach(lancamento => {
-      const categoriaNome = lancamento.categoria?.nome || 'Sem categoria';
-      if (!categorias[categoriaNome]) {
-        categorias[categoriaNome] = 0;
-      }
-      categorias[categoriaNome] += Number(lancamento.valor) || 0;
+    filtrados.forEach(l => {
+      const nome = l.categoria?.nome || 'Sem categoria';
+      categorias[nome] = (categorias[nome] || 0) + (Number(l.valor) || 0);
     });
-    
-    console.log(`Categorias agrupadas (${tipo}):`, categorias);
-    
-    // Convert to array format for charts
     return Object.entries(categorias).map(([name, value]) => ({ name, value }));
   };
   
-  // Process data for cash flow chart
-  const processarFluxoCaixa = (lancamentos: any[], periodo: string): {name: string; receitas: number; despesas: number}[] => {
-    // Para simplificar e mostrar dados reais, vamos criar apenas um único período com total
-    // Se existirem dados, isso garantirá que pelo menos uma barra seja mostrada no gráfico
+  const processarFluxoPorMes = (lancamentos: any[]) => {
+    const meses: Record<string, { receitas: number; despesas: number }> = {};
     
-    const receitas = lancamentos
-      .filter(l => l.tipo === 'receita')
-      .reduce((sum, l) => sum + (Number(l.valor) || 0), 0);
-      
-    const despesas = lancamentos
-      .filter(l => l.tipo === 'despesa')
-      .reduce((sum, l) => sum + (Number(l.valor) || 0), 0);
-    
-    console.log("Total de receitas:", receitas);
-    console.log("Total de despesas:", despesas);
-    
-    // Se não há dados de período, retorna pelo menos um período com os totais
-    if (receitas === 0 && despesas === 0) {
-      return [];
-    }
-    
-    return [{ name: "Total", receitas, despesas }];
+    lancamentos.forEach(l => {
+      const mesKey = l.data_vencimento?.substring(0, 7); // yyyy-MM
+      if (!mesKey) return;
+      if (!meses[mesKey]) meses[mesKey] = { receitas: 0, despesas: 0 };
+      const valor = Number(l.valor) || 0;
+      if (l.tipo === 'receita') meses[mesKey].receitas += valor;
+      else meses[mesKey].despesas += valor;
+    });
+
+    return Object.entries(meses)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, val]) => {
+        const [year, month] = key.split('-');
+        const date = new Date(Number(year), Number(month) - 1);
+        return {
+          name: format(date, "MMM/yy", { locale: ptBR }),
+          receitas: val.receitas,
+          despesas: val.despesas,
+        };
+      });
   };
   
-  // Effect to fetch data when the period changes
   useEffect(() => {
     fetchRelatoriosData();
-  }, [periodo]);
+  }, [periodo, customStart?.getTime(), customEnd?.getTime()]);
   
   return {
     loading,
     dataReceitas,
     dataDespesas,
     dataFluxo,
+    topReceitas,
+    topDespesas,
     fetchRelatoriosData
   };
 };
