@@ -23,7 +23,7 @@ const MobileBottomNav = () => {
   const visibleItems = navItems.filter(item => canAccessRoute(item.path));
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/40 glass-card pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-sidebar-border bg-white/72 backdrop-blur-[14px] dark:bg-slate-900/80 pb-[env(safe-area-inset-bottom)]">
       <div className="flex items-center justify-around h-14">
         {visibleItems.map(item => {
           const isActive = location.pathname === item.path || 
@@ -35,8 +35,8 @@ const MobileBottomNav = () => {
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg transition-colors min-w-[56px]",
                 isActive 
-                  ? "text-primary" 
-                  : "text-muted-foreground hover:text-foreground"
+                   ? "text-primary font-semibold" 
+                   : "text-sidebar-foreground/70 hover:text-sidebar-foreground"
               )}
             >
               <item.icon className={cn("h-5 w-5", isActive && "stroke-[2.5]")} />
