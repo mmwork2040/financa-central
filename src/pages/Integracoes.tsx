@@ -589,19 +589,6 @@ const Integracoes = () => {
   const handleToggleDisponibilidade = async (plataformaId: string, disponivel: boolean) => {
     setTogglingDisp(plataformaId);
     try {
-      // Check if any empresa has this integration active
-      if (!disponivel) {
-        const { data: activeIntegrations } = await (supabase as any)
-          .from('integracoes')
-          .select('id, empresa_id')
-          .eq('plataforma', plataformaId)
-          .eq('ativo', true);
-        if (activeIntegrations && activeIntegrations.length > 0) {
-          toast.error(`Não é possível desabilitar: ${activeIntegrations.length} empresa(s) possui(em) esta integração ativa.`);
-          setTogglingDisp(null);
-          return;
-        }
-      }
       const { error } = await (supabase as any)
         .from('integracoes_disponiveis')
         .upsert({
@@ -611,7 +598,7 @@ const Integracoes = () => {
         }, { onConflict: 'plataforma' });
       if (error) throw error;
       setDisponibilidade(prev => ({ ...prev, [plataformaId]: disponivel }));
-      toast.success(disponivel ? "Integração habilitada para todos os usuários." : "Integração desabilitada para todos os usuários.");
+      toast.success(disponivel ? "Integração habilitada para novos usuários." : "Integração ocultada para usuários sem conexão ativa.");
     } catch (error: any) {
       toast.error(error.message || "Erro ao alterar disponibilidade");
     } finally {
@@ -621,6 +608,9 @@ const Integracoes = () => {
 
   const isPlataformaDisponivel = (plataformaId: string): boolean => {
     if (isSuperAdmin) return true; // super admin always sees all
+    // Users with active connection always see it, even if globally disabled
+    const userHasActive = integracoes.some((i: any) => i.plataforma === plataformaId && i.ativo);
+    if (userHasActive) return true;
     if (disponibilidade[plataformaId] === undefined) return true; // default available
     return disponibilidade[plataformaId];
   };
@@ -885,10 +875,19 @@ const Integracoes = () => {
             })}
           </TabsList>
 
-          {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => (
+          {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => {
+            const filteredPlatsForTab = PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin) && isPlataformaDisponivel(p.id));
+            return (
             <TabsContent key={cat} value={cat}>
+              {filteredPlatsForTab.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Plug className="h-10 w-10 text-muted-foreground/40 mb-3" />
+                  <p className="text-sm font-medium text-muted-foreground">Nenhuma integração de {CATEGORIAS_INFO[cat].label.toLowerCase()} disponível no momento.</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Entre em contato com o administrador para habilitar integrações.</p>
+                </div>
+              ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin) && isPlataformaDisponivel(p.id)).map(plat => {
+                {filteredPlatsForTab.map(plat => {
             const status = getStatus(plat.id);
             const Icon = plat.icon;
             const platDisponivel = disponibilidade[plat.id] !== false;
@@ -950,13 +949,13 @@ const Integracoes = () => {
                               <Switch
                                 checked={platDisponivel}
                                 onCheckedChange={(checked) => handleToggleDisponibilidade(plat.id, checked)}
-                                disabled={togglingDisp === plat.id || (!platDisponivel && hasActiveUsers)}
+                                disabled={togglingDisp === plat.id}
                                 className="scale-75"
                               />
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>{hasActiveUsers && platDisponivel ? 'Não pode desabilitar: há usuários com integração ativa' : platDisponivel ? 'Desabilitar para todos' : 'Habilitar para todos'}</p>
+                            <p>{platDisponivel ? 'Ocultar para usuários sem conexão ativa' : 'Habilitar para todos os usuários'}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -1153,8 +1152,10 @@ const Integracoes = () => {
             );
                 })}
               </div>
+              )}
             </TabsContent>
-          ))}
+            );
+          })}
         </Tabs>
       )}
 
