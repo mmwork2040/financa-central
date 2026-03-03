@@ -220,17 +220,15 @@ const RelatoriosContent = () => {
         </div>
       ) : (
         <Tabs defaultValue="fluxo" className="space-y-4">
-          <div className="overflow-x-auto -mx-3 px-3 pb-1" style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}>
-            <TabsList className="inline-flex w-max min-w-full sm:w-auto">
-              <TabsTrigger value="fluxo">Fluxo de Caixa</TabsTrigger>
-              <TabsTrigger value="receitas">Receitas</TabsTrigger>
-              <TabsTrigger value="despesas">Despesas</TabsTrigger>
-              <TabsTrigger value="fechamento">Fechamento</TabsTrigger>
-              <TabsTrigger value="preditivo">Preditivo</TabsTrigger>
-              <TabsTrigger value="caixa">Caixa</TabsTrigger>
-              <TabsTrigger value="conciliacao">Conciliação</TabsTrigger>
-            </TabsList>
-          </div>
+          <TabsList className="mb-4 flex-wrap h-auto">
+            <TabsTrigger value="fluxo" className="text-xs sm:text-sm">Fluxo de Caixa</TabsTrigger>
+            <TabsTrigger value="receitas" className="text-xs sm:text-sm">Receitas</TabsTrigger>
+            <TabsTrigger value="despesas" className="text-xs sm:text-sm">Despesas</TabsTrigger>
+            <TabsTrigger value="fechamento" className="text-xs sm:text-sm">Fechamento</TabsTrigger>
+            <TabsTrigger value="preditivo" className="text-xs sm:text-sm">Preditivo</TabsTrigger>
+            <TabsTrigger value="caixa" className="text-xs sm:text-sm">Caixa</TabsTrigger>
+            <TabsTrigger value="conciliacao" className="text-xs sm:text-sm">Conciliação</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="fluxo" className="space-y-4">
             <FluxoCaixaChart data={dataFluxo} />
