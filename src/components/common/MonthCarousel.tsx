@@ -81,10 +81,11 @@ const MonthCarousel = () => {
               ref={isActive ? activeRef : undefined}
               onClick={() => setSelectedMonth(startOfMonth(month))}
               className={cn(
-                "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap capitalize",
+                "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap capitalize",
+                "transition-all duration-300 ease-out",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm scale-110"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground scale-100 opacity-70 hover:opacity-100"
               )}
             >
               {label}
