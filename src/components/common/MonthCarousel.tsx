@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMonthFilter } from "@/contexts/MonthFilterContext";
@@ -10,30 +10,34 @@ const MonthCarousel = () => {
   const { selectedMonth, setSelectedMonth } = useMonthFilter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
+  const hasMountedRef = useRef(false);
 
-  // Generate months: 6 back, current, 12 forward = 19 months
   const months = React.useMemo(() => {
     const now = startOfMonth(new Date());
     return Array.from({ length: 19 }, (_, i) => addMonths(now, i - 6));
   }, []);
 
-  const hasMountedRef = useRef(false);
-
-  const centerActive = React.useCallback((smooth = true) => {
-    if (activeRef.current && scrollRef.current) {
-      const container = scrollRef.current;
-      const el = activeRef.current;
-      const scrollLeft = el.offsetLeft - container.offsetWidth / 2 + el.offsetWidth / 2;
-      container.scrollTo({ left: scrollLeft, behavior: smooth ? "smooth" : "instant" });
-    }
+  const centerActive = useCallback((smooth = true) => {
+    const container = scrollRef.current;
+    const el = activeRef.current;
+    if (!container || !el) return;
+    const scrollLeft = el.offsetLeft - container.offsetWidth / 2 + el.offsetWidth / 2;
+    container.scrollTo({ left: Math.max(0, scrollLeft), behavior: smooth ? "smooth" : "instant" });
   }, []);
 
-  // Initial center (instant) after first paint
+  // Robust initial center: try multiple times until layout is stable
   useEffect(() => {
-    const raf = requestAnimationFrame(() => {
+    let attempts = 0;
+    const tryCenter = () => {
       centerActive(false);
-      hasMountedRef.current = true;
-    });
+      attempts++;
+      if (attempts < 5) {
+        requestAnimationFrame(tryCenter);
+      } else {
+        hasMountedRef.current = true;
+      }
+    };
+    const raf = requestAnimationFrame(tryCenter);
     return () => cancelAnimationFrame(raf);
   }, [centerActive]);
 
@@ -44,6 +48,7 @@ const MonthCarousel = () => {
     }
   }, [selectedMonth, centerActive]);
 
+  // Re-center on resize
   useEffect(() => {
     const handleResize = () => centerActive(false);
     window.addEventListener("resize", handleResize);
@@ -84,7 +89,7 @@ const MonthCarousel = () => {
                 "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap capitalize",
                 "transition-all duration-300 ease-out",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm scale-110"
+                  ? "bg-primary text-primary-foreground shadow-sm scale-110 animate-[pulse_2.5s_cubic-bezier(0.4,0,0.6,1)_infinite]"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground scale-100 opacity-70 hover:opacity-100"
               )}
             >
