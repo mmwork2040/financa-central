@@ -12,6 +12,14 @@ import FloatingChatButton from "@/components/common/FloatingChatButton";
 import MobileBottomNav from "@/components/common/MobileBottomNav";
 import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 
+const AuroraBackground = () => (
+  <div className="aurora-bg">
+    <div className="aurora-blob aurora-blob-1" />
+    <div className="aurora-blob aurora-blob-2" />
+    <div className="aurora-blob aurora-blob-3" />
+  </div>
+);
+
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
   const { isAuthenticated, loading, empresaId, userProfile } = useAuth();
@@ -45,10 +53,11 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="flex min-h-screen bg-background overflow-x-hidden">
+      <AuroraBackground />
       <Sidebar />
       <main
         className={cn(
-          "flex-1 transition-all duration-300 ease-in-out min-w-0",
+          "flex-1 transition-all duration-300 ease-in-out min-w-0 relative z-0",
           isMobile ? "ml-0 pt-14" : isExpanded ? "ml-60" : "ml-14"
         )}
       >
