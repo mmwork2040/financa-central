@@ -42,11 +42,11 @@ const DashboardContent = () => {
     <div className="space-y-6 pb-20">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2 mb-1">
-          <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className="flex items-center justify-center h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-primary/10">
             <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold">Olá, {userProfile?.nome?.split(' ')[0] || 'Usuário'}! 👋</h1>
+          <h1 className="text-xl sm:text-2xl font-bold font-heading">Olá, {userProfile?.nome?.split(' ')[0] || 'Usuário'}! 👋</h1>
         </div>
         <p className="text-xs sm:text-sm text-muted-foreground">Aqui está o resumo do seu financeiro</p>
       </div>

@@ -8,15 +8,17 @@ interface Shortcut {
   icon: React.ComponentType<any>;
   route?: string;
   action?: string;
+  iconBg: string;
+  iconColor: string;
 }
 
 const shortcuts: Shortcut[] = [
-  { label: "Novo Lançamento", icon: Plus, action: "openModal" },
-  { label: "Clientes", icon: Users, route: "/clientes" },
-  { label: "Fornecedores", icon: Truck, route: "/fornecedores" },
-  { label: "Relatórios", icon: BarChart3, route: "/relatorios" },
-  { label: "Contas Bancárias", icon: Landmark, route: "/contas-bancarias" },
-  { label: "Vendas Digitais", icon: ShoppingCart, route: "/vendas-digitais" },
+  { label: "Novo Lançamento", icon: Plus, action: "openModal", iconBg: "bg-primary/10", iconColor: "text-primary" },
+  { label: "Clientes", icon: Users, route: "/clientes", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
+  { label: "Fornecedores", icon: Truck, route: "/fornecedores", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
+  { label: "Relatórios", icon: BarChart3, route: "/relatorios", iconBg: "bg-green-100", iconColor: "text-green-600" },
+  { label: "Contas Bancárias", icon: Landmark, route: "/contas-bancarias", iconBg: "bg-orange-100", iconColor: "text-orange-600" },
+  { label: "Vendas Digitais", icon: ShoppingCart, route: "/vendas-digitais", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
 ];
 
 export const DashboardShortcuts = () => {
@@ -39,10 +41,10 @@ export const DashboardShortcuts = () => {
           <button
             key={s.label}
             onClick={() => handleClick(s)}
-            className="flex flex-col items-center gap-2 rounded-2xl border bg-card/80 backdrop-blur-sm p-4 transition-all hover:shadow-md hover:scale-[1.03] hover:bg-primary/5 active:scale-[0.97]"
+            className="flex flex-col items-center gap-2.5 rounded-2xl bg-card border p-4 transition-all duration-300 hover:shadow-md hover:scale-[1.03] hover:bg-accent/50 active:scale-[0.97]"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-              <Icon className="h-5 w-5 text-primary" />
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${s.iconBg}`}>
+              <Icon className={`h-5 w-5 ${s.iconColor}`} />
             </div>
             <span className="text-[11px] sm:text-xs font-medium text-foreground text-center leading-tight">
               {s.label}
