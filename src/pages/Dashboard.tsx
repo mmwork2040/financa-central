@@ -1,6 +1,5 @@
-
 import React from "react";
-import { Plus, ArrowUpRight, ArrowDownRight, Wallet, AlertTriangle, Clock, Activity, Eye, EyeOff, LayoutDashboard, TrendingUp } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Wallet, AlertTriangle, Clock, Activity, Eye, EyeOff, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,8 @@ import { ValuesVisibilityProvider, useValuesVisibility, maskValue } from "@/cont
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
 import { MyExitRequests } from "@/components/solicitacoes/MyExitRequests";
 import { DashboardChart } from "@/components/dashboard/DashboardChart";
+import { DashboardShortcuts } from "@/components/dashboard/DashboardShortcuts";
+import { DashboardDonutChart } from "@/components/dashboard/DashboardDonutChart";
 import { cn } from "@/lib/utils";
 
 const healthConfig: Record<HealthStatus, { label: string; color: string; icon: string; bg: string }> = {
@@ -22,9 +23,8 @@ const healthConfig: Record<HealthStatus, { label: string; color: string; icon: s
 };
 
 const DashboardContent = () => {
-  const { userProfile, empresaId } = useAuth();
+  const { userProfile } = useAuth();
   const { loading, summary, lancamentosRecentes, contasProximas, healthStatus, monthlyChartData } = useDashboardData();
-  const { handleOpenModal } = useLancamentosContext();
   const { visible, toggle } = useValuesVisibility();
   const { myRequests, cancelRequest, actionLoading } = useSolicitacoesSaida();
 
@@ -85,7 +85,6 @@ const DashboardContent = () => {
             </p>
           </CardContent>
         </Card>
-        
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -97,7 +96,6 @@ const DashboardContent = () => {
             </p>
           </CardContent>
         </Card>
-        
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -109,7 +107,6 @@ const DashboardContent = () => {
             </p>
           </CardContent>
         </Card>
-        
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -124,35 +121,22 @@ const DashboardContent = () => {
         </Card>
       </div>
 
-      {/* Cash Flow Chart */}
+      {/* Quick Shortcuts */}
+      <DashboardShortcuts />
+
+      {/* Charts Row: BarChart + Donut */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <DashboardChart data={monthlyChartData} saldoAtual={summary.saldoAtual} />
-        <Card>
-          <CardContent className="p-4 space-y-4">
-            <div>
-              <p className="text-xs text-muted-foreground">Total Receitas</p>
-              <p className="text-xl sm:text-2xl font-bold text-green-600">
-                {maskValue(formatCurrency(summary.totalReceitas), visible)}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Total Despesas</p>
-              <p className="text-xl sm:text-2xl font-bold text-red-600">
-                {maskValue(formatCurrency(summary.totalDespesas), visible)}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Saldo</p>
-              <p className={cn("text-xl sm:text-2xl font-bold", summary.saldoAtual >= 0 ? "text-green-600" : "text-red-600")}>
-                {maskValue(formatCurrency(summary.saldoAtual), visible)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <DashboardDonutChart
+          receitas={summary.totalReceitas}
+          despesas={summary.totalDespesas}
+          saldo={summary.saldoAtual}
+        />
       </div>
 
-      {/* Upcoming Bills */}
-      {contasProximas.length > 0 && (
+      {/* Upcoming Bills + Recent Transactions side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Upcoming Bills */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -161,69 +145,71 @@ const DashboardContent = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {contasProximas.slice(0, 5).map(conta => (
-                <div key={conta.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{conta.descricao}</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(conta.data_vencimento)}</p>
+            {contasProximas.length === 0 ? (
+              <div className="flex h-32 items-center justify-center rounded-lg border border-dashed">
+                <p className="text-sm text-muted-foreground">Nenhuma conta nos próximos 7 dias</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {contasProximas.slice(0, 5).map(conta => (
+                  <div key={conta.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{conta.descricao}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(conta.data_vencimento)}</p>
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <p className={cn("text-sm font-semibold", conta.tipo === 'receita' ? 'text-green-600' : 'text-red-600')}>
+                        {maskValue(formatCurrency(conta.valor), visible)}
+                      </p>
+                      <Badge variant="outline" className="text-[10px]">
+                        {conta.tipo === 'receita' ? 'Receber' : 'Pagar'}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="text-right shrink-0 ml-3">
-                    <p className={cn("text-sm font-semibold", conta.tipo === 'receita' ? 'text-green-600' : 'text-red-600')}>
-                      {maskValue(formatCurrency(conta.valor), visible)}
-                    </p>
-                    <Badge variant="outline" className="text-[10px]">
-                      {conta.tipo === 'receita' ? 'Receber' : 'Pagar'}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
 
-      {/* Recent Transactions */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary" />
-            Últimas movimentações
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {lancamentosRecentes.length === 0 ? (
-            <div className="flex h-32 items-center justify-center rounded-lg border border-dashed">
-              <p className="text-sm text-muted-foreground">Nenhuma movimentação ainda</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {lancamentosRecentes.map(l => (
-                <div key={l.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{l.descricao}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {l.categoria?.nome || l.tipo} • Venc: {formatDate(l.data_vencimento)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Registro: {new Date(l.created_at).toLocaleDateString('pt-BR')} {new Date(l.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+        {/* Recent Transactions */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary" />
+              Últimas movimentações
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {lancamentosRecentes.length === 0 ? (
+              <div className="flex h-32 items-center justify-center rounded-lg border border-dashed">
+                <p className="text-sm text-muted-foreground">Nenhuma movimentação ainda</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {lancamentosRecentes.map(l => (
+                  <div key={l.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{l.descricao}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {l.categoria?.nome || l.tipo} • Venc: {formatDate(l.data_vencimento)}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <p className={cn(
+                        "text-sm font-semibold",
+                        l.tipo === 'receita' ? 'text-green-600' : l.tipo === 'investimento' ? 'text-blue-600' : 'text-red-600'
+                      )}>
+                        {l.tipo === 'receita' ? '+' : '-'}{maskValue(formatCurrency(l.valor), visible)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right shrink-0 ml-3">
-                    <p className={cn(
-                      "text-sm font-semibold",
-                      l.tipo === 'receita' ? 'text-green-600' : l.tipo === 'investimento' ? 'text-blue-600' : 'text-red-600'
-                    )}>
-                      {l.tipo === 'receita' ? '+' : '-'}{maskValue(formatCurrency(l.valor), visible)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <LancamentosFormDialog />
     </div>
