@@ -17,22 +17,37 @@ const MonthCarousel = () => {
     return Array.from({ length: 19 }, (_, i) => addMonths(now, i - 6));
   }, []);
 
-  const centerActive = React.useCallback(() => {
+  const hasMountedRef = useRef(false);
+
+  const centerActive = React.useCallback((smooth = true) => {
     if (activeRef.current && scrollRef.current) {
       const container = scrollRef.current;
       const el = activeRef.current;
       const scrollLeft = el.offsetLeft - container.offsetWidth / 2 + el.offsetWidth / 2;
-      container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+      container.scrollTo({ left: scrollLeft, behavior: smooth ? "smooth" : "instant" });
     }
   }, []);
 
+  // Initial center (instant) after first paint
   useEffect(() => {
-    centerActive();
+    const raf = requestAnimationFrame(() => {
+      centerActive(false);
+      hasMountedRef.current = true;
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [centerActive]);
+
+  // Re-center smoothly on month change (after mount)
+  useEffect(() => {
+    if (hasMountedRef.current) {
+      centerActive(true);
+    }
   }, [selectedMonth, centerActive]);
 
   useEffect(() => {
-    window.addEventListener("resize", centerActive);
-    return () => window.removeEventListener("resize", centerActive);
+    const handleResize = () => centerActive(false);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [centerActive]);
 
   const scroll = (dir: number) => {
