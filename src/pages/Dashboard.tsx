@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowUpRight, ArrowDownRight, Wallet, AlertTriangle, Clock, Activity, Eye, EyeOff, LayoutDashboard } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Wallet, AlertTriangle, Clock, Activity, Eye, EyeOff, LayoutDashboard, Landmark, TrendingUp, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ const healthConfig: Record<HealthStatus, { label: string; color: string; icon: s
 
 const DashboardContent = () => {
   const { userProfile } = useAuth();
-  const { loading, summary, lancamentosRecentes, contasProximas, healthStatus, monthlyChartData } = useDashboardData();
+  const { loading, summary, caixa, lancamentosRecentes, contasProximas, healthStatus, monthlyChartData } = useDashboardData();
   const { visible, toggle } = useValuesVisibility();
   const { myRequests, cancelRequest, actionLoading } = useSolicitacoesSaida();
 
@@ -51,7 +51,6 @@ const DashboardContent = () => {
         <p className="text-xs sm:text-sm text-muted-foreground">Aqui está o resumo do seu financeiro</p>
       </div>
 
-      {/* Exit Requests Alert */}
       <MyExitRequests requests={myRequests} onCancel={cancelRequest} loading={actionLoading} />
 
       {/* Health Indicator with Eye toggle */}
@@ -100,7 +99,7 @@ const DashboardContent = () => {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-blue-100 p-1.5"><Wallet className="h-4 w-4 text-blue-600" /></div>
-              <span className="text-xs text-muted-foreground">Seu saldo hoje</span>
+              <span className="text-xs text-muted-foreground">Saldo do mês</span>
             </div>
             <p className={cn("text-lg sm:text-xl font-bold", summary.saldoAtual >= 0 ? "text-blue-600" : "text-destructive")}>
               {maskValue(formatCurrency(summary.saldoAtual), visible)}
@@ -121,10 +120,49 @@ const DashboardContent = () => {
         </Card>
       </div>
 
-      {/* Quick Shortcuts */}
+      {/* Caixa Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-blue-500">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="rounded-full bg-blue-100 p-1.5"><Landmark className="h-4 w-4 text-blue-600" /></div>
+              <span className="text-xs text-muted-foreground">Caixa Atual</span>
+            </div>
+            <p className={cn("text-lg sm:text-xl font-bold", caixa.caixaAtual >= 0 ? "text-blue-600" : "text-destructive")}>
+              {maskValue(formatCurrency(caixa.caixaAtual), visible)}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-1">Soma de todas as contas bancárias</p>
+          </CardContent>
+        </Card>
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-primary">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="rounded-full bg-primary/10 p-1.5"><TrendingUp className="h-4 w-4 text-primary" /></div>
+              <span className="text-xs text-muted-foreground">Caixa Previsto</span>
+            </div>
+            <p className={cn("text-lg sm:text-xl font-bold", caixa.caixaPrevisto >= 0 ? "text-primary" : "text-destructive")}>
+              {maskValue(formatCurrency(caixa.caixaPrevisto), visible)}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-1">Projeção para o mês seguinte</p>
+          </CardContent>
+        </Card>
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-amber-500">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="rounded-full bg-amber-100 p-1.5"><Calendar className="h-4 w-4 text-amber-600" /></div>
+              <span className="text-xs text-muted-foreground">Meses de Caixa</span>
+            </div>
+            <p className={cn("text-lg sm:text-xl font-bold", caixa.mesesDeCaixa >= 3 ? "text-primary" : caixa.mesesDeCaixa >= 1 ? "text-amber-600" : "text-destructive")}>
+              {caixa.mesesDeCaixa >= 99 ? "∞" : `${caixa.mesesDeCaixa} meses`}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-1">Runway baseado na média de despesas</p>
+          </CardContent>
+        </Card>
+      </div>
+
       <DashboardShortcuts />
 
-      {/* Charts Row: BarChart + Donut */}
+      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <DashboardChart data={monthlyChartData} saldoAtual={summary.saldoAtual} />
         <DashboardDonutChart
@@ -134,9 +172,8 @@ const DashboardContent = () => {
         />
       </div>
 
-      {/* Upcoming Bills + Recent Transactions side by side */}
+      {/* Upcoming Bills + Recent Transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Upcoming Bills */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -172,7 +209,6 @@ const DashboardContent = () => {
           </CardContent>
         </Card>
 
-        {/* Recent Transactions */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -193,6 +229,9 @@ const DashboardContent = () => {
                       <p className="text-sm font-medium truncate">{l.descricao}</p>
                       <p className="text-xs text-muted-foreground">
                         {l.categoria?.nome || l.tipo} • Venc: {formatDate(l.data_vencimento)}
+                        {(l.status === 'pago' || l.status === 'recebido') 
+                          ? <span className="ml-1 text-primary">✓</span> 
+                          : <span className="ml-1 text-amber-500">🕐</span>}
                       </p>
                     </div>
                     <div className="text-right shrink-0 ml-3">

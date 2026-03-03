@@ -223,9 +223,16 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                 {displayCurrency(lancamento.valor)}
               </TableCell>
               <TableCell>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(lancamento.status)}`}>
-                  {getStatusLabel(lancamento.status, lancamento.tipo)}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(lancamento.status)}`}>
+                    {getStatusLabel(lancamento.status, lancamento.tipo)}
+                  </span>
+                  {(lancamento.status === 'pago' || lancamento.status === 'recebido') ? (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-primary/10 text-primary">✓ Executado</span>
+                  ) : lancamento.status === 'pendente' ? (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-700">🕐 Previsto</span>
+                  ) : null}
+                </div>
               </TableCell>
               {showActions && (
                 <TableCell>

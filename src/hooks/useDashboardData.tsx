@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMonthFilter } from "@/contexts/MonthFilterContext";
-import { startOfMonth, endOfMonth, format } from "date-fns";
+import { startOfMonth, endOfMonth, addMonths, format } from "date-fns";
 
 interface DashboardSummary {
   totalReceitas: number;
@@ -10,6 +10,16 @@ interface DashboardSummary {
   saldoAtual: number;
   contasProximas: number;
   emAtraso: number;
+  receitasExecutadas: number;
+  despesasExecutadas: number;
+  receitasPrevistas: number;
+  despesasPrevistas: number;
+}
+
+interface CaixaData {
+  caixaAtual: number;
+  caixaPrevisto: number;
+  mesesDeCaixa: number;
 }
 
 interface LancamentoRecente {
@@ -45,8 +55,13 @@ export const useDashboardData = () => {
     saldoAtual: 0,
     contasProximas: 0,
     emAtraso: 0,
+    receitasExecutadas: 0,
+    despesasExecutadas: 0,
+    receitasPrevistas: 0,
+    despesasPrevistas: 0,
   });
   
+  const [caixa, setCaixa] = useState<CaixaData>({ caixaAtual: 0, caixaPrevisto: 0, mesesDeCaixa: 0 });
   const [lancamentosRecentes, setLancamentosRecentes] = useState<LancamentoRecente[]>([]);
   const [contasProximas, setContasProximas] = useState<ContaProxima[]>([]);
   const [healthStatus, setHealthStatus] = useState<HealthStatus>('saudavel');
@@ -98,15 +113,26 @@ export const useDashboardData = () => {
       const em7Dias = new Date(hoje);
       em7Dias.setDate(em7Dias.getDate() + 7);
       
-      // Only count paid/received transactions for totals
-      const totalReceitas = todosLancamentos
+      // Executed (paid/received)
+      const receitasExecutadas = todosLancamentos
         ?.filter(l => l.tipo === 'receita' && (l.status === 'pago' || l.status === 'recebido'))
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
         
-      const totalDespesas = todosLancamentos
+      const despesasExecutadas = todosLancamentos
         ?.filter(l => l.tipo === 'despesa' && l.status === 'pago')
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+
+      // Predicted (pending)
+      const receitasPrevistas = todosLancamentos
+        ?.filter(l => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto'))
+        .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+
+      const despesasPrevistas = todosLancamentos
+        ?.filter(l => l.tipo === 'despesa' && (l.status === 'pendente' || l.status === 'aberto'))
+        .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
       
+      const totalReceitas = receitasExecutadas;
+      const totalDespesas = despesasExecutadas;
       const saldoAtual = totalReceitas - totalDespesas;
 
       // Bills in next 7 days (pending)
@@ -135,7 +161,56 @@ export const useDashboardData = () => {
         saldoAtual,
         contasProximas: proximasContas.length,
         emAtraso,
+        receitasExecutadas,
+        despesasExecutadas,
+        receitasPrevistas,
+        despesasPrevistas,
       });
+
+      // === CAIXA ===
+      // 1. Caixa Atual = sum of all contas_bancarias.saldo_atual
+      const { data: contas, error: contasError } = await supabase
+        .from('contas_bancarias')
+        .select('saldo_atual');
+      
+      if (contasError) throw contasError;
+      const caixaAtual = contas?.reduce((sum, c) => sum + (c.saldo_atual || 0), 0) || 0;
+
+      // 2. Next month projections
+      const nextMonthStart = format(startOfMonth(addMonths(selectedMonth, 1)), 'yyyy-MM-dd');
+      const nextMonthEnd = format(endOfMonth(addMonths(selectedMonth, 1)), 'yyyy-MM-dd');
+      
+      const { data: nextMonthLanc } = await supabase
+        .from('lancamentos')
+        .select('tipo, valor, status')
+        .gte('data_vencimento', nextMonthStart)
+        .lte('data_vencimento', nextMonthEnd);
+
+      const nextReceitas = nextMonthLanc
+        ?.filter(l => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto'))
+        .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+      const nextDespesas = nextMonthLanc
+        ?.filter(l => l.tipo === 'despesa' && (l.status === 'pendente' || l.status === 'aberto'))
+        .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+      
+      const caixaPrevisto = caixaAtual + nextReceitas - nextDespesas;
+
+      // 3. Meses de caixa (runway) = caixa / avg monthly expenses (last 3 months paid)
+      const tresMesesAtras = new Date(hoje);
+      tresMesesAtras.setMonth(tresMesesAtras.getMonth() - 3);
+      const { data: despesasHistorico } = await supabase
+        .from('lancamentos')
+        .select('valor')
+        .eq('tipo', 'despesa')
+        .eq('status', 'pago')
+        .gte('data_vencimento', format(tresMesesAtras, 'yyyy-MM-dd'))
+        .lte('data_vencimento', format(hoje, 'yyyy-MM-dd'));
+
+      const totalDespesas3m = despesasHistorico?.reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+      const mediaMensal = totalDespesas3m / 3;
+      const mesesDeCaixa = mediaMensal > 0 ? Math.round((caixaAtual / mediaMensal) * 10) / 10 : 99;
+
+      setCaixa({ caixaAtual, caixaPrevisto, mesesDeCaixa });
 
       // Monthly chart data (last 6 months)
       const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -173,21 +248,19 @@ export const useDashboardData = () => {
         ?.filter(l => l.tipo === 'despesa' && (l.status === 'pendente' || l.status === 'aberto'))
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
 
-      const receitasPendentes = todosLancamentos
+      const receitasPendentesHealth = todosLancamentos
         ?.filter(l => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto'))
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
 
-      const tressMesesAtras = new Date(hoje);
-      tressMesesAtras.setMonth(tressMesesAtras.getMonth() - 3);
       const receitasRecentes = todosLancamentos
-        ?.filter(l => l.tipo === 'receita' && (l.status === 'pago' || l.status === 'recebido') && new Date(l.data_vencimento) >= tressMesesAtras)
+        ?.filter(l => l.tipo === 'receita' && (l.status === 'pago' || l.status === 'recebido') && new Date(l.data_vencimento) >= tresMesesAtras)
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
       const mediaReceitaMensal = receitasRecentes / 3;
 
       let score = 100;
       if (saldoAtual < 0) score -= 40;
       if (emAtraso > 0) score -= emAtraso * 10;
-      if (compromissosFuturos > saldoAtual + receitasPendentes) score -= 20;
+      if (compromissosFuturos > saldoAtual + receitasPendentesHealth) score -= 20;
       if (mediaReceitaMensal > 0 && compromissosFuturos > mediaReceitaMensal * 2) score -= 15;
       if (saldoAtual > 0 && saldoAtual < compromissosFuturos * 0.3) score -= 10;
 
@@ -214,6 +287,7 @@ export const useDashboardData = () => {
   return {
     loading,
     summary,
+    caixa,
     lancamentosRecentes,
     contasProximas,
     healthStatus,
