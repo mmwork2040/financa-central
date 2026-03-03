@@ -126,7 +126,20 @@ const PLATAFORMAS: Plataforma[] = [
     needsSecret: false, usesWebhook: true, keyValidation: { hint: "Chave alfanumérica" },
     categoria: "vendas",
   },
-  // --- Pagamentos ---
+  {
+    id: "kiwify", name: "Kiwify", description: "Plataforma de infoprodutos e cursos",
+    icon: ShoppingCart, color: "bg-pink-100 text-pink-600",
+    site: "https://dashboard.kiwify.com.br/settings/webhooks", doc: "https://docs.kiwify.com.br/",
+    events: ["order_paid", "order_refunded", "order_chargedback", "order_waiting_payment"],
+    steps: [
+      "Acesse o Dashboard Kiwify → Configurações → Webhooks",
+      "Clique em 'Adicionar Webhook' e cole a URL abaixo",
+      "Selecione os eventos desejados (ex: Pedido Pago, Reembolso)",
+      "Salve e pronto! As vendas serão registradas automaticamente",
+    ],
+    needsSecret: false, webhookOnly: true, usesWebhook: true, keyValidation: { hint: "" },
+    categoria: "vendas",
+  },
   {
     id: "stripe", name: "Stripe", description: "Pagamentos internacionais",
     icon: CreditCard, color: "bg-purple-100 text-purple-600",
