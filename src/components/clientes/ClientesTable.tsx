@@ -36,7 +36,7 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
 
   if (isMobile) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 glass-surface rounded-2xl p-3">
         {paginatedItems.map((c) => (
           <Card key={c.id} className={hasPendingRequest && hasPendingRequest(c.id) ? "border-l-4 border-l-destructive bg-destructive/5" : ""}>
             <CardContent className="p-4">
@@ -119,7 +119,7 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
   }
 
   return (
-    <div className="border rounded-md overflow-hidden">
+    <div className="glass-card rounded-2xl overflow-hidden">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
