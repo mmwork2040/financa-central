@@ -29,7 +29,7 @@ const features = [
 {
   icon: FileText,
   title: "Lançamentos",
-  description: "Controle receitas e despesas com parcelas, recorrências, datas de vencimento e pagamento."
+  description: "Controle receitas e despesas com parcelas, recorrências, datas de vencimento e pagamento. Tudo com o auxilio de Inteligência Artificial."
 },
 {
   icon: PieChart,
@@ -89,7 +89,7 @@ const LandingPage = () => {
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
               <BarChart3 className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">Fluxo de Contas</span>
+            <span className="text-xl font-bold text-foreground">Contabiliza AI</span>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => navigate("/login")}>
@@ -243,7 +243,7 @@ const LandingPage = () => {
               <span className="font-semibold text-foreground">Cntabiliza AI</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Fluxo de Contas. Todos os direitos reservados.
+              © {new Date().getFullYear()} ContabilizaAI. Todos os direitos reservados.
             </p>
           </div>
         </div>
