@@ -462,7 +462,15 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (lancamento) {
       handleEdit(lancamento);
     } else {
+      // Lógica de fallback: principal > única conta > nenhuma
+      let contaId: string | null = null;
       const contaPrincipal = contasBancarias.find(c => c.principal);
+      if (contaPrincipal) {
+        contaId = contaPrincipal.id;
+      } else if (contasBancarias.length === 1) {
+        contaId = contasBancarias[0].id;
+      }
+      // Se múltiplas contas sem principal, não define nenhuma
       setSelectedId(null);
       setFormData({
         descricao: "",
@@ -473,7 +481,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         categoria_id: null,
         fornecedor_id: null,
         cliente_id: null,
-        conta_bancaria_id: contaPrincipal?.id || null,
+        conta_bancaria_id: contaId,
         forma_pagamento_id: null,
         projeto_id: null,
         recorrente: false,
@@ -568,6 +576,20 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           throw error;
         }
 
+        // Atualizar saldo da conta se pago/recebido
+        if (data && data[0] && formData.conta_bancaria_id && ["pago", "recebido"].includes(formData.status)) {
+          const delta = formData.tipo === "receita" ? formData.valor : -formData.valor;
+          const { data: contaAtual } = await supabase
+            .from("contas_bancarias")
+            .select("saldo_atual")
+            .eq("id", formData.conta_bancaria_id)
+            .single();
+          if (contaAtual) {
+            await (supabase.from("contas_bancarias").update({ saldo_atual: Number(contaAtual.saldo_atual) + delta } as any) as any)
+              .eq("id", formData.conta_bancaria_id);
+          }
+        }
+
         // Cast data to ensure type safety
         setLancamentos([...lancamentos, ...(data as unknown as Lancamento[])]);
         toast.success("O lançamento foi criado com sucesso.");
@@ -600,6 +622,10 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const handleStatus = async (id: string, status: "pendente" | "pago" | "recebido" | "cancelado") => {
     try {
+      // Buscar o lançamento atual para saber o valor e tipo
+      const lancamento = lancamentos.find(l => l.id === id);
+      const oldStatus = lancamento?.status;
+
       const { error } = await supabase
         .from("lancamentos")
         .update({ status })
@@ -607,6 +633,38 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       if (error) {
         throw error;
+      }
+
+      // Atualizar saldo da conta quando muda para pago/recebido ou sai de pago/recebido
+      if (lancamento?.conta_bancaria_id) {
+        const wasPaid = ["pago", "recebido"].includes(oldStatus || "");
+        const isPaid = ["pago", "recebido"].includes(status);
+
+        if (!wasPaid && isPaid) {
+          // Entrando em pago/recebido: aplicar delta
+          const delta = lancamento.tipo === "receita" ? lancamento.valor : -lancamento.valor;
+          const { data: contaAtual } = await supabase
+            .from("contas_bancarias")
+            .select("saldo_atual")
+            .eq("id", lancamento.conta_bancaria_id)
+            .single();
+          if (contaAtual) {
+            await (supabase.from("contas_bancarias").update({ saldo_atual: Number(contaAtual.saldo_atual) + delta } as any) as any)
+              .eq("id", lancamento.conta_bancaria_id);
+          }
+        } else if (wasPaid && !isPaid) {
+          // Saindo de pago/recebido: reverter delta
+          const delta = lancamento.tipo === "receita" ? -lancamento.valor : lancamento.valor;
+          const { data: contaAtual } = await supabase
+            .from("contas_bancarias")
+            .select("saldo_atual")
+            .eq("id", lancamento.conta_bancaria_id)
+            .single();
+          if (contaAtual) {
+            await (supabase.from("contas_bancarias").update({ saldo_atual: Number(contaAtual.saldo_atual) + delta } as any) as any)
+              .eq("id", lancamento.conta_bancaria_id);
+          }
+        }
       }
 
       setLancamentos(
