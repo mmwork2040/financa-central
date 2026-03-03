@@ -78,7 +78,10 @@ const LogsIntegracoes = () => {
 
   const filteredLogs = logs.filter(log => {
     if (filtroPlataforma !== "todas" && log.plataforma !== filtroPlataforma) return false;
-    if (filtroStatus !== "todos" && log.status !== filtroStatus) return false;
+    if (filtroStatus !== "todos") {
+      if (filtroStatus === "success" && !isSuccess(log.status)) return false;
+      if (filtroStatus === "error" && !isError(log.status)) return false;
+    }
     if (busca) {
       const search = busca.toLowerCase();
       return (
@@ -92,18 +95,21 @@ const LogsIntegracoes = () => {
 
   const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(filteredLogs, 10);
 
-  const successCount = logs.filter(l => l.status === "success").length;
-  const errorCount = logs.filter(l => l.status === "error").length;
+  const successCount = logs.filter(l => l.status === "success" || l.status === "sucesso").length;
+  const errorCount = logs.filter(l => l.status === "error" || l.status === "erro").length;
+
+  const isSuccess = (s: string) => s === "success" || s === "sucesso";
+  const isError = (s: string) => s === "error" || s === "erro";
 
   const StatusIcon = ({ status }: { status: string }) => {
-    if (status === "success") return <CheckCircle2 className="h-4 w-4 text-green-600" />;
-    if (status === "error") return <XCircle className="h-4 w-4 text-destructive" />;
+    if (isSuccess(status)) return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+    if (isError(status)) return <XCircle className="h-4 w-4 text-destructive" />;
     return <AlertTriangle className="h-4 w-4 text-amber-600" />;
   };
 
   const StatusBadge = ({ status }: { status: string }) => {
-    if (status === "success") return <Badge variant="outline" className="border-green-300 text-green-700 text-[10px]">Sucesso</Badge>;
-    if (status === "error") return <Badge variant="outline" className="border-destructive/30 text-destructive text-[10px]">Erro</Badge>;
+    if (isSuccess(status)) return <Badge variant="outline" className="border-green-300 text-green-700 text-[10px]">Sucesso</Badge>;
+    if (isError(status)) return <Badge variant="outline" className="border-destructive/30 text-destructive text-[10px]">Erro</Badge>;
     return <Badge variant="outline" className="border-amber-300 text-amber-600 text-[10px]">{status}</Badge>;
   };
 
