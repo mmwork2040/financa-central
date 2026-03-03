@@ -11,6 +11,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import FloatingChatButton from "@/components/common/FloatingChatButton";
 import MobileBottomNav from "@/components/common/MobileBottomNav";
 import { useSupportNotifications } from "@/hooks/useSupportNotifications";
+import { MonthFilterProvider } from "@/contexts/MonthFilterContext";
+import MonthCarousel from "@/components/common/MonthCarousel";
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
@@ -44,20 +46,25 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="flex min-h-screen bg-background overflow-x-hidden">
-      <Sidebar />
-      <main
-        className={cn(
-          "flex-1 transition-all duration-300 ease-in-out min-w-0",
-          isMobile ? "ml-0 pt-14" : isExpanded ? "ml-60" : "ml-14"
-        )}
-      >
-        <div className="w-full px-3 py-4 md:px-4 md:py-6 max-w-full pb-20 md:pb-6">
-          {children}
-        </div>
-      </main>
-      <MobileBottomNav />
-      <FloatingChatButton />
-    </div>
+    <MonthFilterProvider>
+      <div className="flex min-h-screen bg-background overflow-x-hidden">
+        <Sidebar />
+        <main
+          className={cn(
+            "flex-1 transition-all duration-300 ease-in-out min-w-0",
+            isMobile ? "ml-0 pt-14" : isExpanded ? "ml-60" : "ml-14"
+          )}
+        >
+          <div className="w-full px-3 py-4 md:px-4 md:py-6 max-w-full pb-20 md:pb-6">
+            <div className="mb-4 glass-card rounded-xl px-2 py-2">
+              <MonthCarousel />
+            </div>
+            {children}
+          </div>
+        </main>
+        <MobileBottomNav />
+        <FloatingChatButton />
+      </div>
+    </MonthFilterProvider>
   );
 };
