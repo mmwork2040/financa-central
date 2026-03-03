@@ -133,6 +133,8 @@ interface LancamentosContextType {
   refreshContasBancarias: () => void;
   refreshProjetos: () => void;
   refreshLancamentos: () => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
 }
 
 const LancamentosContext = createContext<LancamentosContextType | undefined>(
@@ -167,6 +169,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   // Add sort state
   const [sortField, setSortField] = useState<string>('data_vencimento');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [filtros, setFiltros] = useState<FiltrosType>({
     tipo: null,
@@ -790,6 +793,8 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         refreshContasBancarias: fetchContasBancarias,
         refreshProjetos: fetchProjetos,
         refreshLancamentos: fetchLancamentos,
+        searchQuery,
+        setSearchQuery,
       }}
     >
       {children}
