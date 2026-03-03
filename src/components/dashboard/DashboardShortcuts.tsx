@@ -15,7 +15,7 @@ const shortcuts: Shortcut[] = [
   { label: "Clientes", icon: Users, route: "/clientes" },
   { label: "Fornecedores", icon: Truck, route: "/fornecedores" },
   { label: "Relatórios", icon: BarChart3, route: "/relatorios" },
-  { label: "Contas Bancárias", icon: Landmark, route: "/contas-bancarias" },
+  { label: "Contas Bancárias", icon: Landmark, route: "/bank-accounts" },
   { label: "Vendas Digitais", icon: ShoppingCart, route: "/vendas-digitais" },
 ];
 
