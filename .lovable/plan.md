@@ -1,89 +1,57 @@
 
 
-## Plano: Filtro de Mês em Carrossel + Parcelas Divididas + Despesas Recorrentes Previstas
+## Plano: Caixa da Empresa no Dashboard/Relatórios + Receitas/Despesas Previstas vs Executadas em Lançamentos
 
-### Visão Geral
+### Conceito de "Caixa"
 
-Criar um componente de navegação por mês (carrossel horizontal) que será exibido em todas as páginas internas, filtrando os dados pelo mês selecionado. Ao salvar lançamentos parcelados, o sistema criará automaticamente um registro para cada parcela nos meses seguintes com o valor dividido. Despesas recorrentes também gerarão lançamentos futuros como "previstos".
+O **Caixa** é o saldo consolidado de todas as contas bancárias da empresa (`sum(saldo_atual)` da tabela `contas_bancarias`). Diferente do "saldo do mês" (receitas - despesas do mês), o caixa representa o dinheiro real disponível.
 
-### 1. Componente MonthCarousel (`src/components/common/MonthCarousel.tsx`)
+### 1. Dashboard — Novos Cards de Caixa
 
-- Carrossel horizontal com setas esquerda/direita
-- Exibe o mês atual centralizado, com meses anteriores e futuros navegáveis (6 meses para trás, 12 para frente)
-- Formato: "Janeiro 2026", "Fevereiro 2026", etc.
-- Mês ativo destacado com `bg-primary text-white rounded-full`
-- Estado armazenado em contexto global para ser acessado em todas as páginas
-- Estilo glass consistente com o design system
+Adicionar 2 novos cards no grid de resumo do Dashboard:
 
-### 2. Contexto Global de Mês (`src/contexts/MonthFilterContext.tsx`)
+- **Caixa Atual**: soma de `saldo_atual` de todas as `contas_bancarias`. Ícone `Landmark`, cor azul.
+- **Caixa Previsto (Mês Seguinte)**: Caixa Atual + receitas pendentes do mês seguinte - despesas pendentes do mês seguinte. Ícone `TrendingUp`, cor verde/vermelho conforme positivo/negativo.
+- **Meses de Caixa**: Caixa Atual / média mensal de despesas (últimos 3 meses pagos). Exibe "X meses" como indicador de runway. Ícone `Calendar`.
 
-- `selectedMonth: Date` (primeiro dia do mês selecionado)
-- `setSelectedMonth(date: Date)`
-- `monthStart: string` e `monthEnd: string` (formatados para queries)
-- Provider envolvendo o AppLayout para estar disponível em todas as páginas
+Esses dados serão calculados no `useDashboardData.tsx`, buscando `contas_bancarias` e lançamentos do mês seguinte.
 
-### 3. Integração nas Páginas
+### 2. Relatórios — Seção de Caixa
 
-**Dashboard** — Filtrar resumo, gráficos e movimentações pelo mês selecionado. Os cards de resumo mostrarão totais do mês. O gráfico de fluxo de caixa destacará o mês ativo.
+No `Relatorios.tsx`, adicionar uma nova aba **"Caixa"** com:
+- Card de Caixa Atual (soma saldos bancários)
+- Projeção de caixa mês a mês (gráfico de linha: caixa atual + receitas previstas - despesas previstas para os próximos 3 meses)
+- Indicador de "Meses de Caixa" (runway)
 
-**Lançamentos** — O `fetchLancamentos` usará `monthStart`/`monthEnd` como filtro padrão de `data_vencimento`. Os lançamentos virtuais (parcelas futuras e recorrências) aparecerão junto com os reais, marcados com badge "Previsto".
+### 3. Lançamentos — Previsto vs Executado
 
-**Clientes, Fornecedores, Categorias, Contas Bancárias, Formas de Pagamento** — Estas páginas são cadastros, não transacionais. O carrossel aparecerá mas não filtrará dados (apenas para consistência visual e navegação rápida).
+No `LancamentosSummary.tsx`, separar os totais em **Executado** (status pago/recebido) e **Previsto** (status pendente/aberto):
 
-### 4. Criação Automática de Parcelas no Banco (handleSave)
-
-Quando o usuário salvar um lançamento com `recorrente: true` e `total_parcelas > 1`:
-- O valor total será dividido por `total_parcelas`
-- Serão inseridos N registros no banco, cada um com:
-  - `valor = valor_total / total_parcelas`
-  - `data_vencimento` incrementada mês a mês
-  - `parcela_atual` = 1, 2, 3...
-  - `total_parcelas` = N
-  - `status = "pendente"`
-  - `descricao` com sufixo "(Parcela X/N)"
-
-Isso acontecerá no `handleSave` do `LancamentosContext.tsx`, substituindo a inserção única por um `insert` em lote.
-
-### 5. Projeção de Recorrências (client-side)
-
-Para lançamentos marcados como `recorrente: true` sem `total_parcelas` (recorrência indefinida):
-- No `LancamentosContainer`, ao filtrar pelo mês, verificar se existem recorrências ativas cujo `data_vencimento` é anterior ao mês selecionado e que não possuem `recorrencia_fim` ou cuja `recorrencia_fim` é posterior
-- Gerar lançamentos virtuais (sem `id` real) com badge "Previsto" para exibição
-- Esses lançamentos virtuais não são salvos no banco — são calculados em runtime
-
-### 6. Integração no AppLayout
-
-O `MonthCarousel` será renderizado dentro do `AppLayout`, acima do `{children}`, para aparecer em todas as páginas internas.
-
-### Arquivos a criar/editar
-
-| Arquivo | Ação |
-|---------|------|
-| `src/components/common/MonthCarousel.tsx` | **Criar** — componente de carrossel de meses |
-| `src/contexts/MonthFilterContext.tsx` | **Criar** — contexto global do mês selecionado |
-| `src/layouts/AppLayout.tsx` | **Editar** — adicionar MonthFilterProvider e MonthCarousel |
-| `src/contexts/LancamentosContext.tsx` | **Editar** — usar monthStart/monthEnd no fetch; gerar parcelas no save |
-| `src/components/lancamentos/LancamentosContainer.tsx` | **Editar** — gerar lançamentos virtuais de recorrências |
-| `src/components/lancamentos/LancamentosTable.tsx` | **Editar** — exibir badge "Previsto" em lançamentos virtuais |
-| `src/hooks/useDashboardData.tsx` | **Editar** — filtrar dados pelo mês selecionado |
-| `src/pages/Dashboard.tsx` | **Editar** — usar mês do contexto |
-| `src/components/lancamentos/LancamentosSummary.tsx` | Sem mudanças (já calcula sobre os lancamentos filtrados) |
-
-### Detalhes Técnicos
-
-**MonthCarousel**: Usa `embla-carousel-react` (já instalado) ou scroll nativo com `overflow-x-auto` e `scroll-snap`. Renderiza botões para cada mês, com `ChevronLeft`/`ChevronRight` nas extremidades.
-
-**Parcelas no banco**: O insert em lote usa array de objetos no Supabase:
-```typescript
-const parcelas = Array.from({ length: totalParcelas }, (_, i) => ({
-  ...dataToSave,
-  valor: valorTotal / totalParcelas,
-  parcela_atual: i + 1,
-  data_vencimento: addMonths(dataVencimento, i),
-  descricao: `${descricao} (${i+1}/${totalParcelas})`
-}));
-await supabase.from("lancamentos").insert(parcelas);
+```text
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+│ Receitas     │  │ Despesas     │  │ Receitas     │  │ Despesas     │
+│ Executadas   │  │ Executadas   │  │ Previstas    │  │ Previstas    │
+│ R$ X.XXX     │  │ R$ X.XXX     │  │ R$ X.XXX     │  │ R$ X.XXX     │
+└─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘
 ```
 
-**Lançamentos virtuais**: Adicionam flag `_virtual: true` para que a tabela saiba que não são editáveis e exiba o badge "Previsto".
+Na `LancamentosTable`, adicionar um badge visual indicando se o lançamento já foi **Executado** (✓ verde) ou é **Previsto** (🕐 amarelo), baseado no status.
+
+### Arquivos a editar
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/hooks/useDashboardData.tsx` | Buscar `contas_bancarias`, calcular caixa atual, caixa previsto mês seguinte, meses de caixa |
+| `src/pages/Dashboard.tsx` | Adicionar 3 cards de caixa no grid (Caixa Atual, Previsto, Meses de Caixa) |
+| `src/components/lancamentos/LancamentosSummary.tsx` | Separar totais em Executado vs Previsto (6 cards) |
+| `src/components/lancamentos/LancamentosTable.tsx` | Adicionar badge Executado/Previsto na coluna de status |
+| `src/pages/Relatorios.tsx` | Adicionar aba "Caixa" com card + projeção |
+| `src/components/relatorios/CaixaView.tsx` | **Criar** — componente da aba Caixa nos relatórios |
+
+### Dados necessários (sem migração)
+
+Todos os dados já existem:
+- `contas_bancarias.saldo_atual` — caixa real
+- `lancamentos` com filtro por mês seguinte e status pendente — previsões
+- `lancamentos` dos últimos 3 meses com status pago — média de despesas para calcular runway
 
