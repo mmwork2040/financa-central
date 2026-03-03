@@ -30,6 +30,7 @@ interface AdData {
   totalConversoes: number;
   roas: number;
   campanhas: CampaignData[];
+  erro?: string;
 }
 
 const MASK = "••••••";
@@ -98,6 +99,7 @@ const AnunciosDigitais = () => {
   const totalGasto = adSummary.reduce((s, a) => s + a.totalGasto, 0);
   const totalReceita = adSummary.reduce((s, a) => s + a.totalReceita, 0);
   const roasGeral = totalGasto > 0 ? totalReceita / totalGasto : 0;
+  const platformsWithErrors = adSummary.filter(a => a.erro);
 
   const chartData = adSummary.map(a => ({
     name: a.plataforma,
@@ -211,6 +213,30 @@ const AnunciosDigitais = () => {
             </Card>
           </div>
 
+          {/* Error Banner */}
+          {platformsWithErrors.length > 0 && (
+            <Card className="border-destructive/30 bg-destructive/5">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-destructive">Problemas de conexão detectados</h4>
+                    <ul className="mt-1 space-y-1">
+                      {platformsWithErrors.map(p => (
+                        <li key={p.plataforma} className="text-xs text-muted-foreground">
+                          <strong>{p.plataforma}:</strong> {p.erro}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Atualize as credenciais em <strong>Configurações → Integrações</strong> para corrigir.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Chart */}
           {chartData.length > 0 && (totalGasto > 0 || totalReceita > 0) && valoresVisiveis && (
             <Card>
@@ -310,11 +336,24 @@ const AnunciosDigitais = () => {
                     </div>
                   )}
 
-                  {ad.totalGasto === 0 && ad.totalReceita === 0 && (
+                  {ad.erro ? (
+                    <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs font-semibold text-destructive">Erro de conexão</p>
+                          <p className="text-[11px] text-destructive/80 mt-0.5 break-words">{ad.erro}</p>
+                          <p className="text-[11px] text-muted-foreground mt-1">
+                            Verifique suas credenciais em <strong>Configurações → Integrações</strong>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : ad.totalGasto === 0 && ad.totalReceita === 0 ? (
                     <p className="text-xs text-muted-foreground mt-3 text-center">
                       Sem dados para o período selecionado
                     </p>
-                  )}
+                  ) : null}
                 </CardContent>
               </Card>
             ))}
