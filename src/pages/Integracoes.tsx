@@ -186,15 +186,15 @@ const PLATAFORMAS: Plataforma[] = [
   {
     id: "google_ads", name: "Google Ads", description: "Anúncios no Google",
     icon: Target, color: "bg-red-100 text-red-600",
-    site: "https://console.cloud.google.com/apis/credentials", doc: "https://developers.google.com/google-ads/api/docs/start",
+    site: "https://ads.google.com/aw/apicenter", doc: "https://developers.google.com/google-ads/api/docs/start",
     events: ["ad_spend_update", "campaign_status_change"],
     steps: [
-      "Acesse o Google Cloud Console → APIs & Services → Credentials",
-      "Crie uma nova API Key ou OAuth Client",
-      "Ative a Google Ads API no projeto",
-      "Cole a API Key no campo abaixo",
+      "Crie uma conta de gerenciador (MCC) em ads.google.com/home/tools/manager-accounts",
+      "Vincule sua conta de anunciante ao MCC",
+      "No MCC, acesse Ferramentas → Centro de API e copie o Developer Token",
+      "Copie também o Customer ID (número da conta, formato XXX-XXX-XXXX, sem hífens)",
     ],
-    needsSecret: true, usesWebhook: false, keyValidation: { prefix: "AIza", hint: "Deve começar com AIza" },
+    needsSecret: true, usesWebhook: false, keyValidation: { hint: "Developer Token do MCC (ex: AbCdEfG...)" },
     categoria: "anuncios",
   },
   // --- Comunicação ---
@@ -1021,7 +1021,7 @@ const Integracoes = () => {
           {wizardStep === 1 && currentPlat && (
             <div className="space-y-4">
               <div>
-                <Label>API Key *</Label>
+                <Label>{currentPlat?.id === 'google_ads' ? 'Developer Token *' : 'API Key *'}</Label>
                 <Input
                   value={apiKey}
                   onChange={e => { setApiKey(e.target.value); setKeyError(""); }}
@@ -1036,15 +1036,18 @@ const Integracoes = () => {
               </div>
               {currentPlat.needsSecret && (
                 <div>
-                  <Label>{currentPlat.id === 'evolution_api' ? 'URL do Servidor *' : 'API Secret'}</Label>
+                  <Label>{currentPlat.id === 'evolution_api' ? 'URL do Servidor *' : currentPlat.id === 'google_ads' ? 'Customer ID *' : 'API Secret'}</Label>
                   <Input
                     type={currentPlat.id === 'evolution_api' ? 'url' : 'password'}
                     value={apiSecret}
                     onChange={e => setApiSecret(e.target.value)}
-                    placeholder={currentPlat.id === 'evolution_api' ? 'https://sua-evolution-api.com' : 'Cole o secret aqui'}
+                    placeholder={currentPlat.id === 'evolution_api' ? 'https://sua-evolution-api.com' : currentPlat.id === 'google_ads' ? 'Ex: 1234567890 (sem hífens)' : 'Cole o secret aqui'}
                   />
                   {currentPlat.id === 'evolution_api' && (
                     <p className="text-xs text-muted-foreground mt-1">URL base da sua instância Evolution API</p>
+                  )}
+                  {currentPlat.id === 'google_ads' && (
+                    <p className="text-xs text-muted-foreground mt-1">Número da conta no canto superior direito do Google Ads (remova os hífens)</p>
                   )}
                 </div>
               )}
