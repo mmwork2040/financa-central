@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMonthFilter } from "@/contexts/MonthFilterContext";
-import { startOfMonth, endOfMonth, addMonths, format } from "date-fns";
+import { startOfMonth, endOfMonth, format } from "date-fns";
 import { simularFluxoCaixa } from "@/utils/cashFlowProjection";
 
 interface DashboardSummary {
@@ -177,24 +177,15 @@ export const useDashboardData = () => {
       if (contasError) throw contasError;
       const caixaAtual = contas?.reduce((sum, c) => sum + (c.saldo_atual || 0), 0) || 0;
 
-      // 2. Next month projections
-      const nextMonthStart = format(startOfMonth(addMonths(selectedMonth, 1)), 'yyyy-MM-dd');
-      const nextMonthEnd = format(endOfMonth(addMonths(selectedMonth, 1)), 'yyyy-MM-dd');
-      
-      const { data: nextMonthLanc } = await supabase
-        .from('lancamentos')
-        .select('tipo, valor, status')
-        .gte('data_vencimento', nextMonthStart)
-        .lte('data_vencimento', nextMonthEnd);
-
-      const nextReceitas = nextMonthLanc
+      // 2. Caixa Previsto = caixaAtual + receitas pendentes do mês atual - despesas pendentes do mês atual
+      const receitasPendentes = todosLancamentos
         ?.filter(l => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto'))
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
-      const nextDespesas = nextMonthLanc
+      const despesasPendentes = todosLancamentos
         ?.filter(l => l.tipo === 'despesa' && (l.status === 'pendente' || l.status === 'aberto'))
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
       
-      const caixaPrevisto = caixaAtual + nextReceitas - nextDespesas;
+      const caixaPrevisto = caixaAtual + receitasPendentes - despesasPendentes;
 
       // 3. Meses de caixa (runway) — simulação mês a mês com recorrências
       const { data: lancFuturos } = await supabase
