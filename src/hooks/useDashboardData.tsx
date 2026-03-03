@@ -21,6 +21,7 @@ interface CaixaData {
   caixaAtual: number;
   caixaPrevisto: number;
   mesesDeCaixa: number;
+  saldoInvestido: number;
 }
 
 interface LancamentoRecente {
@@ -62,7 +63,7 @@ export const useDashboardData = () => {
     despesasPrevistas: 0,
   });
   
-  const [caixa, setCaixa] = useState<CaixaData>({ caixaAtual: 0, caixaPrevisto: 0, mesesDeCaixa: 0 });
+  const [caixa, setCaixa] = useState<CaixaData>({ caixaAtual: 0, caixaPrevisto: 0, mesesDeCaixa: 0, saldoInvestido: 0 });
   const [lancamentosRecentes, setLancamentosRecentes] = useState<LancamentoRecente[]>([]);
   const [contasProximas, setContasProximas] = useState<ContaProxima[]>([]);
   const [healthStatus, setHealthStatus] = useState<HealthStatus>('saudavel');
@@ -134,12 +135,12 @@ export const useDashboardData = () => {
       
       const totalReceitas = receitasExecutadas;
       const totalDespesas = despesasExecutadas;
-      const saldoAtual = totalReceitas - totalDespesas;
 
-      // Bills in next 7 days (pending)
+      // Saldo do mês será calculado após buscar contas bancárias
+
+      // Contas a Pagar: todas as despesas pendentes do mês selecionado
       const proximasContas = todosLancamentos?.filter(l => {
-        const dv = new Date(l.data_vencimento);
-        return dv >= hoje && dv <= em7Dias && (l.status === 'pendente' || l.status === 'aberto');
+        return l.tipo === 'despesa' && (l.status === 'pendente' || l.status === 'aberto');
       }) || [];
       
       const emAtraso = todosLancamentos?.filter(l => {
@@ -155,18 +156,6 @@ export const useDashboardData = () => {
         tipo: l.tipo,
         status: l.status,
       })).sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime()));
-      
-      setSummary({
-        totalReceitas,
-        totalDespesas,
-        saldoAtual,
-        contasProximas: proximasContas.length,
-        emAtraso,
-        receitasExecutadas,
-        despesasExecutadas,
-        receitasPrevistas,
-        despesasPrevistas,
-      });
 
       // === CAIXA ===
       // 1. Caixa Atual = sum of all contas_bancarias.saldo_atual
@@ -207,7 +196,27 @@ export const useDashboardData = () => {
         12
       );
 
-      setCaixa({ caixaAtual, caixaPrevisto, mesesDeCaixa });
+      // Saldo Investido: soma dos lançamentos de investimento do mês (pagos)
+      const saldoInvestido = todosLancamentos
+        ?.filter(l => l.tipo === 'investimento' && (l.status === 'pago' || l.status === 'recebido'))
+        .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+
+      setCaixa({ caixaAtual, caixaPrevisto, mesesDeCaixa, saldoInvestido });
+
+      // Saldo do mês = caixa + receitas recebidas - despesas pagas
+      const saldoAtual = caixaAtual + totalReceitas - totalDespesas;
+
+      setSummary({
+        totalReceitas,
+        totalDespesas,
+        saldoAtual,
+        contasProximas: proximasContas.length,
+        emAtraso,
+        receitasExecutadas,
+        despesasExecutadas,
+        receitasPrevistas,
+        despesasPrevistas,
+      });
 
       // Monthly chart data (last 6 months)
       const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
