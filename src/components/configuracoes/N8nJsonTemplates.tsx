@@ -508,7 +508,6 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 
 REGRA CRÍTICA — CAMPOS PERMITIDOS:
 - Envie APENAS os campos listados abaixo. NÃO invente campos extras.
-- Campos como "banco", "cnpj", "cpf" NÃO EXISTEM nesta ferramenta e causam ERRO.
 
 RESOLUÇÃO AUTOMÁTICA DE DEPENDÊNCIAS:
 - Para cada campo obrigatório (categoria, cliente, fornecedor, conta bancária, forma de pagamento), você pode enviar:
@@ -517,7 +516,8 @@ RESOLUÇÃO AUTOMÁTICA DE DEPENDÊNCIAS:
 - Exemplo: em vez de categoria_id, envie categoria_nome: "Alimentação". O sistema busca ou cria.
 - conta_bancaria_nome busca pelo campo "nome" E pelo campo "banco" (ex: "Santander" encontra a conta cujo banco é Santander).
 - NUNCA inclua agência ou número da conta no campo conta_bancaria_nome. Use SOMENTE o nome do banco.
-- Se o usuário informar agência e/ou número da conta, envie nos campos separados: conta_bancaria_agencia e conta_bancaria_conta. Esses dados serão usados ao criar uma nova conta bancária.
+- Se o usuário informar agência e/ou número da conta, envie nos campos separados: conta_bancaria_agencia e conta_bancaria_conta.
+- Se o usuário informar o nome do banco separado do nome da conta, envie conta_bancaria_banco para o nome do banco.
 
 CAMPOS OBRIGATÓRIOS:
 - empresa_id, descricao, valor, data_vencimento, tipo (receita ou despesa)
@@ -529,8 +529,6 @@ CAMPOS OBRIGATÓRIOS:
 
 VALOR:
 - Envie SEMPRE como número puro (ex: 500, 3000.50). NÃO use formato brasileiro "3.000,00".
-- Exemplos corretos: 500, 1500.99, 250
-- Exemplos ERRADOS: "R$ 500,00", "3.000,00"
 
 STATUS AUTOMÁTICO:
 - Se data_pagamento for informada e status não for enviado, o sistema define automaticamente:
@@ -539,15 +537,19 @@ STATUS AUTOMÁTICO:
 - Se data_pagamento NÃO for informada, status padrão = "pendente"
 
 CAMPOS OPCIONAIS:
-- status (pendente, pago, recebido — se não informado, é calculado automaticamente conforme regra acima)
+- status (pendente, pago, recebido — se não informado, é calculado automaticamente)
 - projeto_id, data_pagamento
-- conta_bancaria_agencia (número da agência — usado apenas ao criar nova conta bancária)
-- conta_bancaria_conta (número da conta — usado apenas ao criar nova conta bancária)
+- conta_bancaria_agencia (número da agência — usado ao criar nova conta bancária)
+- conta_bancaria_conta (número da conta — usado ao criar nova conta bancária)
+- conta_bancaria_banco (nome do banco — usado ao criar nova conta bancária, se diferente de conta_bancaria_nome)
+- cliente_cpf_cnpj (CPF ou CNPJ do cliente — usado ao criar novo cliente)
+- fornecedor_cpf_cnpj (CPF ou CNPJ do fornecedor — usado ao criar novo fornecedor)
 
 FLUXO SIMPLIFICADO:
 1. Pergunte ao usuário: descrição, valor, tipo (receita/despesa), data, categoria, forma de pagamento, conta bancária, e cliente/fornecedor.
-2. Chame criar_lancamento com os NOMES informados pelo usuário nos campos _nome.
-3. O sistema resolve tudo e retorna o lançamento criado + registros_criados (se houver).
+2. Se o usuário informar CPF/CNPJ, banco, agência ou conta, envie nos campos correspondentes.
+3. Chame criar_lancamento com os NOMES informados pelo usuário nos campos _nome.
+4. O sistema resolve tudo e retorna o lançamento criado + registros_criados (se houver).
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas.`,
     category: "Financeiro",
@@ -562,18 +564,21 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas.`,
       { name: "categoria_nome", type: "string", required: false, description: "Nome da categoria (busca ou cria automaticamente)" },
       { name: "cliente_id", type: "string", required: false, description: "UUID do cliente (obrigatório se receita)" },
       { name: "cliente_nome", type: "string", required: false, description: "Nome do cliente (busca ou cria, obrigatório se receita)" },
+      { name: "cliente_cpf_cnpj", type: "string", required: false, description: "CPF ou CNPJ do cliente (usado ao criar novo cliente)" },
       { name: "fornecedor_id", type: "string", required: false, description: "UUID do fornecedor (obrigatório se despesa)" },
       { name: "fornecedor_nome", type: "string", required: false, description: "Nome do fornecedor (busca ou cria, obrigatório se despesa)" },
+      { name: "fornecedor_cpf_cnpj", type: "string", required: false, description: "CPF ou CNPJ do fornecedor (usado ao criar novo fornecedor)" },
       { name: "forma_pagamento_id", type: "string", required: false, description: "UUID da forma de pagamento" },
       { name: "forma_pagamento_nome", type: "string", required: false, description: "Nome da forma de pagamento (busca ou cria)" },
       { name: "conta_bancaria_id", type: "string", required: false, description: "UUID da conta bancária" },
       { name: "conta_bancaria_nome", type: "string", required: false, description: "SOMENTE o nome do banco (ex: Santander, Itaú, Nubank). NÃO inclua agência ou número da conta" },
+      { name: "conta_bancaria_banco", type: "string", required: false, description: "Nome do banco (ex: Itaú). Usado ao criar nova conta se diferente do nome" },
       { name: "conta_bancaria_agencia", type: "string", required: false, description: "Número da agência bancária (usado ao criar nova conta)" },
       { name: "conta_bancaria_conta", type: "string", required: false, description: "Número da conta bancária (usado ao criar nova conta)" },
       { name: "projeto_id", type: "string", required: false, description: "UUID do projeto (opcional)" },
       { name: "data_pagamento", type: "string", required: false, description: "Data de pagamento (YYYY-MM-DD). Se informada, status será auto-definido como pago/recebido" },
     ],
-    body: { action: "criar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", descricao: "{{ $fromAI('descricao', 'Descrição do lançamento') }}", valor: "{{ $fromAI('valor', 'Valor numérico puro. Ex: 500, 1500.99. NUNCA use formato brasileiro') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'Data de vencimento YYYY-MM-DD') }}", tipo: "{{ $fromAI('tipo', 'OBRIGATÓRIO: receita ou despesa') }}", status: "{{ $fromAI('status', 'pendente, pago ou recebido. Deixe vazio para auto-definir pela data_pagamento') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Vazio se usar categoria_nome') }}", categoria_nome: "{{ $fromAI('categoria_nome', 'Nome da categoria. O sistema busca ou cria automaticamente') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Vazio se usar cliente_nome ou se for despesa') }}", cliente_nome: "{{ $fromAI('cliente_nome', 'Nome do cliente. Obrigatório se receita e sem cliente_id') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor. Vazio se usar fornecedor_nome ou se for receita') }}", fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'Nome do fornecedor. Obrigatório se despesa e sem fornecedor_id') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento. Vazio se usar forma_pagamento_nome') }}", forma_pagamento_nome: "{{ $fromAI('forma_pagamento_nome', 'Nome da forma de pagamento. Busca ou cria automaticamente') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária. Vazio se usar conta_bancaria_nome') }}", conta_bancaria_nome: "{{ $fromAI('conta_bancaria_nome', 'SOMENTE nome do banco. Ex: Santander, Itaú. NÃO inclua agência ou número') }}", conta_bancaria_agencia: "{{ $fromAI('conta_bancaria_agencia', 'Número da agência. Usado ao criar nova conta. Deixe vazio se não informado') }}", conta_bancaria_conta: "{{ $fromAI('conta_bancaria_conta', 'Número da conta. Usado ao criar nova conta. Deixe vazio se não informado') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não informado') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'Data de pagamento YYYY-MM-DD. Se informada, status auto-definido como pago/recebido') }}" },
+    body: { action: "criar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", descricao: "{{ $fromAI('descricao', 'Descrição do lançamento') }}", valor: "{{ $fromAI('valor', 'Valor numérico puro. Ex: 500, 1500.99. NUNCA use formato brasileiro') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'Data de vencimento YYYY-MM-DD') }}", tipo: "{{ $fromAI('tipo', 'OBRIGATÓRIO: receita ou despesa') }}", status: "{{ $fromAI('status', 'pendente, pago ou recebido. Deixe vazio para auto-definir pela data_pagamento') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Vazio se usar categoria_nome') }}", categoria_nome: "{{ $fromAI('categoria_nome', 'Nome da categoria. O sistema busca ou cria automaticamente') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Vazio se usar cliente_nome ou se for despesa') }}", cliente_nome: "{{ $fromAI('cliente_nome', 'Nome do cliente. Obrigatório se receita e sem cliente_id') }}", cliente_cpf_cnpj: "{{ $fromAI('cliente_cpf_cnpj', 'CPF ou CNPJ do cliente. Usado ao criar novo cliente. Deixe vazio se não informado') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor. Vazio se usar fornecedor_nome ou se for receita') }}", fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'Nome do fornecedor. Obrigatório se despesa e sem fornecedor_id') }}", fornecedor_cpf_cnpj: "{{ $fromAI('fornecedor_cpf_cnpj', 'CPF ou CNPJ do fornecedor. Usado ao criar novo fornecedor. Deixe vazio se não informado') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento. Vazio se usar forma_pagamento_nome') }}", forma_pagamento_nome: "{{ $fromAI('forma_pagamento_nome', 'Nome da forma de pagamento. Busca ou cria automaticamente') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária. Vazio se usar conta_bancaria_nome') }}", conta_bancaria_nome: "{{ $fromAI('conta_bancaria_nome', 'SOMENTE nome do banco. Ex: Santander, Itaú. NÃO inclua agência ou número') }}", conta_bancaria_banco: "{{ $fromAI('conta_bancaria_banco', 'Nome do banco. Usado ao criar nova conta se diferente do nome. Deixe vazio se não informado') }}", conta_bancaria_agencia: "{{ $fromAI('conta_bancaria_agencia', 'Número da agência. Usado ao criar nova conta. Deixe vazio se não informado') }}", conta_bancaria_conta: "{{ $fromAI('conta_bancaria_conta', 'Número da conta. Usado ao criar nova conta. Deixe vazio se não informado') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não informado') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'Data de pagamento YYYY-MM-DD. Se informada, status auto-definido como pago/recebido') }}" },
   },
   {
     action: "atualizar-telegram-id",
