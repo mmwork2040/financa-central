@@ -282,7 +282,7 @@ Deno.serve(async (req) => {
       }
 
       // Create lancamento automatically if approved or refunded
-      if (saleData.status === "aprovada" || saleData.status === "reembolsada") {
+      if (saleData.status === "aprovada" || saleData.status === "reembolsada" || saleData.status === "chargeback") {
         const dataVenda = String(saleData.data_venda).split("T")[0] || new Date().toISOString().split("T")[0];
 
         // Find principal bank account (or single account) for the empresa
@@ -306,10 +306,14 @@ Deno.serve(async (req) => {
           }
         }
 
-        const isReembolso = saleData.status === "reembolsada";
-        const tipoLancamento = isReembolso ? "despesa" : "receita";
-        const statusLancamento = isReembolso ? "pago" : "pago";
-        const prefixo = isReembolso ? "REEMBOLSO" : saleData.plataforma.charAt(0).toUpperCase() + saleData.plataforma.slice(1);
+        const isEstorno = saleData.status === "reembolsada" || saleData.status === "chargeback";
+        const isChargeback = saleData.status === "chargeback";
+        const tipoLancamento = isEstorno ? "despesa" : "receita";
+        const prefixo = isChargeback
+          ? "⚠️ CHARGEBACK"
+          : saleData.status === "reembolsada"
+            ? "REEMBOLSO"
+            : saleData.plataforma.charAt(0).toUpperCase() + saleData.plataforma.slice(1);
 
         const { data: lancamento, error: lancError } = await supabase
           .from("lancamentos")
@@ -320,7 +324,7 @@ Deno.serve(async (req) => {
             valor: saleData.valor_liquido,
             data_vencimento: dataVenda,
             data_pagamento: dataVenda,
-            status: statusLancamento,
+            status: "pago",
             origem: "integracao",
             ...(clienteId ? { cliente_id: clienteId } : {}),
             ...(contaBancariaId ? { conta_bancaria_id: contaBancariaId } : {}),
@@ -335,7 +339,7 @@ Deno.serve(async (req) => {
 
           // Update bank account balance
           if (contaBancariaId) {
-            const rpcTipo = isReembolso ? "despesa" : "receita";
+            const rpcTipo = isEstorno ? "despesa" : "receita";
             const { error: saldoError } = await supabase.rpc("update_saldo_conta", {
               _conta_id: contaBancariaId,
               _valor: saleData.valor_liquido,
@@ -351,7 +355,7 @@ Deno.serve(async (req) => {
                 .single();
 
               if (contaAtual) {
-                const novoSaldo = isReembolso
+                const novoSaldo = isEstorno
                   ? contaAtual.saldo_atual - saleData.valor_liquido
                   : contaAtual.saldo_atual + saleData.valor_liquido;
                 await supabase
@@ -363,11 +367,11 @@ Deno.serve(async (req) => {
           }
         }
 
-        // If refund, also update the venda_digital status
-        if (isReembolso && vendaId) {
+        // Update venda_digital status for refund/chargeback
+        if (isEstorno && vendaId) {
           await supabase
             .from("vendas_digitais")
-            .update({ status: "reembolsada" })
+            .update({ status: saleData.status })
             .eq("id", vendaId);
         }
       }
