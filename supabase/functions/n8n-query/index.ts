@@ -324,9 +324,9 @@ Deno.serve(async (req) => {
       "contas-bancarias": { tela: "contas_bancarias" },
       "formas-pagamento": { tela: "formas_pagamento" },
       "projetos": { tela: "projetos" },
-      "vendas-digitais": { tela: "vendas_digitais", tipo: "pode_incluir" },
-      "recebimentos-digitais": { tela: "vendas_digitais", tipo: "pode_incluir" },
-      "listar-anuncios": { tela: "anuncios", tipo: "pode_incluir" },
+      "vendas-digitais": { tela: "vendas_digitais" },
+      "recebimentos-digitais": { tela: "vendas_digitais" },
+      "listar-anuncios": { tela: "vendas_digitais" },
       "listar-usuarios": { tela: "users" },
       "extrato-conta": { tela: "contas_bancarias" },
       
