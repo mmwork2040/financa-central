@@ -261,9 +261,9 @@ const FloatingChatButton: React.FC = () => {
     <>
       <Button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-[9999] h-14 w-14 rounded-full shadow-xl relative bg-primary hover:bg-primary/90"
+        className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[9999] h-14 w-14 rounded-full shadow-xl relative bg-primary hover:bg-primary/90"
         size="icon"
-        style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem' }}
+        style={{ position: 'fixed', right: '1rem' }}
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
         {!open && unreadCount > 0 && (
