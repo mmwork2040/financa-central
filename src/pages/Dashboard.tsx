@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Plus, ArrowUpRight, ArrowDownRight, Wallet, AlertTriangle, Clock, Activity, Eye, EyeOff, LayoutDashboard } from "lucide-react";
+import { Plus, ArrowUpRight, ArrowDownRight, Wallet, AlertTriangle, Clock, Activity, Eye, EyeOff, LayoutDashboard, TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { formatCurrency, formatDate } from "@/utils/formatters";
 import { ValuesVisibilityProvider, useValuesVisibility, maskValue } from "@/contexts/ValuesVisibilityContext";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
 import { MyExitRequests } from "@/components/solicitacoes/MyExitRequests";
+import { DashboardChart } from "@/components/dashboard/DashboardChart";
 import { cn } from "@/lib/utils";
 
 const healthConfig: Record<HealthStatus, { label: string; color: string; icon: string; bg: string }> = {
@@ -22,7 +23,7 @@ const healthConfig: Record<HealthStatus, { label: string; color: string; icon: s
 
 const DashboardContent = () => {
   const { userProfile, empresaId } = useAuth();
-  const { loading, summary, lancamentosRecentes, contasProximas, healthStatus } = useDashboardData();
+  const { loading, summary, lancamentosRecentes, contasProximas, healthStatus, monthlyChartData } = useDashboardData();
   const { handleOpenModal } = useLancamentosContext();
   const { visible, toggle } = useValuesVisibility();
   const { myRequests, cancelRequest, actionLoading } = useSolicitacoesSaida();
@@ -119,6 +120,33 @@ const DashboardContent = () => {
             {summary.emAtraso > 0 && (
               <p className="text-[10px] text-red-500 font-medium mt-0.5">{summary.emAtraso} em atraso</p>
             )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Cash Flow Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <DashboardChart data={monthlyChartData} saldoAtual={summary.saldoAtual} />
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Total Receitas</p>
+              <p className="text-xl sm:text-2xl font-bold text-green-600">
+                {maskValue(formatCurrency(summary.totalReceitas), visible)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Total Despesas</p>
+              <p className="text-xl sm:text-2xl font-bold text-red-600">
+                {maskValue(formatCurrency(summary.totalDespesas), visible)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Saldo</p>
+              <p className={cn("text-xl sm:text-2xl font-bold", summary.saldoAtual >= 0 ? "text-green-600" : "text-red-600")}>
+                {maskValue(formatCurrency(summary.saldoAtual), visible)}
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>

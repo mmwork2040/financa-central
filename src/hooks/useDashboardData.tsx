@@ -47,8 +47,8 @@ export const useDashboardData = () => {
   const [lancamentosRecentes, setLancamentosRecentes] = useState<LancamentoRecente[]>([]);
   const [contasProximas, setContasProximas] = useState<ContaProxima[]>([]);
   const [healthStatus, setHealthStatus] = useState<HealthStatus>('saudavel');
-  // Keep legacy fields for compatibility
   const [dataFluxo, setDataFluxo] = useState<any[]>([]);
+  const [monthlyChartData, setMonthlyChartData] = useState<Array<{ name: string; receitas: number; despesas: number; investimentos: number }>>([]);
   
   const fetchDashboardData = async () => {
     try {
@@ -130,6 +130,37 @@ export const useDashboardData = () => {
         emAtraso,
       });
 
+      // Monthly chart data (last 6 months)
+      const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      const chartMap: Record<string, { receitas: number; despesas: number; investimentos: number }> = {};
+      const seisMesesAtras = new Date(hoje);
+      seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 5);
+      seisMesesAtras.setDate(1);
+
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(seisMesesAtras);
+        d.setMonth(d.getMonth() + i);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        chartMap[key] = { receitas: 0, despesas: 0, investimentos: 0 };
+      }
+
+      todosLancamentos?.forEach(l => {
+        if (l.status !== 'pago' && l.status !== 'recebido') return;
+        const dv = new Date(l.data_vencimento);
+        const key = `${dv.getFullYear()}-${dv.getMonth()}`;
+        if (chartMap[key]) {
+          if (l.tipo === 'receita') chartMap[key].receitas += l.valor || 0;
+          else if (l.tipo === 'despesa') chartMap[key].despesas += l.valor || 0;
+          else if (l.tipo === 'investimento') chartMap[key].investimentos += l.valor || 0;
+        }
+      });
+
+      const chartData = Object.entries(chartMap).map(([key, val]) => {
+        const [year, month] = key.split('-').map(Number);
+        return { name: monthNames[month], ...val };
+      });
+      setMonthlyChartData(chartData);
+
       // Refined Health Indicator
       const compromissosFuturos = todosLancamentos
         ?.filter(l => l.tipo === 'despesa' && (l.status === 'pendente' || l.status === 'aberto'))
@@ -139,7 +170,6 @@ export const useDashboardData = () => {
         ?.filter(l => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto'))
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
 
-      // Calculate average monthly revenue (last 3 months)
       const tressMesesAtras = new Date(hoje);
       tressMesesAtras.setMonth(tressMesesAtras.getMonth() - 3);
       const receitasRecentes = todosLancamentos
@@ -147,7 +177,6 @@ export const useDashboardData = () => {
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
       const mediaReceitaMensal = receitasRecentes / 3;
 
-      // Scoring system for health
       let score = 100;
       if (saldoAtual < 0) score -= 40;
       if (emAtraso > 0) score -= emAtraso * 10;
@@ -182,6 +211,7 @@ export const useDashboardData = () => {
     contasProximas,
     healthStatus,
     dataFluxo,
+    monthlyChartData,
     fetchDashboardData,
   };
 };
