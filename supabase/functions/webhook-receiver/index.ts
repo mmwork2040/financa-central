@@ -103,6 +103,39 @@ function parseEduzz(body: any): SaleData | null {
   };
 }
 
+// ─── Kiwify ───
+function parseKiwify(body: any): SaleData | null {
+  const statusMap: Record<string, string> = {
+    paid: "aprovada",
+    approved: "aprovada",
+    refunded: "reembolsada",
+    chargedback: "chargeback",
+    waiting_payment: "pendente",
+    expired: "expirada",
+    refused: "cancelada",
+  };
+
+  const order = body?.order || body;
+  const customer = body?.Customer || body?.customer || {};
+  const product = body?.Product || body?.product || {};
+  const rawStatus = String(order?.status || order?.order_status || body?.order_status || "paid").toLowerCase();
+  const valorBruto = Number(order?.total || order?.charges?.amount || body?.commission?.charge_amount || 0);
+  const taxa = Number(order?.platform_fee || body?.commission?.commission_amount || 0);
+
+  return {
+    plataforma: "kiwify",
+    evento: body?.webhook_event_type || body?.event || "order_paid",
+    status: statusMap[rawStatus] || "pendente",
+    valor_bruto: valorBruto,
+    taxa,
+    valor_liquido: valorBruto - taxa,
+    cliente: customer?.full_name || customer?.name || customer?.email || null,
+    produto: product?.name || product?.product_name || null,
+    data_venda: normalizeDate(order?.created_at || order?.approved_date || body?.created_at),
+    data_prevista_recebimento: null,
+  };
+}
+
 // ─── Monetizze ───
 function parseMonetizze(body: any): SaleData | null {
   const evento = body?.evento || body?.venda || {};
@@ -210,6 +243,8 @@ Deno.serve(async (req) => {
       saleData = parseEduzz(body);
     } else if (platform === "monetizze") {
       saleData = parseMonetizze(body);
+    } else if (platform === "kiwify") {
+      saleData = parseKiwify(body);
     }
 
     let vendaId: string | null = null;
