@@ -5,8 +5,9 @@ import { formatCurrency } from "@/utils/format";
 import { useValuesVisibility, maskValue } from "@/contexts/ValuesVisibilityContext";
 import { Landmark, TrendingUp, Calendar } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { startOfMonth, endOfMonth, addMonths, format } from "date-fns";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { simularFluxoCaixa } from "@/utils/cashFlowProjection";
 
 const CaixaView = () => {
   const { visible } = useValuesVisibility();
@@ -19,6 +20,8 @@ const CaixaView = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        const hoje = new Date();
+
         // Caixa atual
         const { data: contas } = await supabase
           .from("contas_bancarias")
@@ -26,52 +29,31 @@ const CaixaView = () => {
         const totalCaixa = contas?.reduce((sum, c) => sum + (c.saldo_atual || 0), 0) || 0;
         setCaixaAtual(totalCaixa);
 
-        // Average monthly expenses (last 3 months)
-        const hoje = new Date();
-        const tresMesesAtras = new Date(hoje);
-        tresMesesAtras.setMonth(tresMesesAtras.getMonth() - 3);
-        
-        const { data: despHist } = await supabase
+        // Fetch future pending transactions
+        const { data: lancFuturos } = await supabase
           .from("lancamentos")
-          .select("valor")
-          .eq("tipo", "despesa")
-          .eq("status", "pago")
-          .gte("data_vencimento", format(tresMesesAtras, "yyyy-MM-dd"))
-          .lte("data_vencimento", format(hoje, "yyyy-MM-dd"));
+          .select("tipo, valor, data_vencimento, status, descricao, recorrente, total_parcelas, recorrencia_fim")
+          .in("status", ["pendente", "aberto"])
+          .gte("data_vencimento", format(hoje, "yyyy-MM-dd"));
 
-        const totalDesp3m = despHist?.reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
-        const mediaMensal = totalDesp3m / 3;
-        setMesesDeCaixa(mediaMensal > 0 ? Math.round((totalCaixa / mediaMensal) * 10) / 10 : 99);
+        // Fetch active recurring without fixed installments
+        const { data: recorrentes } = await supabase
+          .from("lancamentos")
+          .select("tipo, valor, data_vencimento, status, descricao, recorrente, total_parcelas, recorrencia_fim")
+          .eq("recorrente", true)
+          .is("total_parcelas", null);
 
-        // Projection: next 3 months
-        const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-        const projection: Array<{ name: string; caixa: number }> = [
-          { name: `${monthNames[hoje.getMonth()]} (Atual)`, caixa: totalCaixa },
-        ];
+        // Simulate cash flow for next 3 months (chart) and get runway
+        const result = simularFluxoCaixa(
+          totalCaixa,
+          (lancFuturos || []) as any,
+          (recorrentes || []) as any,
+          12
+        );
 
-        let runningCaixa = totalCaixa;
-        for (let i = 1; i <= 3; i++) {
-          const mStart = format(startOfMonth(addMonths(hoje, i)), "yyyy-MM-dd");
-          const mEnd = format(endOfMonth(addMonths(hoje, i)), "yyyy-MM-dd");
-
-          const { data: lancFuturos } = await supabase
-            .from("lancamentos")
-            .select("tipo, valor, status")
-            .gte("data_vencimento", mStart)
-            .lte("data_vencimento", mEnd);
-
-          const recPend = lancFuturos
-            ?.filter(l => l.tipo === "receita" && (l.status === "pendente" || l.status === "aberto"))
-            .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
-          const despPend = lancFuturos
-            ?.filter(l => l.tipo === "despesa" && (l.status === "pendente" || l.status === "aberto"))
-            .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
-
-          runningCaixa = runningCaixa + recPend - despPend;
-          const monthDate = addMonths(hoje, i);
-          projection.push({ name: monthNames[monthDate.getMonth()], caixa: runningCaixa });
-        }
-        setProjectionData(projection);
+        setMesesDeCaixa(result.mesesDeCaixa);
+        // Use first 4 entries (current + 3 months) for chart
+        setProjectionData(result.projectionData.slice(0, 4));
       } catch (err) {
         console.error("Erro ao carregar dados de caixa:", err);
       } finally {
@@ -118,7 +100,7 @@ const CaixaView = () => {
               <span className="text-xs text-muted-foreground">Meses de Caixa</span>
             </div>
             <p className={cn("text-xl font-bold", mesesDeCaixa >= 3 ? "text-primary" : mesesDeCaixa >= 1 ? "text-amber-600" : "text-destructive")}>
-              {mesesDeCaixa >= 99 ? "∞" : `${mesesDeCaixa} meses`}
+              {mesesDeCaixa >= 12 ? "12+ meses" : `${mesesDeCaixa} meses`}
             </p>
           </CardContent>
         </Card>
