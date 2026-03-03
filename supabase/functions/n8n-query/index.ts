@@ -854,6 +854,8 @@ Deno.serve(async (req) => {
         const cliente_nome = normalizeText(sanitize(body.cliente_nome), "nome");
         const fornecedor_nome = normalizeText(sanitize(body.fornecedor_nome), "nome");
         const conta_bancaria_nome = normalizeText(sanitize(body.conta_bancaria_nome), "nome");
+        const conta_bancaria_agencia = sanitize(body.conta_bancaria_agencia);
+        const conta_bancaria_conta = sanitize(body.conta_bancaria_conta);
         const forma_pagamento_nome = normalizeText(sanitize(body.forma_pagamento_nome), "descricao");
 
         if (!descricao || valor === undefined || valor === null) {
@@ -941,13 +943,21 @@ Deno.serve(async (req) => {
               conta_bancaria_id = cbByBanco.id;
               registros_criados.conta_bancaria = { id: cbByBanco.id, nome: cbByBanco.nome, encontrado_por: "banco" };
             } else {
-              // Criar nova conta bancária
+              // Criar nova conta bancária com dados extras se disponíveis
+              const insertData: any = { empresa_id, nome: conta_bancaria_nome.trim(), saldo_inicial: 0, saldo_atual: 0, principal: false };
+              if (conta_bancaria_agencia) insertData.agencia = conta_bancaria_agencia;
+              if (conta_bancaria_conta) insertData.conta = conta_bancaria_conta;
+              // Se o nome parece ser um banco, salvar também no campo banco
+              const bancos = ["santander", "itaú", "itau", "bradesco", "nubank", "inter", "caixa", "bb", "banco do brasil", "sicoob", "sicredi", "c6", "original", "safra", "btg"];
+              if (bancos.some(b => conta_bancaria_nome.trim().toLowerCase().includes(b))) {
+                insertData.banco = conta_bancaria_nome.trim();
+              }
               const { data: created } = await supabase.from("contas_bancarias")
-                .insert({ empresa_id, nome: conta_bancaria_nome.trim(), saldo_inicial: 0, saldo_atual: 0, principal: false })
+                .insert(insertData)
                 .select("id").single();
               if (created) {
                 conta_bancaria_id = created.id;
-                registros_criados.conta_bancaria = { id: created.id, nome: conta_bancaria_nome, criado: true };
+                registros_criados.conta_bancaria = { id: created.id, nome: conta_bancaria_nome, criado: true, agencia: conta_bancaria_agencia || null, conta: conta_bancaria_conta || null };
               }
             }
           }
