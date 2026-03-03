@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AppLayout } from "@/layouts/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
@@ -40,50 +39,48 @@ const queryClient = new QueryClient();
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <SidebarProvider>
-              <TooltipProvider>
-                <Sonner />
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/install" element={<Install />} />
+      <BrowserRouter>
+        <AuthProvider>
+          <SidebarProvider>
+            <TooltipProvider>
+              <Sonner />
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/install" element={<Install />} />
 
-                  {/* Protected routes */}
-                  <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
-                  <Route path="/profile" element={<AppLayout><Profile /></AppLayout>} />
-                  <Route path="/settings" element={<AppLayout><ConfiguracoesEmpresa /></AppLayout>} />
-                  <Route path="/settings/integracoes" element={<AppLayout><Integracoes /></AppLayout>} />
-                  <Route path="/settings/webhooks" element={<AppLayout><WebhooksConfig /></AppLayout>} />
-                  <Route path="/settings/logs" element={<AppLayout><LogsIntegracoes /></AppLayout>} />
-                  <Route path="/settings/n8n-templates" element={<AppLayout><N8nTemplates /></AppLayout>} />
-                  <Route path="/vendas-digitais" element={<AppLayout><VendasDigitais /></AppLayout>} />
-                  <Route path="/anuncios" element={<ProtectedRoute path="/anuncios"><AppLayout><AnunciosDigitais /></AppLayout></ProtectedRoute>} />
-                  
-                  {/* Permission-protected routes */}
-                  <Route path="/users" element={<ProtectedRoute path="/users"><AppLayout><Users /></AppLayout></ProtectedRoute>} />
-                  <Route path="/permissions" element={<ProtectedRoute path="/permissions"><AppLayout><Permissoes /></AppLayout></ProtectedRoute>} />
-                  <Route path="/fornecedores" element={<ProtectedRoute path="/fornecedores"><AppLayout><Fornecedores /></AppLayout></ProtectedRoute>} />
-                  <Route path="/clientes" element={<ProtectedRoute path="/clientes"><AppLayout><Clientes /></AppLayout></ProtectedRoute>} />
-                  <Route path="/categorias" element={<ProtectedRoute path="/categorias"><AppLayout><Categorias /></AppLayout></ProtectedRoute>} />
-                  <Route path="/bank-accounts" element={<ProtectedRoute path="/bank-accounts"><AppLayout><ContasBancarias /></AppLayout></ProtectedRoute>} />
-                  <Route path="/payment-methods" element={<ProtectedRoute path="/payment-methods"><AppLayout><FormasPagamento /></AppLayout></ProtectedRoute>} />
-                  <Route path="/transactions" element={<ProtectedRoute path="/transactions"><AppLayout><Lancamentos /></AppLayout></ProtectedRoute>} />
-                  <Route path="/reports" element={<ProtectedRoute path="/reports"><AppLayout><Relatorios /></AppLayout></ProtectedRoute>} />
-                  <Route path="/projetos" element={<ProtectedRoute path="/projetos"><AppLayout><Projetos /></AppLayout></ProtectedRoute>} />
-                  
-                  {/* 404 route */}
-                  <Route path="*" element={<NotFoundPage />} />
-                </Routes>
-              </TooltipProvider>
-            </SidebarProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </ThemeProvider>
+                {/* Protected routes */}
+                <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
+                <Route path="/profile" element={<AppLayout><Profile /></AppLayout>} />
+                <Route path="/settings" element={<AppLayout><ConfiguracoesEmpresa /></AppLayout>} />
+                <Route path="/settings/integracoes" element={<AppLayout><Integracoes /></AppLayout>} />
+                <Route path="/settings/webhooks" element={<AppLayout><WebhooksConfig /></AppLayout>} />
+                <Route path="/settings/logs" element={<AppLayout><LogsIntegracoes /></AppLayout>} />
+                <Route path="/settings/n8n-templates" element={<AppLayout><N8nTemplates /></AppLayout>} />
+                <Route path="/vendas-digitais" element={<AppLayout><VendasDigitais /></AppLayout>} />
+                <Route path="/anuncios" element={<ProtectedRoute path="/anuncios"><AppLayout><AnunciosDigitais /></AppLayout></ProtectedRoute>} />
+                
+                {/* Permission-protected routes */}
+                <Route path="/users" element={<ProtectedRoute path="/users"><AppLayout><Users /></AppLayout></ProtectedRoute>} />
+                <Route path="/permissions" element={<ProtectedRoute path="/permissions"><AppLayout><Permissoes /></AppLayout></ProtectedRoute>} />
+                <Route path="/fornecedores" element={<ProtectedRoute path="/fornecedores"><AppLayout><Fornecedores /></AppLayout></ProtectedRoute>} />
+                <Route path="/clientes" element={<ProtectedRoute path="/clientes"><AppLayout><Clientes /></AppLayout></ProtectedRoute>} />
+                <Route path="/categorias" element={<ProtectedRoute path="/categorias"><AppLayout><Categorias /></AppLayout></ProtectedRoute>} />
+                <Route path="/bank-accounts" element={<ProtectedRoute path="/bank-accounts"><AppLayout><ContasBancarias /></AppLayout></ProtectedRoute>} />
+                <Route path="/payment-methods" element={<ProtectedRoute path="/payment-methods"><AppLayout><FormasPagamento /></AppLayout></ProtectedRoute>} />
+                <Route path="/transactions" element={<ProtectedRoute path="/transactions"><AppLayout><Lancamentos /></AppLayout></ProtectedRoute>} />
+                <Route path="/reports" element={<ProtectedRoute path="/reports"><AppLayout><Relatorios /></AppLayout></ProtectedRoute>} />
+                <Route path="/projetos" element={<ProtectedRoute path="/projetos"><AppLayout><Projetos /></AppLayout></ProtectedRoute>} />
+                
+                {/* 404 route */}
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </TooltipProvider>
+          </SidebarProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };

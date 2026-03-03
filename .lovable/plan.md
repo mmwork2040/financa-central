@@ -1,73 +1,106 @@
 
 
-## Redesign Completo — Aurora Design System (Cyan Edition)
+## Adicionar Projetos ao Sistema Financeiro
 
-O design system enviado é o **Aurora — Cyan Edition**, com estética dark-first baseada em glassmorphism, gradientes cyan→indigo→violet, fonte Plus Jakarta Sans, e superfícies com blur/transparência. Vou adaptar para light + dark mode mantendo toda a identidade visual.
+### Objetivo
+Permitir que o usuario crie projetos e associe lancamentos (receitas e despesas) a projetos especificos, possibilitando acompanhar o financeiro por projeto.
 
----
+### Funcionalidades
+- CRUD completo de projetos (nome, descricao, status ativo/concluido/cancelado, orcamento previsto)
+- Associar lancamentos a projetos (campo opcional)
+- Pagina dedicada para listar projetos com resumo financeiro (total receitas, despesas, saldo)
+- Filtro por projeto na tela de lancamentos
 
-### Paleta de cores (Aurora adaptada)
+### Alteracoes necessarias
 
-**Dark mode** (fiel ao design system):
-- Primary: `#06B6D4` (cyan)
-- Background: `#050D14` / Cards: `rgba(255,255,255,0.04)`
-- Borders: `rgba(255,255,255,0.07)`
-- Text: `#F0FDFF` / Secondary: `rgba(224,242,254,0.65)`
-- Sidebar: glass escuro com backdrop-blur
+#### 1. Banco de dados -- nova tabela `projetos`
 
-**Light mode** (derivado):
-- Primary: `#0891B2` (cyan-700 para contraste)
-- Background: `#F8FAFC` / Cards: `#FFFFFF`
-- Borders: `#E2E8F0`
-- Text: `#0F172A` / Secondary: `#64748B`
-- Sidebar: glass branco com backdrop-blur
+Criar tabela `projetos` com:
+- `id` (uuid, PK)
+- `nome` (text, NOT NULL)
+- `descricao` (text, nullable)
+- `status` (text, default 'ativo') -- ativo, concluido, cancelado
+- `orcamento` (numeric, default 0)
+- `empresa_id` (uuid, NOT NULL)
+- `created_at`, `updated_at` (timestamps)
 
----
+Politicas RLS identicas as demais tabelas tenant-scoped (SELECT/INSERT/UPDATE/DELETE usando `get_user_empresa_id`).
 
-### Arquivos a alterar
+Adicionar coluna `projeto_id` (uuid, nullable) na tabela `lancamentos` para associar lancamentos a projetos.
 
-1. **`src/index.css`** — Reescrever todas as CSS variables (`:root` e `.dark`) com a paleta Aurora. Adicionar background com blobs animados (gradientes cyan/indigo/violet). Atualizar classes utilitárias (cards, sidebar-link, etc.).
+#### 2. Pagina de Projetos (`src/pages/Projetos.tsx`)
 
-2. **`tailwind.config.ts`** — Atualizar cores extended (cyan como primary), adicionar font-family Plus Jakarta Sans, novos keyframes (blobFloat, glowPulse, fadeSlideUp/Down), border-radius tokens maiores.
+Nova pagina com:
+- Header com titulo, botao "Novo Projeto"
+- Tabela/cards listando projetos com nome, status, orcamento, total receitas, total despesas, saldo
+- Modal de criacao/edicao de projeto
+- Dialog de confirmacao de exclusao
 
-3. **`index.html`** — Adicionar link do Google Fonts para Plus Jakarta Sans.
+#### 3. Hook `src/hooks/useProjetos.ts`
 
-4. **`src/components/Sidebar.tsx`** — Converter sidebar para glass panel (backdrop-blur-xl, bg semi-transparente), texto adaptado ao tema, gradiente no logo, hover states com glow sutil.
+Hook para CRUD de projetos via Supabase, seguindo o padrao dos outros hooks (useCategorias, useFornecedores, etc).
 
-5. **`src/layouts/AppLayout.tsx`** — Adicionar background animado (aurora blobs) atrás do conteúdo principal.
+#### 4. Formulario de Lancamentos
 
-6. **`src/pages/Dashboard.tsx`** — Cards com glass effect, gradient borders on hover, ícones com glow, valores com gradient-text para destaques.
+Adicionar select de "Projeto" no `LancamentosFormDialog.tsx` usando o componente `GenericSelect`, permitindo associar um lancamento a um projeto (campo opcional).
 
-7. **`src/components/dashboard/SummaryCard.tsx`** — Aplicar glass card style, hover com translateY(-4px) e shadow glow.
+Atualizar `LancamentosContext.tsx`:
+- Adicionar `projeto_id` ao tipo `Lancamento` e `LancamentoFormData`
+- Adicionar `projeto_id` ao `FiltrosType`
+- Buscar e expor lista de projetos
+- Incluir `projeto_id` nos filtros da query
 
-8. **`src/components/common/PageHeader.tsx`** — Título com gradient-text (cyan→indigo), ícone com glow background.
+#### 5. Navegacao e Rotas
 
-9. **`src/components/ui/button.tsx`** — Variante primary com gradient (cyan→indigo), shadow glow, hover translateY(-2px). Secondary com border glass. Pill shape (rounded-full).
+- Adicionar rota `/projetos` no `App.tsx` (protegida por permissao)
+- Adicionar item "Projetos" no menu lateral (`Sidebar.tsx`) com icone `Briefcase`
+- Adicionar `projetos` ao mapa de permissoes em `usePermissoes.ts`
 
-10. **`src/components/ui/card.tsx`** — Glass surface default, border sutil, hover com lift + glow. `::before` pseudo-element com gradient line no topo.
+#### 6. Tabela de Lancamentos
 
-11. **`src/components/ui/input.tsx`** — Focus com border cyan + box-shadow glow rgba(6,182,212,0.18).
+Exibir nome do projeto na tabela de lancamentos (join com tabela `projetos`).
 
-12. **`src/components/ui/badge.tsx`** — Pill shape, semantic colors com alpha backgrounds (como no design system: success, warning, error com transparência).
+### Secao tecnica
 
-13. **`src/components/common/MobileBottomNav.tsx`** — Glass bar com backdrop-blur.
+**Migracao SQL:**
+```sql
+CREATE TABLE public.projetos (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  nome text NOT NULL,
+  descricao text,
+  status text NOT NULL DEFAULT 'ativo',
+  orcamento numeric NOT NULL DEFAULT 0,
+  empresa_id uuid NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 
-14. **`src/pages/LandingPage.tsx`** — Hero com animated blobs, gradient text, botões Aurora.
+ALTER TABLE public.projetos ENABLE ROW LEVEL SECURITY;
 
-15. **`src/components/auth/LoginForm.tsx` / `RegisterForm.tsx`** — Glass card centralizado sobre fundo Aurora.
+CREATE POLICY "projetos_select" ON public.projetos FOR SELECT USING (empresa_id = get_user_empresa_id(auth.uid()));
+CREATE POLICY "projetos_insert" ON public.projetos FOR INSERT WITH CHECK (empresa_id = get_user_empresa_id(auth.uid()));
+CREATE POLICY "projetos_update" ON public.projetos FOR UPDATE USING (empresa_id = get_user_empresa_id(auth.uid()));
+CREATE POLICY "projetos_delete" ON public.projetos FOR DELETE USING (empresa_id = get_user_empresa_id(auth.uid()));
 
----
+CREATE TRIGGER update_projetos_updated_at BEFORE UPDATE ON public.projetos
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-### Detalhes técnicos
+ALTER TABLE public.lancamentos ADD COLUMN projeto_id uuid REFERENCES public.projetos(id) ON DELETE SET NULL;
+```
 
-- **Fonte**: Plus Jakarta Sans (weights 400-800) via Google Fonts
-- **Glass effect**: `bg-white/[0.04] dark:bg-white/[0.04] bg-white/80 backdrop-blur-xl border border-white/[0.07]`
-- **Gradient primary**: `bg-gradient-to-br from-cyan-500 to-indigo-500`
-- **Glow shadows**: `shadow-[0_0_40px_rgba(6,182,212,0.35)]`
-- **Animated blobs**: 3 divs posicionados fixed com radial-gradient, blur(80px), opacity 0.25, animation float
-- **Dark mode toggle**: mantido via `next-themes`, apenas troca variáveis CSS
-- **Pill buttons**: `rounded-full` em todos os botões e badges
-- **Cards hover**: `hover:-translate-y-1 hover:shadow-lg transition-all`
+**Arquivos a criar:**
+- `src/pages/Projetos.tsx` -- pagina principal
+- `src/hooks/useProjetos.ts` -- hook CRUD
+- `src/components/projetos/ProjetoForm.tsx` -- formulario
+- `src/components/projetos/ProjetosTable.tsx` -- tabela
+- `src/components/projetos/ProjetoDeleteDialog.tsx` -- dialog exclusao
 
-Estimativa: ~15 arquivos editados, mudança puramente visual sem impacto funcional.
+**Arquivos a modificar:**
+- `src/App.tsx` -- nova rota `/projetos`
+- `src/components/Sidebar.tsx` -- item de menu "Projetos"
+- `src/hooks/usePermissoes.ts` -- adicionar `/projetos` ao mapa de rotas
+- `src/contexts/LancamentosContext.tsx` -- tipo Lancamento + formData + filtros + fetch projetos + projeto_id
+- `src/components/lancamentos/LancamentosFormDialog.tsx` -- select de projeto
+- `src/components/lancamentos/LancamentosFilterDialog.tsx` -- filtro por projeto
+- `src/components/lancamentos/LancamentosTable.tsx` -- coluna projeto
 

@@ -32,8 +32,6 @@ import {
   Megaphone,
   ScrollText,
   Briefcase,
-  Moon,
-  Sun,
   Code2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -64,22 +62,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NotificacoesDropdown from "@/components/common/NotificacoesDropdown";
-import { useTheme } from "@/contexts/ThemeContext";
-
-const ThemeToggleButton = ({ showExpanded }: { showExpanded: boolean }) => {
-  const { resolvedTheme, setTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
-  return (
-    <button
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      className={cn("sidebar-link w-full", !showExpanded && "justify-center")}
-      title={isDark ? "Modo claro" : "Modo escuro"}
-    >
-      {isDark ? <Sun size={18} /> : <Moon size={18} />}
-      {showExpanded && <span className="text-sm">{isDark ? "Modo Claro" : "Modo Escuro"}</span>}
-    </button>
-  );
-};
 
 export const Sidebar = () => {
   const { isExpanded, toggle } = useSidebar();
@@ -230,7 +212,7 @@ export const Sidebar = () => {
             <img src={companyLogo} alt="Logo" className="h-7 w-7 rounded object-contain shrink-0" />
           ) : null}
           {showExpanded && (
-            <h1 className="text-base font-bold gradient-text truncate">Contabiliza AI</h1>
+            <h1 className="text-base font-bold text-sidebar-foreground truncate">Finança Central</h1>
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
@@ -416,9 +398,8 @@ export const Sidebar = () => {
         </ul>
       </nav>
       
-      {/* Theme toggle + Logout */}
-      <div className="px-2 py-3 border-t border-sidebar-border space-y-0.5">
-        <ThemeToggleButton showExpanded={showExpanded} />
+      {/* Logout */}
+      <div className="px-2 py-3 border-t border-sidebar-border">
         <button 
           onClick={handleLogout}
           className={cn("sidebar-link w-full", !showExpanded && "justify-center")}
@@ -435,7 +416,7 @@ export const Sidebar = () => {
       {isMobile && (
         <button
           onClick={() => setMobileOpen(true)}
-          className="fixed top-3 left-3 z-50 rounded-xl bg-gradient-to-r from-primary to-accent p-2 text-primary-foreground shadow-lg"
+          className="fixed top-3 left-3 z-50 rounded-lg bg-primary p-2 text-primary-foreground shadow-lg"
           aria-label="Abrir menu"
         >
           <Menu size={22} />
@@ -451,7 +432,7 @@ export const Sidebar = () => {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col glass-surface shadow-lg transition-all duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar border-r border-sidebar-border shadow-lg transition-all duration-300 ease-in-out",
           isMobile
             ? cn("w-72", mobileOpen ? "translate-x-0" : "-translate-x-full")
             : isExpanded ? "w-60" : "w-14"
