@@ -55,7 +55,7 @@ export const LancamentosTable = () => {
 
   if (isMobile) {
     return (
-      <div className="space-y-3 overflow-hidden">
+      <div className="space-y-3 overflow-hidden glass-surface rounded-2xl p-3">
         {paginatedItems.map((l) => (
           <Card key={l.id} className={hasPendingRequest("lancamentos", l.id!) ? "border-l-4 border-l-destructive bg-destructive/5" : ""}>
             <CardContent className="p-4">
@@ -163,7 +163,7 @@ export const LancamentosTable = () => {
   }
 
   return (
-    <div className="rounded-md border overflow-hidden">
+    <div className="glass-card rounded-2xl overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
