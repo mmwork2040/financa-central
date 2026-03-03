@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, BarChart3, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, Share2, MessageCircle, Send, Brain, Star, StarOff, Eye, EyeOff, ShieldAlert } from "lucide-react";
+import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, MessageCircle, Send, Brain, Star, StarOff, ShieldAlert } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -336,10 +336,6 @@ const Integracoes = () => {
   const [autoTestingPlatforms, setAutoTestingPlatforms] = useState<Set<string>>(new Set());
   const [autoTestDone, setAutoTestDone] = useState(false);
   const [webhookExpanded, setWebhookExpanded] = useState<string | null>(null);
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const [exportTargetEmpresa, setExportTargetEmpresa] = useState("");
-  const [exporting, setExporting] = useState(false);
-  const [exportResult, setExportResult] = useState<{ count: number; webhookUrls: { plataforma: string; url: string }[] } | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'disconnect' | 'edit'; plataforma: string } | null>(null);
   const [llmPadrao, setLlmPadrao] = useState<string | null>(null);
   const [settingDefault, setSettingDefault] = useState<string | null>(null);
@@ -851,25 +847,8 @@ const Integracoes = () => {
     }
   };
 
-  const handleExportIntegracoes = async () => {
-    if (!empresaId || !exportTargetEmpresa) return;
-    setExporting(true);
-    try {
-      const res = await supabase.functions.invoke("export-integracoes", {
-        body: { sourceEmpresaId: empresaId, targetEmpresaId: exportTargetEmpresa },
-      });
-      if (res.error) throw res.error;
-      if (res.data?.error) throw new Error(res.data.error);
-      
-      setExportResult({ count: res.data.count, webhookUrls: res.data.webhookUrls || [] });
-      const targetNome = empresas.find(e => e.empresa_id === exportTargetEmpresa)?.empresa_nome || 'empresa';
-      toast.success(`${res.data.count} integrações exportadas para ${targetNome}!`);
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao exportar integrações");
-    } finally {
-      setExporting(false);
-    }
-  };
+
+
 
   return (
     <div className="space-y-6">
