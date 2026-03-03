@@ -1,57 +1,101 @@
 
 
-## Plano: Redesign do Dashboard com Atalhos e Dados Visuais
+## Plano: Redesign Visual Completo — Green Emphasis Design System
 
-Baseado na imagem de referência (dashboard estilo moderno com cards de resumo, gráfico de fluxo de caixa, atalhos rápidos e lista de transações recentes), vou reestruturar o dashboard atual.
+Migrar todo o sistema do design system atual (Orange Emphasis) para o novo **Green Emphasis Light Premium**, aplicando glassmorphism, novas cores, bordas arredondadas pill, e melhor contraste de texto em todas as páginas.
 
-### Estrutura do Novo Dashboard
+### Escopo das Mudanças
 
-```text
-┌─────────────────────────────────────────────────────┐
-│  Header: Saudação + Saúde Financeira + Eye toggle   │
-├──────────┬──────────┬──────────┬─────────────────────┤
-│ Receitas │ Despesas │  Saldo   │  Contas Próximas    │
-│  (card)  │  (card)  │  (card)  │     (card)          │
-├──────────┴──────────┴──────────┴─────────────────────┤
-│  Atalhos Rápidos (grid de botões com ícones)         │
-│  [+ Lançamento] [Clientes] [Fornecedores]            │
-│  [Relatórios] [Contas Bancárias] [Vendas Digitais]   │
-├─────────────────────────┬───────────────────────────-┤
-│  Gráfico Fluxo de Caixa │  Resumo Totais + Donut    │
-│  (BarChart 6 meses)     │  por Tipo (receita/desp)  │
-├─────────────────────────┴───────────────────────────-┤
-│  Próximos 7 dias          │  Últimas Movimentações   │
-│  (contas a vencer)        │  (transações recentes)   │
-└───────────────────────────┴──────────────────────────┘
-```
+**1. CSS Variables e Fundo Global (`src/index.css`)**
+- Trocar `--primary` de laranja para verde (`142 71% 45%` / `#22C55E`)
+- Trocar `--ring` para verde
+- Alterar `--sidebar-background` para glass branco (`0 0% 100% / 0.72`) com texto escuro
+- Adicionar fundo global com gradientes radiais verde/azul/âmbar conforme design system
+- Aumentar `--radius` para `0.75rem` (mais arredondado)
+- Adicionar classes utilitárias: `.glass-card`, `.glass-surface` com backdrop-blur e bordas sutis
+- Atualizar `.sidebar-link` para texto escuro com hover suave
+- Atualizar dark mode mantendo verde como primary
+- Adicionar `box-shadow` premium (inset + glow verde)
 
-### O que será implementado
+**2. Sidebar (`src/components/Sidebar.tsx`)**
+- Mudar de fundo sólido laranja para glass branco (`bg-white/72 backdrop-blur-[14px]`)
+- Texto de `sidebar-foreground` (branco) para texto escuro (`text-slate-700`)
+- Links ativos: fundo `bg-slate-900/4` com borda sutil em vez de cor sólida
+- Logo/header em estilo clean
+- Botão toggle com fundo semi-transparente
 
-1. **Seção de Atalhos Rápidos** (novo componente `DashboardShortcuts.tsx`)
-   - Grid de 6 botões-atalho com ícones e labels
-   - Navegação para: Novo Lançamento, Clientes, Fornecedores, Relatórios, Contas Bancárias, Vendas Digitais
-   - Estilo pill/glassmorphism seguindo o design system do projeto
-   - O atalho "Novo Lançamento" abre o modal de criação diretamente
+**3. Dashboard (`src/pages/Dashboard.tsx`)**
+- Cards de resumo com estilo glass (fundo semi-transparente, inset shadow, hover com elevação)
+- Ícones dos cards com fundo verde suave em vez de cores variadas
+- Banner de saúde financeira com glass effect
+- Atalhos rápidos com estilo pill/glassmorphism
 
-2. **Gráfico Donut de Distribuição** (novo componente `DashboardDonutChart.tsx`)
-   - PieChart (Recharts) mostrando proporção receitas vs despesas vs investimentos
-   - Integrado ao lado do card de totais, substituindo o card simples atual
+**4. DashboardShortcuts (`src/components/dashboard/DashboardShortcuts.tsx`)**
+- Botões com fundo glass, borda sutil, hover com elevação `-2px`
+- Ícone com fundo gradiente verde suave
 
-3. **Layout side-by-side para Próximos 7 dias e Últimas Movimentações**
-   - Reorganizar as duas seções em grid 2 colunas no desktop
+**5. DashboardChart (`src/components/dashboard/DashboardChart.tsx`)**
+- Card com estilo glass
+- Tooltip com backdrop-blur e borda sutil
 
-4. **Ajustes no Dashboard.tsx**
-   - Integrar os novos componentes
-   - Reorganizar layout em grid responsivo
-   - Manter todos os dados e funcionalidades existentes
+**6. DashboardDonutChart (`src/components/dashboard/DashboardDonutChart.tsx`)**
+- Mesmo estilo glass no card
 
-5. **Hook `useDashboardData`** -- sem alterações necessárias, já fornece todos os dados
+**7. SummaryCard (`src/components/dashboard/SummaryCard.tsx`)**
+- Aplicar glass effect e hover elevação
 
-### Arquivos a criar/editar
+**8. Lançamentos (`LancamentosHeader.tsx`, `LancamentosTable.tsx`, `LancamentosSummary.tsx`)**
+- Botões primários com gradiente verde
+- Cards e tabelas com estilo glass
+- Ícone do header com fundo verde
 
-| Arquivo | Ação |
+**9. MobileBottomNav (`src/components/common/MobileBottomNav.tsx`)**
+- Active state usa verde em vez de laranja
+
+**10. PageHeader (`src/components/common/PageHeader.tsx`)**
+- Ícone com fundo verde suave
+
+**11. Card Component (`src/components/ui/card.tsx`)**
+- Adicionar backdrop-blur sutil e inset shadow como padrão
+
+**12. Button Component (`src/components/ui/button.tsx`)**
+- Variante `default` com gradiente verde e shadow glow
+- Pill border-radius nos botões
+
+**13. Input Component (`src/components/ui/input.tsx`)**
+- Pill border-radius, fundo `bg-slate-900/4`, inset shadow
+
+**14. useCompanyTheme (`src/hooks/useCompanyTheme.ts`)**
+- Mudar `SYSTEM_PRIMARY_COLOR` de `#f97316` para `#22C55E`
+- Atualizar `applyHex` para também setar sidebar como glass (não mudar sidebar bg para cor primária)
+
+**15. Auth pages (LoginForm, RegisterForm, AuthContainer)**
+- Botão primário verde
+- Estilo glass nos cards de formulário
+
+### Arquivos a Editar
+
+| Arquivo | Tipo |
 |---------|------|
-| `src/components/dashboard/DashboardShortcuts.tsx` | Criar |
-| `src/components/dashboard/DashboardDonutChart.tsx` | Criar |
-| `src/pages/Dashboard.tsx` | Editar layout |
+| `src/index.css` | Editar (tokens, classes globais) |
+| `src/components/ui/card.tsx` | Editar (glass effect) |
+| `src/components/ui/button.tsx` | Editar (pill radius, green gradient) |
+| `src/components/ui/input.tsx` | Editar (pill radius) |
+| `src/components/Sidebar.tsx` | Editar (glass sidebar, texto escuro) |
+| `src/pages/Dashboard.tsx` | Editar (glass cards) |
+| `src/components/dashboard/DashboardShortcuts.tsx` | Editar (glass buttons) |
+| `src/components/dashboard/DashboardChart.tsx` | Editar (glass tooltip) |
+| `src/components/dashboard/DashboardDonutChart.tsx` | Editar (glass card) |
+| `src/components/dashboard/SummaryCard.tsx` | Editar (glass effect) |
+| `src/components/lancamentos/LancamentosHeader.tsx` | Editar (green icon) |
+| `src/components/common/PageHeader.tsx` | Editar (green icon bg) |
+| `src/components/common/MobileBottomNav.tsx` | Ajuste menor (cor ativa) |
+| `src/hooks/useCompanyTheme.ts` | Editar (default green, glass sidebar) |
+| `tailwind.config.ts` | Editar (extended colors, radius) |
+
+### Princípios de Contraste
+- Texto sobre glass branco: `text-slate-900` para títulos, `text-slate-600` para corpo
+- Texto sobre fundo verde: `text-slate-900/92` (escuro sobre verde claro, alto contraste)
+- Muted text: `text-slate-500`
+- Sidebar: texto escuro sobre glass branco (invertendo o padrão atual)
 
