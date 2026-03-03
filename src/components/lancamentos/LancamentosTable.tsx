@@ -62,7 +62,12 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-1 flex-1 min-w-0">
-                  <p className="font-medium text-foreground text-sm truncate">{l.descricao}</p>
+                  <p className="font-medium text-foreground text-sm truncate">
+                    {l.descricao}
+                    {(l as any)._virtual && (
+                      <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-100 text-blue-700">Previsto</span>
+                    )}
+                  </p>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getTipoBadgeClass(l.tipo)}`}>
                       {l.tipo === "receita" ? "Receita" : l.tipo === "investimento" ? "Investimento" : "Despesa"}
@@ -200,6 +205,9 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
               </TableCell>
               <TableCell className="font-medium">
                 {lancamento.descricao}
+                {(lancamento as any)._virtual && (
+                  <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-100 text-blue-700">Previsto</span>
+                )}
                 <div className="text-xs text-muted-foreground">
                   {lancamento.fornecedor ? `Fornecedor: ${lancamento.fornecedor.nome}` : 
                     lancamento.cliente ? `Cliente: ${lancamento.cliente.nome}` : ''}

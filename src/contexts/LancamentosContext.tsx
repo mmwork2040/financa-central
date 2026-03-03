@@ -8,6 +8,8 @@ import React, {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMonthFilter } from "@/contexts/MonthFilterContext";
+import { addMonths, format } from "date-fns";
 
 // Define the types for the data
 export type Lancamento = {
@@ -25,6 +27,8 @@ export type Lancamento = {
   forma_pagamento_id: string | null;
   projeto_id?: string | null;
   recorrente: boolean;
+  recorrencia_fim?: string | null;
+  recorrencia_tipo?: string | null;
   parcela_atual: number | null;
   total_parcelas: number | null;
   data_pagamento: string | null;
@@ -165,6 +169,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
   const [projetos, setProjetos] = useState<ProjetoSimple[]>([]);
   const { empresaId, user, userProfile } = useAuth();
+  const { monthStart, monthEnd } = useMonthFilter();
 
   // Add sort state
   const [sortField, setSortField] = useState<string>('data_vencimento');
@@ -213,6 +218,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         projeto:projetos(id, nome)
       `).order(sortField, { ascending: sortDirection === 'asc' });
 
+      // Always filter by selected month
+      query = query.gte("data_vencimento", monthStart).lte("data_vencimento", monthEnd);
+
       if (filtros.tipo) {
         query = query.eq("tipo", filtros.tipo);
       }
@@ -257,7 +265,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     } finally {
       setLoading(false);
     }
-  }, [filtros, sortField, sortDirection]);
+  }, [filtros, sortField, sortDirection, monthStart, monthEnd]);
 
   const fetchCategorias = useCallback(async () => {
     try {
@@ -570,33 +578,56 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         );
         toast.success("O lançamento foi atualizado com sucesso.");
       } else {
-        // Create new lancamento
-        const { data, error } = await supabase
-          .from("lancamentos")
-          .insert([{ ...dataToSave, empresa_id: empresaId }])
-          .select();
+        // Create new lancamento — check for parcelas
+        const totalParcelas = dataToSave.total_parcelas;
+        if (dataToSave.recorrente && totalParcelas && totalParcelas > 1) {
+          // Insert multiple parcelas with divided value
+          const valorParcela = Math.round((dataToSave.valor / totalParcelas) * 100) / 100;
+          const baseDate = new Date(dataToSave.data_vencimento);
+          const parcelas = Array.from({ length: totalParcelas }, (_, i) => ({
+            ...dataToSave,
+            valor: valorParcela,
+            parcela_atual: i + 1,
+            total_parcelas: totalParcelas,
+            data_vencimento: format(addMonths(baseDate, i), "yyyy-MM-dd"),
+            descricao: `${dataToSave.descricao} (${i + 1}/${totalParcelas})`,
+            empresa_id: empresaId,
+          }));
 
-        if (error) {
-          throw error;
-        }
+          const { data, error } = await supabase
+            .from("lancamentos")
+            .insert(parcelas)
+            .select();
 
-        // Atualizar saldo da conta se pago/recebido
-        if (data && data[0] && formData.conta_bancaria_id && ["pago", "recebido"].includes(formData.status)) {
-          const delta = formData.tipo === "receita" ? formData.valor : -formData.valor;
-          const { data: contaAtual } = await supabase
-            .from("contas_bancarias")
-            .select("saldo_atual")
-            .eq("id", formData.conta_bancaria_id)
-            .single();
-          if (contaAtual) {
-            await (supabase.from("contas_bancarias").update({ saldo_atual: Number(contaAtual.saldo_atual) + delta } as any) as any)
-              .eq("id", formData.conta_bancaria_id);
+          if (error) throw error;
+          setLancamentos([...lancamentos, ...(data as unknown as Lancamento[])]);
+          toast.success(`${totalParcelas} parcelas criadas com sucesso.`);
+        } else {
+          // Single insert
+          const { data, error } = await supabase
+            .from("lancamentos")
+            .insert([{ ...dataToSave, empresa_id: empresaId }])
+            .select();
+
+          if (error) throw error;
+
+          // Atualizar saldo da conta se pago/recebido
+          if (data && data[0] && formData.conta_bancaria_id && ["pago", "recebido"].includes(formData.status)) {
+            const delta = formData.tipo === "receita" ? formData.valor : -formData.valor;
+            const { data: contaAtual } = await supabase
+              .from("contas_bancarias")
+              .select("saldo_atual")
+              .eq("id", formData.conta_bancaria_id)
+              .single();
+            if (contaAtual) {
+              await (supabase.from("contas_bancarias").update({ saldo_atual: Number(contaAtual.saldo_atual) + delta } as any) as any)
+                .eq("id", formData.conta_bancaria_id);
+            }
           }
-        }
 
-        // Cast data to ensure type safety
-        setLancamentos([...lancamentos, ...(data as unknown as Lancamento[])]);
-        toast.success("O lançamento foi criado com sucesso.");
+          setLancamentos([...lancamentos, ...(data as unknown as Lancamento[])]);
+          toast.success("O lançamento foi criado com sucesso.");
+        }
       }
 
       setOpenModal(false);

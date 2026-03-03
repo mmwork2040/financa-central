@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useMonthFilter } from "@/contexts/MonthFilterContext";
+import { startOfMonth, endOfMonth, format } from "date-fns";
 
 interface DashboardSummary {
   totalReceitas: number;
@@ -35,6 +37,7 @@ interface ContaProxima {
 export type HealthStatus = 'saudavel' | 'atencao' | 'risco';
 
 export const useDashboardData = () => {
+  const { selectedMonth, monthStart, monthEnd } = useMonthFilter();
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<DashboardSummary>({
     totalReceitas: 0,
@@ -58,6 +61,8 @@ export const useDashboardData = () => {
       const { data: lancamentos, error: lancamentosError } = await supabase
         .from('lancamentos')
         .select(`*, categoria:categoria_id(nome), fornecedor:fornecedor_id(nome), cliente:cliente_id(nome)`)
+        .gte('data_vencimento', monthStart)
+        .lte('data_vencimento', monthEnd)
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -78,10 +83,12 @@ export const useDashboardData = () => {
       
       setLancamentosRecentes(typedLancamentos);
 
-      // Fetch all transactions for summary
+      // Fetch transactions for the selected month
       const { data: todosLancamentos, error: todosError } = await supabase
         .from('lancamentos')
-        .select('*');
+        .select('*')
+        .gte('data_vencimento', monthStart)
+        .lte('data_vencimento', monthEnd);
         
       if (todosError) throw todosError;
 
@@ -202,7 +209,7 @@ export const useDashboardData = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [monthStart, monthEnd]);
 
   return {
     loading,
