@@ -212,7 +212,7 @@ export const Sidebar = () => {
             <img src={companyLogo} alt="Logo" className="h-7 w-7 rounded object-contain shrink-0" />
           ) : null}
           {showExpanded && (
-            <h1 className="text-base font-bold text-sidebar-foreground truncate">Contabiliza AI</h1>
+            <h1 className="text-base font-extrabold tracking-tight text-sidebar-foreground truncate">Contabiliza AI</h1>
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
