@@ -121,6 +121,17 @@ export const LoginForm = ({ onLogin, isLoading }: LoginFormProps) => {
         >
           {isLoading ? "Entrando..." : "Entrar"}
         </Button>
+
+        <p className="text-xs text-center text-muted-foreground">
+          Ao entrar, você concorda com nossos{" "}
+          <a href="/termos?tab=termos" target="_blank" className="text-primary hover:underline">
+            Termos de Uso
+          </a>{" "}
+          e{" "}
+          <a href="/termos?tab=privacidade" target="_blank" className="text-primary hover:underline">
+            Política de Privacidade
+          </a>.
+        </p>
       </form>
     </div>
   );
