@@ -332,11 +332,11 @@ const VendaFormDialog: React.FC<VendaFormDialogProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label>Valor Bruto *</Label>
-              <CurrencyInput id="valor_bruto" name="valor_bruto" value={valorBruto} onValueChange={(v) => setValorBruto(v ? parseFloat(v.replace(/\./g, "").replace(",", ".")) || 0 : 0)} />
+              <CurrencyInput id="valor_bruto" name="valor_bruto" value={valorBruto} onValueChange={(v) => setValorBruto(v ? parseInt(v, 10) / 100 : 0)} />
             </div>
             <div className="space-y-1.5">
               <Label>Taxa</Label>
-              <CurrencyInput id="taxa" name="taxa" value={taxa} onValueChange={(v) => setTaxa(v ? parseFloat(v.replace(/\./g, "").replace(",", ".")) || 0 : 0)} />
+              <CurrencyInput id="taxa" name="taxa" value={taxa} onValueChange={(v) => setTaxa(v ? parseInt(v, 10) / 100 : 0)} />
             </div>
             <div className="space-y-1.5">
               <Label>Valor Líquido</Label>
