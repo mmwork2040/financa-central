@@ -226,15 +226,6 @@ const PlanosAssinaturaConfig = () => {
                   <div className="mb-3">
                     <span className="text-2xl font-bold">R$ {plano.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                     <span className="text-xs text-muted-foreground ml-1">/ {plano.periodo}</span>
-                    {plano.periodo !== 'mensal' && (() => {
-                      const meses = plano.periodo === 'trimestral' ? 3 : plano.periodo === 'anual' ? 12 : 1;
-                      const mensal = plano.preco / meses;
-                      return (
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          equivale a <span className="font-semibold">R$ {mensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>/mês
-                        </p>
-                      );
-                    })()}
                   </div>
                   <div className="text-xs text-muted-foreground mb-3">
                     Período: <Badge variant="outline" className="text-[10px]">{plano.periodo}</Badge>
@@ -284,15 +275,6 @@ const PlanosAssinaturaConfig = () => {
                   onValueChange={(val) => setForm(prev => ({ ...prev, preco: val ? parseInt(val) / 100 : 0 }))}
                   placeholder="0,00"
                 />
-                {form.preco > 0 && form.periodo !== 'mensal' && (() => {
-                  const meses = form.periodo === 'trimestral' ? 3 : form.periodo === 'anual' ? 12 : 1;
-                  const mensal = form.preco / meses;
-                  return (
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                      equivale a <span className="font-semibold text-foreground">R$ {mensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>/mês
-                    </p>
-                  );
-                })()}
               </div>
               <div className="space-y-2">
                 <Label>Período</Label>
