@@ -206,6 +206,14 @@ const VendaFormDialog: React.FC<VendaFormDialogProps> = ({
         finalClienteEndereco = novoClienteEndereco;
       }
 
+      // Map venda status to lancamento status
+      const statusMap: Record<string, string> = {
+        aprovada: "recebido",
+        pendente: "pendente",
+        reembolsada: "cancelado",
+        cancelada: "cancelado",
+      };
+
       const record = {
         empresa_id: empresaId,
         produto,
@@ -226,16 +234,57 @@ const VendaFormDialog: React.FC<VendaFormDialogProps> = ({
       };
 
       if (venda?.id) {
+        // Update existing venda
         const { error } = await (supabase as any)
           .from("vendas_digitais")
           .update(record)
           .eq("id", venda.id);
         if (error) throw error;
+
+        // Update linked lancamento if exists
+        if (venda.lancamento_id) {
+          await (supabase as any)
+            .from("lancamentos")
+            .update({
+              descricao: `Venda - ${produto}`,
+              valor: valorBruto - taxa,
+              data_vencimento: dataVenda.toISOString().split("T")[0],
+              status: statusMap[status] || "pendente",
+              cliente_id: finalClienteId,
+            })
+            .eq("id", venda.lancamento_id);
+        }
+
         toast.success("Venda atualizada!");
       } else {
+        // Create lancamento first
+        const { data: lancamento, error: lancError } = await (supabase as any)
+          .from("lancamentos")
+          .insert({
+            empresa_id: empresaId,
+            descricao: `Venda - ${produto}`,
+            tipo: "receita",
+            valor: valorBruto - taxa,
+            data_vencimento: dataVenda.toISOString().split("T")[0],
+            data_pagamento: status === "aprovada" ? dataVenda.toISOString().split("T")[0] : null,
+            status: statusMap[status] || "pendente",
+            origem: "venda",
+            cliente_id: finalClienteId,
+          })
+          .select("id")
+          .single();
+
+        if (lancError) {
+          console.error("Erro ao criar lançamento:", lancError);
+        }
+
+        // Insert venda with lancamento_id
         const { error } = await (supabase as any)
           .from("vendas_digitais")
-          .insert(record);
+          .insert({
+            ...record,
+            lancamento_id: lancamento?.id || null,
+          });
         if (error) throw error;
         toast.success("Venda registrada!");
       }

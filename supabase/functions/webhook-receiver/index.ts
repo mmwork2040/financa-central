@@ -310,7 +310,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Insert venda_digital
+      // Insert venda_digital (lancamento_id will be updated after lancamento is created)
       const { data: venda, error: vendaError } = await supabase
         .from("vendas_digitais")
         .insert({
@@ -415,6 +415,14 @@ Deno.serve(async (req) => {
           console.error("Erro ao inserir lançamento:", lancError);
         } else {
           lancamentoId = lancamento.id;
+
+          // Link lancamento_id back to the venda
+          if (vendaId) {
+            await supabase
+              .from("vendas_digitais")
+              .update({ lancamento_id: lancamentoId })
+              .eq("id", vendaId);
+          }
 
           // Only update bank balance immediately for estornos (refunds/chargebacks)
           // For approved sales with dias_recebimento, balance is updated later by process-digital-receipts

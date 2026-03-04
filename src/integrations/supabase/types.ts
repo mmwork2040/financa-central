@@ -1113,11 +1113,18 @@ export type Database = {
       vendas_digitais: {
         Row: {
           cliente: string | null
+          cliente_documento: string | null
+          cliente_email: string | null
+          cliente_endereco: string | null
+          cliente_id: string | null
+          cliente_telefone: string | null
           created_at: string
           data_prevista_recebimento: string | null
           data_venda: string
           empresa_id: string
           id: string
+          observacoes: string | null
+          origem: string
           plataforma: string
           produto: string | null
           status: string
@@ -1127,11 +1134,18 @@ export type Database = {
         }
         Insert: {
           cliente?: string | null
+          cliente_documento?: string | null
+          cliente_email?: string | null
+          cliente_endereco?: string | null
+          cliente_id?: string | null
+          cliente_telefone?: string | null
           created_at?: string
           data_prevista_recebimento?: string | null
           data_venda?: string
           empresa_id: string
           id?: string
+          observacoes?: string | null
+          origem?: string
           plataforma: string
           produto?: string | null
           status?: string
@@ -1141,11 +1155,18 @@ export type Database = {
         }
         Update: {
           cliente?: string | null
+          cliente_documento?: string | null
+          cliente_email?: string | null
+          cliente_endereco?: string | null
+          cliente_id?: string | null
+          cliente_telefone?: string | null
           created_at?: string
           data_prevista_recebimento?: string | null
           data_venda?: string
           empresa_id?: string
           id?: string
+          observacoes?: string | null
+          origem?: string
           plataforma?: string
           produto?: string | null
           status?: string
@@ -1154,6 +1175,13 @@ export type Database = {
           valor_liquido?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "vendas_digitais_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vendas_digitais_empresa_id_fkey"
             columns: ["empresa_id"]
