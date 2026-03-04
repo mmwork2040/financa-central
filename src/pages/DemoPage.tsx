@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { DemoProvider, useDemo } from "@/contexts/DemoContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,8 +21,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-
-type DemoSection = "dashboard" | "lancamentos" | "projetos" | "clientes" | "fornecedores" | "relatorios";
+import DemoTour, { type DemoSection } from "@/components/demo/DemoTour";
 
 const sectionItems: { key: DemoSection; label: string; icon: React.ElementType }[] = [
   { key: "dashboard", label: "Dashboard", icon: Home },
@@ -570,6 +569,7 @@ const DemoRelatorios = () => {
 const DemoContent = () => {
   const [section, setSection] = useState<DemoSection>("dashboard");
   const navigate = useNavigate();
+  const handleTourNavigate = useCallback((s: DemoSection) => setSection(s), []);
 
   const renderSection = () => {
     switch (section) {
@@ -658,6 +658,8 @@ const DemoContent = () => {
           </div>
         </main>
       </div>
+
+      <DemoTour onNavigate={handleTourNavigate} currentSection={section} />
     </div>
   );
 };
