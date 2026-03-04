@@ -2,10 +2,12 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
 import TermosInlineDialog from "./TermosInlineDialog";
 
 interface LoginFormProps {
@@ -13,11 +15,27 @@ interface LoginFormProps {
   isLoading: boolean;
 }
 
+const recordAcceptance = async (tipo: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await (supabase as any).from("aceite_termos").insert({
+        user_id: user.id,
+        tipo,
+        user_agent: navigator.userAgent,
+      });
+    }
+  } catch (e) {
+    console.error("Erro ao registrar aceite:", e);
+  }
+};
+
 export const LoginForm = ({ onLogin, isLoading }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,14 +43,23 @@ export const LoginForm = ({ onLogin, isLoading }: LoginFormProps) => {
       toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
+    if (!accepted) {
+      toast.error("Você deve aceitar os Termos de Uso e Política de Privacidade para continuar.");
+      return;
+    }
     try {
       await onLogin(email, password);
+      await recordAcceptance("login");
     } catch (error) {
       console.error("Erro de login:", error);
     }
   };
 
   const handleGoogleLogin = async () => {
+    if (!accepted) {
+      toast.error("Você deve aceitar os Termos de Uso e Política de Privacidade para continuar.");
+      return;
+    }
     setGoogleLoading(true);
     try {
       const { error } = await lovable.auth.signInWithOAuth("google", {
@@ -55,7 +82,7 @@ export const LoginForm = ({ onLogin, isLoading }: LoginFormProps) => {
         variant="outline"
         className="w-full flex items-center justify-center gap-2"
         onClick={handleGoogleLogin}
-        disabled={googleLoading || isLoading}
+        disabled={googleLoading || isLoading || !accepted}
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -115,28 +142,36 @@ export const LoginForm = ({ onLogin, isLoading }: LoginFormProps) => {
           </div>
         </div>
 
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="accept-terms"
+            checked={accepted}
+            onCheckedChange={(checked) => setAccepted(checked === true)}
+            className="mt-0.5"
+          />
+          <label htmlFor="accept-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+            Li e aceito os{" "}
+            <TermosInlineDialog
+              defaultTab="termos"
+              trigger={<button type="button" className="text-primary hover:underline">Termos de Uso</button>}
+            />{" "}
+            e a{" "}
+            <TermosInlineDialog
+              defaultTab="privacidade"
+              trigger={<button type="button" className="text-primary hover:underline">Política de Privacidade</button>}
+            />
+          </label>
+        </div>
+
         <Button
           type="submit"
           className="w-full"
-          disabled={isLoading}
+          disabled={isLoading || !accepted}
         >
           {isLoading ? "Entrando..." : "Entrar"}
         </Button>
 
       </form>
-
-      <p className="text-xs text-center text-muted-foreground">
-        Ao entrar, você concorda com nossos{" "}
-        <TermosInlineDialog
-          defaultTab="termos"
-          trigger={<button type="button" className="text-primary hover:underline">Termos de Uso</button>}
-        />{" "}
-        e{" "}
-        <TermosInlineDialog
-          defaultTab="privacidade"
-          trigger={<button type="button" className="text-primary hover:underline">Política de Privacidade</button>}
-        />.
-      </p>
     </div>
   );
 };

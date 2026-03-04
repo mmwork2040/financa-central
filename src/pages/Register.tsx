@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AuthContainer from "@/components/auth/AuthContainer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ const Register = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, "").slice(0, 11);
@@ -31,6 +33,11 @@ const Register = () => {
     e.preventDefault();
 
     const rawPhone = form.phone.replace(/\D/g, "");
+
+    if (!accepted) {
+      toast.error("Você deve aceitar os Termos de Uso e Política de Privacidade para continuar.");
+      return;
+    }
 
     if (!form.nome || !form.email || !form.password || !rawPhone) {
       toast.error("Preencha todos os campos obrigatórios.");
@@ -171,22 +178,30 @@ const Register = () => {
           </div>
         </div>
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="accept-terms-register"
+            checked={accepted}
+            onCheckedChange={(checked) => setAccepted(checked === true)}
+            className="mt-0.5"
+          />
+          <label htmlFor="accept-terms-register" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+            Li e aceito os{" "}
+            <TermosInlineDialog
+              defaultTab="termos"
+              trigger={<button type="button" className="text-primary hover:underline">Termos de Uso</button>}
+            />{" "}
+            e a{" "}
+            <TermosInlineDialog
+              defaultTab="privacidade"
+              trigger={<button type="button" className="text-primary hover:underline">Política de Privacidade</button>}
+            />
+          </label>
+        </div>
+
+        <Button type="submit" className="w-full" disabled={loading || !accepted}>
           {loading ? "Criando conta..." : "Criar Conta"}
         </Button>
-
-        <p className="text-xs text-center text-muted-foreground">
-          Ao se registrar, você concorda com nossos{" "}
-          <TermosInlineDialog
-            defaultTab="termos"
-            trigger={<button type="button" className="text-primary hover:underline">Termos de Uso</button>}
-          />{" "}
-          e{" "}
-          <TermosInlineDialog
-            defaultTab="privacidade"
-            trigger={<button type="button" className="text-primary hover:underline">Política de Privacidade</button>}
-          />.
-        </p>
 
         <p className="text-center text-sm text-muted-foreground">
           Já tem uma conta?{" "}
