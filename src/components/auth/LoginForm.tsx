@@ -123,6 +123,17 @@ export const LoginForm = ({ onLogin, isLoading }: LoginFormProps) => {
         </Button>
 
       </form>
+
+      <p className="text-xs text-center text-muted-foreground">
+        Ao entrar, você concorda com nossos{" "}
+        <a href="/termos?tab=termos" target="_blank" className="text-primary hover:underline">
+          Termos de Uso
+        </a>{" "}
+        e{" "}
+        <a href="/termos?tab=privacidade" target="_blank" className="text-primary hover:underline">
+          Política de Privacidade
+        </a>.
+      </p>
     </div>
   );
 };
