@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ const getRoleLabel = (role: string | null, isSuperAdmin: boolean) => {
 
 const Profile = () => {
   const { userProfile, user, userRole, isSuperAdmin, isTrialActive, trialDaysRemaining, assinaturaStatus } = useAuth();
+  const navigate = useNavigate();
   const [nome, setNome] = useState(userProfile?.nome || "");
   const [savingName, setSavingName] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -330,6 +332,9 @@ const Profile = () => {
               {!planoNome && assinaturaStatus !== 'trial' && (
                 <p className="text-sm text-muted-foreground">Nenhum plano ativo.</p>
               )}
+              <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/ver-planos")}>
+                Ver planos disponíveis
+              </Button>
             </CardContent>
           </Card>
         )}

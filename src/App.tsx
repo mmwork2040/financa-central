@@ -38,6 +38,7 @@ import N8nTemplates from "./pages/N8nTemplates";
 import DemoPage from "./pages/DemoPage";
 import PlanosExpirados from "./pages/PlanosExpirados";
 import Assinaturas from "./pages/Assinaturas";
+import VerPlanos from "./pages/VerPlanos";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => {
                 <Route path="/install" element={<PageTransition><Install /></PageTransition>} />
                 <Route path="/demo" element={<PageTransition><DemoPage /></PageTransition>} />
                 <Route path="/planos-expirados" element={<PageTransition><PlanosExpirados /></PageTransition>} />
+                <Route path="/ver-planos" element={<PageTransition><VerPlanos /></PageTransition>} />
 
                 {/* Protected routes */}
                 <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
