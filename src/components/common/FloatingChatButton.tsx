@@ -279,17 +279,13 @@ const FloatingChatButton: React.FC = () => {
     <>
       <Button
         onClick={() => {
-          if (!chatAvailable) {
-            toast.info("O chat ainda não está configurado. Entre em contato com o administrador.");
-            return;
-          }
-          setOpen(!open);
+          window.open("https://t.me/meu_agente_financeir", "_blank");
         }}
         className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[9999] h-14 w-14 rounded-full shadow-xl relative bg-primary hover:bg-primary/90"
         size="icon"
         style={{ position: 'fixed', right: '1rem' }}
       >
-        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+        <MessageCircle className="h-6 w-6" />
         {!open && unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-5 min-w-5 flex items-center justify-center px-1">
             {unreadCount > 99 ? "99+" : unreadCount}
@@ -302,7 +298,7 @@ const FloatingChatButton: React.FC = () => {
         <div className="fixed bottom-36 md:bottom-[5.5rem] right-4 md:right-6 z-[9999] animate-fade-in" style={{ position: 'fixed' }}>
           <div
             className="bg-card border border-border shadow-2xl rounded-2xl p-4 max-w-[280px] cursor-pointer group hover:shadow-primary/10 transition-shadow relative"
-            onClick={() => { setShowTooltip(false); setOpen(true); }}
+            onClick={() => { setShowTooltip(false); window.open("https://t.me/meu_agente_financeir", "_blank"); }}
           >
             <button
               className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors"
