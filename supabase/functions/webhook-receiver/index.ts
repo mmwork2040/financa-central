@@ -56,13 +56,16 @@ function parseHotmart(body: any): SaleData | null {
   const rawStatus = purchase?.status?.toLowerCase?.() || 
     purchase?.transaction?.status?.toLowerCase?.() || "approved";
 
+  const valorBruto = Number(purchase?.price?.value || purchase?.original_offer_price?.value || purchase?.full_price?.value || purchase?.price || 0);
+  const taxa = Number(purchase?.commission?.value || purchase?.fee?.value || 0);
+
   return {
     plataforma: "hotmart",
     evento: event,
     status: statusMap[rawStatus] || "pendente",
-    valor_bruto: Number(purchase?.price?.value || purchase?.original_offer_price?.value || purchase?.full_price?.value || 0) / 100 || Number(purchase?.price || 0),
-    taxa: Number(purchase?.commission?.value || purchase?.fee?.value || 0) / 100 || 0,
-    valor_liquido: Number(purchase?.price?.value || 0) / 100 - Number(purchase?.commission?.value || 0) / 100 || Number(purchase?.price || 0),
+    valor_bruto: valorBruto,
+    taxa,
+    valor_liquido: valorBruto - taxa,
     cliente: buyer?.name || buyer?.email || null,
     produto: product?.name || null,
     data_venda: normalizeDate(purchase?.approved_date || purchase?.order_date),
