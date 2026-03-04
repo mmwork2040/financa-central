@@ -82,6 +82,9 @@ export const useDashboardData = () => {
   const [healthStatus, setHealthStatus] = useState<HealthStatus>('saudavel');
   const [dataFluxo, setDataFluxo] = useState<any[]>([]);
   const [monthlyChartData, setMonthlyChartData] = useState<Array<{ name: string; receitas: number; despesas: number; investimentos: number }>>([]);
+  const [contasBancarias, setContasBancarias] = useState<Array<{ id: string; nome: string; saldo_atual: number }>>([]);
+  const [projectionData, setProjectionData] = useState<Array<{ name: string; caixa: number }>>([]);
+  const [lancamentosMes, setLancamentosMes] = useState<any[]>([]);
   
   const fetchDashboardData = async () => {
     try {
@@ -196,7 +199,7 @@ export const useDashboardData = () => {
       // 1. Caixa Atual = sum of all contas_bancarias.saldo_atual
       const { data: contas, error: contasError } = await supabase
         .from('contas_bancarias')
-        .select('saldo_atual');
+        .select('id, nome, saldo_atual');
       
       if (contasError) throw contasError;
       const caixaAtual = contas?.reduce((sum, c) => sum + (c.saldo_atual || 0), 0) || 0;
@@ -241,7 +244,7 @@ export const useDashboardData = () => {
         .eq('recorrente', true)
         .is('total_parcelas', null);
 
-      const { mesesDeCaixa } = simularFluxoCaixa(
+      const { mesesDeCaixa, projectionData: projData } = simularFluxoCaixa(
         caixaAtual,
         (lancFuturos || []) as any,
         (recorrentes || []) as any,
@@ -253,6 +256,10 @@ export const useDashboardData = () => {
         .filter(l => l.tipo === 'investimento' && (l.status === 'pago' || l.status === 'recebido'))
         .reduce((sum, l) => sum + (l.valor || 0), 0);
 
+      const contasBancariasList = contas?.map(c => ({ id: c.id, nome: c.nome, saldo_atual: c.saldo_atual })) || [];
+      setContasBancarias(contasBancariasList);
+      setProjectionData(projData);
+      setLancamentosMes(lancamentosSemTransf);
       setCaixa({ caixaAtual, caixaPrevisto, mesesDeCaixa, saldoInvestido, receitasPendentesAcumuladas, despesasPendentesAcumuladas, itensPendentes });
 
       // Saldo do mês = caixa atual (já reflete todas as transações executadas)
@@ -373,5 +380,8 @@ export const useDashboardData = () => {
     dataFluxo,
     monthlyChartData,
     fetchDashboardData,
+    contasBancarias,
+    projectionData,
+    lancamentosMes,
   };
 };

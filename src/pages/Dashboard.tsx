@@ -17,6 +17,7 @@ import { DashboardChart } from "@/components/dashboard/DashboardChart";
 import { useNavigate } from "react-router-dom";
 import { DashboardDonutChart } from "@/components/dashboard/DashboardDonutChart";
 import { CaixaPrevistoDialog } from "@/components/dashboard/CaixaPrevistoDialog";
+import { DashboardDetailDialog, DashboardDialogType } from "@/components/dashboard/DashboardDetailDialog";
 import { cn } from "@/lib/utils";
 
 const healthConfig: Record<HealthStatus, { label: string; color: string; icon: string; bg: string }> = {
@@ -27,11 +28,12 @@ const healthConfig: Record<HealthStatus, { label: string; color: string; icon: s
 
 const DashboardContent = () => {
   const { userProfile } = useAuth();
-  const { loading, summary, caixa, lancamentosRecentes, contasProximas, receitasPendentes, healthStatus, monthlyChartData } = useDashboardData();
+  const { loading, summary, caixa, lancamentosRecentes, contasProximas, receitasPendentes, healthStatus, monthlyChartData, contasBancarias, projectionData, lancamentosMes } = useDashboardData();
   const { visible, toggle } = useValuesVisibility();
   const { myRequests, cancelRequest, actionLoading } = useSolicitacoesSaida();
   const navigate = useNavigate();
   const [caixaPrevistoOpen, setCaixaPrevistoOpen] = React.useState(false);
+  const [activeDialog, setActiveDialog] = React.useState<DashboardDialogType>(null);
 
   const health = healthConfig[healthStatus];
 
@@ -78,7 +80,7 @@ const DashboardContent = () => {
 
       {/* Linha 1: Você já recebeu + Você já pagou */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg cursor-pointer" onClick={() => navigate("/transactions")}>
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg cursor-pointer" onClick={() => setActiveDialog('receitas')}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-green-100 p-1.5"><ArrowUpRight className="h-4 w-4 text-green-600" /></div>
@@ -92,7 +94,7 @@ const DashboardContent = () => {
             </p>
           </CardContent>
         </Card>
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg cursor-pointer" onClick={() => navigate("/transactions")}>
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg cursor-pointer" onClick={() => setActiveDialog('despesas')}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-destructive/10 p-1.5"><ArrowDownRight className="h-4 w-4 text-destructive" /></div>
@@ -110,7 +112,7 @@ const DashboardContent = () => {
 
       {/* Linha 2: Receitas Pendentes + Contas a Pagar */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-orange-400 cursor-pointer" onClick={() => navigate("/transactions")}>
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-orange-400 cursor-pointer" onClick={() => setActiveDialog('receita-pendente')}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-orange-100 p-1.5"><Clock className="h-4 w-4 text-orange-600" /></div>
@@ -122,7 +124,7 @@ const DashboardContent = () => {
             <p className="text-[10px] text-muted-foreground mt-0.5">Receitas a receber</p>
           </CardContent>
         </Card>
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-amber-500 cursor-pointer" onClick={() => navigate("/transactions")}>
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-amber-500 cursor-pointer" onClick={() => setActiveDialog('contas-pagar')}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-amber-100 p-1.5"><AlertTriangle className="h-4 w-4 text-amber-600" /></div>
@@ -140,7 +142,7 @@ const DashboardContent = () => {
 
       {/* Linha 3: Saldo do mês + Caixa Previsto + Meses de Caixa */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg cursor-pointer" onClick={() => navigate("/transactions")}>
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg cursor-pointer" onClick={() => setActiveDialog('saldo')}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-blue-100 p-1.5"><Wallet className="h-4 w-4 text-blue-600" /></div>
@@ -171,7 +173,7 @@ const DashboardContent = () => {
             <p className="text-[10px] text-muted-foreground mt-1">Clique para ver detalhes</p>
           </CardContent>
         </Card>
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-amber-500">
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-amber-500 cursor-pointer" onClick={() => setActiveDialog('meses-caixa')}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-amber-100 p-1.5"><Calendar className="h-4 w-4 text-amber-600" /></div>
@@ -180,7 +182,7 @@ const DashboardContent = () => {
             <p className={cn("text-lg sm:text-xl font-bold", caixa.mesesDeCaixa >= 3 ? "text-primary" : caixa.mesesDeCaixa >= 1 ? "text-amber-600" : "text-destructive")}>
               {caixa.mesesDeCaixa >= 99 ? "∞" : `${caixa.mesesDeCaixa} meses`}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-1">Runway baseado na média de despesas</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Clique para ver detalhes</p>
           </CardContent>
         </Card>
       </div>
@@ -340,6 +342,16 @@ const DashboardContent = () => {
         despesasPendentes={caixa.despesasPendentesAcumuladas}
         caixaPrevisto={caixa.caixaPrevisto}
         itens={caixa.itensPendentes}
+      />
+
+      <DashboardDetailDialog
+        type={activeDialog}
+        onClose={() => setActiveDialog(null)}
+        contasBancarias={contasBancarias}
+        lancamentosMes={lancamentosMes}
+        summary={summary}
+        caixa={caixa}
+        projectionData={projectionData}
       />
 
       <LancamentosFormDialog />
