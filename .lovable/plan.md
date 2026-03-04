@@ -1,42 +1,34 @@
 
 
-## Plano: Integrar vendas digitais nos relatórios e refletir dados em tempo real
+## Plano: Corrigir duplicação de lançamentos recorrentes
 
-### Problema atual
+### Problema identificado
 
-O hook `useRelatoriosData` consulta **apenas** a tabela `lancamentos`. As vendas digitais (`vendas_digitais`) que representam receitas de plataformas (Hotmart, Kiwify, etc.) nao sao consideradas nos relatórios. Alem disso, os relatórios nao distinguem entre receitas confirmadas e receitas previstas.
+A edge function `generate-recurring` está criando lançamentos duplicados porque:
 
-### Solucao
+1. **Chamadas concorrentes**: A função é invocada tanto no `fetchLancamentos` (toda navegação de mês) quanto ao marcar como pago — ambas fire-and-forget. Múltiplas execuções simultâneas não veem os registros que a outra está inserindo.
+2. **Agrupamento fraco**: A chave de cadeia `descricao + valor + tipo` não diferencia lançamentos recorrentes distintos com mesma descrição/valor (ex: se o usuário tem duas despesas "AI - Claude" com valores diferentes que foram editadas para ter o mesmo valor).
 
-**1. `src/hooks/useRelatoriosData.tsx`** -- Incluir vendas digitais como receitas:
+### Solução
 
-- Apos buscar `lancamentos`, tambem buscar `vendas_digitais` no mesmo periodo (filtro por `data_venda`)
-- Vendas com status `recebido` contam como receita executada
-- Vendas com status `aprovada` ou `pendente` contam como receita prevista
-- Agrupar vendas por plataforma como categoria (ex: "Hotmart", "Kiwify")
-- Mesclar nos dados de `dataReceitas`, `dataFluxo` e `topReceitas`
-- Adicionar estados `receitasExecutadas` e `receitasPrevistas` ao retorno do hook para uso no ResumoFinanceiro
+**1. `supabase/functions/generate-recurring/index.ts`** — Prevenir duplicatas:
 
-**2. `src/components/relatorios/ResumoFinanceiro.tsx`** -- Expandir para mostrar receitas executadas vs previstas:
+- Antes de inserir, fazer uma verificação direta no banco (`SELECT`) para a combinação exata de `descricao + valor + tipo + data_vencimento + empresa_id + recorrente=true` em vez de confiar apenas no array em memória
+- Adicionar um `upsert`-like approach: verificar existência no banco antes de cada insert
+- Alternativa mais simples e eficaz: adicionar a coluna `recorrencia_tipo` à chave de agrupamento e verificar existência com query no banco em vez de array local
 
-- Receber props adicionais: `receitasExecutadas`, `receitasPrevistas`, `despesasExecutadas`, `despesasPrevistas`
-- Exibir as 4 linhas detalhadas (executadas + previstas) alem dos totais
-- Badge visual para "Previsto" em amarelo
+**2. `src/contexts/LancamentosContext.tsx`** — Evitar chamadas concorrentes:
 
-**3. `src/pages/Relatorios.tsx`** -- Passar os novos dados para o ResumoFinanceiro
+- Remover a chamada em `fetchLancamentos` (linha 214) — a geração só deve ocorrer ao marcar como pago/recebido (linha 746)
+- Na chamada do handleStatus, usar `await` em vez de fire-and-forget para garantir que termina antes do refetch
+- Adicionar debounce/flag para evitar chamadas duplicadas
 
-**4. `src/components/relatorios/FluxoCaixaChart.tsx`** -- Adicionar barras para receitas previstas vs executadas (opcional, se complexidade permitir, senao manter receitas totais)
-
-### Regras de negocio
-
-- Vendas digitais com `status = 'recebido'` -> receita confirmada do mes
-- Vendas digitais com `status != 'recebido'` (aprovada, pendente) -> receita prevista
-- Lancamentos com `status = 'pago'` ou `'recebido'` -> executado
-- Lancamentos com `status = 'pendente'` -> previsto
-- Evitar duplicidade: vendas digitais que ja possuem `lancamento_id` nao devem ser contadas duas vezes (o lancamento vinculado ja esta na tabela lancamentos)
+**3. Limpeza de duplicatas existentes** — Criar uma migration SQL para remover lançamentos duplicados já criados:
+- Agrupar por `empresa_id, descricao, valor, tipo, data_vencimento, recorrente` onde `status = 'pendente'`
+- Manter apenas 1 registro por grupo, deletar os extras
 
 ### Arquivos afetados
-- `src/hooks/useRelatoriosData.tsx`
-- `src/components/relatorios/ResumoFinanceiro.tsx`
-- `src/pages/Relatorios.tsx`
+- `supabase/functions/generate-recurring/index.ts`
+- `src/contexts/LancamentosContext.tsx`
+- Migration SQL para limpar duplicatas existentes
 
