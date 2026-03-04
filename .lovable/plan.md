@@ -1,28 +1,28 @@
 
 
-## Plano: Padronizar espaçamento lateral da Landing Page
+## Plano: Corrigir lançamentos não funcionando em nova empresa
 
 ### Diagnóstico
 
-A seção 2 ("Conexão com a dor") usa `container` + conteúdo interno com `max-w-4xl mx-auto`, o que cria margens laterais generosas. Outras seções usam o `container` cheio (max-width ~1280px) sem restrição interna, ficando mais "esticadas". As seções que precisam de ajuste:
+O erro `"invalid input syntax for type uuid: ''"` indica que `empresaId` está como string vazia `""` no momento do insert. Isso acontece porque:
 
-- **Seção 1 (Hero)**: grid ocupa toda a largura do container
-- **Seção 4 (Funcionalidades)**: grids de features vão até a borda do container
-- **Seção 5 (Para quem é)**: usa `max-w-5xl` (já razoável)
-- **Footer**: conteúdo ocupa toda a largura
+1. Ao criar uma nova empresa e recarregar a página, o `fetchUserRoles` no `AuthContext` pode retornar antes do perfil estar atualizado, resultando em `empresaId` vazio ou inconsistente.
+2. O `handleSave` em `LancamentosContext` usa `empresaId` diretamente sem validar se é um UUID válido.
 
-### Mudanças em `src/pages/LandingPage.tsx`
+### Mudanças
 
-1. **Hero (seção 1)**: Envolver o grid em `max-w-6xl mx-auto` para centralizar e dar respiro lateral.
+#### 1. `src/contexts/LancamentosContext.tsx`
+- No `handleSave`, adicionar validação antes do insert: se `empresaId` for falsy ou string vazia, bloquear a operação com toast de erro ("Empresa não selecionada").
+- Aplicar a mesma validação nos dois caminhos de insert (parcelado e único/recorrente).
 
-2. **Funcionalidades (seção 4)**: Envolver todo o conteúdo interno em `max-w-6xl mx-auto` — isso alinha os grids de features com o mesmo respiro das demais seções.
+#### 2. `src/contexts/AuthContext.tsx`
+- No `fetchUserRoles`, garantir que `setEmpresaId` nunca receba string vazia — se `activeEmpresaId` for falsy, definir como `null`.
+- No `fetchUserProfile`, se `data.empresa_id` for string vazia, tratar como `null`.
 
-3. **Para quem é (seção 5)**: Ajustar de `max-w-5xl` para `max-w-6xl` nos cards para manter consistência.
+#### 3. `supabase/functions/create-empresa/index.ts`
+- Verificar que o `update` no perfil realmente grava o novo `empresa_id` — a function parece correta, mas vale garantir que o `userId` está correto e o update não falha silenciosamente.
 
-4. **Footer**: Adicionar `max-w-6xl mx-auto` ao conteúdo interno.
-
-O valor `max-w-6xl` (1152px) foi escolhido por ser intermediário entre o `max-w-4xl` da seção 2 e o container cheio, criando margens confortáveis sem comprimir demais o conteúdo de grids com 2 colunas.
-
-### Arquivo afetado
-- `src/pages/LandingPage.tsx`
+### Arquivos afetados
+- `src/contexts/LancamentosContext.tsx` — validação de `empresaId` antes de inserir
+- `src/contexts/AuthContext.tsx` — proteção contra `empresaId` vazio
 
