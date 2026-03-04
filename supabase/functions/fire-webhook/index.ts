@@ -107,10 +107,10 @@ Deno.serve(async (req) => {
 
             payload = JSON.parse(payloadStr);
           } catch {
-            payload = { empresa_id, evento, descricao, usuario, acao, registro, timestamp: new Date().toISOString() };
+            payload = { empresa_id, evento, descricao, nome, id_usuario, id_telegram, telefone, email, usuario, acao, registro, timestamp: new Date().toISOString() };
           }
         } else {
-          payload = { empresa_id, evento, descricao, usuario, acao, registro, timestamp: new Date().toISOString() };
+          payload = { empresa_id, evento, descricao, nome, id_usuario, id_telegram, telefone, email, usuario, acao, registro, timestamp: new Date().toISOString() };
         }
 
         const response = await fetch(wh.url, {
