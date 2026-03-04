@@ -78,8 +78,8 @@ export const usePermissoes = (userId: string | null, userRole: string | null, is
     // Admin-only screens
     if (adminOnlyScreens.includes(screenKey)) return false;
 
-    // If no permissions defined at all, user has view-only access to everything
-    if (permissions.length === 0) return true;
+    // If no permissions defined at all, user has NO access (must be explicitly granted)
+    if (permissions.length === 0) return false;
 
     // Check if user has any permission for this screen
     const perm = permissions.find(p => p.tela === screenKey);
