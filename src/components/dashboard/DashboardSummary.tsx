@@ -1,6 +1,6 @@
 
 import React from "react";
-import { ArrowUpRight, ArrowDownRight, CreditCard, AlertCircle, TrendingUp, Eye, EyeOff } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, CreditCard, AlertCircle, TrendingUp, Eye, EyeOff, Clock } from "lucide-react";
 import SummaryCard from "./SummaryCard";
 import { Button } from "@/components/ui/button";
 import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
@@ -10,6 +10,7 @@ interface DashboardSummaryProps {
     totalReceitas: number;
     totalDespesas: number;
     totalInvestimentos: number;
+    receitasPrevistas: number;
     vencendoHoje: number;
     emAtraso: number;
   };
@@ -27,7 +28,7 @@ export const DashboardSummary = ({ summary, formatCurrency }: DashboardSummaryPr
           {visible ? "Ocultar valores" : "Exibir valores"}
         </Button>
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
         <SummaryCard 
           title="Total de Receitas"
           value={formatCurrency(summary.totalReceitas)}
@@ -42,6 +43,14 @@ export const DashboardSummary = ({ summary, formatCurrency }: DashboardSummaryPr
           description="+4.5% em relação ao mês anterior"
           icon={ArrowDownRight}
           iconColor="text-red-500"
+          isCurrency
+        />
+        <SummaryCard 
+          title="Receita Pendente"
+          value={formatCurrency(summary.receitasPrevistas)}
+          description="Receitas a receber"
+          icon={Clock}
+          iconColor="text-amber-500"
           isCurrency
         />
         <SummaryCard 
