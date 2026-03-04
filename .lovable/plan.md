@@ -1,29 +1,61 @@
 
 
-## Plano: Tornar CurrencyInput editável livremente (copiar/colar/editar)
+## Plano: Tratar investimentos como transferências (reserva resgatável)
 
-### Problema
-O `CurrencyInput` atual usa uma abordagem baseada em centavos que intercepta cada tecla individualmente. Isso impede copiar/colar, selecionar texto, e edição livre do cursor. O usuário fica "preso" num modo rígido de digitação.
+### Problema raiz
+
+Quando um investimento é marcado como "pago", o sistema debita o saldo da conta bancária (linha 631 do LancamentosContext: `tipo !== "receita"` → delta negativo). Isso reduz o `caixaAtual`. No dashboard, investimentos são excluídos do cálculo do Caixa Previsto, mas o saldo bancário já foi reduzido — sem compensação.
+
+Resultado: Caixa = 67.649 (já descontado o investimento de 32.325), e o Caixa Previsto fica ainda mais negativo porque só considera receitas/despesas pendentes.
 
 ### Solução
-Reescrever o `CurrencyInput` para usar uma abordagem de texto livre com formatação on-blur:
-- **Digitação livre**: o usuário digita normalmente, pode colar valores, mover o cursor
-- **On blur**: ao sair do campo, o valor é parseado e formatado como `R$ 1.234,56`
-- **On focus**: mostra o valor numérico limpo para facilitar edição (ex: `1234.56` ou `1234,56`)
-- **Copiar/colar**: funciona naturalmente pois o input não intercepta teclas
 
-### Mudança
+Tratar investimentos como transferências internas (dinheiro que muda de "bolso" mas continua disponível como reserva). Três pontos de correção:
 
-**`src/components/ui/currency-input.tsx`** — Reescrever o componente:
-- Estado interno como string de texto livre
-- `onFocus`: mostra valor numérico sem formatação (apenas número com vírgula decimal)
-- `onChange`: aceita qualquer input, sem restrição
-- `onBlur`: parseia o texto (aceita `.` ou `,` como decimal, remove caracteres não numéricos), formata como BRL, e emite `onValueChange` com o valor em centavos (mantendo compatibilidade com consumidores)
-- Sync com prop `value` via `useEffect`
-- Manter a mesma interface `CurrencyInputProps` para não quebrar nenhum consumidor
+---
+
+### 1. `src/contexts/LancamentosContext.tsx` — Saldo bancário
+
+**Criar lançamento (linha ~631)**: Investimentos pagos NÃO devem reduzir saldo da conta bancária.
+```
+// Antes:  delta = tipo === "receita" ? valor : -valor
+// Depois: delta = tipo === "receita" ? valor : tipo === "investimento" ? 0 : -valor
+```
+
+**Alterar status (linha ~709 e ~721)**: Mesma lógica — investimento tem delta 0 ao entrar/sair de pago.
+
+**Deletar lançamento**: Verificar se ao deletar investimento pago, não reverte saldo indevidamente.
+
+---
+
+### 2. `src/hooks/useDashboardData.tsx` — Caixa Previsto
+
+**Linha 232**: Atualmente `caixaPrevisto = caixaAtual + receitasPendentes - despesasPendentes`. Como investimentos não reduzem mais o saldo, o cálculo fica correto automaticamente.
+
+**Saldo Investido (linha ~255)**: Buscar o total investido de TODOS os períodos (não apenas do mês), pois investimentos são acumulativos. Fazer uma query separada sem filtro de mês.
+
+**Runway/Projeção**: Excluir investimentos das queries de `lancFuturos` e `recorrentes` (linhas 235-245).
+
+---
+
+### 3. `src/utils/cashFlowProjection.ts` — Projeção
+
+Adicionar filtro para ignorar `tipo === 'investimento'` em `calcularFluxoMensal`, tanto nos lançamentos futuros quanto nos recorrentes.
+
+---
+
+### 4. `src/contexts/LancamentosContext.tsx` — Funções auxiliares do n8n
+
+Verificar `n8n-query/index.ts` para a mesma lógica de delta — investimentos com delta 0.
+
+---
 
 ### Arquivos afetados
-- `src/components/ui/currency-input.tsx` — reescrita do componente (sem alterar a interface)
 
-Nenhum outro arquivo precisa mudar pois a interface `onValueChange(cents: string)` será mantida.
+| Arquivo | Mudança |
+|---|---|
+| `src/contexts/LancamentosContext.tsx` | Delta 0 para investimentos em criar, alterar status e deletar |
+| `src/hooks/useDashboardData.tsx` | Saldo investido acumulativo (query sem filtro de mês), excluir investimentos da projeção |
+| `src/utils/cashFlowProjection.ts` | Ignorar tipo investimento no cálculo mensal |
+| `supabase/functions/n8n-query/index.ts` | Delta 0 para investimentos |
 
