@@ -27,9 +27,9 @@ const PricingCard = ({ title, price, period, description, highlighted = false, b
 
   return (
     <div
-      className={`relative rounded-3xl p-6 flex flex-col transition-all duration-300 group ${
+      className={`relative rounded-3xl p-6 flex flex-col transition-all duration-300 group h-full ${
         highlighted
-          ? "glass-card border-2 border-primary shadow-xl shadow-primary/10 scale-[1.03] hover:shadow-2xl hover:shadow-primary/20"
+          ? "glass-card border-2 border-primary shadow-xl shadow-primary/10 ring-2 ring-primary/20 hover:shadow-2xl hover:shadow-primary/20"
           : "glass-card hover:shadow-lg hover:-translate-y-1"
       }`}
     >
