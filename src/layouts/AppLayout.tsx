@@ -4,7 +4,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
 import { useCompanyTheme } from "@/hooks/useCompanyTheme";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -18,8 +18,13 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
   const { isAuthenticated, loading, empresaId, userProfile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
   const themeReady = useCompanyTheme();
+  useSupportNotifications();
+
+  const monthFilterRoutes = ["/dashboard", "/transactions", "/vendas-digitais", "/anuncios"];
+  const showMonthFilter = monthFilterRoutes.includes(location.pathname);
   useSupportNotifications();
 
   useEffect(() => {
@@ -56,9 +61,11 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
           )}
         >
           <div className="w-full px-3 py-4 md:px-4 md:py-6 max-w-full pb-20 md:pb-6">
-            <div className="mb-4 glass-card rounded-xl px-2 py-2">
-              <MonthCarousel />
-            </div>
+            {showMonthFilter && (
+              <div className="mb-3 flex justify-center">
+                <MonthCarousel />
+              </div>
+            )}
             <div className="animate-fade-in">
               {children}
             </div>
