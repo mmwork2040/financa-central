@@ -602,12 +602,15 @@ const Integracoes = () => {
     }
   };
 
+  const CATEGORIAS_FIXAS: PlataformaCategoria[] = ["vendas", "anuncios"];
+
   const isPlataformaDisponivel = (plataformaId: string): boolean => {
-    if (isSuperAdmin) return true; // super admin always sees all
-    // Users with active connection always see it, even if globally disabled
+    if (isSuperAdmin) return true;
+    const plat = PLATAFORMAS.find(p => p.id === plataformaId);
+    if (plat && CATEGORIAS_FIXAS.includes(plat.categoria)) return true;
     const userHasActive = integracoes.some((i: any) => i.plataforma === plataformaId && i.ativo);
     if (userHasActive) return true;
-    if (disponibilidade[plataformaId] === undefined) return true; // default available
+    if (disponibilidade[plataformaId] === undefined) return true;
     return disponibilidade[plataformaId];
   };
 
@@ -939,7 +942,7 @@ const Integracoes = () => {
                     </div>
                   </div>
                   {/* Super Admin: Toggle availability */}
-                  {isSuperAdmin && (
+                  {isSuperAdmin && !CATEGORIAS_FIXAS.includes(plat.categoria) && (
                     <div className="mt-2 flex items-center justify-between p-2 rounded-md bg-muted/50 border border-dashed">
                       <div className="flex items-center gap-1.5">
                         <ShieldAlert className="h-3.5 w-3.5 text-muted-foreground" />
