@@ -1,51 +1,35 @@
 
 
-## Plano: Transformar "Vendas Digitais" em "Vendas" com cadastro manual e exportação
+## Plano: Integrar vendas manuais com lançamentos financeiros
 
-### Resumo
-Renomear "Vendas Digitais" para "Vendas", permitir registro manual de vendas com dados completos do cliente, e adicionar exportação para contabilidade.
+### Contexto
+Atualmente, ao registrar uma venda manual na página "Vendas", apenas um registro em `vendas_digitais` é criado. Não é gerado um lançamento financeiro correspondente em `lancamentos`. O webhook já faz isso para vendas de plataformas. A página de Vendas serve como ambiente de visualização e exportação contábil com dados detalhados do cliente.
 
-### Etapa 1 -- Schema: Adicionar colunas na tabela `vendas_digitais`
-Adicionar campos para suportar vendas manuais e dados completos do cliente:
-- `cliente_telefone` (text, nullable)
-- `cliente_email` (text, nullable)  
-- `cliente_documento` (text, nullable)
-- `cliente_endereco` (text, nullable)
-- `observacoes` (text, nullable)
-- `origem` (text, default 'manual') -- para distinguir manual vs integracao
-- `cliente_id` (uuid, nullable) -- link opcional ao cadastro de clientes
+### O que será feito
 
-### Etapa 2 -- Renomear referências no frontend
-- **Sidebar**: "Vendas Digitais" -> "Vendas"
-- **Rota**: manter `/vendas-digitais` por compatibilidade ou criar redirect
-- **Página**: atualizar titulo e subtitulo
+**1. Criar lançamento automaticamente ao registrar venda manual**
+No `VendaFormDialog.tsx`, após inserir o registro em `vendas_digitais`, inserir também um registro em `lancamentos` com:
+- `tipo`: "receita"
+- `descricao`: "Venda - {produto}"
+- `valor`: valor_liquido
+- `data_vencimento`: data da venda
+- `status`: mapeado do status da venda (aprovada → "recebido", pendente → "pendente")
+- `empresa_id`, `cliente_id`: herdados da venda
+- `origem`: "venda"
 
-### Etapa 3 -- Criar formulário de nova venda
-Modal/dialog para registrar venda manual com campos:
-- Produto, valor bruto, taxa, valor liquido (calculado automaticamente)
-- Data da venda, status
-- Cliente (select do cadastro existente ou criar novo inline)
-- Dados do cliente: nome, telefone, email, documento, endereço
-- Observações
-- Plataforma como "manual" por padrão
+**2. Ao editar venda manual, atualizar o lançamento vinculado**
+Adicionar campo `lancamento_id` na tabela `vendas_digitais` (nullable) para vincular venda ao lançamento correspondente. Na edição, atualizar o lançamento associado.
 
-### Etapa 4 -- Criar modal de quick-add cliente
-Permitir criar cliente diretamente do formulário de venda (similar ao `QuickAddClienteModal` existente).
-
-### Etapa 5 -- Melhorar listagem de vendas
-Expandir os cards para mostrar mais dados: telefone, email, documento do cliente, observações. Adicionar botão "Nova Venda".
-
-### Etapa 6 -- Exportação para contabilidade
-Usar o pattern existente (`ExportDropdown` + `exportToCSV`/`exportToPDF`) para exportar vendas com todos os campos relevantes: data, produto, cliente, documento, valor bruto, taxa, valor liquido, status, plataforma, observações.
-
-### Etapa 7 -- Webhook-receiver: preencher novos campos
-Atualizar o parser do Hotmart (e outros) para preencher `cliente_email`, `cliente_documento`, `cliente_telefone` quando disponíveis no payload.
+**3. Schema: adicionar coluna `lancamento_id`**
+Migration: `ALTER TABLE vendas_digitais ADD COLUMN lancamento_id uuid REFERENCES lancamentos(id) ON DELETE SET NULL;`
 
 ### Arquivos afetados
-- **Migration SQL**: adicionar colunas em `vendas_digitais`
-- `src/components/Sidebar.tsx`: renomear menu
-- `src/pages/VendasDigitais.tsx`: refatorar como página "Vendas" completa
-- Novo: `src/components/vendas/VendaFormDialog.tsx` -- formulário de nova venda
-- Novo: `src/components/vendas/VendasExport.ts` -- lógica de exportação
-- `supabase/functions/webhook-receiver/index.ts`: preencher campos extras
+- **Migration SQL**: adicionar `lancamento_id` em `vendas_digitais`
+- `src/components/vendas/VendaFormDialog.tsx`: após salvar venda, criar/atualizar lançamento vinculado
+- `supabase/functions/webhook-receiver/index.ts`: salvar `lancamento_id` no registro de venda (já cria lançamento, só precisa vincular)
+
+### Detalhes técnicos
+- O mapeamento de status: `aprovada` → `recebido`, `pendente` → `pendente`, `reembolsada/cancelada` → `cancelado`
+- A categoria será opcional (o usuário pode classificar depois nos lançamentos)
+- Conta bancária e forma de pagamento ficam opcionais para vendas manuais, diferente do fluxo obrigatório via n8n
 
