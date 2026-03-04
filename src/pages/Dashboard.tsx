@@ -26,7 +26,7 @@ const healthConfig: Record<HealthStatus, { label: string; color: string; icon: s
 
 const DashboardContent = () => {
   const { userProfile } = useAuth();
-  const { loading, summary, caixa, lancamentosRecentes, contasProximas, healthStatus, monthlyChartData } = useDashboardData();
+  const { loading, summary, caixa, lancamentosRecentes, contasProximas, receitasPendentes, healthStatus, monthlyChartData } = useDashboardData();
   const { visible, toggle } = useValuesVisibility();
   const { myRequests, cancelRequest, actionLoading } = useSolicitacoesSaida();
 
@@ -119,6 +119,13 @@ const DashboardContent = () => {
               {maskValue(formatCurrency(summary.saldoAtual), visible)}
             </p>
             <p className="text-[10px] text-muted-foreground mt-0.5">Caixa + recebido − pago</p>
+            <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border/50">
+              <Landmark className="h-3 w-3 text-blue-500" />
+              <span className="text-[10px] text-muted-foreground">Investido:</span>
+              <span className={cn("text-xs font-semibold", caixa.saldoInvestido > 0 ? "text-blue-600" : "text-muted-foreground")}>
+                {maskValue(formatCurrency(caixa.saldoInvestido), visible)}
+              </span>
+            </div>
           </CardContent>
         </Card>
         <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
@@ -137,20 +144,8 @@ const DashboardContent = () => {
         </Card>
       </div>
 
-      {/* Caixa Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-blue-500">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="rounded-full bg-blue-100 p-1.5"><Landmark className="h-4 w-4 text-blue-600" /></div>
-              <span className="text-xs text-muted-foreground">Saldo Investido</span>
-            </div>
-            <p className={cn("text-lg sm:text-xl font-bold", caixa.saldoInvestido > 0 ? "text-blue-600" : "text-muted-foreground")}>
-              {maskValue(formatCurrency(caixa.saldoInvestido), visible)}
-            </p>
-            <p className="text-[10px] text-muted-foreground mt-1">Investimentos realizados no mês</p>
-          </CardContent>
-        </Card>
+      {/* Caixa Cards — without Saldo Investido (now merged above) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-primary">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -189,7 +184,7 @@ const DashboardContent = () => {
         />
       </div>
 
-      {/* Upcoming Bills + Recent Transactions - Collapsible */}
+      {/* Contas a Pagar + Receitas Pendentes - side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Collapsible defaultOpen={false}>
           <Card>
@@ -220,12 +215,9 @@ const DashboardContent = () => {
                           <p className="text-xs text-muted-foreground">{formatDate(conta.data_vencimento)}</p>
                         </div>
                         <div className="text-right shrink-0 ml-3">
-                          <p className={cn("text-sm font-semibold", conta.tipo === 'receita' ? 'text-green-600' : 'text-destructive')}>
+                          <p className="text-sm font-semibold text-destructive">
                             {maskValue(formatCurrency(conta.valor), visible)}
                           </p>
-                          <Badge variant="outline" className="text-[10px]">
-                            {conta.tipo === 'receita' ? 'Receber' : 'Pagar'}
-                          </Badge>
                         </div>
                       </div>
                     ))}
@@ -241,37 +233,32 @@ const DashboardContent = () => {
             <CollapsibleTrigger className="w-full">
               <CardHeader className="pb-2 flex flex-row items-center justify-between cursor-pointer hover:bg-muted/50 rounded-t-xl transition-colors">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-primary" />
-                  Últimas Movimentações
+                  <ArrowUpRight className="h-4 w-4 text-green-500" />
+                  Receitas Pendentes
+                  {receitasPendentes.length > 0 && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{receitasPendentes.length}</Badge>
+                  )}
                 </CardTitle>
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
               </CardHeader>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CardContent>
-                {lancamentosRecentes.length === 0 ? (
+                {receitasPendentes.length === 0 ? (
                   <div className="flex h-32 items-center justify-center rounded-xl border border-dashed">
-                    <p className="text-sm text-muted-foreground">Nenhuma movimentação ainda</p>
+                    <p className="text-sm text-muted-foreground">Nenhuma receita pendente neste mês</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {lancamentosRecentes.map(l => (
-                      <div key={l.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                    {receitasPendentes.slice(0, 8).map(receita => (
+                      <div key={receita.id} className="flex items-center justify-between py-2 border-b last:border-0">
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{l.descricao}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {l.categoria?.nome || l.tipo} • Venc: {formatDate(l.data_vencimento)}
-                            {(l.status === 'pago' || l.status === 'recebido') 
-                              ? <span className="ml-1 text-primary">✓</span> 
-                              : <span className="ml-1 text-amber-500">🕐</span>}
-                          </p>
+                          <p className="text-sm font-medium truncate">{receita.descricao}</p>
+                          <p className="text-xs text-muted-foreground">{formatDate(receita.data_vencimento)}</p>
                         </div>
                         <div className="text-right shrink-0 ml-3">
-                          <p className={cn(
-                            "text-sm font-semibold",
-                            l.tipo === 'receita' ? 'text-green-600' : l.tipo === 'investimento' ? 'text-blue-600' : 'text-destructive'
-                          )}>
-                            {l.tipo === 'receita' ? '+' : '-'}{maskValue(formatCurrency(l.valor), visible)}
+                          <p className="text-sm font-semibold text-green-600">
+                            {maskValue(formatCurrency(receita.valor), visible)}
                           </p>
                         </div>
                       </div>
@@ -283,6 +270,54 @@ const DashboardContent = () => {
           </Card>
         </Collapsible>
       </div>
+
+      {/* Últimas Movimentações - full width */}
+      <Collapsible defaultOpen={false}>
+        <Card>
+          <CollapsibleTrigger className="w-full">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between cursor-pointer hover:bg-muted/50 rounded-t-xl transition-colors">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                Últimas Movimentações
+              </CardTitle>
+              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent>
+              {lancamentosRecentes.length === 0 ? (
+                <div className="flex h-32 items-center justify-center rounded-xl border border-dashed">
+                  <p className="text-sm text-muted-foreground">Nenhuma movimentação ainda</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {lancamentosRecentes.map(l => (
+                    <div key={l.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{l.descricao}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {l.categoria?.nome || l.tipo} • Venc: {formatDate(l.data_vencimento)}
+                          {(l.status === 'pago' || l.status === 'recebido') 
+                            ? <span className="ml-1 text-primary">✓</span> 
+                            : <span className="ml-1 text-amber-500">🕐</span>}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0 ml-3">
+                        <p className={cn(
+                          "text-sm font-semibold",
+                          l.tipo === 'receita' ? 'text-green-600' : l.tipo === 'investimento' ? 'text-blue-600' : 'text-destructive'
+                        )}>
+                          {l.tipo === 'receita' ? '+' : '-'}{maskValue(formatCurrency(l.valor), visible)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       <LancamentosFormDialog />
     </div>

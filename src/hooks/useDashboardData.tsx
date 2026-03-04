@@ -66,6 +66,7 @@ export const useDashboardData = () => {
   const [caixa, setCaixa] = useState<CaixaData>({ caixaAtual: 0, caixaPrevisto: 0, mesesDeCaixa: 0, saldoInvestido: 0 });
   const [lancamentosRecentes, setLancamentosRecentes] = useState<LancamentoRecente[]>([]);
   const [contasProximas, setContasProximas] = useState<ContaProxima[]>([]);
+  const [receitasPendentes, setReceitasPendentes] = useState<ContaProxima[]>([]);
   const [healthStatus, setHealthStatus] = useState<HealthStatus>('saudavel');
   const [dataFluxo, setDataFluxo] = useState<any[]>([]);
   const [monthlyChartData, setMonthlyChartData] = useState<Array<{ name: string; receitas: number; despesas: number; investimentos: number }>>([]);
@@ -152,6 +153,20 @@ export const useDashboardData = () => {
       }).length || 0;
 
       setContasProximas(proximasContas.map(l => ({
+        id: l.id,
+        descricao: l.descricao,
+        valor: l.valor,
+        data_vencimento: l.data_vencimento,
+        tipo: l.tipo,
+        status: l.status,
+      })).sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime()));
+
+      // Receitas Pendentes list
+      const receitasPendList = todosLancamentos?.filter(l => {
+        return l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto');
+      }) || [];
+
+      setReceitasPendentes(receitasPendList.map(l => ({
         id: l.id,
         descricao: l.descricao,
         valor: l.valor,
@@ -301,6 +316,7 @@ export const useDashboardData = () => {
     caixa,
     lancamentosRecentes,
     contasProximas,
+    receitasPendentes,
     healthStatus,
     dataFluxo,
     monthlyChartData,
