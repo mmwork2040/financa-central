@@ -125,12 +125,6 @@ Deno.serve(async (req) => {
             }
 
             payload = JSON.parse(payloadStr);
-            // Always ensure user identity fields are present in the payload
-            if (id_telegram && !payload.id_telegram) payload.id_telegram = id_telegram;
-            if (id_usuario && !payload.id_usuario) payload.id_usuario = id_usuario;
-            if (nome && !payload.nome) payload.nome = nome;
-            if (telefone && !payload.telefone) payload.telefone = telefone;
-            if (email && !payload.email) payload.email = email;
           } catch {
             payload = { empresa_id, evento, descricao, nome, id_usuario, id_telegram, telefone, email, usuario, acao, registro, timestamp: new Date().toISOString() };
           }
