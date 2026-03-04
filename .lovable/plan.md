@@ -1,39 +1,28 @@
 
 
-## Plano: Popups de detalhamento para todos os cards do Dashboard
+## Plano: Telegram como atalho no menu e na barra mobile
 
-Atualmente, apenas o card "Caixa Previsto" abre um popup ao ser clicado. A ideia é adicionar o mesmo comportamento para os outros 5 cards: **Saldo do mês**, **Receitas**, **Despesas**, **Contas a Pagar**, **Receita Pendente** e **Meses de Caixa**.
+### Mudanças
 
-### O que cada popup vai mostrar
+#### 1. `src/components/Sidebar.tsx`
+- Importar o ícone `Send` do lucide-react.
+- Adicionar um item de menu **"Lançamentos via Chat"** no nível principal (após "Anúncios", antes de "Cadastros"), que abre `https://t.me/meu_agente_financeir` em nova aba via `window.open`.
+- Usar o ícone `Send` (mesmo do botão flutuante atual).
 
-1. **Saldo do mês** — Lista de cada conta bancária com nome e saldo atual, totalizando no final.
-2. **Receitas** — Resumo: total do mês (executado + previsto). Lista dos lançamentos de receita do mês (executados e pendentes), com indicador ✓ ou 🕐.
-3. **Despesas** — Resumo: total do mês (executado + previsto). Lista dos lançamentos de despesa do mês (executados e pendentes), com indicador ✓ ou 🕐.
-4. **Receita Pendente** — Lista das receitas pendentes do mês com descrição, vencimento e valor.
-5. **Contas a Pagar** — Lista das despesas pendentes do mês com descrição, vencimento e valor. Destaque para itens em atraso.
-6. **Meses de Caixa** — Explicação da fórmula (runway), caixa atual, média de despesas mensais, e a projeção mês a mês retornada por `simularFluxoCaixa`.
+#### 2. `src/components/common/MobileBottomNav.tsx`
+- Substituir um dos itens ou adicionar o item **"Chat"** com ícone `Send` na barra inferior.
+- Ao clicar, abre o link do Telegram em nova aba (em vez de navegar internamente).
+- Substituir "Anúncios" por "Chat" na barra mobile (5 itens é o limite visual confortável), ou manter os 5 atuais e trocar "Config" por "Chat" (Config já está acessível pela sidebar).
 
-### Mudanças técnicas
+#### 3. `src/components/common/FloatingTelegramButton.tsx`
+- Remover o botão flutuante, já que o atalho estará no menu e na barra mobile.
 
-#### 1. `src/hooks/useDashboardData.tsx`
-- Alterar a query de `contas_bancarias` para incluir `nome` e `saldo_atual` (atualmente só busca `saldo_atual`).
-- Expor a lista de contas bancárias (`contasBancarias`) no retorno do hook.
-- Expor os dados de projeção (`projectionData`) retornados por `simularFluxoCaixa`.
-- Expor a lista de todos os lançamentos do mês filtrados (receitas executadas + pendentes, despesas executadas + pendentes) para os popups de Receitas e Despesas.
-
-#### 2. `src/components/dashboard/DashboardDetailDialog.tsx` (novo)
-- Componente genérico de dialog que recebe um `type` e os dados relevantes.
-- Renderiza o conteúdo adequado com base no tipo do card clicado.
-- Reutiliza o padrão visual do `CaixaPrevistoDialog` existente (ícones, formatação, maskValue).
-
-#### 3. `src/pages/Dashboard.tsx`
-- Adicionar estado para controlar qual dialog está aberto (`activeDialog`).
-- Substituir os `onClick={() => navigate("/transactions")}` dos 5 cards por `onClick` que abre o dialog correspondente.
-- O card "Meses de Caixa" (que hoje não tem onClick) também ganha o comportamento.
-- Renderizar o novo `DashboardDetailDialog` passando os dados do hook.
+#### 4. `src/layouts/AppLayout.tsx`
+- Remover a importação e renderização do `FloatingTelegramButton`.
 
 ### Arquivos afetados
-- `src/hooks/useDashboardData.tsx` — expor contas bancárias, projeção e lançamentos do mês
-- `src/components/dashboard/DashboardDetailDialog.tsx` — novo componente
-- `src/pages/Dashboard.tsx` — conectar os cards aos dialogs
+- `src/components/Sidebar.tsx` — novo item de menu
+- `src/components/common/MobileBottomNav.tsx` — novo item na barra
+- `src/components/common/FloatingTelegramButton.tsx` — remover
+- `src/layouts/AppLayout.tsx` — remover referência ao floating button
 
