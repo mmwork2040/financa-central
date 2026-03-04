@@ -227,27 +227,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           fetchUserRoles(data.user.id),
         ]);
 
-        // Fire login webhook silently BEFORE navigating
-        const activeEmpresaId = rolesResult?.activeEmpresaId || profile?.empresa_id;
-        console.log("[login webhook] activeEmpresaId:", activeEmpresaId, "profile:", profile?.nome, "telegram:", profile?.telegram_id);
-        if (activeEmpresaId) {
+        // Fire login webhook for ALL empresas the user belongs to
+        const allEmpresas = rolesResult?.empresasList || [];
+        const webhookBody = {
+          evento: "Acesso do Usuário",
+          descricao: `Login: ${profile?.nome || email}`,
+          nome: profile?.nome || null,
+          id_usuario: data.user.id || null,
+          id_telegram: profile?.telegram_id || null,
+          telefone: profile?.evolution_webhook_url || null,
+          email: profile?.email || null,
+          acao: "login",
+        };
+
+        for (const emp of allEmpresas) {
           try {
             await supabase.functions.invoke("fire-webhook", {
-              body: {
-                empresa_id: activeEmpresaId,
-                evento: "Acesso do Usuário",
-                descricao: `Login: ${profile?.nome || email}`,
-                nome: profile?.nome || null,
-                id_usuario: data.user.id || null,
-                id_telegram: profile?.telegram_id || null,
-                telefone: profile?.evolution_webhook_url || null,
-                email: profile?.email || null,
-                acao: "login",
-              },
+              body: { ...webhookBody, empresa_id: emp.empresa_id },
             });
-            console.log("[login webhook] fired successfully");
           } catch (whErr) {
-            console.error("[login webhook] error:", whErr);
+            console.error("[login webhook] error for empresa", emp.empresa_id, whErr);
           }
         }
 
