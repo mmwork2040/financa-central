@@ -210,6 +210,24 @@ export const useRelatoriosData = (periodo: string, customStart?: Date, customEnd
     fetchRelatoriosData();
   }, [periodo, customStart?.getTime(), customEnd?.getTime()]);
 
+  // Realtime listener for lancamentos changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('relatorios-lancamentos')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lancamentos' },
+        () => {
+          fetchRelatoriosData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [periodo, customStart?.getTime(), customEnd?.getTime()]);
+
   return {
     loading,
     dataReceitas,
