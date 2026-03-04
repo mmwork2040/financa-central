@@ -42,7 +42,11 @@ const gerarPayloadSugerido = (acao: string): string => {
       empresa_nome: "{{empresa_nome}}",
       acao: "Acesso do Usuário",
       timestamp: "{{timestamp}}",
-      usuario: { id: "{{user_id}}", nome: "{{user_nome}}", email: "{{user_email}}", telefone: "{{user_telefone}}" },
+      nome: "{{user_nome}}",
+      id_usuario: "{{user_id}}",
+      id_telegram: "{{user_telegram_id}}",
+      telefone: "{{user_telefone}}",
+      email: "{{user_email}}",
     }, null, 2);
   }
 
