@@ -59,19 +59,16 @@ const LandingPage = () => {
 
       {/* ===== SEÇÃO 1: HERO ===== */}
       <section className="relative overflow-hidden">
-        {/* Background decorativo */}
         <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 0%, hsla(25, 95%, 53%, 0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 80%, hsla(25, 95%, 53%, 0.05) 0%, transparent 50%)"
+          background: "radial-gradient(ellipse 80% 60% at 50% 0%, hsla(187, 92%, 41%, 0.1) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 80%, hsla(239, 84%, 67%, 0.06) 0%, transparent 50%)"
         }} />
-        {/* Dots decorativos */}
         <div className="absolute top-20 left-[10%] h-3 w-3 rounded-full bg-primary/20 shadow-lg animate-pulse hidden md:block" />
-        <div className="absolute top-40 right-[15%] h-2 w-2 rounded-full bg-primary/30 shadow-md animate-pulse hidden md:block" />
-        <div className="absolute bottom-32 left-[20%] h-4 w-4 rounded-full bg-primary/10 shadow-lg hidden md:block" />
+        <div className="absolute top-40 right-[15%] h-2 w-2 rounded-full bg-accent/30 shadow-md animate-pulse hidden md:block" />
+        <div className="absolute bottom-32 left-[20%] h-4 w-4 rounded-full bg-secondary/10 shadow-lg hidden md:block" />
         <div className="absolute top-60 right-[8%] h-2.5 w-2.5 rounded-full bg-primary/15 shadow-md hidden md:block" />
 
         <div className="container mx-auto px-4 py-16 md:py-24 relative">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Texto */}
             <div className="space-y-6 text-center md:text-left">
               <Badge className="rounded-full px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 text-xs font-semibold tracking-wide">
                 <Zap className="h-3 w-3 mr-1.5" />
@@ -79,11 +76,8 @@ const LandingPage = () => {
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
                 Seu departamento financeiro a uma{" "}
-                <span className="text-primary relative">
+                <span className="aurora-text">
                   mensagem de distância
-                  <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
-                    <path d="M2 8C50 2 100 2 150 6C200 10 250 4 298 8" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" opacity="0.3" />
-                  </svg>
                 </span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-lg mx-auto md:mx-0">
@@ -101,9 +95,7 @@ const LandingPage = () => {
               </div>
             </div>
 
-            {/* Phone mockup com floating cards */}
             <div className="flex justify-center relative">
-              {/* Floating stat cards */}
               <FloatingStatCard
                 icon={<TrendingUp className="h-4 w-4 text-primary" />}
                 label="Receitas do mês"
@@ -112,14 +104,14 @@ const LandingPage = () => {
                 delay="0s"
               />
               <FloatingStatCard
-                icon={<Target className="h-4 w-4 text-primary" />}
+                icon={<Target className="h-4 w-4 text-accent" />}
                 label="Precisão da IA"
                 value="95%"
                 className="absolute -right-4 top-24 md:-right-8 z-10"
                 delay="0.5s"
               />
               <FloatingStatCard
-                icon={<DollarSign className="h-4 w-4 text-primary" />}
+                icon={<DollarSign className="h-4 w-4 text-secondary" />}
                 label="Saldo atual"
                 value="R$ 10.300"
                 className="absolute -left-2 bottom-16 md:-left-6 z-10"
@@ -154,12 +146,11 @@ const LandingPage = () => {
       {/* ===== SEÇÃO 2: CONEXÃO COM A DOR ===== */}
       <section className="relative border-y border-border/40">
         <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse 60% 80% at 50% 50%, hsla(25, 95%, 53%, 0.04) 0%, transparent 60%)"
+          background: "radial-gradient(ellipse 60% 80% at 50% 50%, hsla(187, 92%, 41%, 0.04) 0%, transparent 60%)"
         }} />
         <div className="container mx-auto px-4 py-20 relative">
           <div className="max-w-3xl mx-auto text-center space-y-8">
             <div className="flex justify-center items-center gap-6 mb-8">
-              {/* Planilha riscada */}
               <div className="relative glass-card rounded-2xl p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg">
                 <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" style={{
                   background: "radial-gradient(ellipse at 50% 0%, hsla(0, 84%, 60%, 0.08) 0%, transparent 70%)"
@@ -169,7 +160,6 @@ const LandingPage = () => {
                 <p className="text-[10px] text-muted-foreground mt-2 font-medium">Planilhas</p>
               </div>
 
-              {/* Calculadora riscada */}
               <div className="relative glass-card rounded-2xl p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg">
                 <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" style={{
                   background: "radial-gradient(ellipse at 50% 0%, hsla(0, 84%, 60%, 0.08) 0%, transparent 70%)"
@@ -179,17 +169,15 @@ const LandingPage = () => {
                 <p className="text-[10px] text-muted-foreground mt-2 font-medium">Cálculos manuais</p>
               </div>
 
-              {/* Seta animada */}
               <div className="flex flex-col items-center gap-1 px-2">
                 <div className="h-px w-10 bg-gradient-to-r from-destructive/40 to-primary/60" />
                 <ArrowRight className="h-6 w-6 text-primary animate-pulse" />
                 <div className="h-px w-10 bg-gradient-to-r from-destructive/40 to-primary/60" />
               </div>
 
-              {/* IA solução */}
               <div className="relative glass-card rounded-2xl p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg border-primary/20">
                 <div className="absolute inset-0 rounded-2xl opacity-60 group-hover:opacity-100 transition-opacity" style={{
-                  background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.1) 0%, transparent 70%)"
+                  background: "radial-gradient(ellipse at 50% 0%, hsla(187, 92%, 41%, 0.12) 0%, transparent 70%)"
                 }} />
                 <Sparkles className="h-10 w-10 text-primary" />
                 <div className="h-5 w-5 bg-primary rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5 shadow-md">
@@ -207,16 +195,13 @@ const LandingPage = () => {
               A burocracia não pode ser um obstáculo para o seu crescimento.
             </p>
 
-            {/* Stats bar */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto pt-4">
               {[
                 { icon: Clock, value: "+85%", label: "Economia de tempo" },
                 { icon: Target, value: "98%", label: "Precisão nos dados" },
                 { icon: Zap, value: "2 min", label: "Por lançamento" },
               ].map((stat) => (
-                <div key={stat.label} className="glass-card rounded-2xl p-4 text-center hover:-translate-y-1 transition-all duration-300" style={{
-                  background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%), rgba(255,255,255,0.72)"
-                }}>
+                <div key={stat.label} className="glass-card rounded-2xl p-4 text-center hover:-translate-y-1 transition-all duration-300">
                   <stat.icon className="h-5 w-5 text-primary mx-auto mb-2" />
                   <p className="text-2xl font-extrabold text-foreground">{stat.value}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -231,12 +216,11 @@ const LandingPage = () => {
       <section className="container mx-auto px-4 py-20">
         <div className="text-center mb-14">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-            Tudo com o auxílio de <span className="text-primary">inteligência artificial</span>
+            Tudo com o auxílio de <span className="aurora-text">inteligência artificial</span>
           </h2>
           <p className="mt-3 text-muted-foreground text-lg">Veja como é simples fazer os lançamentos e ter o controle total.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-          {/* Linha conectora (desktop) */}
           <div className="hidden lg:block absolute top-16 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-primary/10 via-primary/30 to-primary/10" />
           
           {[
@@ -246,9 +230,8 @@ const LandingPage = () => {
             { step: 4, icon: FileBarChart, title: "Peça relatórios", desc: "Solicite relatórios à IA e gerencie seu financeiro na palma da mão." },
           ].map((item) => (
             <div key={item.step} className="glass-card rounded-2xl p-6 text-center space-y-3 group hover:-translate-y-1 hover:shadow-xl transition-all duration-300 relative overflow-hidden">
-              {/* Radial tint */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{
-                background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.08) 0%, transparent 70%)"
+                background: "radial-gradient(ellipse at 50% 0%, hsla(187, 92%, 41%, 0.08) 0%, transparent 70%)"
               }} />
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md z-10">
                 {item.step}
@@ -268,7 +251,7 @@ const LandingPage = () => {
         <div className="container mx-auto px-4 py-20">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-              Um sistema completo, <span className="text-primary">sem a complexidade</span> de um sistema tradicional
+              Um sistema completo, <span className="aurora-text">sem a complexidade</span> de um sistema tradicional
             </h2>
           </div>
 
@@ -301,7 +284,7 @@ const LandingPage = () => {
             </div>
           </div>
 
-          {/* Feature 2 — Fluxo de Caixa com imagem real */}
+          {/* Feature 2 — Fluxo de Caixa */}
           <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
             <div className="order-2 md:order-1 flex justify-center">
               <DashboardMockup />
@@ -378,7 +361,7 @@ const LandingPage = () => {
       <section className="container mx-auto px-4 py-20">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-            Para quem é o <span className="text-primary">Contabiliza AI</span>?
+            Para quem é o <span className="aurora-text">Contabiliza AI</span>?
           </h2>
           <p className="mt-3 text-muted-foreground text-lg">
             Criado para quem precisa de agilidade e não tem tempo para tarefas engessadas.
@@ -393,7 +376,7 @@ const LandingPage = () => {
           ].map((item) => (
             <div key={item.title} className="glass-card rounded-2xl p-6 text-center space-y-3 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{
-                background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%)"
+                background: "radial-gradient(ellipse at 50% 0%, hsla(187, 92%, 41%, 0.08) 0%, transparent 70%)"
               }} />
               <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto relative z-10">
                 <item.icon className="h-7 w-7 text-primary" />
@@ -404,7 +387,6 @@ const LandingPage = () => {
           ))}
         </div>
       </section>
-
 
       {/* ===== SEÇÃO 6: PLANOS E PREÇOS ===== */}
       <section className="border-t border-border/40">
