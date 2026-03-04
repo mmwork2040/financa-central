@@ -230,39 +230,158 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ===== SEÇÃO 3: COMO FUNCIONA ===== */}
+      {/* ===== SEÇÃO 3: COMO FUNCIONA — TRILHA VISUAL ===== */}
       <section className="container mx-auto px-4 py-20">
-        <div className="text-center mb-14">
+        <div className="text-center mb-16">
+          <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px] mb-4">Passo a passo</Badge>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">
             Tudo com o auxílio de <span className="text-primary">inteligência artificial</span>
           </h2>
-          <p className="mt-3 text-muted-foreground text-lg">Veja como é simples fazer os lançamentos e ter o controle total.</p>
+          <p className="mt-3 text-muted-foreground text-lg">Veja como é simples em 4 passos.</p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-          {/* Linha conectora (desktop) */}
-          <div className="hidden lg:block absolute top-16 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-primary/10 via-primary/30 to-primary/10" />
-          
-          {[
-            { step: 1, icon: MessageSquare, title: "Acesse o chat", desc: "Abra o chat diretamente do seu celular, onde estiver." },
-            { step: 2, icon: UserPlus, title: "Cadastre-se", desc: "Crie sua conta na plataforma em poucos segundos." },
-            { step: 3, icon: Mic, title: "Faça lançamentos", desc: "Envie mensagens de texto, áudios ou fotos de forma natural." },
-            { step: 4, icon: FileBarChart, title: "Peça relatórios", desc: "Solicite relatórios à IA e gerencie seu financeiro na palma da mão." },
-          ].map((item) => (
-            <div key={item.step} className="glass-card rounded-2xl p-6 text-center space-y-3 group hover:-translate-y-1 hover:shadow-xl transition-all duration-300 relative overflow-hidden">
-              {/* Radial tint */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{
-                background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.08) 0%, transparent 70%)"
-              }} />
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md z-10">
-                {item.step}
+
+        {/* Timeline trail */}
+        <div className="relative max-w-4xl mx-auto">
+          {/* Vertical line */}
+          <div className="absolute left-6 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/40 via-primary/20 to-border/30" />
+
+          {/* Step 1 */}
+          <div className="relative flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-12 mb-16 pl-16 md:pl-0">
+            <div className="absolute left-3.5 md:left-1/2 md:-translate-x-1/2 top-0 h-6 w-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow-lg z-10 ring-4 ring-background">1</div>
+            <div className="md:w-1/2 md:text-right md:pr-12 space-y-2">
+              <div className="inline-flex items-center gap-2 text-primary">
+                <MessageSquare className="h-5 w-5" />
+                <h3 className="text-lg font-bold text-foreground">Acesse o chat</h3>
               </div>
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mt-2 group-hover:bg-primary/20 transition-colors relative z-10">
-                <item.icon className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-base font-semibold text-foreground relative z-10">{item.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed relative z-10">{item.desc}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">Abra o chat pelo celular ou computador. A IA está pronta para te ajudar, 24 horas por dia.</p>
             </div>
-          ))}
+            <div className="md:w-1/2 md:pl-12">
+              <div className="glass-card rounded-2xl p-3 max-w-[260px] shadow-lg">
+                <div className="rounded-xl bg-muted/50 p-3 space-y-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center">
+                      <BarChart3 className="h-3 w-3 text-primary" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-foreground">Contabiliza AI</span>
+                    <span className="ml-auto h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                  </div>
+                  <div className="rounded-lg bg-background/80 p-2 text-[10px] text-muted-foreground">👋 Olá! Sou sua IA financeira. Como posso ajudar?</div>
+                  <div className="flex gap-1.5">
+                    <div className="rounded-full bg-primary/10 px-2 py-0.5 text-[8px] text-primary font-medium">💰 Lançar despesa</div>
+                    <div className="rounded-full bg-primary/10 px-2 py-0.5 text-[8px] text-primary font-medium">📊 Relatório</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div className="relative flex flex-col md:flex-row-reverse items-start md:items-center gap-6 md:gap-12 mb-16 pl-16 md:pl-0">
+            <div className="absolute left-3.5 md:left-1/2 md:-translate-x-1/2 top-0 h-6 w-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow-lg z-10 ring-4 ring-background">2</div>
+            <div className="md:w-1/2 md:text-left md:pl-12 space-y-2">
+              <div className="inline-flex items-center gap-2 text-primary">
+                <UserPlus className="h-5 w-5" />
+                <h3 className="text-lg font-bold text-foreground">Cadastre-se em segundos</h3>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">Crie sua conta com e-mail ou telefone. Sem burocracia, sem configurações complexas.</p>
+            </div>
+            <div className="md:w-1/2 md:pr-12 md:flex md:justify-end">
+              <div className="glass-card rounded-2xl p-3 max-w-[260px] shadow-lg">
+                <div className="rounded-xl bg-muted/50 p-4 space-y-2.5">
+                  <p className="text-[11px] font-semibold text-foreground text-center">Criar conta</p>
+                  <div className="space-y-1.5">
+                    <div className="rounded-lg bg-background/80 border border-border/40 px-2 py-1.5 text-[9px] text-muted-foreground">Nome completo</div>
+                    <div className="rounded-lg bg-background/80 border border-border/40 px-2 py-1.5 text-[9px] text-muted-foreground">E-mail</div>
+                    <div className="rounded-lg bg-background/80 border border-border/40 px-2 py-1.5 text-[9px] text-muted-foreground">Senha</div>
+                  </div>
+                  <div className="rounded-lg bg-primary text-primary-foreground text-center text-[9px] font-semibold py-1.5">Começar grátis →</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div className="relative flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-12 mb-16 pl-16 md:pl-0">
+            <div className="absolute left-3.5 md:left-1/2 md:-translate-x-1/2 top-0 h-6 w-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow-lg z-10 ring-4 ring-background">3</div>
+            <div className="md:w-1/2 md:text-right md:pr-12 space-y-2">
+              <div className="inline-flex items-center gap-2 text-primary">
+                <Mic className="h-5 w-5" />
+                <h3 className="text-lg font-bold text-foreground">Faça lançamentos</h3>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">Envie texto, áudio ou foto do recibo. A IA interpreta e lança automaticamente.</p>
+            </div>
+            <div className="md:w-1/2 md:pl-12">
+              <div className="glass-card rounded-2xl p-3 max-w-[260px] shadow-lg">
+                <div className="rounded-xl bg-muted/50 p-3 space-y-2">
+                  <div className="flex items-center gap-2 rounded-lg bg-primary/10 p-2">
+                    <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Mic className="h-3 w-3 text-primary" />
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5,6,7,8].map(i => (
+                        <div key={i} className="w-[2px] rounded-full bg-primary/60" style={{ height: `${Math.random() * 10 + 4}px` }} />
+                      ))}
+                    </div>
+                    <span className="text-[8px] text-muted-foreground ml-auto">0:08</span>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg bg-primary/10 p-2">
+                    <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Camera className="h-3 w-3 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-medium text-foreground">recibo.jpg</p>
+                      <p className="text-[7px] text-muted-foreground">📎 245 KB</p>
+                    </div>
+                  </div>
+                  <div className="rounded-lg bg-background/80 p-2 text-[9px] text-foreground">
+                    ✅ <span className="font-semibold">R$ 350,00</span> registrado como Despesa → Materiais
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 4 */}
+          <div className="relative flex flex-col md:flex-row-reverse items-start md:items-center gap-6 md:gap-12 pl-16 md:pl-0">
+            <div className="absolute left-3.5 md:left-1/2 md:-translate-x-1/2 top-0 h-6 w-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow-lg z-10 ring-4 ring-background">4</div>
+            <div className="md:w-1/2 md:text-left md:pl-12 space-y-2">
+              <div className="inline-flex items-center gap-2 text-primary">
+                <FileBarChart className="h-5 w-5" />
+                <h3 className="text-lg font-bold text-foreground">Peça relatórios</h3>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">Solicite DRE, fluxo de caixa ou qualquer relatório. A IA gera e envia na hora.</p>
+            </div>
+            <div className="md:w-1/2 md:pr-12 md:flex md:justify-end">
+              <div className="glass-card rounded-2xl p-3 max-w-[260px] shadow-lg">
+                <div className="rounded-xl bg-muted/50 p-3 space-y-2">
+                  <p className="text-[9px] font-semibold text-foreground">📊 Resumo — Março 2026</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[8px]">
+                      <span className="text-muted-foreground">Receitas</span>
+                      <span className="text-green-600 font-semibold">R$ 24.500</span>
+                    </div>
+                    <div className="flex justify-between text-[8px]">
+                      <span className="text-muted-foreground">Despesas</span>
+                      <span className="text-red-500 font-semibold">R$ 14.200</span>
+                    </div>
+                    <div className="h-px bg-border/50 my-1" />
+                    <div className="flex justify-between text-[9px] font-bold">
+                      <span className="text-foreground">Lucro</span>
+                      <span className="text-primary">R$ 10.300</span>
+                    </div>
+                  </div>
+                  <div className="flex items-end gap-1 h-8 pt-1">
+                    {[60, 45, 75, 50, 80, 65, 70].map((h, i) => (
+                      <div key={i} className="flex-1 rounded-sm bg-primary/30" style={{ height: `${h}%` }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* End dot */}
+          <div className="absolute left-3.5 md:left-1/2 md:-translate-x-1/2 -bottom-2 h-3 w-3 rounded-full bg-primary/30 ring-4 ring-background" />
         </div>
       </section>
 
