@@ -14,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 142 71% 45%;
+    --primary: 25 95% 53%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
@@ -31,18 +31,18 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 142 71% 45%;
+    --ring: 25 95% 53%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 215 25% 27%;
-    --sidebar-primary: 142 71% 45%;
+    --sidebar-primary: 25 95% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 40% 96%;
     --sidebar-accent-foreground: 215 25% 27%;
     --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 142 71% 45%;
+    --sidebar-ring: 25 95% 53%;
   }
 
   .dark {
@@ -55,7 +55,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 142 71% 45%;
+    --primary: 25 95% 53%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -72,16 +72,16 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 142 71% 45%;
+    --ring: 25 95% 53%;
 
     --sidebar-background: 222.2 84% 6%;
     --sidebar-foreground: 210 40% 85%;
-    --sidebar-primary: 142 71% 45%;
+    --sidebar-primary: 25 95% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217.2 32.6% 14%;
     --sidebar-accent-foreground: 210 40% 85%;
     --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 142 71% 45%;
+    --sidebar-ring: 25 95% 53%;
   }
 }
 
@@ -99,7 +99,7 @@
     @apply bg-background text-foreground font-sans;
     -webkit-tap-highlight-color: transparent;
     background-image:
-      radial-gradient(ellipse 80% 60% at 10% 90%, hsla(142, 71%, 45%, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 60% at 10% 90%, hsla(25, 95%, 53%, 0.06) 0%, transparent 60%),
       radial-gradient(ellipse 60% 50% at 90% 10%, hsla(217, 91%, 60%, 0.05) 0%, transparent 50%),
       radial-gradient(ellipse 50% 40% at 50% 50%, hsla(45, 93%, 47%, 0.03) 0%, transparent 40%);
     background-attachment: fixed;
