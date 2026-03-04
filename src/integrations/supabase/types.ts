@@ -887,9 +887,15 @@ export type Database = {
       projetos: {
         Row: {
           created_at: string
+          data_fim: string | null
+          data_inicio: string | null
           descricao: string | null
+          despesa_prevista: number
           empresa_id: string
           id: string
+          imposto_base: string
+          imposto_percentual: number
+          investimento_previsto: number
           nome: string
           orcamento: number
           status: string
@@ -897,9 +903,15 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
           descricao?: string | null
+          despesa_prevista?: number
           empresa_id: string
           id?: string
+          imposto_base?: string
+          imposto_percentual?: number
+          investimento_previsto?: number
           nome: string
           orcamento?: number
           status?: string
@@ -907,9 +919,15 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
           descricao?: string | null
+          despesa_prevista?: number
           empresa_id?: string
           id?: string
+          imposto_base?: string
+          imposto_percentual?: number
+          investimento_previsto?: number
           nome?: string
           orcamento?: number
           status?: string

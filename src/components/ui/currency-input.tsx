@@ -16,70 +16,91 @@ export interface CurrencyInputProps {
   className?: string;
 }
 
-function formatBRL(cents: number): string {
-  const isNegative = cents < 0;
-  const absCents = Math.abs(cents);
-  const intPart = Math.floor(absCents / 100);
-  const decPart = (absCents % 100).toString().padStart(2, "0");
-  const formatted = intPart.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return `${isNegative ? "-" : ""}R$ ${formatted},${decPart}`;
+function parseToNumber(raw: string): number {
+  // Remove everything except digits, comma, dot, minus
+  let cleaned = raw.replace(/[^\d.,-]/g, "");
+  if (!cleaned) return 0;
+
+  // Detect format: if last separator is comma and has <=2 digits after → comma is decimal
+  // e.g. "1.234,56" or "1234,5" → comma is decimal
+  // e.g. "1,234.56" → dot is decimal
+  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf(".");
+
+  if (lastComma > lastDot) {
+    // Comma is the decimal separator (Brazilian format)
+    cleaned = cleaned.replace(/\./g, "").replace(",", ".");
+  } else if (lastDot > lastComma) {
+    // Dot is the decimal separator
+    cleaned = cleaned.replace(/,/g, "");
+  } else {
+    // No separators or only one type
+    cleaned = cleaned.replace(",", ".");
+  }
+
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
 }
 
-function parseToCents(val: string): number {
-  return parseInt(val.replace(/\D/g, "") || "0", 10);
+function formatBRL(value: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function toRawDisplay(value: number): string {
+  if (value === 0) return "";
+  // Show as "1234,56" for easy editing
+  return value.toFixed(2).replace(".", ",");
 }
 
 export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
   ({ id, name, value, defaultValue, onValueChange, className, placeholder }, ref) => {
-    const getInitialCents = (): number => {
-      if (typeof value === "number") return Math.round(value * 100);
+    const getInitialValue = (): number => {
+      if (typeof value === "number") return value;
       if (defaultValue) {
-        const cleaned = defaultValue.replace(/[^\d.,\-]/g, "").replace(",", ".");
-        const num = parseFloat(cleaned);
-        return isNaN(num) ? 0 : Math.round(num * 100);
+        return parseToNumber(defaultValue);
       }
       return 0;
     };
 
-    const [cents, setCents] = React.useState(getInitialCents);
+    const [focused, setFocused] = React.useState(false);
+    const [displayText, setDisplayText] = React.useState(() => {
+      const v = getInitialValue();
+      return v === 0 ? "" : formatBRL(v);
+    });
+    const lastExternalValue = React.useRef(value);
 
-    // Sync if value prop changes externally
+    // Sync when value prop changes externally
     React.useEffect(() => {
-      if (typeof value === "number") {
-        setCents(Math.round(value * 100));
+      if (typeof value === "number" && value !== lastExternalValue.current) {
+        lastExternalValue.current = value;
+        if (!focused) {
+          setDisplayText(value === 0 ? "" : formatBRL(value));
+        }
       }
-    }, [value]);
+    }, [value, focused]);
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Backspace") {
-        e.preventDefault();
-        const newCents = Math.floor(cents / 10);
-        setCents(newCents);
-        onValueChange(String(newCents));
-        return;
-      }
+    const handleFocus = () => {
+      setFocused(true);
+      const currentValue = typeof value === "number" ? value : parseToNumber(displayText);
+      setDisplayText(toRawDisplay(currentValue));
+    };
 
-      if (e.key === "Delete") {
-        e.preventDefault();
-        setCents(0);
-        onValueChange("0");
-        return;
-      }
-
-      // Only allow digits
-      if (/^\d$/.test(e.key)) {
-        e.preventDefault();
-        const newCents = cents * 10 + parseInt(e.key, 10);
-        // Limit to prevent overflow (max ~999 million)
-        if (newCents > 99999999999) return;
-        setCents(newCents);
-        onValueChange(String(newCents));
-      }
+    const handleBlur = () => {
+      setFocused(false);
+      const parsed = parseToNumber(displayText);
+      const cents = Math.round(parsed * 100);
+      lastExternalValue.current = parsed;
+      setDisplayText(parsed === 0 ? "" : formatBRL(parsed));
+      onValueChange(String(cents));
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      // Prevent default change, we handle via keyDown
-      e.preventDefault();
+      setDisplayText(e.target.value);
     };
 
     return (
@@ -88,10 +109,11 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
         id={id}
         name={name}
         type="text"
-        inputMode="numeric"
-        value={formatBRL(cents)}
+        inputMode="decimal"
+        value={displayText}
         onChange={handleChange}
-        onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         placeholder={placeholder || "R$ 0,00"}
         className={cn(
           "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
