@@ -223,6 +223,7 @@ export type Database = {
           id: string
           llm_padrao: string | null
           logo_url: string | null
+          logs_enabled: boolean
           nome: string
           numero: string | null
           pessoal: boolean
@@ -244,6 +245,7 @@ export type Database = {
           id?: string
           llm_padrao?: string | null
           logo_url?: string | null
+          logs_enabled?: boolean
           nome: string
           numero?: string | null
           pessoal?: boolean
@@ -265,6 +267,7 @@ export type Database = {
           id?: string
           llm_padrao?: string | null
           logo_url?: string | null
+          logs_enabled?: boolean
           nome?: string
           numero?: string | null
           pessoal?: boolean
