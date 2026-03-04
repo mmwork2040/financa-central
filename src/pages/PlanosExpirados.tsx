@@ -6,6 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, ArrowRight, Star, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
+interface PlanoControles {
+  max_lancamentos: number;
+  chat_ia: boolean;
+  dashboard_completo: boolean;
+  relatorios_personalizados: boolean;
+}
+
 interface Plano {
   id: string;
   nome: string;
@@ -16,6 +23,40 @@ interface Plano {
   badge: string | null;
   link_acesso: string | null;
   itens: string[];
+  controles: PlanoControles;
+}
+
+const defaultControles: PlanoControles = {
+  max_lancamentos: 0,
+  chat_ia: false,
+  dashboard_completo: false,
+  relatorios_personalizados: false,
+};
+
+function parseItensFromDb(raw: any): { itens: string[]; controles: PlanoControles } {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return {
+      itens: Array.isArray(raw.items) ? raw.items : [],
+      controles: { ...defaultControles, ...(raw.controles || {}) },
+    };
+  }
+  if (Array.isArray(raw)) {
+    return { itens: raw.filter((x: any) => typeof x === 'string'), controles: { ...defaultControles } };
+  }
+  return { itens: [], controles: { ...defaultControles } };
+}
+
+function getControleItems(controles: PlanoControles): string[] {
+  const items: string[] = [];
+  if (controles.max_lancamentos === 0) {
+    items.push("Lançamentos ilimitados");
+  } else if (controles.max_lancamentos > 0) {
+    items.push(`Até ${controles.max_lancamentos} lançamentos`);
+  }
+  if (controles.chat_ia) items.push("Chat IA");
+  if (controles.dashboard_completo) items.push("Dashboard Completo");
+  if (controles.relatorios_personalizados) items.push("Relatórios Personalizados");
+  return items;
 }
 
 const PlanosExpirados = () => {
@@ -35,7 +76,10 @@ const PlanosExpirados = () => {
         .eq("ativo", true)
         .order("ordem");
       if (error) throw error;
-      setPlanos((data || []).map((p: any) => ({ ...p, itens: Array.isArray(p.itens) ? p.itens : [] })));
+      setPlanos((data || []).map((p: any) => {
+        const parsed = parseItensFromDb(p.itens);
+        return { ...p, itens: parsed.itens, controles: parsed.controles };
+      }));
     } catch {
       // fallback
     } finally {
@@ -74,55 +118,59 @@ const PlanosExpirados = () => {
         <div className="text-muted-foreground">Nenhum plano disponível no momento. Entre em contato com o administrador.</div>
       ) : (
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl w-full mb-8">
-          {planos.map((plano) => (
-            <div
-              key={plano.id}
-              className={`relative rounded-3xl p-6 flex flex-col transition-all duration-300 h-full ${
-                plano.destaque
-                  ? "glass-card border-2 border-primary shadow-xl shadow-primary/10 ring-2 ring-primary/20"
-                  : "glass-card"
-              }`}
-            >
-              {plano.destaque && (
-                <div className="absolute inset-0 pointer-events-none rounded-3xl" style={{
-                  background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.08) 0%, transparent 60%)"
-                }} />
-              )}
-              {plano.badge && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
-                  <Badge className="bg-primary text-primary-foreground px-4 py-1.5 text-xs font-semibold gap-1.5 rounded-full shadow-lg shadow-primary/30 whitespace-nowrap border-2 border-background">
-                    <Star className="h-3 w-3 fill-current" />
-                    {plano.badge}
-                  </Badge>
-                </div>
-              )}
-              <div className="mb-4 relative z-10">
-                <h3 className="text-lg font-bold text-foreground">{plano.nome}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{plano.descricao}</p>
-              </div>
-              <div className="mb-5 relative z-10">
-                <span className="text-3xl font-extrabold text-foreground">R$ {plano.preco}</span>
-                <span className="text-sm text-muted-foreground ml-1">/ mês</span>
-              </div>
-              <ul className="space-y-2.5 mb-6 flex-1 relative z-10">
-                {(plano.itens.length > 0 ? plano.itens : ["Acesso ao sistema"]).map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-foreground">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Button
-                onClick={() => handleSelectPlan(plano)}
-                className={`w-full relative z-10 rounded-full ${plano.destaque ? "shadow-lg shadow-primary/20" : ""}`}
-                variant={plano.destaque ? "default" : "outline"}
-                size="lg"
+          {planos.map((plano) => {
+            const controleItems = getControleItems(plano.controles);
+            const allItems = [...controleItems, ...plano.itens];
+            return (
+              <div
+                key={plano.id}
+                className={`relative rounded-3xl p-6 flex flex-col transition-all duration-300 h-full ${
+                  plano.destaque
+                    ? "glass-card border-2 border-primary shadow-xl shadow-primary/10 ring-2 ring-primary/20"
+                    : "glass-card"
+                }`}
               >
-                Assinar agora
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+                {plano.destaque && (
+                  <div className="absolute inset-0 pointer-events-none rounded-3xl" style={{
+                    background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.08) 0%, transparent 60%)"
+                  }} />
+                )}
+                {plano.badge && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
+                    <Badge className="bg-primary text-primary-foreground px-4 py-1.5 text-xs font-semibold gap-1.5 rounded-full shadow-lg shadow-primary/30 whitespace-nowrap border-2 border-background">
+                      <Star className="h-3 w-3 fill-current" />
+                      {plano.badge}
+                    </Badge>
+                  </div>
+                )}
+                <div className="mb-4 relative z-10">
+                  <h3 className="text-lg font-bold text-foreground">{plano.nome}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">{plano.descricao}</p>
+                </div>
+                <div className="mb-5 relative z-10">
+                  <span className="text-3xl font-extrabold text-foreground">R$ {plano.preco}</span>
+                  <span className="text-sm text-muted-foreground ml-1">/ {plano.periodo}</span>
+                </div>
+                <ul className="space-y-2.5 mb-6 flex-1 relative z-10">
+                  {(allItems.length > 0 ? allItems : ["Acesso ao sistema"]).map((f, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm text-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  onClick={() => handleSelectPlan(plano)}
+                  className={`w-full relative z-10 rounded-full ${plano.destaque ? "shadow-lg shadow-primary/20" : ""}`}
+                  variant={plano.destaque ? "default" : "outline"}
+                  size="lg"
+                >
+                  Assinar agora
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            );
+          })}
         </div>
       )}
 

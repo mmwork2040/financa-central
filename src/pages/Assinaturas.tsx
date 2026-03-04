@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CreditCard, Plus, Pencil, Trash2, Loader2, Star, ExternalLink, CheckCircle2, X } from "lucide-react";
+import { CreditCard, Plus, Pencil, Trash2, Loader2, Star, ExternalLink, CheckCircle2, X, MessageSquare, BarChart3, FileText, Layers } from "lucide-react";
+
+interface PlanoControles {
+  max_lancamentos: number;
+  chat_ia: boolean;
+  dashboard_completo: boolean;
+  relatorios_personalizados: boolean;
+}
 
 interface Plano {
   id: string;
@@ -22,6 +29,36 @@ interface Plano {
   link_acesso: string | null;
   ordem: number;
   itens: string[];
+  controles: PlanoControles;
+}
+
+const defaultControles: PlanoControles = {
+  max_lancamentos: 0,
+  chat_ia: false,
+  dashboard_completo: false,
+  relatorios_personalizados: false,
+};
+
+function parseItensFromDb(raw: any): { itens: string[]; controles: PlanoControles } {
+  if (!raw || !Array.isArray(raw) && typeof raw !== 'object') {
+    return { itens: [], controles: { ...defaultControles } };
+  }
+  // New format: { items: string[], controles: PlanoControles }
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return {
+      itens: Array.isArray(raw.items) ? raw.items : [],
+      controles: { ...defaultControles, ...(raw.controles || {}) },
+    };
+  }
+  // Legacy format: string[]
+  if (Array.isArray(raw)) {
+    return { itens: raw.filter((x: any) => typeof x === 'string'), controles: { ...defaultControles } };
+  }
+  return { itens: [], controles: { ...defaultControles } };
+}
+
+function serializeItensToDb(itens: string[], controles: PlanoControles): any {
+  return { items: itens, controles };
 }
 
 const periodoOptions = [
@@ -48,6 +85,7 @@ const Assinaturas = () => {
     link_acesso: "",
     ordem: 0,
     itens: [] as string[],
+    controles: { ...defaultControles },
   });
 
   useEffect(() => {
@@ -62,10 +100,10 @@ const Assinaturas = () => {
         .select("*")
         .order("ordem");
       if (error) throw error;
-      setPlanos((data || []).map((p: any) => ({
-        ...p,
-        itens: Array.isArray(p.itens) ? p.itens : [],
-      })));
+      setPlanos((data || []).map((p: any) => {
+        const parsed = parseItensFromDb(p.itens);
+        return { ...p, itens: parsed.itens, controles: parsed.controles };
+      }));
     } catch (error: any) {
       toast.error(error.message || "Erro ao carregar planos");
     } finally {
@@ -75,7 +113,7 @@ const Assinaturas = () => {
 
   const openNew = () => {
     setEditingPlano(null);
-    setForm({ nome: "", descricao: "", preco: "", periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, itens: [] });
+    setForm({ nome: "", descricao: "", preco: "", periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, itens: [], controles: { ...defaultControles } });
     setNovoItem("");
     setDialogOpen(true);
   };
@@ -93,6 +131,7 @@ const Assinaturas = () => {
       link_acesso: plano.link_acesso || "",
       ordem: plano.ordem,
       itens: plano.itens || [],
+      controles: plano.controles || { ...defaultControles },
     });
     setNovoItem("");
     setDialogOpen(true);
@@ -126,7 +165,7 @@ const Assinaturas = () => {
         ativo: form.ativo,
         link_acesso: form.link_acesso || null,
         ordem: form.ordem,
-        itens: form.itens,
+        itens: serializeItensToDb(form.itens, form.controles),
       };
 
       if (editingPlano) {
@@ -181,6 +220,19 @@ const Assinaturas = () => {
     }
   };
 
+  const getControleItems = (controles: PlanoControles): string[] => {
+    const items: string[] = [];
+    if (controles.max_lancamentos === 0) {
+      items.push("Lançamentos ilimitados");
+    } else if (controles.max_lancamentos > 0) {
+      items.push(`Até ${controles.max_lancamentos} lançamentos`);
+    }
+    if (controles.chat_ia) items.push("Chat IA");
+    if (controles.dashboard_completo) items.push("Dashboard Completo");
+    if (controles.relatorios_personalizados) items.push("Relatórios Personalizados");
+    return items;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -215,60 +267,64 @@ const Assinaturas = () => {
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {planos.map((plano) => (
-            <div
-              key={plano.id}
-              className={`relative rounded-xl border p-4 transition-all ${
-                plano.destaque ? "border-primary shadow-md" : "border-border"
-              } ${!plano.ativo ? "opacity-50" : ""}`}
-            >
-              {plano.badge && (
-                <Badge className="absolute -top-2.5 left-3 bg-primary text-primary-foreground text-[10px] gap-1">
-                  <Star className="h-3 w-3 fill-current" />
-                  {plano.badge}
-                </Badge>
-              )}
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h4 className="font-semibold text-sm">{plano.nome}</h4>
-                  <p className="text-xs text-muted-foreground">{plano.descricao}</p>
+          {planos.map((plano) => {
+            const controleItems = getControleItems(plano.controles);
+            const allItems = [...controleItems, ...plano.itens];
+            return (
+              <div
+                key={plano.id}
+                className={`relative rounded-xl border p-4 transition-all ${
+                  plano.destaque ? "border-primary shadow-md" : "border-border"
+                } ${!plano.ativo ? "opacity-50" : ""}`}
+              >
+                {plano.badge && (
+                  <Badge className="absolute -top-2.5 left-3 bg-primary text-primary-foreground text-[10px] gap-1">
+                    <Star className="h-3 w-3 fill-current" />
+                    {plano.badge}
+                  </Badge>
+                )}
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h4 className="font-semibold text-sm">{plano.nome}</h4>
+                    <p className="text-xs text-muted-foreground">{plano.descricao}</p>
+                  </div>
+                  <Switch
+                    checked={plano.ativo}
+                    onCheckedChange={() => toggleAtivo(plano)}
+                    className="scale-75"
+                  />
                 </div>
-                <Switch
-                  checked={plano.ativo}
-                  onCheckedChange={() => toggleAtivo(plano)}
-                  className="scale-75"
-                />
-              </div>
-              <div className="mb-3">
-                <span className="text-2xl font-bold">R$ {plano.preco}</span>
-                <span className="text-xs text-muted-foreground ml-1">/ {plano.periodo}</span>
-              </div>
-              {plano.itens && plano.itens.length > 0 && (
-                <ul className="space-y-1 mb-3">
-                  {plano.itens.map((item, i) => (
-                    <li key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {plano.link_acesso && (
-                <div className="text-xs text-muted-foreground mb-3 flex items-center gap-1 truncate">
-                  <ExternalLink className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{plano.link_acesso}</span>
+                <div className="mb-3">
+                  <span className="text-2xl font-bold">R$ {plano.preco}</span>
+                  <span className="text-xs text-muted-foreground ml-1">/ {plano.periodo}</span>
                 </div>
-              )}
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => openEdit(plano)}>
-                  <Pencil className="h-3 w-3" /> Editar
-                </Button>
-                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive gap-1" onClick={() => handleDelete(plano.id)}>
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                {allItems.length > 0 && (
+                  <ul className="space-y-1 mb-3">
+                    {allItems.map((item, i) => (
+                      <li key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {plano.link_acesso && (
+                  <div className="text-xs text-muted-foreground mb-3 flex items-center gap-1 truncate">
+                    <ExternalLink className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{plano.link_acesso}</span>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => openEdit(plano)}>
+                    <Pencil className="h-3 w-3" /> Editar
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive gap-1" onClick={() => handleDelete(plano.id)}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -311,14 +367,79 @@ const Assinaturas = () => {
               <Input value={form.badge} onChange={(e) => setForm(prev => ({ ...prev, badge: e.target.value }))} placeholder="Ex: Melhor Escolha" />
             </div>
 
+            {/* Controles de funcionalidades */}
+            <div className="space-y-3 rounded-lg border p-3">
+              <Label className="text-sm font-semibold flex items-center gap-2">
+                <Layers className="h-4 w-4 text-primary" />
+                Controle de Funcionalidades
+              </Label>
+              <p className="text-xs text-muted-foreground">Funcionalidades ativadas serão exibidas nos planos</p>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Lançamentos (0 = ilimitados)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={form.controles.max_lancamentos}
+                  onChange={(e) => setForm(prev => ({
+                    ...prev,
+                    controles: { ...prev.controles, max_lancamentos: parseInt(e.target.value) || 0 }
+                  }))}
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label className="text-xs flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5 text-primary" />
+                  Chat IA
+                </Label>
+                <Switch
+                  checked={form.controles.chat_ia}
+                  onCheckedChange={(v) => setForm(prev => ({
+                    ...prev,
+                    controles: { ...prev.controles, chat_ia: v }
+                  }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label className="text-xs flex items-center gap-1.5">
+                  <BarChart3 className="h-3.5 w-3.5 text-primary" />
+                  Dashboard Completo
+                </Label>
+                <Switch
+                  checked={form.controles.dashboard_completo}
+                  onCheckedChange={(v) => setForm(prev => ({
+                    ...prev,
+                    controles: { ...prev.controles, dashboard_completo: v }
+                  }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label className="text-xs flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-primary" />
+                  Relatórios Personalizados
+                </Label>
+                <Switch
+                  checked={form.controles.relatorios_personalizados}
+                  onCheckedChange={(v) => setForm(prev => ({
+                    ...prev,
+                    controles: { ...prev.controles, relatorios_personalizados: v }
+                  }))}
+                />
+              </div>
+            </div>
+
             {/* Itens inclusos */}
             <div className="space-y-2">
-              <Label>Itens inclusos no plano</Label>
+              <Label>Itens adicionais inclusos no plano</Label>
               <div className="flex gap-2">
                 <Input
                   value={novoItem}
                   onChange={(e) => setNovoItem(e.target.value)}
-                  placeholder="Ex: Acesso ilimitado"
+                  placeholder="Ex: Suporte prioritário"
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addItem(); } }}
                 />
                 <Button type="button" variant="outline" size="sm" onClick={addItem} className="shrink-0">

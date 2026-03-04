@@ -908,6 +908,7 @@ export type Database = {
           descricao: string | null
           destaque: boolean
           id: string
+          itens: Json | null
           link_acesso: string | null
           nome: string
           ordem: number
@@ -922,6 +923,7 @@ export type Database = {
           descricao?: string | null
           destaque?: boolean
           id?: string
+          itens?: Json | null
           link_acesso?: string | null
           nome: string
           ordem?: number
@@ -936,6 +938,7 @@ export type Database = {
           descricao?: string | null
           destaque?: boolean
           id?: string
+          itens?: Json | null
           link_acesso?: string | null
           nome?: string
           ordem?: number
