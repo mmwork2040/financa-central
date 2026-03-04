@@ -1,3 +1,4 @@
+// LancamentosContext — manages lancamentos state and CRUD
 import React, {
   createContext,
   useState,
