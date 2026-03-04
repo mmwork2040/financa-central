@@ -88,7 +88,7 @@ const ProjetoDetalhe = () => {
           <TabsTrigger value="lancamentos">Lançamentos ({lancamentos.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="resumo">
-          <ProjetoResumo projeto={projeto} summary={summary} />
+          <ProjetoResumo projeto={projeto} summary={summary} lancamentos={lancamentos} />
         </TabsContent>
         <TabsContent value="lancamentos">
           <ProjetoLancamentos lancamentos={lancamentos} />

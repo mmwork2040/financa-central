@@ -1,14 +1,22 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { formatCurrency } from "@/utils/format";
 import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   TrendingUp, TrendingDown, DollarSign, Target, Receipt,
   Clock, CalendarDays, Percent, PiggyBank
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
 import type { Projeto } from "@/hooks/useProjetos";
+
+interface Lancamento {
+  tipo: string;
+  valor: number;
+  data_vencimento: string;
+  status: string;
+}
 
 interface LancamentoSummary {
   receitasRealizadas: number;
@@ -20,9 +28,10 @@ interface LancamentoSummary {
 interface Props {
   projeto: Projeto;
   summary: LancamentoSummary;
+  lancamentos: Lancamento[];
 }
 
-export const ProjetoResumo = ({ projeto, summary }: Props) => {
+export const ProjetoResumo = ({ projeto, summary, lancamentos }: Props) => {
   const { visible } = useValuesVisibility();
   const display = (val: number) => (visible ? formatCurrency(val) : "••••••");
 
@@ -43,8 +52,26 @@ export const ProjetoResumo = ({ projeto, summary }: Props) => {
     { label: "Saldo Pendente", value: totalPendente, icon: Clock, color: "text-muted-foreground" },
   ];
 
+  const chartData = useMemo(() => {
+    const monthMap: Record<string, { receitas: number; despesas: number }> = {};
+    for (const l of lancamentos) {
+      if (!l.data_vencimento) continue;
+      const key = l.data_vencimento.substring(0, 7); // yyyy-MM
+      if (!monthMap[key]) monthMap[key] = { receitas: 0, despesas: 0 };
+      if (l.tipo === "receita") monthMap[key].receitas += Number(l.valor) || 0;
+      else if (l.tipo === "despesa") monthMap[key].despesas += Number(l.valor) || 0;
+    }
+    return Object.keys(monthMap)
+      .sort()
+      .map((key) => ({
+        name: format(parseISO(key + "-01"), "MMM/yy", { locale: ptBR }),
+        receitas: monthMap[key].receitas,
+        despesas: monthMap[key].despesas,
+      }));
+  }, [lancamentos]);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {(projeto.data_inicio || projeto.data_fim) && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <CalendarDays className="h-4 w-4" />
@@ -68,6 +95,28 @@ export const ProjetoResumo = ({ projeto, summary }: Props) => {
           </Card>
         ))}
       </div>
+
+      {chartData.length > 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Evolução Mensal</CardTitle>
+            <CardDescription>Receitas vs Despesas por mês</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis tickFormatter={(v) => formatCurrency(v).split(",")[0]} />
+                <Tooltip formatter={(value) => (visible ? formatCurrency(Number(value)) : "••••••")} />
+                <Legend />
+                <Bar dataKey="receitas" name="Receitas" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="despesas" name="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
