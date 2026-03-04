@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CreditCard, Plus, Pencil, Trash2, Loader2, Star, ExternalLink, CheckCircle2, X, MessageSquare, BarChart3, FileText, Layers } from "lucide-react";
@@ -77,13 +78,14 @@ const Assinaturas = () => {
   const [form, setForm] = useState({
     nome: "",
     descricao: "",
-    preco: "",
+    preco: 0,
     periodo: "mensal",
     destaque: false,
     badge: "",
     ativo: true,
     link_acesso: "",
     ordem: 0,
+    max_empresas: 1,
     itens: [] as string[],
     controles: { ...defaultControles },
   });
@@ -113,7 +115,7 @@ const Assinaturas = () => {
 
   const openNew = () => {
     setEditingPlano(null);
-    setForm({ nome: "", descricao: "", preco: "", periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, itens: [], controles: { ...defaultControles } });
+    setForm({ nome: "", descricao: "", preco: 0, periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, max_empresas: 1, itens: [], controles: { ...defaultControles } });
     setNovoItem("");
     setDialogOpen(true);
   };
@@ -123,13 +125,14 @@ const Assinaturas = () => {
     setForm({
       nome: plano.nome,
       descricao: plano.descricao || "",
-      preco: String(plano.preco),
+      preco: plano.preco,
       periodo: plano.periodo,
       destaque: plano.destaque,
       badge: plano.badge || "",
       ativo: plano.ativo,
       link_acesso: plano.link_acesso || "",
       ordem: plano.ordem,
+      max_empresas: (plano as any).max_empresas ?? 1,
       itens: plano.itens || [],
       controles: plano.controles || { ...defaultControles },
     });
@@ -158,13 +161,14 @@ const Assinaturas = () => {
       const payload = {
         nome: form.nome,
         descricao: form.descricao || null,
-        preco: parseFloat(form.preco),
+        preco: form.preco,
         periodo: form.periodo,
         destaque: form.destaque,
         badge: form.badge || null,
         ativo: form.ativo,
         link_acesso: form.link_acesso || null,
         ordem: form.ordem,
+        max_empresas: form.max_empresas || 1,
         itens: serializeItensToDb(form.itens, form.controles),
       };
 
@@ -295,8 +299,17 @@ const Assinaturas = () => {
                   />
                 </div>
                 <div className="mb-3">
-                  <span className="text-2xl font-bold">R$ {plano.preco}</span>
+                  <span className="text-2xl font-bold">R$ {plano.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                   <span className="text-xs text-muted-foreground ml-1">/ {plano.periodo}</span>
+                  {plano.periodo !== 'mensal' && (() => {
+                    const meses = plano.periodo === 'trimestral' ? 3 : plano.periodo === 'anual' ? 12 : 1;
+                    const mensal = plano.preco / meses;
+                    return (
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        equivale a <span className="font-semibold">R$ {mensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>/mês
+                      </p>
+                    );
+                  })()}
                 </div>
                 {allItems.length > 0 && (
                   <ul className="space-y-1 mb-3">
@@ -345,7 +358,22 @@ const Assinaturas = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Preço (R$) *</Label>
-                <Input type="number" value={form.preco} onChange={(e) => setForm(prev => ({ ...prev, preco: e.target.value }))} placeholder="197" />
+                <CurrencyInput
+                  id="preco-plano"
+                  name="preco"
+                  value={form.preco}
+                  onValueChange={(val) => setForm(prev => ({ ...prev, preco: val ? parseInt(val) / 100 : 0 }))}
+                  placeholder="0,00"
+                />
+                {form.preco > 0 && form.periodo !== 'mensal' && (() => {
+                  const meses = form.periodo === 'trimestral' ? 3 : form.periodo === 'anual' ? 12 : 1;
+                  const mensal = form.preco / meses;
+                  return (
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      equivale a <span className="font-semibold text-foreground">R$ {mensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>/mês
+                    </p>
+                  );
+                })()}
               </div>
               <div className="space-y-2">
                 <Label>Período</Label>
@@ -468,7 +496,13 @@ const Assinaturas = () => {
                 <Label>Ordem</Label>
                 <Input type="number" value={form.ordem} onChange={(e) => setForm(prev => ({ ...prev, ordem: parseInt(e.target.value) || 0 }))} />
               </div>
-              <div className="flex items-center gap-2 pt-6">
+              <div className="space-y-2">
+                <Label>Máx. Empresas</Label>
+                <Input type="number" min="1" value={form.max_empresas} onChange={(e) => setForm(prev => ({ ...prev, max_empresas: parseInt(e.target.value) || 1 }))} placeholder="1" />
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <Switch checked={form.destaque} onCheckedChange={(v) => setForm(prev => ({ ...prev, destaque: v }))} />
                 <Label>Destaque</Label>
               </div>
