@@ -5,51 +5,83 @@
 
 @layer base {
   :root {
-    --background: 210 65% 4%;
-    --foreground: 190 100% 97%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 210 50% 7%;
-    --card-foreground: 190 100% 97%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 210 50% 7%;
-    --popover-foreground: 190 100% 97%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 187 92% 41%;
-    --primary-foreground: 210 65% 4%;
+    --primary: 25 95% 53%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 91% 60%;
-    --secondary-foreground: 210 65% 4%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 210 40% 14%;
-    --muted-foreground: 210 25% 58%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 263 70% 76%;
-    --accent-foreground: 210 65% 4%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 30% 15%;
-    --input: 210 30% 15%;
-    --ring: 187 92% 41%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 25 95% 53%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 210 50% 6%;
-    --sidebar-foreground: 190 40% 85%;
-    --sidebar-primary: 187 92% 41%;
-    --sidebar-primary-foreground: 210 65% 4%;
-    --sidebar-accent: 210 40% 12%;
-    --sidebar-accent-foreground: 190 40% 85%;
-    --sidebar-border: 210 30% 13%;
-    --sidebar-ring: 187 92% 41%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 27%;
+    --sidebar-primary: 25 95% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 215 25% 27%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 25 95% 53%;
+  }
 
-    /* Aurora gradients */
-    --aurora-gradient-primary: linear-gradient(135deg, #06B6D4 0%, #6366F1 100%);
-    --aurora-gradient-text: linear-gradient(90deg, #06B6D4 0%, #818CF8 55%, #A78BFA 100%);
-    --aurora-glow-cyan: hsla(187, 92%, 41%, 0.15);
-    --aurora-glow-indigo: hsla(239, 84%, 67%, 0.12);
-    --aurora-glow-violet: hsla(263, 70%, 76%, 0.10);
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 25 95% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 25 95% 53%;
+
+    --sidebar-background: 222.2 84% 6%;
+    --sidebar-foreground: 210 40% 85%;
+    --sidebar-primary: 25 95% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217.2 32.6% 14%;
+    --sidebar-accent-foreground: 210 40% 85%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 25 95% 53%;
   }
 }
 
@@ -64,13 +96,12 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    @apply bg-background text-foreground font-sans;
     -webkit-tap-highlight-color: transparent;
     background-image:
-      radial-gradient(ellipse 80% 60% at 10% 90%, var(--aurora-glow-cyan) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 90% 10%, var(--aurora-glow-indigo) 0%, transparent 50%),
-      radial-gradient(ellipse 50% 40% at 50% 50%, var(--aurora-glow-violet) 0%, transparent 40%);
+      radial-gradient(ellipse 80% 60% at 10% 90%, hsla(25, 95%, 53%, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 10%, hsla(217, 91%, 60%, 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, hsla(45, 93%, 47%, 0.03) 0%, transparent 40%);
     background-attachment: fixed;
   }
 
@@ -85,22 +116,35 @@
 }
 
 @layer components {
-  /* Glass utilities — Aurora dark */
+  /* Glass utilities */
   .glass-card {
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow:
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+      0 4px 24px -6px rgba(0, 0, 0, 0.06);
+  }
+
+  .glass-surface {
+    background: rgba(255, 255, 255, 0.48);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+
+  .dark .glass-card {
+    background: rgba(15, 23, 42, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow:
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.04),
       0 4px 24px -6px rgba(0, 0, 0, 0.3);
   }
 
-  .glass-surface {
-    background: rgba(255, 255, 255, 0.02);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+  .dark .glass-surface {
+    background: rgba(15, 23, 42, 0.48);
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   .card-dashboard {
@@ -108,15 +152,15 @@
   }
   
   .card-success {
-    @apply border-green-800/40 bg-green-900/20 text-green-400;
+    @apply border-green-200 bg-green-50 text-green-800;
   }
   
   .card-danger {
-    @apply border-red-800/40 bg-red-900/20 text-red-400;
+    @apply border-red-200 bg-red-50 text-red-800;
   }
   
   .card-warning {
-    @apply border-amber-800/40 bg-amber-900/20 text-amber-400;
+    @apply border-amber-200 bg-amber-50 text-amber-800;
   }
   
   .sidebar-link {
@@ -138,7 +182,7 @@
   }
   
   .table-responsive {
-    @apply min-w-full divide-y divide-border;
+    @apply min-w-full divide-y divide-gray-200;
   }
   
   .table-header {
@@ -146,7 +190,7 @@
   }
   
   .table-row {
-    @apply bg-card hover:bg-muted/50;
+    @apply bg-white hover:bg-muted/50;
   }
   
   .table-row:nth-child(even) {
@@ -155,14 +199,6 @@
   
   .table-cell {
     @apply px-4 py-3 text-sm whitespace-nowrap;
-  }
-
-  /* Aurora gradient text utility */
-  .aurora-text {
-    background: var(--aurora-gradient-text);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
 }
 

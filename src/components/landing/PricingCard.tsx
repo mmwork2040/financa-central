@@ -33,9 +33,10 @@ const PricingCard = ({ title, price, period, description, highlighted = false, b
           : "glass-card hover:shadow-lg hover:-translate-y-1"
       }`}
     >
+      {/* Radial tint for highlighted */}
       {highlighted && (
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse at 50% 0%, hsla(187, 92%, 41%, 0.1) 0%, transparent 60%)"
+          background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.08) 0%, transparent 60%)"
         }} />
       )}
 
