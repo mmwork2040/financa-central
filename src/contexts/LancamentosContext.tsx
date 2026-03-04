@@ -210,8 +210,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const fetchLancamentos = useCallback(async () => {
     setLoading(true);
     try {
-      // Silently generate recurring transactions for future months
-      supabase.functions.invoke("generate-recurring").catch(() => {});
+      // Recurring generation removed from here — only triggered on status change
 
       // Query 1: lancamentos do mês selecionado
       let query = (supabase as any).from("lancamentos").select(`
@@ -742,8 +741,8 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       // Auto-generate next occurrence for recurring transactions when paying
       if (lancamento && lancamento.recorrente && !lancamento.total_parcelas && ["pago", "recebido"].includes(status)) {
-        // Trigger the edge function to fill future months
-        supabase.functions.invoke("generate-recurring").catch(() => {});
+        // Trigger the edge function to fill future months and wait for completion
+        await supabase.functions.invoke("generate-recurring");
       }
 
       setLancamentos(

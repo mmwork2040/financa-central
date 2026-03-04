@@ -73,10 +73,10 @@ Deno.serve(async (req) => {
 
     if (fetchError) throw fetchError;
 
-    // Group by chain key: descricao + valor + tipo
+    // Group by chain key: descricao + valor + tipo + recorrencia_tipo
     const chains = new Map<string, typeof allRecorrentes>();
     for (const lanc of allRecorrentes || []) {
-      const key = `${lanc.descricao}|||${lanc.valor}|||${lanc.tipo}`;
+      const key = `${lanc.descricao}|||${lanc.valor}|||${lanc.tipo}|||${lanc.recorrencia_tipo || 'mensal'}`;
       if (!chains.has(key)) chains.set(key, []);
       chains.get(key)!.push(lanc);
     }
@@ -113,9 +113,27 @@ Deno.serve(async (req) => {
         // Stop if beyond recorrencia_fim
         if (recFim && nextDateStr > recFim) break;
 
-        // Check if this date already exists in the chain
-        const alreadyExists = chainLancs.some((l: any) => l.data_vencimento === nextDateStr);
-        if (alreadyExists) {
+        // Check if this date already exists in the chain (in-memory check)
+        const alreadyInChain = chainLancs.some((l: any) => l.data_vencimento === nextDateStr);
+        if (alreadyInChain) {
+          currentDate = nextDate;
+          continue;
+        }
+
+        // Database-level check to prevent duplicates from concurrent calls
+        const { data: existing } = await supabase
+          .from("lancamentos")
+          .select("id")
+          .eq("empresa_id", empresaId)
+          .eq("descricao", template.descricao)
+          .eq("valor", template.valor)
+          .eq("tipo", template.tipo)
+          .eq("data_vencimento", nextDateStr)
+          .eq("recorrente", true)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          chainLancs.push(existing[0]);
           currentDate = nextDate;
           continue;
         }
