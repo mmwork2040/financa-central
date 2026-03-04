@@ -1166,6 +1166,30 @@ export type Database = {
           },
         ]
       }
+      termos_politica: {
+        Row: {
+          conteudo: string
+          id: string
+          tipo: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          conteudo?: string
+          id?: string
+          tipo: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          conteudo?: string
+          id?: string
+          tipo?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
