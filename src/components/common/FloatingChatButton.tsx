@@ -279,7 +279,7 @@ const FloatingChatButton: React.FC = () => {
     <>
       <Button
         onClick={() => {
-          window.open("https://t.me/meu_agente_financeir", "_blank");
+          window.open("https://t.me/meu_agente_financeiro_bot", "_blank");
         }}
         className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[9999] h-14 w-14 rounded-full shadow-xl relative bg-primary hover:bg-primary/90"
         size="icon"
@@ -298,7 +298,7 @@ const FloatingChatButton: React.FC = () => {
         <div className="fixed bottom-36 md:bottom-[5.5rem] right-4 md:right-6 z-[9999] animate-fade-in" style={{ position: 'fixed' }}>
           <div
             className="bg-card border border-border shadow-2xl rounded-2xl p-4 max-w-[280px] cursor-pointer group hover:shadow-primary/10 transition-shadow relative"
-            onClick={() => { setShowTooltip(false); window.open("https://t.me/meu_agente_financeir", "_blank"); }}
+            onClick={() => { setShowTooltip(false); window.open("https://t.me/meu_agente_financeiro_bot", "_blank"); }}
           >
             <button
               className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors"
