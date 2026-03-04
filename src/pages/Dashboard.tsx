@@ -14,7 +14,7 @@ import { ValuesVisibilityProvider, useValuesVisibility, maskValue } from "@/cont
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
 import { MyExitRequests } from "@/components/solicitacoes/MyExitRequests";
 import { DashboardChart } from "@/components/dashboard/DashboardChart";
-import { DashboardShortcuts } from "@/components/dashboard/DashboardShortcuts";
+import { useNavigate } from "react-router-dom";
 import { DashboardDonutChart } from "@/components/dashboard/DashboardDonutChart";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +29,7 @@ const DashboardContent = () => {
   const { loading, summary, caixa, lancamentosRecentes, contasProximas, receitasPendentes, healthStatus, monthlyChartData } = useDashboardData();
   const { visible, toggle } = useValuesVisibility();
   const { myRequests, cancelRequest, actionLoading } = useSolicitacoesSaida();
+  const navigate = useNavigate();
 
   const health = healthConfig[healthStatus];
 
@@ -75,7 +76,7 @@ const DashboardContent = () => {
 
       {/* Linha 1: Você já recebeu + Você já pagou */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg cursor-pointer" onClick={() => navigate("/transactions")}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-green-100 p-1.5"><ArrowUpRight className="h-4 w-4 text-green-600" /></div>
@@ -86,7 +87,7 @@ const DashboardContent = () => {
             </p>
           </CardContent>
         </Card>
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg cursor-pointer" onClick={() => navigate("/transactions")}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-destructive/10 p-1.5"><ArrowDownRight className="h-4 w-4 text-destructive" /></div>
@@ -101,7 +102,7 @@ const DashboardContent = () => {
 
       {/* Linha 2: Receitas Pendentes + Contas a Pagar */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-orange-400">
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-orange-400 cursor-pointer" onClick={() => navigate("/transactions")}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-orange-100 p-1.5"><Clock className="h-4 w-4 text-orange-600" /></div>
@@ -113,7 +114,7 @@ const DashboardContent = () => {
             <p className="text-[10px] text-muted-foreground mt-0.5">Receitas a receber</p>
           </CardContent>
         </Card>
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-amber-500">
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-amber-500 cursor-pointer" onClick={() => navigate("/transactions")}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-amber-100 p-1.5"><AlertTriangle className="h-4 w-4 text-amber-600" /></div>
@@ -131,7 +132,7 @@ const DashboardContent = () => {
 
       {/* Linha 3: Saldo do mês + Caixa Previsto + Meses de Caixa */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg cursor-pointer" onClick={() => navigate("/transactions")}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-blue-100 p-1.5"><Wallet className="h-4 w-4 text-blue-600" /></div>
@@ -150,7 +151,7 @@ const DashboardContent = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-primary">
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-primary cursor-pointer" onClick={() => navigate("/transactions")}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-primary/10 p-1.5"><TrendingUp className="h-4 w-4 text-primary" /></div>
@@ -176,7 +177,7 @@ const DashboardContent = () => {
         </Card>
       </div>
 
-      <DashboardShortcuts />
+      
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
