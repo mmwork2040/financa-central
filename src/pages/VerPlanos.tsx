@@ -170,15 +170,6 @@ const VerPlanos = () => {
                     R$ {plano.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                   <span className="text-sm text-muted-foreground ml-1">/ {plano.periodo}</span>
-                  {plano.periodo !== 'mensal' && (() => {
-                    const meses = plano.periodo === 'trimestral' ? 3 : plano.periodo === 'anual' ? 12 : 1;
-                    const mensal = plano.preco / meses;
-                    return (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        equivale a <span className="font-semibold text-foreground">R$ {mensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>/mês
-                      </p>
-                    );
-                  })()}
                 </div>
                 <ul className="space-y-2.5 mb-6 flex-1 relative z-10">
                   {(allItems.length > 0 ? allItems : ["Acesso ao sistema"]).map((f, i) => (
