@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Filter, Plus, Receipt, RefreshCw, Search } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import ExportDropdown from "@/components/common/ExportDropdown";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,20 +53,41 @@ export const LancamentosHeader = () => {
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground">Gerencie suas receitas e despesas</p>
         </div>
-        <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground shrink-0" title={visible ? "Ocultar valores" : "Exibir valores"}>
-          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </Button>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground shrink-0">
+                {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>{visible ? "Ocultar valores" : "Exibir valores"}</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
-        <Button variant="outline" size="sm" onClick={() => setOpenFilterModal(true)}>
-          <Filter className="mr-1.5 h-4 w-4" />
-          <span className="hidden sm:inline">Filtros</span>
-          <span className="sm:hidden">Filtrar</span>
-        </Button>
-        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing || loading}>
-          <RefreshCw className={cn("mr-1.5 h-4 w-4", (refreshing || loading) && "animate-spin")} />
-          <span className="hidden sm:inline">Atualizar</span>
-        </Button>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={() => setOpenFilterModal(true)}>
+                <Filter className="mr-1.5 h-4 w-4" />
+                <span className="hidden sm:inline">Filtros</span>
+                <span className="sm:hidden">Filtrar</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>Abrir filtros avançados</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing || loading}>
+                <RefreshCw className={cn("mr-1.5 h-4 w-4", (refreshing || loading) && "animate-spin")} />
+                <span className="hidden sm:inline">Atualizar</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>Atualizar lista de lançamentos</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <ExportDropdown onExport={handleExport} />
         <div className="relative flex-1 min-w-[140px] max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -77,11 +99,18 @@ export const LancamentosHeader = () => {
           />
         </div>
         {canIncluir && (
-          <Button size="sm" onClick={() => handleOpenModal()} className="ml-auto">
-            <Plus className="mr-1.5 h-4 w-4" />
-            <span className="hidden sm:inline">Novo Lançamento</span>
-            <span className="sm:hidden">Novo</span>
-          </Button>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" onClick={() => handleOpenModal()} className="ml-auto">
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  <span className="hidden sm:inline">Novo Lançamento</span>
+                  <span className="sm:hidden">Novo</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent><p>Criar novo lançamento</p></TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
     </div>
