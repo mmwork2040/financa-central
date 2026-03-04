@@ -385,18 +385,12 @@ const LandingPage = () => {
               Escolha o formato ideal para o momento da sua empresa. Teste por 30 dias grátis em qualquer opção e cancele quando quiser.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12">
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12 items-center">
             <PricingCard
               title="Plano Mensal"
               price="R$ 197"
               period="mês"
               description="Ideal para quem quer liberdade e pagamento mês a mês."
-            />
-            <PricingCard
-              title="Plano Trimestral"
-              price="R$ 147"
-              period="mês"
-              description="Perfeito para sentir o impacto real em um ciclo de 90 dias."
             />
             <PricingCard
               title="Plano Anual"
@@ -405,6 +399,12 @@ const LandingPage = () => {
               description="A opção mais inteligente e econômica para o ano todo."
               highlighted
               badge="Melhor Escolha"
+            />
+            <PricingCard
+              title="Plano Trimestral"
+              price="R$ 147"
+              period="mês"
+              description="Perfeito para sentir o impacto real em um ciclo de 90 dias."
             />
           </div>
         </div>
