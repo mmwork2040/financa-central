@@ -62,6 +62,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { CreateEmpresaDialog } from "@/components/sidebar/CreateEmpresaDialog";
 import NotificacoesDropdown from "@/components/common/NotificacoesDropdown";
 
 export const Sidebar = () => {
@@ -82,6 +83,7 @@ export const Sidebar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
+  const [createEmpresaOpen, setCreateEmpresaOpen] = useState(false);
 
   // Auto-open submenus when on their routes
   useEffect(() => {
@@ -273,6 +275,10 @@ export const Sidebar = () => {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setCreateEmpresaOpen(true)}>
+                  <Building2 size={14} className="mr-2" />
+                  Criar nova empresa
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setJoinDialogOpen(true)}>
                   <UserPlus size={14} className="mr-2" />
                   Entrar com código de convite
@@ -319,6 +325,10 @@ export const Sidebar = () => {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setCreateEmpresaOpen(true)}>
+                  <Building2 size={14} className="mr-2" />
+                  Criar empresa
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setJoinDialogOpen(true)}>
                   <UserPlus size={14} className="mr-2" />
                   Entrar com código
@@ -491,6 +501,8 @@ export const Sidebar = () => {
           loading={actionLoading}
         />
       )}
+
+      <CreateEmpresaDialog open={createEmpresaOpen} onOpenChange={setCreateEmpresaOpen} />
     </>
   );
 };
