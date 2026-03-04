@@ -308,7 +308,7 @@ const LandingPage = () => {
                 <Mic className="h-5 w-5" />
                 <h3 className="text-lg font-extrabold tracking-tight text-foreground">Faça lançamentos</h3>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">Envie texto, áudio ou foto do recibo. A IA interpreta e lança automaticamente.</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">Envie <span className="text-primary font-semibold border-b-2 border-primary/30">texto</span>, <span className="text-primary font-semibold border-b-2 border-primary/30">áudio</span> ou <span className="text-primary font-semibold border-b-2 border-primary/30">foto</span> do recibo. A IA interpreta e lança automaticamente.</p>
             </div>
             <div className="md:w-1/2 md:pl-12">
               <div className="glass-card rounded-2xl p-3 max-w-[260px] shadow-lg">
@@ -400,7 +400,7 @@ const LandingPage = () => {
               <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px]">Lançamentos</Badge>
               <h3 className="text-2xl font-extrabold tracking-tight text-foreground">Lançamento de Receitas e Despesas</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Registre entradas e saídas em segundos, conversando com a IA. Envie um áudio, uma foto do recibo ou simplesmente digite — a IA cuida do resto.
+                Registre entradas e saídas em segundos, conversando com a IA. Envie um <span className="text-primary font-semibold border-b-2 border-primary/30">áudio</span>, uma <span className="text-primary font-semibold border-b-2 border-primary/30">foto</span> do recibo ou simplesmente <span className="text-primary font-semibold border-b-2 border-primary/30">digite</span> — a IA cuida do resto.
               </p>
             </div>
             <div className="flex justify-center">
