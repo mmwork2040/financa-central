@@ -253,32 +253,11 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         query = query.eq("projeto_id", filtros.projeto_id);
       }
 
-      // Query 2: lançamentos recorrentes de meses anteriores (para projeções virtuais)
-      const recurringQuery = (supabase as any).from("lancamentos").select(`
-        *,
-        categoria:categorias(*),
-        fornecedor:fornecedores(*),
-        cliente:clientes(*),
-        projeto:projetos(id, nome)
-      `)
-        .eq("recorrente", true)
-        .lt("data_vencimento", monthStart);
+      const { data, error: queryError } = await query;
 
-      const [mainResult, recurringResult] = await Promise.all([query, recurringQuery]);
+      if (queryError) throw queryError;
 
-      if (mainResult.error) throw mainResult.error;
-      if (recurringResult.error) throw recurringResult.error;
-
-      // Merge without duplicates
-      const mainData = mainResult.data || [];
-      const recurringData = recurringResult.data || [];
-      const mainIds = new Set(mainData.map((l: any) => l.id));
-      const merged = [
-        ...mainData,
-        ...recurringData.filter((l: any) => !mainIds.has(l.id)),
-      ];
-
-      setLancamentos(merged as unknown as Lancamento[]);
+      setLancamentos((data || []) as unknown as Lancamento[]);
     } catch (error: any) {
       toast.error(error.message || "Erro ao carregar lançamentos");
     } finally {
@@ -738,6 +717,72 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
             await (supabase.from("contas_bancarias").update({ saldo_atual: Number(contaAtual.saldo_atual) + delta } as any) as any)
               .eq("id", lancamento.conta_bancaria_id);
           }
+        }
+      }
+
+      // Auto-generate next occurrence for recurring transactions
+      if (lancamento && lancamento.recorrente && !lancamento.total_parcelas && ["pago", "recebido"].includes(status)) {
+        try {
+          const lastDate = new Date(lancamento.data_vencimento);
+          let nextDate: Date;
+          switch (lancamento.recorrencia_tipo) {
+            case "semanal":
+              nextDate = new Date(lastDate);
+              nextDate.setDate(nextDate.getDate() + 7);
+              break;
+            case "quinzenal":
+              nextDate = new Date(lastDate);
+              nextDate.setDate(nextDate.getDate() + 15);
+              break;
+            case "trimestral":
+              nextDate = new Date(lastDate);
+              nextDate.setMonth(nextDate.getMonth() + 3);
+              break;
+            case "anual":
+              nextDate = new Date(lastDate);
+              nextDate.setFullYear(nextDate.getFullYear() + 1);
+              break;
+            default: // mensal
+              nextDate = new Date(lastDate);
+              nextDate.setMonth(nextDate.getMonth() + 1);
+              break;
+          }
+
+          const nextDateStr = nextDate.toISOString().split("T")[0];
+
+          // Check recorrencia_fim
+          if (!lancamento.recorrencia_fim || nextDateStr <= lancamento.recorrencia_fim) {
+            // Check if next occurrence already exists
+            const { data: existing } = await supabase
+              .from("lancamentos")
+              .select("id")
+              .eq("descricao", lancamento.descricao)
+              .eq("data_vencimento", nextDateStr)
+              .eq("valor", lancamento.valor)
+              .limit(1);
+
+            if (!existing || existing.length === 0) {
+              await supabase.from("lancamentos").insert({
+                empresa_id: empresaId,
+                descricao: lancamento.descricao,
+                valor: lancamento.valor,
+                tipo: lancamento.tipo,
+                status: "pendente",
+                data_vencimento: nextDateStr,
+                categoria_id: lancamento.categoria_id,
+                fornecedor_id: lancamento.fornecedor_id,
+                cliente_id: lancamento.cliente_id,
+                conta_bancaria_id: lancamento.conta_bancaria_id,
+                forma_pagamento_id: lancamento.forma_pagamento_id,
+                projeto_id: lancamento.projeto_id,
+                recorrente: true,
+                recorrencia_tipo: lancamento.recorrencia_tipo,
+                recorrencia_fim: lancamento.recorrencia_fim,
+              } as any);
+            }
+          }
+        } catch (err) {
+          console.warn("Erro ao gerar próxima ocorrência recorrente:", err);
         }
       }
 
