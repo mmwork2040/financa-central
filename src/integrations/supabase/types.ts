@@ -1123,6 +1123,7 @@ export type Database = {
           data_venda: string
           empresa_id: string
           id: string
+          lancamento_id: string | null
           observacoes: string | null
           origem: string
           plataforma: string
@@ -1144,6 +1145,7 @@ export type Database = {
           data_venda?: string
           empresa_id: string
           id?: string
+          lancamento_id?: string | null
           observacoes?: string | null
           origem?: string
           plataforma: string
@@ -1165,6 +1167,7 @@ export type Database = {
           data_venda?: string
           empresa_id?: string
           id?: string
+          lancamento_id?: string | null
           observacoes?: string | null
           origem?: string
           plataforma?: string
@@ -1187,6 +1190,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_digitais_lancamento_id_fkey"
+            columns: ["lancamento_id"]
+            isOneToOne: false
+            referencedRelation: "lancamentos"
             referencedColumns: ["id"]
           },
         ]
