@@ -184,7 +184,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1 ml-2">
-                      <p className={`text-sm font-semibold ${l.tipo === "receita" ? "text-primary" : l.tipo === "investimento" ? "text-accent-foreground" : "text-destructive"}`}>
+                      <p className={`text-sm font-semibold ${l.tipo === "receita" ? "text-green-600" : l.tipo === "investimento" ? "text-accent-foreground" : "text-destructive"}`}>
                         {displayCurrency(l.valor)}
                       </p>
                       {showActions && (
@@ -353,7 +353,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                     </span>
                   </TableCell>
                   <TableCell>{lancamento.categoria?.nome || '-'}</TableCell>
-                  <TableCell className={`font-medium ${lancamento.tipo === "receita" ? "text-primary" : lancamento.tipo === "investimento" ? "text-accent-foreground" : "text-destructive"}`}>
+                  <TableCell className={`font-medium ${lancamento.tipo === "receita" ? "text-green-600" : lancamento.tipo === "investimento" ? "text-accent-foreground" : "text-destructive"}`}>
                     {displayCurrency(lancamento.valor)}
                   </TableCell>
                   <TableCell>
@@ -362,7 +362,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                         {getStatusLabel(lancamento.status, lancamento.tipo)}
                       </span>
                       {(lancamento.status === 'pago' || lancamento.status === 'recebido') ? (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-primary/10 text-primary">✓ Executado</span>
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${lancamento.tipo === "receita" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>✓ Executado</span>
                       ) : lancamento.status === 'pendente' ? (
                         <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-700">🕐 Previsto</span>
                       ) : null}
