@@ -236,12 +236,14 @@ export const useDashboardData = () => {
         .from('lancamentos')
         .select('tipo, valor, data_vencimento, status, descricao, recorrente, total_parcelas, recorrencia_fim')
         .in('status', ['pendente', 'aberto'])
+        .neq('tipo', 'investimento')
         .gte('data_vencimento', format(hoje, 'yyyy-MM-dd'));
 
       const { data: recorrentes } = await supabase
         .from('lancamentos')
         .select('tipo, valor, data_vencimento, status, descricao, recorrente, total_parcelas, recorrencia_fim')
         .eq('recorrente', true)
+        .neq('tipo', 'investimento')
         .is('total_parcelas', null);
 
       const { mesesDeCaixa, projectionData: projData } = simularFluxoCaixa(
@@ -251,10 +253,13 @@ export const useDashboardData = () => {
         12
       );
 
-      // Saldo Investido: soma dos lançamentos de investimento do mês (pagos, exceto transferências)
-      const saldoInvestido = lancamentosSemTransf
-        .filter(l => l.tipo === 'investimento' && (l.status === 'pago' || l.status === 'recebido'))
-        .reduce((sum, l) => sum + (l.valor || 0), 0);
+      // Saldo Investido: soma acumulativa de TODOS os investimentos pagos (sem filtro de mês)
+      const { data: investimentosPagos } = await supabase
+        .from('lancamentos')
+        .select('valor')
+        .eq('tipo', 'investimento')
+        .in('status', ['pago', 'recebido']);
+      const saldoInvestido = investimentosPagos?.reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
 
       const contasBancariasList = contas?.map(c => ({ id: c.id, nome: c.nome, saldo_atual: c.saldo_atual, saldo_inicial: c.saldo_inicial })) || [];
       setContasBancarias(contasBancariasList);

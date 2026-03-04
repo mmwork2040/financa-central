@@ -36,6 +36,7 @@ function calcularFluxoMensal(
   const descInMonth = new Set<string>();
 
   for (const l of lancamentosFuturos) {
+    if (l.tipo === "investimento") continue;
     if (l.data_vencimento >= mStartStr && l.data_vencimento <= mEndStr) {
       descInMonth.add(l.descricao.toLowerCase());
       if (l.tipo === "receita") {
@@ -48,6 +49,7 @@ function calcularFluxoMensal(
 
   // 2. Virtual recurring projections (recorrente=true, no total_parcelas)
   for (const r of recorrentes) {
+    if (r.tipo === "investimento") continue;
     // Check if this month falls within the recurrence range
     const recStart = new Date(r.data_vencimento);
     const recEnd = r.recorrencia_fim
