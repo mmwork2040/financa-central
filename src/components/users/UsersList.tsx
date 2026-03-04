@@ -11,6 +11,7 @@ import MobilePagination, { usePagination } from "@/components/common/MobilePagin
 import { useTableSort } from "@/hooks/useTableSort";
 import SortableTableHead from "@/components/common/SortableTableHead";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface User {
   id: string;
@@ -62,6 +63,9 @@ const getInitials = (nome: string) => {
 
 export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, currentUserId }: UsersListProps) => {
   const isMobile = useIsMobile();
+  const { canPerformAction } = useAuth();
+  const canAlterar = canPerformAction("users", "pode_alterar");
+  const canExcluir = canPerformAction("users", "pode_excluir");
   const { sortedItems, sortKey, sortDir, toggleSort } = useTableSort(users);
   const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(sortedItems);
 
@@ -71,7 +75,8 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
         {paginatedItems.map((user) => {
           const isTargetSuperAdmin = user.is_super_admin === true;
           const isSelf = user.id === currentUserId;
-          const canModify = !isTargetSuperAdmin || isSelf;
+          const canModify = (!isTargetSuperAdmin || isSelf) && canAlterar;
+          const canDelete = (!isTargetSuperAdmin || isSelf) && canExcluir;
 
           return (
             <Card key={user.id}>
@@ -98,18 +103,15 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                         <Pencil className="h-4 w-4" />
                       </Button>
                     )}
-                    {canModify && onRevoke && user.empresa_id && (
+                    {canDelete && onRevoke && user.empresa_id && (
                       <Button size="icon" variant="ghost" className="h-8 w-8 text-warning" onClick={() => onRevoke(user.id, user.empresa_id!)}>
                         <UserX className="h-4 w-4" />
                       </Button>
                     )}
-                    {canModify && !isSelf && (
+                    {canDelete && !isSelf && (
                       <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(user.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    )}
-                    {!canModify && (
-                      <span className="text-xs text-muted-foreground italic self-center">Protegido</span>
                     )}
                   </div>
                 </div>
@@ -139,7 +141,8 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
           {paginatedItems.map((user) => {
             const isTargetSuperAdmin = user.is_super_admin === true;
             const isSelf = user.id === currentUserId;
-            const canModify = !isTargetSuperAdmin || isSelf;
+            const canModify = (!isTargetSuperAdmin || isSelf) && canAlterar;
+            const canDeleteUser = (!isTargetSuperAdmin || isSelf) && canExcluir;
 
             return (
               <TableRow key={user.id}>
@@ -170,18 +173,15 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                         <Pencil className="h-4 w-4" />
                       </Button>
                     )}
-                    {canModify && onRevoke && user.empresa_id && (
+                    {canDeleteUser && onRevoke && user.empresa_id && (
                       <Button size="icon" variant="ghost" onClick={() => onRevoke(user.id, user.empresa_id!)} className="h-8 w-8 text-warning">
                         <UserX className="h-4 w-4" />
                       </Button>
                     )}
-                    {canModify && !isSelf && (
+                    {canDeleteUser && !isSelf && (
                       <Button size="icon" variant="ghost" onClick={() => onDelete(user.id)} className="h-8 w-8 text-destructive">
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    )}
-                    {!canModify && (
-                      <span className="text-xs text-muted-foreground italic">Protegido</span>
                     )}
                   </div>
                 </TableCell>
