@@ -33,6 +33,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import Install from "./pages/Install";
 import Profile from "./pages/Profile";
 import Projetos from "./pages/Projetos";
+import ProjetoDetalhe from "./pages/ProjetoDetalhe";
 import N8nTemplates from "./pages/N8nTemplates";
 
 const queryClient = new QueryClient();
@@ -74,6 +75,7 @@ const App = () => {
                 <Route path="/transactions" element={<ProtectedRoute path="/transactions"><AppLayout><Lancamentos /></AppLayout></ProtectedRoute>} />
                 <Route path="/reports" element={<ProtectedRoute path="/reports"><AppLayout><Relatorios /></AppLayout></ProtectedRoute>} />
                 <Route path="/projetos" element={<ProtectedRoute path="/projetos"><AppLayout><Projetos /></AppLayout></ProtectedRoute>} />
+                <Route path="/projetos/:id" element={<ProtectedRoute path="/projetos"><AppLayout><ProjetoDetalhe /></AppLayout></ProtectedRoute>} />
                 
                 {/* 404 route */}
                 <Route path="*" element={<NotFoundPage />} />

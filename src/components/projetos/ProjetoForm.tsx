@@ -20,9 +20,14 @@ interface ProjetoFormProps {
 export const ProjetoForm = ({
   isOpen, onClose, currentProjeto, onInputChange, onSelectChange, onSubmit, isSaving,
 }: ProjetoFormProps) => {
+  const handleCurrencyChange = (field: string, val: string | undefined) => {
+    const synth = { target: { name: field, value: String(Number(val || "0") / 100) } } as any;
+    onInputChange(synth);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{currentProjeto?.id ? "Editar" : "Novo"} Projeto</DialogTitle>
         </DialogHeader>
@@ -47,7 +52,7 @@ export const ProjetoForm = ({
                 value={currentProjeto?.descricao || ""}
                 onChange={onInputChange}
                 placeholder="Descrição do projeto"
-                rows={3}
+                rows={2}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -73,11 +78,85 @@ export const ProjetoForm = ({
                   id="orcamento"
                   name="orcamento"
                   value={Number(currentProjeto?.orcamento) || 0}
-                  onValueChange={(val) => {
-                    const synth = { target: { name: "orcamento", value: String(Number(val || "0") / 100) } } as any;
-                    onInputChange(synth);
-                  }}
+                  onValueChange={(val) => handleCurrencyChange("orcamento", val)}
                 />
+              </div>
+            </div>
+
+            <div className="border-t pt-4 mt-1">
+              <p className="text-sm font-medium text-muted-foreground mb-3">Planejamento Financeiro</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Investimento Previsto</Label>
+                  <CurrencyInput
+                    id="investimento_previsto"
+                    name="investimento_previsto"
+                    value={Number(currentProjeto?.investimento_previsto) || 0}
+                    onValueChange={(val) => handleCurrencyChange("investimento_previsto", val)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Despesa Prevista</Label>
+                  <CurrencyInput
+                    id="despesa_prevista"
+                    name="despesa_prevista"
+                    value={Number(currentProjeto?.despesa_prevista) || 0}
+                    onValueChange={(val) => handleCurrencyChange("despesa_prevista", val)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="data_inicio">Data Início</Label>
+                  <Input
+                    id="data_inicio"
+                    name="data_inicio"
+                    type="date"
+                    value={currentProjeto?.data_inicio || ""}
+                    onChange={onInputChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="data_fim">Data Fim</Label>
+                  <Input
+                    id="data_fim"
+                    name="data_fim"
+                    type="date"
+                    value={currentProjeto?.data_fim || ""}
+                    onChange={onInputChange}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="imposto_percentual">% Imposto</Label>
+                  <Input
+                    id="imposto_percentual"
+                    name="imposto_percentual"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={currentProjeto?.imposto_percentual || 0}
+                    onChange={onInputChange}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Base do Imposto</Label>
+                  <Select
+                    value={currentProjeto?.imposto_base || "lucro"}
+                    onValueChange={(v) => onSelectChange("imposto_base", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="lucro">Sobre o Lucro</SelectItem>
+                      <SelectItem value="receita">Sobre a Receita Total</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </div>

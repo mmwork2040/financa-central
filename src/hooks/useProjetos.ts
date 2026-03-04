@@ -9,6 +9,12 @@ export interface Projeto {
   descricao: string | null;
   status: string;
   orcamento: number;
+  investimento_previsto: number;
+  despesa_prevista: number;
+  data_inicio: string | null;
+  data_fim: string | null;
+  imposto_percentual: number;
+  imposto_base: string;
   empresa_id: string;
   created_at: string;
   updated_at: string;
@@ -19,6 +25,12 @@ export const initialProjeto: Omit<Projeto, "id" | "empresa_id" | "created_at" | 
   descricao: "",
   status: "ativo",
   orcamento: 0,
+  investimento_previsto: 0,
+  despesa_prevista: 0,
+  data_inicio: null,
+  data_fim: null,
+  imposto_percentual: 0,
+  imposto_base: "lucro",
 };
 
 export function useProjetos() {
@@ -86,6 +98,12 @@ export function useProjetos() {
         descricao: currentProjeto.descricao || null,
         status: currentProjeto.status,
         orcamento: Number(currentProjeto.orcamento) || 0,
+        investimento_previsto: Number(currentProjeto.investimento_previsto) || 0,
+        despesa_prevista: Number(currentProjeto.despesa_prevista) || 0,
+        data_inicio: currentProjeto.data_inicio || null,
+        data_fim: currentProjeto.data_fim || null,
+        imposto_percentual: Number(currentProjeto.imposto_percentual) || 0,
+        imposto_base: currentProjeto.imposto_base || "lucro",
       };
 
       if (currentProjeto.id) {

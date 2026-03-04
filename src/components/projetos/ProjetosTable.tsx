@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
@@ -20,6 +21,7 @@ interface Props {
 type ProjetoSummary = { projeto_id: string; receitas: number; despesas: number };
 
 export const ProjetosTable = ({ projetos, onEdit, onDelete }: Props) => {
+  const navigate = useNavigate();
   const { visible } = useValuesVisibility();
   const { canPerformAction } = useAuth();
   const canAlterar = canPerformAction("projetos", "pode_alterar");
@@ -72,7 +74,7 @@ export const ProjetosTable = ({ projetos, onEdit, onDelete }: Props) => {
           const s = summaries[p.id] || { receitas: 0, despesas: 0 };
           const saldo = s.receitas - s.despesas;
           return (
-            <Card key={p.id}>
+            <Card key={p.id} className="cursor-pointer" onClick={() => navigate(`/projetos/${p.id}`)}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1 flex-1 min-w-0">
@@ -85,7 +87,7 @@ export const ProjetosTable = ({ projetos, onEdit, onDelete }: Props) => {
                     </span>
                   </div>
                   {showActions && (
-                    <div className="flex gap-1 ml-2 shrink-0">
+                    <div className="flex gap-1 ml-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                       {canAlterar && (
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(p)}>
                           <Pencil className="h-4 w-4" />
@@ -155,9 +157,9 @@ export const ProjetosTable = ({ projetos, onEdit, onDelete }: Props) => {
               const s = summaries[p.id] || { receitas: 0, despesas: 0 };
               const saldo = s.receitas - s.despesas;
               return (
-                <TableRow key={p.id}>
+                <TableRow key={p.id} className="cursor-pointer" onClick={() => navigate(`/projetos/${p.id}`)}>
                   <TableCell>
-                    <div className="font-medium">{p.nome}</div>
+                    <div className="font-medium text-primary hover:underline">{p.nome}</div>
                     {p.descricao && <div className="text-xs text-muted-foreground truncate max-w-[200px]">{p.descricao}</div>}
                   </TableCell>
                   <TableCell>
@@ -173,7 +175,7 @@ export const ProjetosTable = ({ projetos, onEdit, onDelete }: Props) => {
                   </TableCell>
                   {showActions && (
                     <TableCell>
-                      <div className="flex justify-center gap-1">
+                      <div className="flex justify-center gap-1" onClick={(e) => e.stopPropagation()}>
                         {canAlterar && (
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => onEdit(p)}>
                             <Pencil className="h-4 w-4" />
