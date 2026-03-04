@@ -1,19 +1,21 @@
 
 
-## Plano: Corrigir duplicidade de vendas digitais
+## Plano: Remover atalhos e tornar cards clicáveis
 
-### Problema
+### Mudanças em `src/pages/Dashboard.tsx`
 
-O `webhook-receiver` não verifica se uma venda já existe antes de inserir na tabela `vendas_digitais`. Se a plataforma reenvia o mesmo webhook (retry, evento duplicado, etc.), o sistema cria registros duplicados — inclusive com lançamentos financeiros duplicados.
+1. **Remover import e uso do `DashboardShortcuts`** — deletar a linha de import e o `<DashboardShortcuts />` do JSX
 
-### Solução
+2. **Tornar os cards de dados clicáveis** — envolver cada Card com `onClick={() => navigate("/transactions")}` e adicionar `cursor-pointer`:
+   - "Você já recebeu" → `/transactions`
+   - "Você já pagou" → `/transactions`
+   - "Receita Pendente" → `/transactions`
+   - "Contas a Pagar" → `/transactions`
+   - "Saldo do mês" → `/transactions`
+   - "Caixa Previsto" → `/transactions`
 
-**`supabase/functions/webhook-receiver/index.ts`** — Adicionar verificação de duplicidade antes de inserir:
+3. **Adicionar `useNavigate`** ao `DashboardContent` (já importado via react-router-dom no projeto)
 
-1. Antes de inserir em `vendas_digitais`, verificar se já existe um registro com mesma combinação de `empresa_id + plataforma + valor_liquido + data_venda + produto + cliente`
-2. Se já existir, retornar sucesso sem criar duplicata (idempotência)
-3. Logar no `logs_integracoes` que foi um webhook duplicado ignorado
-
-### Arquivo afetado
-- `supabase/functions/webhook-receiver/index.ts` — adicionar check de duplicidade antes do insert
+### Arquivo `src/components/dashboard/DashboardShortcuts.tsx`
+- Pode ser mantido no projeto (sem uso) ou removido. Não será mais referenciado.
 
