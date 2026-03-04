@@ -373,8 +373,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ===== SOCIAL PROOF ===== */}
-      <SocialProofSection />
 
       {/* ===== SEÇÃO 6: PLANOS E PREÇOS ===== */}
       <section className="border-t border-border/40">
