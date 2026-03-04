@@ -72,7 +72,8 @@ export const useRelatoriosData = (periodo: string, customStart?: Date, customEnd
       if (lancamentosRes.error) throw lancamentosRes.error;
       if (vendasRes.error) throw vendasRes.error;
 
-      const lancamentos = lancamentosRes.data || [];
+      // Filter out transfer movements — internal and should not count as income/expense
+      const lancamentos = (lancamentosRes.data || []).filter((l: any) => l.origem !== 'transferencia');
       const vendas = vendasRes.data || [];
 
       // Filter out vendas that already have a lancamento_id (avoid double counting)
