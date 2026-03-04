@@ -152,7 +152,7 @@ export const Sidebar = () => {
     ...(isSuperAdmin ? [{ name: "Assinaturas", icon: CreditCard, path: "/settings/assinaturas" }] : []),
     ...(isSuperAdmin ? [{ name: "Webhooks", icon: Webhook, path: "/settings/webhooks" }] : []),
     ...(isSuperAdmin ? [{ name: "n8n Templates", icon: Code2, path: "/settings/n8n-templates" }] : []),
-    { name: "Logs", icon: ScrollText, path: "/settings/logs" },
+    ...(isSuperAdmin ? [{ name: "Logs", icon: ScrollText, path: "/settings/logs" }] : []),
   ];
 
   const adminItems = [
