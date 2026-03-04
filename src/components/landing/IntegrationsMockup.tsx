@@ -18,10 +18,7 @@ const GoogleAdsLogo = () => (
 );
 
 const KiwifyLogo = () => (
-  <svg viewBox="0 0 256 256" className="h-8 w-8">
-    <rect fill="#22C55E" rx="48" width="256" height="256"/>
-    <path fill="#fff" d="M80 72h24v112H80V72zm42.4 0h28.8l33.6 52-33.6 60H122l33.6-60-33.6-52h.4zm0 0"/>
-  </svg>
+  <img src="/logos/kiwify.png" alt="Kiwify" className="h-9 w-9 object-contain" />
 );
 
 const ShopifyLogo = () => (
