@@ -109,13 +109,34 @@ export const Sidebar = () => {
     };
     fetchLogo();
 
-    const handler = (e: Event) => {
+    const logoHandler = (e: Event) => {
       const logoUrl = (e as CustomEvent).detail?.logo_url ?? null;
       setCompanyLogo(logoUrl);
     };
-    window.addEventListener("company-logo-changed", handler);
-    return () => window.removeEventListener("company-logo-changed", handler);
-  }, [empresaId]);
+    window.addEventListener("company-logo-changed", logoHandler);
+
+    const dataHandler = async () => {
+      // Re-fetch empresa data to update the sidebar name
+      if (empresaId) {
+        const { data } = await supabase
+          .from("empresas")
+          .select("logo_url, nome")
+          .eq("id", empresaId)
+          .single();
+        if (data) {
+          setCompanyLogo(data.logo_url || null);
+        }
+        // Reload to refresh empresas list in AuthContext
+        window.location.reload();
+      }
+    };
+    window.addEventListener("company-data-changed", dataHandler);
+
+    return () => {
+      window.removeEventListener("company-logo-changed", logoHandler);
+      window.removeEventListener("company-data-changed", dataHandler);
+    };
+  }, [empresaId, empresas]);
   
   const isActive = (path: string) => location.pathname === path;
   const activeEmpresa = empresas.find(e => e.empresa_id === empresaId);
@@ -285,7 +306,7 @@ export const Sidebar = () => {
                   <UserPlus size={14} className="mr-2" />
                   Entrar com código de convite
                 </DropdownMenuItem>
-                {activeEmpresa && !activeEmpresa.pessoal && !hasPendingRequest(activeEmpresa.empresa_id) && (
+                {activeEmpresa && !activeEmpresa.pessoal && activeEmpresa.role !== 'admin' && !hasPendingRequest(activeEmpresa.empresa_id) && (
                   <DropdownMenuItem onSelect={() => {
                     const id = activeEmpresa.empresa_id;
                     const nome = activeEmpresa.empresa_nome || "";
@@ -335,7 +356,7 @@ export const Sidebar = () => {
                   <UserPlus size={14} className="mr-2" />
                   Entrar com código
                 </DropdownMenuItem>
-                {activeEmpresa && !activeEmpresa.pessoal && !hasPendingRequest(activeEmpresa.empresa_id) && (
+                {activeEmpresa && !activeEmpresa.pessoal && activeEmpresa.role !== 'admin' && !hasPendingRequest(activeEmpresa.empresa_id) && (
                   <DropdownMenuItem onSelect={() => {
                     const id = activeEmpresa.empresa_id;
                     const nome = activeEmpresa.empresa_nome || "";

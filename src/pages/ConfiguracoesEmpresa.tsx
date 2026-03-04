@@ -66,6 +66,21 @@ const ConfiguracoesEmpresa = () => {
     if (!empresaId || !isAdmin) return;
     setSaving(true);
     try {
+      // Validate CNPJ uniqueness
+      if (empresa.cnpj && empresa.cnpj.trim()) {
+        const { data: existing } = await supabase
+          .from("empresas")
+          .select("id, nome")
+          .ilike("cnpj", empresa.cnpj.trim())
+          .neq("id", empresaId)
+          .limit(1);
+        if (existing && existing.length > 0) {
+          toast.error(`CNPJ já cadastrado pela empresa "${existing[0].nome}"`);
+          setSaving(false);
+          return;
+        }
+      }
+
       const { error } = await (supabase as any).from("empresas").update({
         nome: empresa.nome, cnpj: empresa.cnpj || null, email: empresa.email || null,
         telefone: empresa.telefone || null, endereco: empresa.endereco || null,
@@ -76,6 +91,7 @@ const ConfiguracoesEmpresa = () => {
       }).eq("id", empresaId);
       if (error) throw error;
       toast.success("Dados da empresa atualizados com sucesso.");
+      window.dispatchEvent(new CustomEvent("company-data-changed", { detail: { nome: empresa.nome } }));
     } catch (error: any) {
       toast.error(error.message || "Erro ao salvar");
     } finally {

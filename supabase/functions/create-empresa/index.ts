@@ -116,6 +116,22 @@ serve(async (req) => {
       }
     }
 
+    // Validate CNPJ uniqueness
+    if (cnpj && cnpj.trim()) {
+      const { data: existing } = await supabaseAdmin
+        .from("empresas")
+        .select("id, nome")
+        .ilike("cnpj", cnpj.trim())
+        .limit(1)
+        .single();
+
+      if (existing) {
+        return new Response(JSON.stringify({ error: `CNPJ já cadastrado por outra empresa: "${existing.nome}"` }), {
+          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Create empresa
     const { data: empresa, error: empresaError } = await supabaseAdmin
       .from("empresas")
