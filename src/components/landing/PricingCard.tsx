@@ -18,8 +18,6 @@ const features = [
   "Chat com IA",
   "Dashboard completo",
   "Relatórios personalizados",
-  "Multi-empresa",
-  "Suporte prioritário",
 ];
 
 const PricingCard = ({ title, price, period, description, highlighted = false, badge }: PricingCardProps) => {
