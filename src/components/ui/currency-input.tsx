@@ -86,8 +86,6 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
 
     const handleFocus = () => {
       setFocused(true);
-      const currentValue = typeof value === "number" ? value : parseToNumber(displayText);
-      setDisplayText(toRawDisplay(currentValue));
     };
 
     const handleBlur = () => {
@@ -100,7 +98,16 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setDisplayText(e.target.value);
+      const raw = e.target.value;
+      // Strip everything except digits
+      const digits = raw.replace(/\D/g, "");
+      if (!digits) {
+        setDisplayText("");
+        return;
+      }
+      // Treat digits as cents: "123456" → 1234.56
+      const numValue = parseInt(digits, 10) / 100;
+      setDisplayText(formatBRL(numValue));
     };
 
     return (
