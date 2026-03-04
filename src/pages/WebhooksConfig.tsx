@@ -20,6 +20,7 @@ const acoesDisponiveis = [
   { value: "Excluir Registro", label: "Excluir Registro" },
   { value: "Editar Registro", label: "Editar Registro" },
   { value: "Chat", label: "Chat" },
+  { value: "Acesso do Usuário", label: "Acesso do Usuário" },
 ];
 
 const gerarPayloadSugerido = (acao: string): string => {
@@ -32,6 +33,16 @@ const gerarPayloadSugerido = (acao: string): string => {
       usuario: { id: "{{user_id}}", nome: "{{user_nome}}", email: "{{user_email}}", telefone: "{{user_telefone}}" },
       mensagem: "{{mensagem}}",
       conversa_id: "{{conversa_id}}",
+    }, null, 2);
+  }
+
+  if (acao === "Acesso do Usuário") {
+    return JSON.stringify({
+      empresa_id: "{{empresa_id}}",
+      empresa_nome: "{{empresa_nome}}",
+      acao: "Acesso do Usuário",
+      timestamp: "{{timestamp}}",
+      usuario: { id: "{{user_id}}", nome: "{{user_nome}}", email: "{{user_email}}", telefone: "{{user_telefone}}" },
     }, null, 2);
   }
 
