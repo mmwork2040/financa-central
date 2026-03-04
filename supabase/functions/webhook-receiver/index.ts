@@ -270,6 +270,47 @@ Deno.serve(async (req) => {
     let clienteId: string | null = null;
 
     if (saleData && saleData.valor_bruto > 0) {
+      // Check for duplicate sale before inserting
+      const { data: existingVenda } = await supabase
+        .from("vendas_digitais")
+        .select("id")
+        .eq("empresa_id", empresaId)
+        .eq("plataforma", saleData.plataforma)
+        .eq("valor_liquido", saleData.valor_liquido)
+        .eq("data_venda", saleData.data_venda)
+        .eq("produto", saleData.produto || "")
+        .eq("cliente", saleData.cliente || "")
+        .maybeSingle();
+
+      if (existingVenda) {
+        // Log duplicate and return success (idempotent)
+        await supabase.from("logs_integracoes").insert({
+          empresa_id: empresaId,
+          plataforma: platform,
+          evento: saleData.evento || "duplicate_ignored",
+          status: "duplicate",
+          payload: {
+            source: "webhook_receiver",
+            message: "Webhook duplicado ignorado",
+            existing_venda_id: existingVenda.id,
+            sale_data: saleData,
+          },
+        });
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            platform,
+            evento: saleData.evento,
+            status: saleData.status,
+            venda_id: existingVenda.id,
+            duplicate: true,
+            message: "Venda já registrada anteriormente (duplicata ignorada)",
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       // Auto-register client if sufficient data exists
       if (saleData.cliente) {
         const clienteName = saleData.cliente;
