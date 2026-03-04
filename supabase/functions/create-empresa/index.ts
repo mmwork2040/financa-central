@@ -90,7 +90,7 @@ serve(async (req) => {
           .single();
 
         if (plano) {
-          maxEmpresas = plano.max_empresas ?? 999; // if null, unlimited
+          maxEmpresas = plano.max_empresas === 0 ? Infinity : (plano.max_empresas ?? 999);
         }
       } else if (status === "trial") {
         // Check if trial is still active

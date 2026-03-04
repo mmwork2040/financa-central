@@ -46,12 +46,17 @@ function parseItensFromDb(raw: any): { itens: string[]; controles: PlanoControle
   return { itens: [], controles: { ...defaultControles } };
 }
 
-function getControleItems(controles: PlanoControles): string[] {
+function getControleItems(controles: PlanoControles, maxEmpresas?: number): string[] {
   const items: string[] = [];
   if (controles.max_lancamentos === 0) {
     items.push("Lançamentos ilimitados");
   } else if (controles.max_lancamentos > 0) {
     items.push(`Até ${controles.max_lancamentos} lançamentos`);
+  }
+  if (maxEmpresas === 0) {
+    items.push("Empresas ilimitadas");
+  } else if (maxEmpresas != null && maxEmpresas > 0) {
+    items.push(`Até ${maxEmpresas} empresa${maxEmpresas > 1 ? 's' : ''}`);
   }
   if (controles.chat_ia) items.push("Chat IA");
   if (controles.dashboard_completo) items.push("Dashboard Completo");
@@ -119,7 +124,7 @@ const PlanosExpirados = () => {
       ) : (
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl w-full mb-8">
           {planos.map((plano) => {
-            const controleItems = getControleItems(plano.controles);
+            const controleItems = getControleItems(plano.controles, (plano as any).max_empresas);
             const allItems = [...controleItems, ...plano.itens];
             return (
               <div
