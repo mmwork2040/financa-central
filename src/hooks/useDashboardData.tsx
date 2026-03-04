@@ -267,9 +267,8 @@ export const useDashboardData = () => {
       setLancamentosMes(lancamentosSemTransf);
       setCaixa({ caixaAtual, caixaPrevisto, mesesDeCaixa, saldoInvestido, receitasPendentesAcumuladas, despesasPendentesAcumuladas, itensPendentes });
 
-      // Saldo do mês = soma dos saldos iniciais + receitas recebidas no mês − despesas pagas no mês
-      const saldoInicialTotal = contas?.reduce((sum, c) => sum + ((c as any).saldo_inicial || 0), 0) || 0;
-      const saldoAtual = saldoInicialTotal + totalReceitas - totalDespesas;
+      // Saldo do mês = caixa real disponível (soma dos saldos bancários)
+      const saldoAtual = caixaAtual;
 
       setSummary({
         totalReceitas,
