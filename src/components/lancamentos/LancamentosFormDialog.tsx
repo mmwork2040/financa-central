@@ -46,18 +46,24 @@ export const LancamentosFormDialog = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [modo, setModo] = useState<LancamentoModo>("unico");
 
+  // Only sync modo from formData when the modal opens (edit scenario)
   useEffect(() => {
     setSelectedTipo(formData.tipo || "despesa");
     setSelectedStatus(formData.status || "pendente");
-    // Determine modo from existing data
-    if (formData.total_parcelas && formData.total_parcelas > 1) {
-      setModo("parcelado");
-    } else if (formData.recorrente) {
-      setModo("recorrente");
-    } else {
-      setModo("unico");
-    }
   }, [formData]);
+
+  // Set initial modo when modal opens
+  useEffect(() => {
+    if (openModal) {
+      if (formData.total_parcelas && formData.total_parcelas > 1) {
+        setModo("parcelado");
+      } else if (formData.recorrente) {
+        setModo("recorrente");
+      } else {
+        setModo("unico");
+      }
+    }
+  }, [openModal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTipoChange = (value: string) => {
     const tipoValue = value as "despesa" | "receita" | "investimento";
