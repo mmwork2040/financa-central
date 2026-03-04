@@ -215,7 +215,7 @@ const LandingPage = () => {
               {[
                 { icon: Clock, value: "+85%", label: "Economia de tempo" },
                 { icon: Target, value: "98%", label: "Precisão nos dados" },
-                { icon: Zap, value: "2 min", label: "Por lançamento" },
+                { icon: Zap, value: "1 min", label: "Por lançamento" },
               ].map((stat) => (
                 <div key={stat.label} className="glass-card rounded-2xl p-4 text-center hover:-translate-y-1 transition-all duration-300" style={{
                   background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%), rgba(255,255,255,0.72)"
