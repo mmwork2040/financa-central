@@ -16,6 +16,9 @@ interface SaleData {
   produto: string | null;
   data_venda: string;
   data_prevista_recebimento: string | null;
+  cliente_email: string | null;
+  cliente_telefone: string | null;
+  cliente_documento: string | null;
 }
 
 function normalizeDate(value: any): string {
@@ -70,6 +73,9 @@ function parseHotmart(body: any): SaleData | null {
     produto: product?.name || null,
     data_venda: normalizeDate(purchase?.approved_date || purchase?.order_date),
     data_prevista_recebimento: null,
+    cliente_email: buyer?.email || null,
+    cliente_telefone: buyer?.phone || buyer?.cel_phone || null,
+    cliente_documento: buyer?.document || buyer?.cpf || null,
   };
 }
 
@@ -103,6 +109,9 @@ function parseEduzz(body: any): SaleData | null {
     produto: body?.product_name || body?.pro_name || null,
     data_venda: normalizeDate(body?.trans_createdate || body?.sale_date),
     data_prevista_recebimento: body?.trans_duedate ? normalizeDate(body.trans_duedate) : null,
+    cliente_email: body?.cus_email || null,
+    cliente_telefone: body?.cus_tel || body?.cus_cel || null,
+    cliente_documento: body?.cus_taxnumber || null,
   };
 }
 
@@ -136,6 +145,9 @@ function parseKiwify(body: any): SaleData | null {
     produto: product?.name || product?.product_name || null,
     data_venda: normalizeDate(order?.created_at || order?.approved_date || body?.created_at),
     data_prevista_recebimento: null,
+    cliente_email: customer?.email || null,
+    cliente_telefone: customer?.mobile || customer?.phone || null,
+    cliente_documento: customer?.cpf || customer?.document || null,
   };
 }
 
@@ -175,6 +187,9 @@ function parseMonetizze(body: any): SaleData | null {
     produto: produto?.nome || produto?.name || null,
     data_venda: normalizeDate(evento?.venda?.data || body?.data_venda),
     data_prevista_recebimento: evento?.venda?.data_prevista ? normalizeDate(evento.venda.data_prevista) : null,
+    cliente_email: comprador?.email || null,
+    cliente_telefone: comprador?.telefone || comprador?.celular || null,
+    cliente_documento: comprador?.cpf || comprador?.cnpj || null,
   };
 }
 
@@ -309,6 +324,10 @@ Deno.serve(async (req) => {
           produto: saleData.produto,
           status: saleData.status,
           data_prevista_recebimento: saleData.data_prevista_recebimento,
+          cliente_email: saleData.cliente_email,
+          cliente_telefone: saleData.cliente_telefone,
+          cliente_documento: saleData.cliente_documento,
+          origem: "integracao",
         })
         .select("id")
         .single();

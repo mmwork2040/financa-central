@@ -16,7 +16,7 @@ const shortcuts: Shortcut[] = [
   { label: "Fornecedores", icon: Truck, route: "/fornecedores" },
   { label: "Relatórios", icon: BarChart3, route: "/relatorios" },
   { label: "Contas Bancárias", icon: Landmark, route: "/bank-accounts" },
-  { label: "Vendas Digitais", icon: ShoppingCart, route: "/vendas-digitais" },
+  { label: "Vendas", icon: ShoppingCart, route: "/vendas-digitais" },
 ];
 
 export const DashboardShortcuts = () => {

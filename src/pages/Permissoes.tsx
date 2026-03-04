@@ -54,7 +54,7 @@ const screens: Screen[] = [
   { name: "Lançamentos", value: "lancamentos", description: "Lançamentos financeiros" },
   { name: "Relatórios", value: "relatorios", description: "Visualização de relatórios" },
   { name: "Projetos", value: "projetos", description: "Gerenciamento de projetos" },
-  { name: "Vendas Digitais", value: "vendas_digitais", description: "Dados gerados automaticamente — apenas visualização", viewOnly: true },
+  { name: "Vendas", value: "vendas_digitais", description: "Gestão de vendas manuais e automáticas", viewOnly: true },
   { name: "Anúncios Digitais", value: "anuncios", description: "Dados gerados automaticamente — apenas visualização", viewOnly: true },
 ];
 

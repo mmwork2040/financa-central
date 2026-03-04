@@ -76,7 +76,7 @@ const LLM_MODELS: Record<string, { value: string; label: string }[]> = {
 };
 
 const CATEGORIAS_INFO: Record<PlataformaCategoria, { label: string; icon: any }> = {
-  vendas: { label: "Vendas Digitais", icon: ShoppingCart },
+  vendas: { label: "Vendas", icon: ShoppingCart },
   pagamentos: { label: "Pagamentos", icon: CreditCard },
   anuncios: { label: "Anúncios", icon: Megaphone },
   comunicacao: { label: "Comunicação", icon: MessageCircle },
