@@ -44,14 +44,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch empresa name
+    // Fetch empresa name and logs_enabled
     let empresaNome = "";
+    let logsEnabled = true;
     const { data: empresaData } = await supabase
       .from("empresas")
-      .select("nome")
+      .select("nome, logs_enabled")
       .eq("id", empresa_id)
       .single();
-    if (empresaData) empresaNome = empresaData.nome;
+    if (empresaData) {
+      empresaNome = empresaData.nome;
+      logsEnabled = empresaData.logs_enabled ?? true;
+    }
 
     // Search webhooks matching globally (all empresas) by nome AND tabela
     let webhooks: any[] = [];
@@ -171,14 +175,16 @@ Deno.serve(async (req) => {
           console.error("Error parsing response:", parseErr);
         }
 
-        // Log the integration
-        await supabase.from("logs_integracoes").insert({
-          empresa_id,
-          plataforma: "webhook",
-          evento,
-          status: response.ok ? "success" : "error",
-          payload: { url: wh.url, status: response.status, webhook_nome: wh.nome, response: responseBody, ...payload },
-        });
+        // Log the integration (only if logs are enabled)
+        if (logsEnabled) {
+          await supabase.from("logs_integracoes").insert({
+            empresa_id,
+            plataforma: "webhook",
+            evento,
+            status: response.ok ? "success" : "error",
+            payload: { url: wh.url, status: response.status, webhook_nome: wh.nome, response: responseBody, ...payload },
+          });
+        }
 
         results.push({
           url: wh.url,
@@ -191,13 +197,15 @@ Deno.serve(async (req) => {
           response: responseBody,
         });
       } catch (err: any) {
-        await supabase.from("logs_integracoes").insert({
-          empresa_id,
-          plataforma: "webhook",
-          evento,
-          status: "error",
-          payload: { url: wh.url, error: err.message },
-        });
+        if (logsEnabled) {
+          await supabase.from("logs_integracoes").insert({
+            empresa_id,
+            plataforma: "webhook",
+            evento,
+            status: "error",
+            payload: { url: wh.url, error: err.message },
+          });
+        }
         results.push({ url: wh.url, error: err.message });
       }
     }

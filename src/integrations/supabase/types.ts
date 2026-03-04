@@ -910,6 +910,7 @@ export type Database = {
           id: string
           itens: Json | null
           link_acesso: string | null
+          max_empresas: number
           nome: string
           ordem: number
           periodo: string
@@ -925,6 +926,7 @@ export type Database = {
           id?: string
           itens?: Json | null
           link_acesso?: string | null
+          max_empresas?: number
           nome: string
           ordem?: number
           periodo?: string
@@ -940,6 +942,7 @@ export type Database = {
           id?: string
           itens?: Json | null
           link_acesso?: string | null
+          max_empresas?: number
           nome?: string
           ordem?: number
           periodo?: string

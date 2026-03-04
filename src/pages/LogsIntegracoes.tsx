@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,11 +34,14 @@ const LogsIntegracoes = () => {
   const [filtroPlataforma, setFiltroPlataforma] = useState("todas");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [busca, setBusca] = useState("");
+  const [logsEnabled, setLogsEnabled] = useState(true);
+  const [togglingLogs, setTogglingLogs] = useState(false);
   const isMobile = useIsMobile();
   const isAdmin = userRole === "admin" || isSuperAdmin;
 
   useEffect(() => {
     fetchLogs();
+    fetchLogsEnabled();
   }, []);
 
   const fetchLogs = async () => {
@@ -53,6 +58,38 @@ const LogsIntegracoes = () => {
       console.error("Erro ao carregar logs:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchLogsEnabled = async () => {
+    if (!empresaId) return;
+    try {
+      const { data } = await (supabase as any)
+        .from("empresas")
+        .select("logs_enabled")
+        .eq("id", empresaId)
+        .single();
+      if (data) setLogsEnabled(data.logs_enabled ?? true);
+    } catch (e) {
+      console.error("Erro ao verificar status de logs:", e);
+    }
+  };
+
+  const toggleLogsEnabled = async (value: boolean) => {
+    if (!empresaId) return;
+    setTogglingLogs(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("empresas")
+        .update({ logs_enabled: value })
+        .eq("id", empresaId);
+      if (error) throw error;
+      setLogsEnabled(value);
+      toast.success(value ? "Geração de logs ativada." : "Geração de logs desativada.");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao alterar configuração");
+    } finally {
+      setTogglingLogs(false);
     }
   };
 
@@ -125,30 +162,43 @@ const LogsIntegracoes = () => {
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground">Histórico de eventos enviados e recebidos</p>
         </div>
-        {isAdmin && logs.length > 0 && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive self-start">
-                <Trash2 className="h-4 w-4 mr-1" />
-                Limpar Logs
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Limpar todos os logs?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Esta ação irá remover todos os {logs.length} registros de log. Essa ação não pode ser desfeita.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleClearLogs} disabled={clearing} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  {clearing ? "Limpando..." : "Limpar Tudo"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
+        <div className="flex items-center gap-3 self-start">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="logs-toggle"
+              checked={logsEnabled}
+              onCheckedChange={toggleLogsEnabled}
+              disabled={togglingLogs}
+            />
+            <Label htmlFor="logs-toggle" className="text-sm text-muted-foreground cursor-pointer">
+              {logsEnabled ? "Logs ativados" : "Logs desativados"}
+            </Label>
+          </div>
+          {isAdmin && logs.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Limpar Logs
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Limpar todos os logs?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação irá remover todos os {logs.length} registros de log. Essa ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearLogs} disabled={clearing} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    {clearing ? "Limpando..." : "Limpar Tudo"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
       </div>
 
       {/* Summary Cards */}
