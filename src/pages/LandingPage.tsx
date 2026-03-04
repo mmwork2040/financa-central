@@ -73,7 +73,7 @@ const LandingPage = () => {
         <div className="absolute top-60 right-[8%] h-2.5 w-2.5 rounded-full bg-primary/15 shadow-md hidden md:block" />
 
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-24 lg:py-32 relative">
-          <div className="grid md:grid-cols-2 gap-12 md:gap-16 lg:gap-20 items-center">
+          <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 md:gap-16 lg:gap-20 items-center">
             {/* Texto */}
             <div className="space-y-6 text-center md:text-left">
               <Badge className="rounded-full px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 text-xs font-semibold tracking-wide">
@@ -388,6 +388,7 @@ const LandingPage = () => {
       {/* ===== SEÇÃO 4: FUNCIONALIDADES ===== */}
       <section className="border-y border-border/40">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+          <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
               Um sistema completo, <span className="text-primary relative inline-block">sem a complexidade<svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none"><path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" /></svg></span> de um sistema tradicional
@@ -538,6 +539,7 @@ const LandingPage = () => {
               <IntegrationsMockup />
             </div>
           </div>
+          </div>
         </div>
       </section>
 
@@ -551,7 +553,7 @@ const LandingPage = () => {
             Criado para quem precisa de agilidade e não tem tempo para tarefas engessadas.
           </p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {[
             { emoji: "🚀", title: "Infoprodutores", desc: "Controle vendas digitais, comissões e custos de tráfego em um só lugar." },
             { emoji: "📢", title: "Donos de Agências", desc: "Gerencie o financeiro de múltiplos clientes e projetos simultaneamente." },
@@ -608,7 +610,7 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="border-t border-border/40 glass-surface">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-12">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
                 <BarChart3 className="h-4 w-4 text-primary" />
