@@ -222,12 +222,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data.user) {
-        const [profile] = await Promise.all([
+        const [profile, rolesResult] = await Promise.all([
           fetchUserProfile(data.user.id),
           fetchUserRoles(data.user.id),
         ]);
         navigate("/dashboard");
         toast.success(`Bem-vindo ${profile?.nome || email}!`);
+
+        // Fire login webhook silently
+        const activeEmpresaId = rolesResult?.activeEmpresaId || profile?.empresa_id;
+        if (activeEmpresaId) {
+          supabase.functions.invoke("fire-webhook", {
+            body: {
+              empresa_id: activeEmpresaId,
+              evento: "Acesso do Usuário",
+              descricao: `Login: ${profile?.nome || email}`,
+              usuario: {
+                id: data.user.id,
+                nome: profile?.nome || email,
+                email: profile?.email || email,
+                telefone: profile?.evolution_webhook_url || "",
+              },
+              acao: "login",
+            },
+          }).catch(() => {});
+        }
       }
     } catch (error: any) {
       console.error("Erro ao fazer login:", error);
