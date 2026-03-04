@@ -39,6 +39,8 @@ import DemoPage from "./pages/DemoPage";
 import PlanosExpirados from "./pages/PlanosExpirados";
 import Assinaturas from "./pages/Assinaturas";
 import VerPlanos from "./pages/VerPlanos";
+import TermosPublico from "./pages/TermosPublico";
+import TermosConfig from "./pages/TermosConfig";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +61,7 @@ const App = () => {
                 <Route path="/demo" element={<PageTransition><DemoPage /></PageTransition>} />
                 <Route path="/planos-expirados" element={<PageTransition><PlanosExpirados /></PageTransition>} />
                 <Route path="/ver-planos" element={<PageTransition><VerPlanos /></PageTransition>} />
+                <Route path="/termos" element={<PageTransition><TermosPublico /></PageTransition>} />
 
                 {/* Protected routes */}
                 <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
@@ -69,6 +72,7 @@ const App = () => {
                 <Route path="/settings/logs" element={<AppLayout><LogsIntegracoes /></AppLayout>} />
                 <Route path="/settings/n8n-templates" element={<AppLayout><N8nTemplates /></AppLayout>} />
                 <Route path="/settings/assinaturas" element={<AppLayout><Assinaturas /></AppLayout>} />
+                <Route path="/settings/termos" element={<AppLayout><TermosConfig /></AppLayout>} />
                 <Route path="/vendas-digitais" element={<AppLayout><VendasDigitais /></AppLayout>} />
                 <Route path="/anuncios" element={<ProtectedRoute path="/anuncios"><AppLayout><AnunciosDigitais /></AppLayout></ProtectedRoute>} />
                 
