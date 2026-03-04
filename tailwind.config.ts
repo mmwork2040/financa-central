@@ -19,6 +19,10 @@ export default {
       }
     },
     extend: {
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['"Spline Sans Mono"', 'ui-monospace', 'monospace'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -63,28 +67,28 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))"
         },
-        orange: {
-          50: "#fff7ed",
-          100: "#ffedd5",
-          200: "#fed7aa",
-          300: "#fdba74",
-          400: "#fb923c",
-          500: "#f97316",
-          600: "#ea580c",
-          700: "#c2410c",
-          800: "#9a3412",
-          900: "#7c2d12",
+        cyan: {
+          50: "#ecfeff",
+          100: "#cffafe",
+          200: "#a5f3fc",
+          300: "#67e8f9",
+          400: "#22d3ee",
+          500: "#06b6d4",
+          600: "#0891b2",
+          700: "#0e7490",
+          800: "#155e75",
+          900: "#164e63",
         },
         success: {
-          DEFAULT: "#22C55E", // Green for positive values/success
+          DEFAULT: "#22C55E",
           foreground: "#ffffff"
         },
         warning: {
-          DEFAULT: "#F59E0B", // Amber for warnings
+          DEFAULT: "#F59E0B",
           foreground: "#ffffff"
         },
         danger: {
-          DEFAULT: "#EF4444", // Red for negative values/danger
+          DEFAULT: "#EF4444",
           foreground: "#ffffff"
         }
       },
@@ -95,20 +99,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0"
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)"
-          }
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" }
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)"
-          },
-          to: {
-            height: "0"
-          }
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" }
         },
         "fade-in": {
           "0%": { opacity: "0" },
