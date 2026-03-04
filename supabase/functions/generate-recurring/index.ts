@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
       .select("*")
       .eq("empresa_id", empresaId)
       .eq("recorrente", true)
-      .eq("status", "pago")
+      .in("status", ["pago", "recebido"])
       .order("data_vencimento", { ascending: false });
 
     if (fetchError) throw fetchError;

@@ -77,6 +77,8 @@ export const useDashboardData = () => {
 
       // Silently process mature digital receipts (auto-convert pending → received)
       supabase.functions.invoke("process-digital-receipts").catch(() => {});
+      // Silently generate any missing recurring transactions
+      supabase.functions.invoke("generate-recurring").catch(() => {});
       
       // Fetch recent transactions
       const { data: lancamentos, error: lancamentosError } = await supabase
