@@ -186,15 +186,22 @@ export const useDashboardData = () => {
       if (contasError) throw contasError;
       const caixaAtual = contas?.reduce((sum, c) => sum + (c.saldo_atual || 0), 0) || 0;
 
-      // 2. Caixa Previsto = caixaAtual + receitas pendentes do mês atual - despesas pendentes do mês atual
-      const receitasPendentes = todosLancamentos
-        ?.filter(l => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto'))
+      // 2. Caixa Previsto = caixaAtual + ALL pending receitas up to monthEnd - ALL pending despesas up to monthEnd
+      // Includes overdue items that haven't been paid yet, since they still impact the bank balance
+      const { data: pendentesAteMonthEnd } = await supabase
+        .from('lancamentos')
+        .select('tipo, valor, status')
+        .in('status', ['pendente', 'aberto'])
+        .lte('data_vencimento', monthEnd);
+
+      const receitasPendentesAcumuladas = pendentesAteMonthEnd
+        ?.filter(l => l.tipo === 'receita')
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
-      const despesasPendentes = todosLancamentos
-        ?.filter(l => l.tipo === 'despesa' && (l.status === 'pendente' || l.status === 'aberto'))
+      const despesasPendentesAcumuladas = pendentesAteMonthEnd
+        ?.filter(l => l.tipo === 'despesa')
         .reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
-      
-      const caixaPrevisto = caixaAtual + receitasPendentes - despesasPendentes;
+
+      const caixaPrevisto = caixaAtual + receitasPendentesAcumuladas - despesasPendentesAcumuladas;
 
       // 3. Meses de caixa (runway) — simulação mês a mês com recorrências
       const { data: lancFuturos } = await supabase
