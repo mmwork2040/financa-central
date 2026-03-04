@@ -73,8 +73,8 @@ const DashboardContent = () => {
         </Button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+      {/* Linha 1: Você já recebeu + Você já pagou */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -97,18 +97,40 @@ const DashboardContent = () => {
             </p>
           </CardContent>
         </Card>
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
+      </div>
+
+      {/* Linha 2: Receitas Pendentes + Contas a Pagar */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-orange-400">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className="rounded-full bg-amber-100 p-1.5"><Clock className="h-4 w-4 text-amber-600" /></div>
+              <div className="rounded-full bg-orange-100 p-1.5"><Clock className="h-4 w-4 text-orange-600" /></div>
               <span className="text-xs text-muted-foreground">Receita Pendente</span>
             </div>
-            <p className="text-lg sm:text-xl font-bold text-amber-600">
+            <p className="text-lg sm:text-xl font-bold text-orange-600">
               {maskValue(formatCurrency(summary.receitasPrevistas), visible)}
             </p>
             <p className="text-[10px] text-muted-foreground mt-0.5">Receitas a receber</p>
           </CardContent>
         </Card>
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-amber-500">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="rounded-full bg-amber-100 p-1.5"><AlertTriangle className="h-4 w-4 text-amber-600" /></div>
+              <span className="text-xs text-muted-foreground">Contas a Pagar</span>
+            </div>
+            <p className="text-lg sm:text-xl font-bold text-amber-600">
+              {maskValue(formatCurrency(summary.despesasPrevistas), visible)}
+            </p>
+            {summary.emAtraso > 0 && (
+              <p className="text-[10px] text-destructive font-medium mt-0.5">{summary.emAtraso} em atraso</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Linha 3: Saldo do mês + Caixa Previsto + Meses de Caixa */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -128,24 +150,6 @@ const DashboardContent = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="rounded-full bg-amber-100 p-1.5"><AlertTriangle className="h-4 w-4 text-amber-600" /></div>
-              <span className="text-xs text-muted-foreground">Contas a Pagar</span>
-            </div>
-            <p className="text-lg sm:text-xl font-bold text-amber-600">
-              {maskValue(formatCurrency(summary.despesasPrevistas), visible)}
-            </p>
-            {summary.emAtraso > 0 && (
-              <p className="text-[10px] text-destructive font-medium mt-0.5">{summary.emAtraso} em atraso</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Caixa Cards — without Saldo Investido (now merged above) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-primary">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
