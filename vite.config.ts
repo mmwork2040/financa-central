@@ -23,8 +23,8 @@ export default defineConfig(({ mode }) => ({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
       manifest: {
-        name: "Fluxo de Contas",
-        short_name: "FluxoContas",
+        name: "Contabiliza AI",
+        short_name: "ContabilizaAI",
         description: "Gestão financeira simplificada para sua empresa",
         theme_color: "#f97316",
         background_color: "#ffffff",

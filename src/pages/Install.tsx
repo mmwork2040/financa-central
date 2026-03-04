@@ -43,7 +43,7 @@ const Install = () => {
 
         <div className="text-center space-y-2">
           <Smartphone className="h-12 w-12 mx-auto text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Instalar Fluxo de Contas</h1>
+          <h1 className="text-2xl font-bold text-foreground"><h1 className="text-2xl font-bold text-foreground">Instalar Contabiliza AI</h1></h1>
           <p className="text-muted-foreground text-sm">
             Acesse o app direto da tela inicial do seu celular, como um app nativo.
           </p>
