@@ -7,6 +7,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { phoneInputMask } from "@/utils/format";
+import TermosInlineDialog from "@/components/auth/TermosInlineDialog";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -173,6 +174,19 @@ const Register = () => {
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Criando conta..." : "Criar Conta"}
         </Button>
+
+        <p className="text-xs text-center text-muted-foreground">
+          Ao se registrar, você concorda com nossos{" "}
+          <TermosInlineDialog
+            defaultTab="termos"
+            trigger={<button type="button" className="text-primary hover:underline">Termos de Uso</button>}
+          />{" "}
+          e{" "}
+          <TermosInlineDialog
+            defaultTab="privacidade"
+            trigger={<button type="button" className="text-primary hover:underline">Política de Privacidade</button>}
+          />.
+        </p>
 
         <p className="text-center text-sm text-muted-foreground">
           Já tem uma conta?{" "}
