@@ -16,6 +16,7 @@ import { MyExitRequests } from "@/components/solicitacoes/MyExitRequests";
 import { DashboardChart } from "@/components/dashboard/DashboardChart";
 import { useNavigate } from "react-router-dom";
 import { DashboardDonutChart } from "@/components/dashboard/DashboardDonutChart";
+import { CaixaPrevistoDialog } from "@/components/dashboard/CaixaPrevistoDialog";
 import { cn } from "@/lib/utils";
 
 const healthConfig: Record<HealthStatus, { label: string; color: string; icon: string; bg: string }> = {
@@ -30,6 +31,7 @@ const DashboardContent = () => {
   const { visible, toggle } = useValuesVisibility();
   const { myRequests, cancelRequest, actionLoading } = useSolicitacoesSaida();
   const navigate = useNavigate();
+  const [caixaPrevistoOpen, setCaixaPrevistoOpen] = React.useState(false);
 
   const health = healthConfig[healthStatus];
 
@@ -151,7 +153,7 @@ const DashboardContent = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-primary cursor-pointer" onClick={() => navigate("/transactions")}>
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-primary cursor-pointer" onClick={() => setCaixaPrevistoOpen(true)}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-primary/10 p-1.5"><TrendingUp className="h-4 w-4 text-primary" /></div>
@@ -160,7 +162,7 @@ const DashboardContent = () => {
             <p className={cn("text-lg sm:text-xl font-bold", caixa.caixaPrevisto >= 0 ? "text-primary" : "text-destructive")}>
               {maskValue(formatCurrency(caixa.caixaPrevisto), visible)}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-1">Previsão acumulada até este mês</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Clique para ver detalhes</p>
           </CardContent>
         </Card>
         <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg border-l-4 border-l-amber-500">
@@ -323,6 +325,16 @@ const DashboardContent = () => {
           </CollapsibleContent>
         </Card>
       </Collapsible>
+
+      <CaixaPrevistoDialog
+        open={caixaPrevistoOpen}
+        onOpenChange={setCaixaPrevistoOpen}
+        caixaAtual={caixa.caixaAtual}
+        receitasPendentes={caixa.receitasPendentesAcumuladas}
+        despesasPendentes={caixa.despesasPendentesAcumuladas}
+        caixaPrevisto={caixa.caixaPrevisto}
+        itens={caixa.itensPendentes}
+      />
 
       <LancamentosFormDialog />
     </div>
