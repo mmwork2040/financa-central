@@ -21,11 +21,14 @@ import {
   Target,
   Zap,
   Users,
+  User,
   DollarSign,
   Star,
   Play,
   Sparkles,
   Check,
+  Camera,
+  FileText,
 } from "lucide-react";
 import PhoneMockup from "@/components/landing/PhoneMockup";
 import ChatBubble from "@/components/landing/ChatBubble";
@@ -292,10 +295,55 @@ const LandingPage = () => {
                   </div>
                 </div>
                 <div className="px-3 py-3 space-y-2.5">
-                  <ChatBubble message="🎤 Áudio (0:08)" time="14:22" />
+                  {/* Audio message bubble */}
+                  <div className="flex gap-2 justify-end">
+                    <div className="max-w-[75%] rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-5 w-5 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+                          <Mic className="h-3 w-3" />
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                          {[1,2,3,4,5,6,7,8,9,10,11,12].map(i => (
+                            <div key={i} className="w-[2px] rounded-full bg-primary-foreground/70" style={{ height: `${Math.random() * 10 + 4}px` }} />
+                          ))}
+                        </div>
+                        <span className="text-[9px] text-primary-foreground/70">0:08</span>
+                      </div>
+                      <span className="text-[9px] block mt-0.5 text-primary-foreground/70">14:22</span>
+                    </div>
+                    <div className="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0 mt-1">
+                      <User className="h-4 w-4 text-primary" />
+                    </div>
+                  </div>
                   <ChatBubble isBot message="Entendi! Você pagou R$ 350,00 ao fornecedor ABC pela entrega de materiais. Confirmo o lançamento?" time="14:22" />
-                  <ChatBubble message="Confirma" time="14:23" />
-                  <ChatBubble isBot message="✅ Despesa de R$ 350,00 registrada com sucesso! Categoria: Materiais." time="14:23" />
+                  {/* Photo attachment bubble */}
+                  <div className="flex gap-2 justify-end">
+                    <div className="max-w-[75%] rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-2 py-2">
+                      <div className="rounded-lg bg-primary-foreground/10 p-2 flex items-center gap-2 mb-1">
+                        <div className="h-8 w-8 rounded-md bg-primary-foreground/15 flex items-center justify-center">
+                          <Camera className="h-4 w-4 text-primary-foreground/80" />
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-medium">recibo_compra.jpg</p>
+                          <p className="text-[8px] text-primary-foreground/60">📎 Imagem • 245 KB</p>
+                        </div>
+                      </div>
+                      <span className="text-[9px] block text-primary-foreground/70">14:23</span>
+                    </div>
+                    <div className="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0 mt-1">
+                      <User className="h-4 w-4 text-primary" />
+                    </div>
+                  </div>
+                  <ChatBubble isBot message="✅ Foto analisada! Despesa de R$ 350,00 registrada. Categoria: Materiais." time="14:23" />
+                </div>
+                {/* Input bar with attachment icons */}
+                <div className="px-3 pb-2">
+                  <div className="flex items-center gap-1.5 rounded-full bg-muted/60 border border-border/40 px-3 py-1.5">
+                    <Camera className="h-3.5 w-3.5 text-muted-foreground" />
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="flex-1 text-[9px] text-muted-foreground">Mensagem, áudio ou foto...</span>
+                    <Mic className="h-3.5 w-3.5 text-primary" />
+                  </div>
                 </div>
               </PhoneMockup>
             </div>
