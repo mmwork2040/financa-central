@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { empresa_id, evento, tabela, data, valor, descricao, usuario, acao, registro, assunto, mensagem, conversa_id } = await req.json();
+    const { empresa_id, evento, tabela, data, valor, descricao, usuario, acao, registro, assunto, mensagem, conversa_id, nome, id_usuario, id_telegram, telefone, email } = await req.json();
 
     if (!empresa_id || !evento) {
       throw new Error("empresa_id and evento are required");
@@ -84,12 +84,13 @@ Deno.serve(async (req) => {
               "{{registro_id}}": registro || "",
               "{{descricao}}": descricao || "",
               "{{valor}}": valor?.toString() || "",
-              "{{user_id}}": usuario?.id || "",
-              "{{user_nome}}": usuario?.nome || "",
-              "{{user_email}}": usuario?.email || "",
-              "{{user_telefone}}": usuario?.telefone || "",
-              "{{nome}}": descricao || "",
-              "{{email}}": usuario?.email || "",
+              "{{user_id}}": id_usuario || usuario?.id || "",
+              "{{user_nome}}": nome || usuario?.nome || "",
+              "{{user_email}}": email || usuario?.email || "",
+              "{{user_telefone}}": telefone || usuario?.telefone || "",
+              "{{user_telegram_id}}": id_telegram || "",
+              "{{nome}}": nome || descricao || "",
+              "{{email}}": email || usuario?.email || "",
               "{{cpf_cnpj}}": "",
               "{{tabela}}": tabela || "",
               "{{tipo}}": acao || "",
