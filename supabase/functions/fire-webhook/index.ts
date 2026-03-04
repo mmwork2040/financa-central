@@ -89,6 +89,8 @@ Deno.serve(async (req) => {
               "{{user_email}}": email || usuario?.email || "",
               "{{user_telefone}}": telefone || usuario?.telefone || "",
               "{{user_telegram_id}}": id_telegram || "",
+              "{{telegram_id}}": id_telegram || "",
+              "{{id_telegram}}": id_telegram || "",
               "{{nome}}": nome || descricao || "",
               "{{email}}": email || usuario?.email || "",
               "{{cpf_cnpj}}": "",
