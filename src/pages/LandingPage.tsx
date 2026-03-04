@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import PhoneMockup from "@/components/landing/PhoneMockup";
 import ChatBubble from "@/components/landing/ChatBubble";
+import HeroChatAnimation from "@/components/landing/HeroChatAnimation";
 import DashboardMockup from "@/components/landing/DashboardMockup";
 import ContasListMockup from "@/components/landing/ContasListMockup";
 import IntegrationsMockup from "@/components/landing/IntegrationsMockup";
@@ -146,13 +147,7 @@ const LandingPage = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="px-3 py-3 space-y-2.5">
-                    <ChatBubble isBot message="Olá! Sou sua assistente financeira. Como posso ajudar?" time="09:41" />
-                    <ChatBubble message="Paguei R$ 1.200 de aluguel hoje no Pix" time="09:42" />
-                    <ChatBubble isBot message="✅ Lançamento registrado! Despesa de R$ 1.200,00 — Aluguel, pago via Pix em 04/03/2026." time="09:42" />
-                    <ChatBubble message="Qual meu saldo do mês?" time="09:43" />
-                    <ChatBubble isBot message="📊 Seu saldo em março: Receitas R$ 18.500 | Despesas R$ 8.200 | Saldo R$ 10.300. Quer um relatório detalhado?" time="09:43" />
-                  </div>
+                  <HeroChatAnimation />
                 </PhoneMockup>
               </div>
             </ScrollReveal>
