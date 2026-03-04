@@ -1,61 +1,44 @@
 
 
-## Plano: Tratar investimentos como transferências (reserva resgatável)
+## Plano: Investimento deve sair do saldo bancário (Saldo do Mês = caixa real)
 
-### Problema raiz
+### Entendimento
 
-Quando um investimento é marcado como "pago", o sistema debita o saldo da conta bancária (linha 631 do LancamentosContext: `tipo !== "receita"` → delta negativo). Isso reduz o `caixaAtual`. No dashboard, investimentos são excluídos do cálculo do Caixa Previsto, mas o saldo bancário já foi reduzido — sem compensação.
+O usuário quer que:
+- **Investimento pago** = dinheiro SAI da conta bancária (como transferência para fundo)
+- **Saldo do Mês** = caixa real disponível (soma dos saldos bancários), SEM incluir investimentos
+- **Saldo Investido** = reserva resgatável (acumulado de todos os investimentos pagos)
+- **Resgate** = criar uma receita para devolver o dinheiro ao caixa
 
-Resultado: Caixa = 67.649 (já descontado o investimento de 32.325), e o Caixa Previsto fica ainda mais negativo porque só considera receitas/despesas pendentes.
+### Mudanças
 
-### Solução
+**1. `src/contexts/LancamentosContext.tsx` — Reverter delta 0**
 
-Tratar investimentos como transferências internas (dinheiro que muda de "bolso" mas continua disponível como reserva). Três pontos de correção:
+Investimentos devem debitar o saldo bancário como despesas (o dinheiro sai da conta para o fundo):
+- Linha 631: `delta = formData.tipo === "receita" ? formData.valor : -formData.valor` (remover exceção de investimento)
+- Linha 709: mesma reversão no "entrando em pago"
+- Linha 721: mesma reversão no "saindo de pago"
 
----
+**2. `src/hooks/useDashboardData.tsx` — Saldo do Mês = caixaAtual**
 
-### 1. `src/contexts/LancamentosContext.tsx` — Saldo bancário
+Trocar o cálculo do `saldoAtual` de `saldoInicialTotal + totalReceitas - totalDespesas` para usar `caixaAtual` (soma real dos saldos bancários). Isso reflete o dinheiro efetivamente disponível.
 
-**Criar lançamento (linha ~631)**: Investimentos pagos NÃO devem reduzir saldo da conta bancária.
-```
-// Antes:  delta = tipo === "receita" ? valor : -valor
-// Depois: delta = tipo === "receita" ? valor : tipo === "investimento" ? 0 : -valor
-```
+- Linha 272: `const saldoAtual = caixaAtual;`
 
-**Alterar status (linha ~709 e ~721)**: Mesma lógica — investimento tem delta 0 ao entrar/sair de pago.
+Manter as demais correções já implementadas:
+- Saldo Investido acumulativo (query sem filtro de mês) ✓
+- Investimentos excluídos do Caixa Previsto ✓
+- Investimentos excluídos da projeção de runway ✓
 
-**Deletar lançamento**: Verificar se ao deletar investimento pago, não reverte saldo indevidamente.
+**3. Migração SQL — Reverter ajuste manual**
 
----
-
-### 2. `src/hooks/useDashboardData.tsx` — Caixa Previsto
-
-**Linha 232**: Atualmente `caixaPrevisto = caixaAtual + receitasPendentes - despesasPendentes`. Como investimentos não reduzem mais o saldo, o cálculo fica correto automaticamente.
-
-**Saldo Investido (linha ~255)**: Buscar o total investido de TODOS os períodos (não apenas do mês), pois investimentos são acumulativos. Fazer uma query separada sem filtro de mês.
-
-**Runway/Projeção**: Excluir investimentos das queries de `lancFuturos` e `recorrentes` (linhas 235-245).
-
----
-
-### 3. `src/utils/cashFlowProjection.ts` — Projeção
-
-Adicionar filtro para ignorar `tipo === 'investimento'` em `calcularFluxoMensal`, tanto nos lançamentos futuros quanto nos recorrentes.
-
----
-
-### 4. `src/contexts/LancamentosContext.tsx` — Funções auxiliares do n8n
-
-Verificar `n8n-query/index.ts` para a mesma lógica de delta — investimentos com delta 0.
-
----
+Subtrair os R$ 32.325,87 que foram adicionados manualmente na sessão anterior, pois agora o investimento voltará a debitar o saldo normalmente.
 
 ### Arquivos afetados
 
 | Arquivo | Mudança |
 |---|---|
-| `src/contexts/LancamentosContext.tsx` | Delta 0 para investimentos em criar, alterar status e deletar |
-| `src/hooks/useDashboardData.tsx` | Saldo investido acumulativo (query sem filtro de mês), excluir investimentos da projeção |
-| `src/utils/cashFlowProjection.ts` | Ignorar tipo investimento no cálculo mensal |
-| `supabase/functions/n8n-query/index.ts` | Delta 0 para investimentos |
+| `src/contexts/LancamentosContext.tsx` | Reverter delta para -valor em investimentos (3 pontos) |
+| `src/hooks/useDashboardData.tsx` | Saldo do Mês = caixaAtual |
+| SQL migration | Reverter +32.325,87 no saldo da conta Stone |
 
