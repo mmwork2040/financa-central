@@ -1,45 +1,28 @@
 
 
-## Plano: Gestão de múltiplas empresas independentes com cobrança individual
+## Plano: Padronizar espaçamento lateral da Landing Page
 
-### Situação atual
+### Diagnóstico
 
-O sistema **já suporta** múltiplas empresas por usuário:
-- `user_roles` permite vincular um usuário a N empresas
-- O sidebar já tem um switcher de empresa funcional
-- O convite por código já funciona (onboarding e sidebar)
-- `switchEmpresa` troca o contexto ativo
+A seção 2 ("Conexão com a dor") usa `container` + conteúdo interno com `max-w-4xl mx-auto`, o que cria margens laterais generosas. Outras seções usam o `container` cheio (max-width ~1280px) sem restrição interna, ficando mais "esticadas". As seções que precisam de ajuste:
 
-### O que falta
+- **Seção 1 (Hero)**: grid ocupa toda a largura do container
+- **Seção 4 (Funcionalidades)**: grids de features vão até a borda do container
+- **Seção 5 (Para quem é)**: usa `max-w-5xl` (já razoável)
+- **Footer**: conteúdo ocupa toda a largura
 
-1. **Criar nova empresa após o onboarding** — Hoje, só é possível criar empresa durante o primeiro acesso. Depois, o usuário só pode "entrar com código de convite". Falta a opção "Criar nova empresa" no dropdown do switcher.
+### Mudanças em `src/pages/LandingPage.tsx`
 
-2. **Cobrança por empresa (Stripe)** — Cada empresa deve ter uma assinatura independente. Isso requer integração com Stripe para gerenciar planos por empresa.
+1. **Hero (seção 1)**: Envolver o grid em `max-w-6xl mx-auto` para centralizar e dar respiro lateral.
 
-### Mudanças propostas
+2. **Funcionalidades (seção 4)**: Envolver todo o conteúdo interno em `max-w-6xl mx-auto` — isso alinha os grids de features com o mesmo respiro das demais seções.
 
-#### Fase 1: Criar nova empresa a partir do switcher (sem Stripe)
+3. **Para quem é (seção 5)**: Ajustar de `max-w-5xl` para `max-w-6xl` nos cards para manter consistência.
 
-**`src/components/Sidebar.tsx`**
-- Adicionar opção **"Criar nova empresa"** no dropdown do switcher (ao lado de "Entrar com código de convite").
-- Ao clicar, abrir um Dialog com o formulário de criação de empresa (nome, CNPJ, email, telefone — reutilizando a lógica do `OnboardingScreen`).
-- Chamar a edge function `create-empresa` existente e, após sucesso, recarregar para entrar na nova empresa.
+4. **Footer**: Adicionar `max-w-6xl mx-auto` ao conteúdo interno.
 
-**`supabase/functions/create-empresa/index.ts`**
-- Verificar se já funciona para usuários que já têm empresa (provavelmente sim, mas validar).
+O valor `max-w-6xl` (1152px) foi escolhido por ser intermediário entre o `max-w-4xl` da seção 2 e o container cheio, criando margens confortáveis sem comprimir demais o conteúdo de grids com 2 colunas.
 
-#### Fase 2: Cobrança por empresa (Stripe) — etapa futura
-
-Essa fase exige habilitar a integração Stripe no projeto. A estrutura seria:
-- Tabela `assinaturas` vinculada a `empresa_id` com status do plano.
-- Cada empresa criada inicia em período de teste (trial).
-- Tela de planos/assinatura acessível nas configurações da empresa.
-- Bloqueio de acesso quando a assinatura expira.
-
-### Recomendação
-
-Sugiro implementar a **Fase 1** agora (criar empresa pelo switcher) e discutir a Fase 2 (Stripe/cobrança) separadamente, pois envolve decisões de negócio (planos, preços, trial, etc.).
-
-### Arquivos afetados (Fase 1)
-- `src/components/Sidebar.tsx` — novo item "Criar nova empresa" + Dialog com formulário
+### Arquivo afetado
+- `src/pages/LandingPage.tsx`
 
