@@ -1,58 +1,40 @@
 import React from "react";
 import { TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import dashImage from "@/assets/landing-dash-example.webp";
+import dashImage2 from "@/assets/landing-dash-001.webp";
 
 const DashboardMockup = () => {
-  const bars = [
-    { h: 45, color: "bg-primary" },
-    { h: 65, color: "bg-primary" },
-    { h: 35, color: "bg-destructive/60" },
-    { h: 80, color: "bg-primary" },
-    { h: 50, color: "bg-primary" },
-    { h: 30, color: "bg-destructive/60" },
-    { h: 70, color: "bg-primary" },
-    { h: 55, color: "bg-primary" },
-  ];
-
   return (
-    <div className="glass-card rounded-2xl p-5 space-y-4 w-full max-w-md">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-foreground">Fluxo de Caixa</span>
-        <span className="text-[10px] text-muted-foreground">Mar 2026</span>
-      </div>
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-xl bg-primary/10 p-2.5 text-center">
-          <TrendingUp className="h-3.5 w-3.5 text-primary mx-auto mb-1" />
-          <p className="text-[10px] text-muted-foreground">Receitas</p>
-          <p className="text-xs font-bold text-foreground">R$ 24.500</p>
-        </div>
-        <div className="rounded-xl bg-destructive/10 p-2.5 text-center">
-          <TrendingDown className="h-3.5 w-3.5 text-destructive mx-auto mb-1" />
-          <p className="text-[10px] text-muted-foreground">Despesas</p>
-          <p className="text-xs font-bold text-foreground">R$ 12.300</p>
-        </div>
-        <div className="rounded-xl bg-accent p-2.5 text-center">
-          <DollarSign className="h-3.5 w-3.5 text-primary mx-auto mb-1" />
-          <p className="text-[10px] text-muted-foreground">Saldo</p>
-          <p className="text-xs font-bold text-primary">R$ 12.200</p>
+    <div className="w-full max-w-lg space-y-4">
+      {/* Main dashboard image */}
+      <div className="glass-card rounded-2xl p-2 shadow-xl relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{
+          background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%)"
+        }} />
+        <img 
+          src={dashImage} 
+          alt="Dashboard do Contabiliza AI mostrando fluxo de caixa" 
+          className="w-full rounded-xl"
+          loading="lazy"
+        />
+        {/* Tooltip flutuante */}
+        <div className="absolute top-4 right-4 glass-card rounded-xl px-3 py-2 shadow-lg text-xs">
+          <div className="flex items-center gap-1.5">
+            <TrendingUp className="h-3 w-3 text-primary" />
+            <span className="font-semibold text-foreground">+23%</span>
+            <span className="text-muted-foreground">vs mês anterior</span>
+          </div>
         </div>
       </div>
-
-      {/* Chart */}
-      <div className="flex items-end gap-1.5 h-20 pt-2">
-        {bars.map((bar, i) => (
-          <div
-            key={i}
-            className={`flex-1 ${bar.color} rounded-t-sm transition-all`}
-            style={{ height: `${bar.h}%` }}
-          />
-        ))}
-      </div>
-      <div className="flex justify-between text-[9px] text-muted-foreground">
-        <span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span>
-        <span>Mai</span><span>Jun</span><span>Jul</span><span>Ago</span>
+      
+      {/* Secondary image */}
+      <div className="glass-card rounded-2xl p-2 shadow-xl relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+        <img 
+          src={dashImage2} 
+          alt="Visão detalhada do dashboard financeiro" 
+          className="w-full rounded-xl"
+          loading="lazy"
+        />
       </div>
     </div>
   );
