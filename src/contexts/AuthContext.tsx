@@ -227,6 +227,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           fetchUserRoles(data.user.id),
         ]);
 
+        // Check trial/subscription status
+        const isSuperAdminUser = rolesResult?.empresasList?.some((e: any) => 
+          e.role === 'super_admin' || e.role === 'admin'
+        );
+        
+        // Super admins bypass subscription check
+        const { data: saCheck } = await supabase.rpc('is_super_admin', { _user_id: data.user.id });
+        
+        if (!saCheck) {
+          const assinaturaStatus = profile?.assinatura_status || 'trial';
+          const trialStarted = profile?.trial_started_at || profile?.created_at;
+          
+          if (assinaturaStatus === 'trial' && trialStarted) {
+            const trialEnd = new Date(trialStarted);
+            trialEnd.setDate(trialEnd.getDate() + 30);
+            
+            if (new Date() > trialEnd) {
+              // Trial expired - redirect to plans page
+              navigate("/planos-expirados");
+              toast.error("Seu período de teste de 30 dias expirou. Escolha um plano para continuar.");
+              return;
+            }
+          } else if (assinaturaStatus === 'expired' || assinaturaStatus === 'cancelled') {
+            navigate("/planos-expirados");
+            toast.error("Sua assinatura expirou. Escolha um plano para continuar.");
+            return;
+          }
+        }
+
         // Fire login webhook (global - searches all empresas)
         const activeEmpresaId = rolesResult?.activeEmpresaId || profile?.empresa_id;
         if (activeEmpresaId) {

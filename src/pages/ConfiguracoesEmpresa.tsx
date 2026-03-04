@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Building2, Upload, Loader2, User, Trash2 } from "lucide-react";
 import InviteCodesCard from "@/components/convites/InviteCodesCard";
+import PlanosAssinaturaConfig from "@/components/configuracoes/PlanosAssinaturaConfig";
 import CepAddressFields, { AddressData } from "@/components/common/CepAddressFields";
 import { phoneInputMask } from "@/utils/format";
 
@@ -258,6 +259,8 @@ const ConfiguracoesEmpresa = () => {
       )}
 
       {!isPessoal && <InviteCodesCard />}
+
+      {isSuperAdmin && <PlanosAssinaturaConfig />}
     </div>
   );
 };
