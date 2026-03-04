@@ -226,26 +226,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           fetchUserProfile(data.user.id),
           fetchUserRoles(data.user.id),
         ]);
+
+        // Fire login webhook silently BEFORE navigating
+        const activeEmpresaId = rolesResult?.activeEmpresaId || profile?.empresa_id;
+        console.log("[login webhook] activeEmpresaId:", activeEmpresaId, "profile:", profile?.nome, "telegram:", profile?.telegram_id);
+        if (activeEmpresaId) {
+          try {
+            await supabase.functions.invoke("fire-webhook", {
+              body: {
+                empresa_id: activeEmpresaId,
+                evento: "Acesso do Usuário",
+                descricao: `Login: ${profile?.nome || email}`,
+                nome: profile?.nome || null,
+                id_usuario: data.user.id || null,
+                id_telegram: profile?.telegram_id || null,
+                telefone: profile?.evolution_webhook_url || null,
+                email: profile?.email || null,
+                acao: "login",
+              },
+            });
+            console.log("[login webhook] fired successfully");
+          } catch (whErr) {
+            console.error("[login webhook] error:", whErr);
+          }
+        }
+
         navigate("/dashboard");
         toast.success(`Bem-vindo ${profile?.nome || email}!`);
-
-        // Fire login webhook silently
-        const activeEmpresaId = rolesResult?.activeEmpresaId || profile?.empresa_id;
-        if (activeEmpresaId) {
-          supabase.functions.invoke("fire-webhook", {
-            body: {
-              empresa_id: activeEmpresaId,
-              evento: "Acesso do Usuário",
-              descricao: `Login: ${profile?.nome || email}`,
-              nome: profile?.nome || null,
-              id_usuario: data.user.id || null,
-              id_telegram: profile?.telegram_id || null,
-              telefone: profile?.evolution_webhook_url || null,
-              email: profile?.email || null,
-              acao: "login",
-            },
-          }).catch(() => {});
-        }
       }
     } catch (error: any) {
       console.error("Erro ao fazer login:", error);
