@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
 import { Separator } from "@/components/ui/separator";
+import TermosInlineDialog from "./TermosInlineDialog";
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -126,13 +127,15 @@ export const LoginForm = ({ onLogin, isLoading }: LoginFormProps) => {
 
       <p className="text-xs text-center text-muted-foreground">
         Ao entrar, você concorda com nossos{" "}
-        <a href="/termos?tab=termos" target="_blank" className="text-primary hover:underline">
-          Termos de Uso
-        </a>{" "}
+        <TermosInlineDialog
+          defaultTab="termos"
+          trigger={<button type="button" className="text-primary hover:underline">Termos de Uso</button>}
+        />{" "}
         e{" "}
-        <a href="/termos?tab=privacidade" target="_blank" className="text-primary hover:underline">
-          Política de Privacidade
-        </a>.
+        <TermosInlineDialog
+          defaultTab="privacidade"
+          trigger={<button type="button" className="text-primary hover:underline">Política de Privacidade</button>}
+        />.
       </p>
     </div>
   );
