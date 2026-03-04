@@ -9,8 +9,7 @@ import { DescricaoInput } from "./form/DescricaoInput";
 import { ValorInput } from "./form/ValorInput";
 import { DatePickerField } from "./form/DatePickerField";
 import { StatusSelect } from "./form/StatusSelect";
-import { RecorrenciaToggle } from "./form/RecorrenciaToggle";
-import { ParcelasInput } from "./form/ParcelasInput";
+import { LancamentoModoSelect, LancamentoModo } from "./form/LancamentoModoSelect";
 import { CategoriaSelect } from "./form/CategoriaSelect";
 import { ClienteFornecedorSelect } from "./form/ClienteFornecedorSelect";
 import { GenericSelect } from "./form/GenericSelect";
@@ -45,10 +44,19 @@ export const LancamentosFormDialog = () => {
   const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita" | "investimento">(formData.tipo || "despesa");
   const [selectedStatus, setSelectedStatus] = useState<"pendente" | "pago" | "recebido" | "cancelado">(formData.status || "pendente");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [modo, setModo] = useState<LancamentoModo>("unico");
 
   useEffect(() => {
     setSelectedTipo(formData.tipo || "despesa");
     setSelectedStatus(formData.status || "pendente");
+    // Determine modo from existing data
+    if (formData.total_parcelas && formData.total_parcelas > 1) {
+      setModo("parcelado");
+    } else if (formData.recorrente) {
+      setModo("recorrente");
+    } else {
+      setModo("unico");
+    }
   }, [formData]);
 
   const handleTipoChange = (value: string) => {
@@ -78,6 +86,21 @@ export const LancamentosFormDialog = () => {
     }
   };
 
+  // Function to handle modo change
+  const handleModoChange = (newModo: LancamentoModo) => {
+    setModo(newModo);
+    if (newModo === "unico") {
+      handleRecorrenciaChange(false);
+      handleParcelasChange(null);
+    } else if (newModo === "recorrente") {
+      handleRecorrenciaChange(true);
+      handleParcelasChange(null);
+    } else if (newModo === "parcelado") {
+      handleRecorrenciaChange(false);
+      handleParcelasChange(null); // user will fill in
+    }
+  };
+
   // Function to handle recurrence toggle
   const handleRecorrenciaChange = (checked: boolean) => {
     const syntheticEvent = {
@@ -101,8 +124,7 @@ export const LancamentosFormDialog = () => {
   };
 
   // Function to handle parcelas change
-  const handleParcelasChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value) || null;
+  const handleParcelasChange = (value: number | null) => {
     const syntheticEvent = {
       target: { name: 'total_parcelas', value }
     } as unknown as React.ChangeEvent<HTMLInputElement>;
@@ -147,19 +169,17 @@ export const LancamentosFormDialog = () => {
             />
           )}
           
-          <RecorrenciaToggle 
-            checked={formData.recorrente || false} 
-            onCheckedChange={handleRecorrenciaChange}
+          <LancamentoModoSelect
+            modo={modo}
+            onModoChange={handleModoChange}
             recorrenciaTipo={(formData as any).recorrencia_tipo || "mensal"}
             onRecorrenciaTipoChange={handleRecorrenciaTipoChange}
             recorrenciaFim={(formData as any).recorrencia_fim}
             onRecorrenciaFimChange={handleRecorrenciaFimChange}
+            totalParcelas={formData.total_parcelas}
+            onTotalParcelasChange={handleParcelasChange}
+            valorTotal={formData.valor || 0}
           />
-
-          {/* Conditional parcelas field */}
-          {formData.recorrente && (
-            <ParcelasInput value={formData.total_parcelas} onChange={handleParcelasChange} />
-          )}
           
           <CategoriaSelect 
             value={formData.categoria_id} 
@@ -236,6 +256,12 @@ export const LancamentosFormDialog = () => {
                   <p><strong>Valor:</strong> {formatCurrency(formData.valor || 0)}</p>
                   <p><strong>Vencimento:</strong> {formData.data_vencimento ? new Date(formData.data_vencimento + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</p>
                   <p><strong>Status:</strong> {selectedStatus === "pendente" ? "Pendente" : selectedStatus === "pago" ? "Pago" : selectedStatus === "recebido" ? "Recebido" : "Cancelado"}</p>
+                  {modo === "recorrente" && (
+                    <p className="text-primary font-medium">{formatCurrency(formData.valor || 0)}/{(formData as any).recorrencia_tipo === "mensal" ? "mês" : (formData as any).recorrencia_tipo || "mês"} — repete {(formData as any).recorrencia_tipo || "mensalmente"}</p>
+                  )}
+                  {modo === "parcelado" && formData.total_parcelas && formData.total_parcelas > 1 && (
+                    <p className="text-primary font-medium">{formatCurrency(formData.valor || 0)} total → {formData.total_parcelas}x de {formatCurrency(Math.round(((formData.valor || 0) / formData.total_parcelas) * 100) / 100)}</p>
+                  )}
                 </div>
               </div>
             </AlertDialogDescription>
