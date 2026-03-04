@@ -9,7 +9,7 @@ import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
 import { useCompanyTheme } from "@/hooks/useCompanyTheme";
 import { useIsMobile } from "@/hooks/use-mobile";
 import FloatingChatButton from "@/components/common/FloatingChatButton";
-import FloatingTelegramButton from "@/components/common/FloatingTelegramButton";
+
 import MobileBottomNav from "@/components/common/MobileBottomNav";
 import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 import { MonthFilterProvider } from "@/contexts/MonthFilterContext";
@@ -74,7 +74,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </main>
         <MobileBottomNav />
         <FloatingChatButton />
-        <FloatingTelegramButton />
+        
       </div>
     </MonthFilterProvider>
   );
