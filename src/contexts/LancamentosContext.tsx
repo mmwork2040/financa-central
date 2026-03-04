@@ -475,6 +475,12 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         .eq('tabela', 'lancamentos')
         .eq('status', 'pendente');
 
+      // Clear lancamento_id on any linked venda before deleting
+      await (supabase as any)
+        .from('vendas_digitais')
+        .update({ lancamento_id: null })
+        .eq('lancamento_id', selectedId);
+
       const { error } = await supabase.from("lancamentos").delete().eq("id", selectedId);
 
       if (error) {
@@ -687,6 +693,20 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       if (error) {
         throw error;
+      }
+
+      // Sync venda status if linked
+      const vendaStatusMap: Record<string, string> = {
+        recebido: "aprovada",
+        pendente: "pendente",
+        cancelado: "cancelada",
+        pago: "aprovada",
+      };
+      if (vendaStatusMap[status]) {
+        await (supabase as any)
+          .from('vendas_digitais')
+          .update({ status: vendaStatusMap[status] })
+          .eq('lancamento_id', id);
       }
 
       // Atualizar saldo da conta quando muda para pago/recebido ou sai de pago/recebido
