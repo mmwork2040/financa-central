@@ -851,13 +851,20 @@ const Integracoes = () => {
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : (
-        <Tabs defaultValue="vendas" className="w-full">
+        <Tabs defaultValue={(() => {
+          const visibleCats = (Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).filter(cat => {
+            const plats = PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin) && isPlataformaDisponivel(p.id));
+            return plats.length > 0;
+          });
+          return visibleCats[0] || "vendas";
+        })()} className="w-full">
           <TabsList className="mb-4 flex-wrap h-auto">
             {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => {
               const info = CATEGORIAS_INFO[cat];
               const CatIcon = info.icon;
               const filteredPlats = PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin) && isPlataformaDisponivel(p.id));
               const count = filteredPlats.length;
+              if (count === 0) return null;
               const connectedCount = filteredPlats.filter(p => getStatus(p.id) === 'connected').length;
               return (
                 <TabsTrigger key={cat} value={cat} className="gap-1.5 text-xs sm:text-sm">
