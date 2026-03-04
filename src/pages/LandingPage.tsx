@@ -24,6 +24,8 @@ import {
   DollarSign,
   Star,
   Play,
+  Sparkles,
+  Check,
 } from "lucide-react";
 import PhoneMockup from "@/components/landing/PhoneMockup";
 import ChatBubble from "@/components/landing/ChatBubble";
@@ -156,14 +158,44 @@ const LandingPage = () => {
         }} />
         <div className="container mx-auto px-4 py-20 relative">
           <div className="max-w-3xl mx-auto text-center space-y-8">
-            <div className="flex justify-center gap-8 mb-6">
-              <div className="relative glass-card rounded-2xl p-4 group hover:-translate-y-1 transition-transform">
-                <Table2 className="h-10 w-10 text-muted-foreground/40" />
-                <XCircle className="h-5 w-5 text-destructive absolute -top-1 -right-1" />
+            <div className="flex justify-center items-center gap-6 mb-8">
+              {/* Planilha riscada */}
+              <div className="relative glass-card rounded-2xl p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg">
+                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" style={{
+                  background: "radial-gradient(ellipse at 50% 0%, hsla(0, 84%, 60%, 0.08) 0%, transparent 70%)"
+                }} />
+                <Table2 className="h-10 w-10 text-muted-foreground/30" />
+                <XCircle className="h-5 w-5 text-destructive absolute -top-1.5 -right-1.5 drop-shadow-sm" />
+                <p className="text-[10px] text-muted-foreground mt-2 font-medium">Planilhas</p>
               </div>
-              <div className="relative glass-card rounded-2xl p-4 group hover:-translate-y-1 transition-transform">
-                <Calculator className="h-10 w-10 text-muted-foreground/40" />
-                <XCircle className="h-5 w-5 text-destructive absolute -top-1 -right-1" />
+
+              {/* Calculadora riscada */}
+              <div className="relative glass-card rounded-2xl p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg">
+                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" style={{
+                  background: "radial-gradient(ellipse at 50% 0%, hsla(0, 84%, 60%, 0.08) 0%, transparent 70%)"
+                }} />
+                <Calculator className="h-10 w-10 text-muted-foreground/30" />
+                <XCircle className="h-5 w-5 text-destructive absolute -top-1.5 -right-1.5 drop-shadow-sm" />
+                <p className="text-[10px] text-muted-foreground mt-2 font-medium">Cálculos manuais</p>
+              </div>
+
+              {/* Seta animada */}
+              <div className="flex flex-col items-center gap-1 px-2">
+                <div className="h-px w-10 bg-gradient-to-r from-destructive/40 to-primary/60" />
+                <ArrowRight className="h-6 w-6 text-primary animate-pulse" />
+                <div className="h-px w-10 bg-gradient-to-r from-destructive/40 to-primary/60" />
+              </div>
+
+              {/* IA solução */}
+              <div className="relative glass-card rounded-2xl p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg border-primary/20">
+                <div className="absolute inset-0 rounded-2xl opacity-60 group-hover:opacity-100 transition-opacity" style={{
+                  background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.1) 0%, transparent 70%)"
+                }} />
+                <Sparkles className="h-10 w-10 text-primary" />
+                <div className="h-5 w-5 bg-primary rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5 shadow-md">
+                  <Check className="h-3 w-3 text-primary-foreground" />
+                </div>
+                <p className="text-[10px] text-primary mt-2 font-semibold">IA Financeira</p>
               </div>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">
