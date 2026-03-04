@@ -210,6 +210,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const fetchLancamentos = useCallback(async () => {
     setLoading(true);
     try {
+      // Query 1: lancamentos do mês selecionado
       let query = (supabase as any).from("lancamentos").select(`
         *,
         categoria:categorias(*),
@@ -252,14 +253,32 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         query = query.eq("projeto_id", filtros.projeto_id);
       }
 
-      const { data, error } = await query;
+      // Query 2: lançamentos recorrentes de meses anteriores (para projeções virtuais)
+      const recurringQuery = (supabase as any).from("lancamentos").select(`
+        *,
+        categoria:categorias(*),
+        fornecedor:fornecedores(*),
+        cliente:clientes(*),
+        projeto:projetos(id, nome)
+      `)
+        .eq("recorrente", true)
+        .lt("data_vencimento", monthStart);
 
-      if (error) {
-        throw error;
-      }
+      const [mainResult, recurringResult] = await Promise.all([query, recurringQuery]);
 
-      // Cast results to ensure type safety
-      setLancamentos(data as unknown as Lancamento[]);
+      if (mainResult.error) throw mainResult.error;
+      if (recurringResult.error) throw recurringResult.error;
+
+      // Merge without duplicates
+      const mainData = mainResult.data || [];
+      const recurringData = recurringResult.data || [];
+      const mainIds = new Set(mainData.map((l: any) => l.id));
+      const merged = [
+        ...mainData,
+        ...recurringData.filter((l: any) => !mainIds.has(l.id)),
+      ];
+
+      setLancamentos(merged as unknown as Lancamento[]);
     } catch (error: any) {
       toast.error(error.message || "Erro ao carregar lançamentos");
     } finally {
