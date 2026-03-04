@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Save, Lock, User, MessageCircle, Loader2 } from "lucide-react";
+import { Camera, Save, Lock, User, MessageCircle, Loader2, CreditCard } from "lucide-react";
 import PageHeader from "@/components/common/PageHeader";
 import { phoneInputMask } from "@/utils/format";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 const getInitials = (nome: string) =>
   nome.split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase();
@@ -26,7 +28,7 @@ const getRoleLabel = (role: string | null, isSuperAdmin: boolean) => {
 };
 
 const Profile = () => {
-  const { userProfile, user, userRole, isSuperAdmin } = useAuth();
+  const { userProfile, user, userRole, isSuperAdmin, isTrialActive, trialDaysRemaining, assinaturaStatus } = useAuth();
   const [nome, setNome] = useState(userProfile?.nome || "");
   const [savingName, setSavingName] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -39,6 +41,21 @@ const Profile = () => {
   const rawPhone = userProfile?.evolution_webhook_url || "";
   const [evolutionWebhookUrl, setEvolutionWebhookUrl] = useState(rawPhone ? phoneInputMask(rawPhone) : "");
   const [savingWebhook, setSavingWebhook] = useState(false);
+  const [planoNome, setPlanoNome] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPlano = async () => {
+      if (userProfile?.assinatura_plano_id) {
+        const { data } = await (supabase as any)
+          .from('planos_assinatura')
+          .select('nome')
+          .eq('id', userProfile.assinatura_plano_id)
+          .single();
+        if (data) setPlanoNome(data.nome);
+      }
+    };
+    fetchPlano();
+  }, [userProfile?.assinatura_plano_id]);
 
   const handlePhoneFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, "").slice(0, 11);
@@ -278,8 +295,47 @@ const Profile = () => {
             </Button>
           </CardContent>
         </Card>
+        {/* Plano Atual */}
+        {!isSuperAdmin && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Meu Plano
+              </CardTitle>
+              <CardDescription>Informações sobre sua assinatura atual</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Status</span>
+                <Badge variant={assinaturaStatus === 'ativo' ? 'default' : assinaturaStatus === 'trial' ? 'secondary' : 'destructive'}>
+                  {assinaturaStatus === 'trial' ? 'Teste Gratuito' : assinaturaStatus === 'ativo' ? 'Ativo' : 'Expirado'}
+                </Badge>
+              </div>
+              {planoNome && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Plano</span>
+                  <span className="text-sm font-medium">{planoNome}</span>
+                </div>
+              )}
+              {assinaturaStatus === 'trial' && trialDaysRemaining !== null && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Dias restantes</span>
+                    <span className="text-sm font-bold">{trialDaysRemaining} de 30</span>
+                  </div>
+                  <Progress value={((30 - trialDaysRemaining) / 30) * 100} className="h-2" />
+                </div>
+              )}
+              {!planoNome && assinaturaStatus !== 'trial' && (
+                <p className="text-sm text-muted-foreground">Nenhum plano ativo.</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Telefone WhatsApp */}
-        <Card className="md:col-span-2">
+        <Card className={isSuperAdmin ? "md:col-span-2" : ""}>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <MessageCircle className="h-4 w-4" />
