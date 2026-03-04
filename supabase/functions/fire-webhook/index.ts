@@ -18,19 +18,26 @@ Deno.serve(async (req) => {
     const body = await req.json();
     let { empresa_id, evento, tabela, data, valor, descricao, usuario, acao, registro, assunto, mensagem, conversa_id, nome, id_usuario, id_telegram, telefone, email } = body;
 
+    // Resolve user identity from nested 'usuario' object as fallback
+    if (!id_usuario && usuario?.id) id_usuario = usuario.id;
+    if (!nome && usuario?.nome) nome = usuario.nome;
+    if (!email && usuario?.email) email = usuario.email;
+    if (!telefone && usuario?.telefone) telefone = usuario.telefone;
+    if (!id_telegram && usuario?.telegram_id) id_telegram = usuario.telegram_id;
+
     if (!empresa_id || !evento) {
       throw new Error("empresa_id and evento are required");
     }
 
-    // If id_telegram is missing but we have id_usuario, fetch it from perfis
-    if (!id_telegram && id_usuario) {
+    // Always enrich user data from perfis when we have id_usuario
+    if (id_usuario) {
       const { data: perfilData } = await supabase
         .from("perfis")
         .select("telegram_id, nome, evolution_webhook_url, email")
         .eq("id", id_usuario)
         .single();
       if (perfilData) {
-        id_telegram = perfilData.telegram_id || id_telegram;
+        if (!id_telegram) id_telegram = perfilData.telegram_id || "";
         if (!nome) nome = perfilData.nome;
         if (!telefone) telefone = perfilData.evolution_webhook_url;
         if (!email) email = perfilData.email;
