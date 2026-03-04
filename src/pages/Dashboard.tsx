@@ -151,7 +151,7 @@ const DashboardContent = () => {
             <p className={cn("text-lg sm:text-xl font-bold", summary.saldoAtual >= 0 ? "text-blue-600" : "text-destructive")}>
               {maskValue(formatCurrency(summary.saldoAtual), visible)}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Soma dos saldos bancários</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Saldo inicial + recebido − pago</p>
             <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border/50">
               <Landmark className="h-3 w-3 text-blue-500" />
               <span className="text-[10px] text-muted-foreground">Investido:</span>

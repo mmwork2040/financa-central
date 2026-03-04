@@ -11,7 +11,7 @@ export type DashboardDialogType = 'saldo' | 'receitas' | 'despesas' | 'receita-p
 interface DashboardDetailDialogProps {
   type: DashboardDialogType;
   onClose: () => void;
-  contasBancarias: Array<{ id: string; nome: string; saldo_atual: number }>;
+  contasBancarias: Array<{ id: string; nome: string; saldo_atual: number; saldo_inicial: number }>;
   lancamentosMes: any[];
   summary: {
     totalReceitas: number;
@@ -47,7 +47,7 @@ export const DashboardDetailDialog = ({
   const renderContent = () => {
     switch (type) {
       case 'saldo':
-        return <SaldoContent contasBancarias={contasBancarias} visible={visible} saldoTotal={summary.saldoAtual} />;
+        return <SaldoContent contasBancarias={contasBancarias} visible={visible} saldoTotal={summary.saldoAtual} summary={summary} />;
       case 'receitas':
         return <ReceitasContent lancamentosMes={lancamentosMes} visible={visible} executado={summary.receitasExecutadas} previsto={summary.receitasPrevistas} />;
       case 'despesas':
@@ -90,38 +90,68 @@ export const DashboardDetailDialog = ({
 };
 
 /* ─── Saldo ─── */
-const SaldoContent = ({ contasBancarias, visible, saldoTotal }: { contasBancarias: Array<{ id: string; nome: string; saldo_atual: number }>; visible: boolean; saldoTotal: number }) => (
-  <div className="space-y-3">
-    <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
-      {contasBancarias.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-4">Nenhuma conta bancária cadastrada.</p>
-      ) : (
-        contasBancarias.map(c => (
-          <div key={c.id} className="flex items-center justify-between py-1.5">
-            <div className="flex items-center gap-2">
-              <Landmark className="h-4 w-4 text-blue-500" />
-              <span className="text-sm">{c.nome}</span>
-            </div>
-            <span className={cn("text-sm font-semibold", c.saldo_atual >= 0 ? "text-blue-600" : "text-destructive")}>
-              {maskValue(formatCurrency(c.saldo_atual), visible)}
-            </span>
+const SaldoContent = ({ contasBancarias, visible, saldoTotal, summary }: { contasBancarias: Array<{ id: string; nome: string; saldo_atual: number; saldo_inicial: number }>; visible: boolean; saldoTotal: number; summary: { receitasExecutadas: number; despesasExecutadas: number } }) => {
+  const saldoInicialTotal = contasBancarias.reduce((s, c) => s + ((c as any).saldo_inicial || 0), 0);
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Landmark className="h-4 w-4 text-blue-500" />
+            <span className="text-sm text-muted-foreground">Saldo inicial (todas as contas)</span>
           </div>
-        ))
-      )}
+          <span className="text-sm font-semibold text-blue-600">
+            {maskValue(formatCurrency(saldoInicialTotal), visible)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ArrowUpRight className="h-4 w-4 text-green-500" />
+            <span className="text-sm text-muted-foreground">+ Receitas recebidas no mês</span>
+          </div>
+          <span className="text-sm font-semibold text-green-600">
+            {maskValue(formatCurrency(summary.receitasExecutadas), visible)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ArrowDownRight className="h-4 w-4 text-destructive" />
+            <span className="text-sm text-muted-foreground">− Despesas pagas no mês</span>
+          </div>
+          <span className="text-sm font-semibold text-destructive">
+            {maskValue(formatCurrency(summary.despesasExecutadas), visible)}
+          </span>
+        </div>
+        <Separator />
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-sm font-semibold">= Saldo do mês</span>
+          <span className={cn("text-base font-bold", saldoTotal >= 0 ? "text-blue-600" : "text-destructive")}>
+            {maskValue(formatCurrency(saldoTotal), visible)}
+          </span>
+        </div>
+      </div>
+
       {contasBancarias.length > 0 && (
-        <>
-          <Separator />
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-sm font-semibold">Total</span>
-            <span className={cn("text-base font-bold", saldoTotal >= 0 ? "text-blue-600" : "text-destructive")}>
-              {maskValue(formatCurrency(saldoTotal), visible)}
-            </span>
+        <div>
+          <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+            <Landmark className="h-3.5 w-3.5 text-blue-500" />
+            Contas Bancárias
+          </h4>
+          <div className="space-y-1">
+            {contasBancarias.map(c => (
+              <div key={c.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-muted/50 text-sm">
+                <span>{c.nome}</span>
+                <span className={cn("font-medium", c.saldo_atual >= 0 ? "text-blue-600" : "text-destructive")}>
+                  {maskValue(formatCurrency(c.saldo_atual), visible)}
+                </span>
+              </div>
+            ))}
           </div>
-        </>
+        </div>
       )}
     </div>
-  </div>
-);
+  );
+};
 
 /* ─── Receitas ─── */
 const ReceitasContent = ({ lancamentosMes, visible, executado, previsto }: { lancamentosMes: any[]; visible: boolean; executado: number; previsto: number }) => {
