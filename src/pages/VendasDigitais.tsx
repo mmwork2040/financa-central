@@ -38,7 +38,10 @@ import { toast } from "sonner";
 const PLATAFORMAS_VENDAS = ["hotmart", "eduzz", "monetizze", "kiwify"];
 
 const VendasDigitais = () => {
-  const { empresaId } = useAuth();
+  const { empresaId, canPerformAction } = useAuth();
+  const canIncluir = canPerformAction("vendas_digitais", "pode_incluir");
+  const canAlterar = canPerformAction("vendas_digitais", "pode_alterar");
+  const canExcluir = canPerformAction("vendas_digitais", "pode_excluir");
   const navigate = useNavigate();
   const [vendas, setVendas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,9 +172,11 @@ const VendasDigitais = () => {
         </div>
         <div className="flex items-center gap-2">
           <ExportDropdown onExport={(fmt) => exportVendas(filtered, fmt)} />
-          <Button onClick={() => { setEditingVenda(null); setFormOpen(true); }} size="sm">
-            <Plus className="h-4 w-4 mr-1" /> Nova Venda
-          </Button>
+          {canIncluir && (
+            <Button onClick={() => { setEditingVenda(null); setFormOpen(true); }} size="sm">
+              <Plus className="h-4 w-4 mr-1" /> Nova Venda
+            </Button>
+          )}
         </div>
       </div>
 
@@ -281,9 +286,11 @@ const VendasDigitais = () => {
             <p className="text-sm text-muted-foreground max-w-md mb-4">
               Registre vendas manualmente ou conecte suas plataformas em <strong>Configurações → Integrações</strong>.
             </p>
-            <Button onClick={() => { setEditingVenda(null); setFormOpen(true); }}>
-              <Plus className="h-4 w-4 mr-1" /> Registrar Primeira Venda
-            </Button>
+            {canIncluir && (
+              <Button onClick={() => { setEditingVenda(null); setFormOpen(true); }}>
+                <Plus className="h-4 w-4 mr-1" /> Registrar Primeira Venda
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -321,14 +328,16 @@ const VendasDigitais = () => {
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDetailVenda(venda)}>
                         <Eye className="h-3 w-3" />
                       </Button>
-                      {venda.origem === "manual" && (
+                      {canAlterar && venda.origem === "manual" && (
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingVenda(venda); setFormOpen(true); }}>
                           <Edit className="h-3 w-3" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => setDeleteVenda(venda)}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      {canExcluir && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => setDeleteVenda(venda)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
