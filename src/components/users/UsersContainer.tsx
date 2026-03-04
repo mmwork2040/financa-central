@@ -13,7 +13,7 @@ import { MyExitRequests } from "@/components/solicitacoes/MyExitRequests";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
 
 export const UsersContainer = () => {
-  const { user: authUser, empresaId } = useAuth();
+  const { user: authUser, empresaId, isPessoal } = useAuth();
   const currentUserId = authUser?.id;
   const { 
     filteredUsers, 
@@ -173,6 +173,7 @@ export const UsersContainer = () => {
         onSave={handleSave}
         selectedUser={selectedUser}
         loading={saving}
+        isPersonalOwner={isPessoal && selectedUser?.id === currentUserId}
       />
 
       {/* Delete Confirmation Modal */}

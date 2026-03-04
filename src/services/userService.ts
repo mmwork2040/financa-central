@@ -50,10 +50,29 @@ export const updateUser = async (userId: string, userData: { nome: string; permi
     .maybeSingle();
 
   if (targetRoles) {
-    // Target is super_admin — RLS will enforce, but let's also guard here
     const { data: currentUser } = await supabase.auth.getUser();
     if (currentUser?.user?.id !== userId) {
       throw new Error("Não é possível alterar dados de um Super Admin.");
+    }
+  }
+
+  // Check if user is owner of a personal company — protect admin status
+  const { data: userProfile } = await supabase
+    .from('perfis')
+    .select('empresa_id')
+    .eq('id', userId)
+    .single();
+
+  if (userProfile?.empresa_id) {
+    const { data: empresa } = await supabase
+      .from('empresas')
+      .select('pessoal')
+      .eq('id', userProfile.empresa_id)
+      .single();
+
+    if (empresa?.pessoal) {
+      // Force admin for personal company owner
+      userData.permissao = 'admin';
     }
   }
 
