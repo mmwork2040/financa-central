@@ -46,7 +46,7 @@ const LandingPage = () => {
     <div className="min-h-screen bg-background">
       {/* Navbar */}
       <nav className="sticky top-0 z-50 border-b border-border/40 glass-card">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
               <BarChart3 className="h-5 w-5 text-primary" />
@@ -72,8 +72,8 @@ const LandingPage = () => {
         <div className="absolute bottom-32 left-[20%] h-4 w-4 rounded-full bg-primary/10 shadow-lg hidden md:block" />
         <div className="absolute top-60 right-[8%] h-2.5 w-2.5 rounded-full bg-primary/15 shadow-md hidden md:block" />
 
-        <div className="container mx-auto px-4 py-16 md:py-24 relative">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-24 lg:py-32 relative">
+          <div className="grid md:grid-cols-2 gap-12 md:gap-16 lg:gap-20 items-center">
             {/* Texto */}
             <div className="space-y-6 text-center md:text-left">
               <Badge className="rounded-full px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 text-xs font-semibold tracking-wide">
@@ -89,10 +89,10 @@ const LandingPage = () => {
                   </svg>
                 </span>
               </h1>
-              <p className="text-lg text-muted-foreground max-w-lg mx-auto md:mx-0">
+              <p className="text-lg text-muted-foreground max-w-lg mx-auto md:mx-0 leading-relaxed">
                 Conheça sua nova plataforma de gestão financeira para sua empresa, acelerada por inteligência artificial.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start pt-2">
                 <Button size="lg" onClick={() => navigate("/register")} className="text-base px-8 rounded-full shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
                   Testar por 30 dias grátis
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -111,21 +111,21 @@ const LandingPage = () => {
                 icon={<TrendingUp className="h-4 w-4 text-primary" />}
                 label="Receitas do mês"
                 value="R$ 24.500"
-                className="absolute -left-4 top-8 md:-left-12 z-10"
+                className="absolute -left-4 top-8 md:-left-12 lg:-left-16 z-10 hidden md:block"
                 delay="0s"
               />
               <FloatingStatCard
                 icon={<Target className="h-4 w-4 text-primary" />}
                 label="Precisão da IA"
                 value="95%"
-                className="absolute -right-4 top-24 md:-right-8 z-10"
+                className="absolute -right-4 top-24 md:-right-8 lg:-right-12 z-10 hidden md:block"
                 delay="0.5s"
               />
               <FloatingStatCard
                 icon={<DollarSign className="h-4 w-4 text-primary" />}
                 label="Saldo atual"
                 value="R$ 10.300"
-                className="absolute -left-2 bottom-16 md:-left-6 z-10"
+                className="absolute -left-2 bottom-16 md:-left-6 lg:-left-10 z-10 hidden md:block"
                 delay="1s"
               />
 
@@ -159,9 +159,9 @@ const LandingPage = () => {
         <div className="absolute inset-0" style={{
           background: "radial-gradient(ellipse 60% 80% at 50% 50%, hsla(25, 95%, 53%, 0.04) 0%, transparent 60%)"
         }} />
-        <div className="container mx-auto px-4 py-20 relative">
-          <div className="max-w-3xl mx-auto text-center space-y-8">
-            <div className="flex justify-center items-center gap-6 mb-8">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24 relative">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6 lg:gap-8 mb-8">
               {/* Planilha riscada */}
               <div className="relative glass-card rounded-2xl p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg">
                 <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" style={{
@@ -211,7 +211,7 @@ const LandingPage = () => {
             </p>
 
             {/* Stats bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6 max-w-2xl mx-auto pt-4">
               {[
                 { icon: Clock, value: "+85%", label: "Economia de tempo" },
                 { icon: Target, value: "98%", label: "Precisão nos dados" },
@@ -231,13 +231,13 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 3: COMO FUNCIONA — TRILHA VISUAL ===== */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="text-center mb-16">
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+        <div className="text-center mb-16 lg:mb-20">
           <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px] mb-4">Passo a passo</Badge>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
             Tudo com o auxílio de <span className="text-primary relative inline-block">inteligência artificial<svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none"><path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" /></svg></span>
           </h2>
-          <p className="mt-3 text-muted-foreground text-lg">Veja como é simples em 4 passos.</p>
+          <p className="mt-3 text-muted-foreground text-lg max-w-xl mx-auto">Veja como é simples em 4 passos.</p>
         </div>
 
         {/* Timeline trail */}
@@ -246,7 +246,7 @@ const LandingPage = () => {
           <div className="absolute left-6 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/40 via-primary/20 to-border/30" />
 
           {/* Step 1 */}
-          <div className="relative flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-12 mb-16 pl-16 md:pl-0">
+          <div className="relative flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-12 lg:gap-16 mb-16 md:mb-20 pl-16 md:pl-0">
             <div className="absolute left-3.5 md:left-1/2 md:-translate-x-1/2 top-0 h-6 w-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow-lg z-10 ring-4 ring-background">1</div>
             <div className="md:w-1/2 md:text-right md:pr-12 space-y-2">
               <div className="inline-flex items-center gap-2 text-primary">
@@ -256,7 +256,7 @@ const LandingPage = () => {
               <p className="text-sm text-muted-foreground leading-relaxed">Abra o chat pelo celular ou computador. A IA está pronta para te ajudar, 24 horas por dia.</p>
             </div>
             <div className="md:w-1/2 md:pl-12">
-              <div className="glass-card rounded-2xl p-3 max-w-[260px] shadow-lg">
+              <div className="glass-card rounded-2xl p-3 max-w-xs shadow-lg">
                 <div className="rounded-xl bg-muted/50 p-3 space-y-2">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center">
@@ -276,7 +276,7 @@ const LandingPage = () => {
           </div>
 
           {/* Step 2 */}
-          <div className="relative flex flex-col md:flex-row-reverse items-start md:items-center gap-6 md:gap-12 mb-16 pl-16 md:pl-0">
+          <div className="relative flex flex-col md:flex-row-reverse items-start md:items-center gap-6 md:gap-12 lg:gap-16 mb-16 md:mb-20 pl-16 md:pl-0">
             <div className="absolute left-3.5 md:left-1/2 md:-translate-x-1/2 top-0 h-6 w-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow-lg z-10 ring-4 ring-background">2</div>
             <div className="md:w-1/2 md:text-left md:pl-12 space-y-2">
               <div className="inline-flex items-center gap-2 text-primary">
@@ -286,7 +286,7 @@ const LandingPage = () => {
               <p className="text-sm text-muted-foreground leading-relaxed">Crie sua conta com e-mail ou telefone. Sem burocracia, sem configurações complexas.</p>
             </div>
             <div className="md:w-1/2 md:pr-12 md:flex md:justify-end">
-              <div className="glass-card rounded-2xl p-3 max-w-[260px] shadow-lg">
+              <div className="glass-card rounded-2xl p-3 max-w-xs shadow-lg">
                 <div className="rounded-xl bg-muted/50 p-4 space-y-2.5">
                   <p className="text-[11px] font-semibold text-foreground text-center">Criar conta</p>
                   <div className="space-y-1.5">
@@ -301,7 +301,7 @@ const LandingPage = () => {
           </div>
 
           {/* Step 3 */}
-          <div className="relative flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-12 mb-16 pl-16 md:pl-0">
+          <div className="relative flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-12 lg:gap-16 mb-16 md:mb-20 pl-16 md:pl-0">
             <div className="absolute left-3.5 md:left-1/2 md:-translate-x-1/2 top-0 h-6 w-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow-lg z-10 ring-4 ring-background">3</div>
             <div className="md:w-1/2 md:text-right md:pr-12 space-y-2">
               <div className="inline-flex items-center gap-2 text-primary">
@@ -311,7 +311,7 @@ const LandingPage = () => {
               <p className="text-sm text-muted-foreground leading-relaxed">Envie <span className="text-primary font-semibold border-b-2 border-primary/30">texto</span>, <span className="text-primary font-semibold border-b-2 border-primary/30">áudio</span> ou <span className="text-primary font-semibold border-b-2 border-primary/30">foto</span> do recibo. A IA interpreta e lança automaticamente.</p>
             </div>
             <div className="md:w-1/2 md:pl-12">
-              <div className="glass-card rounded-2xl p-3 max-w-[260px] shadow-lg">
+              <div className="glass-card rounded-2xl p-3 max-w-xs shadow-lg">
                 <div className="rounded-xl bg-muted/50 p-3 space-y-2">
                   <div className="flex items-center gap-2 rounded-lg bg-primary/10 p-2">
                     <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center">
@@ -342,7 +342,7 @@ const LandingPage = () => {
           </div>
 
           {/* Step 4 */}
-          <div className="relative flex flex-col md:flex-row-reverse items-start md:items-center gap-6 md:gap-12 pl-16 md:pl-0">
+          <div className="relative flex flex-col md:flex-row-reverse items-start md:items-center gap-6 md:gap-12 lg:gap-16 pl-16 md:pl-0">
             <div className="absolute left-3.5 md:left-1/2 md:-translate-x-1/2 top-0 h-6 w-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow-lg z-10 ring-4 ring-background">4</div>
             <div className="md:w-1/2 md:text-left md:pl-12 space-y-2">
               <div className="inline-flex items-center gap-2 text-primary">
@@ -352,7 +352,7 @@ const LandingPage = () => {
               <p className="text-sm text-muted-foreground leading-relaxed">Solicite DRE, fluxo de caixa ou qualquer relatório. A IA gera e envia na hora.</p>
             </div>
             <div className="md:w-1/2 md:pr-12 md:flex md:justify-end">
-              <div className="glass-card rounded-2xl p-3 max-w-[260px] shadow-lg">
+              <div className="glass-card rounded-2xl p-3 max-w-xs shadow-lg">
                 <div className="rounded-xl bg-muted/50 p-3 space-y-2">
                   <p className="text-[9px] font-semibold text-foreground">📊 Resumo — Março 2026</p>
                   <div className="space-y-1">
@@ -387,7 +387,7 @@ const LandingPage = () => {
 
       {/* ===== SEÇÃO 4: FUNCIONALIDADES ===== */}
       <section className="border-y border-border/40">
-        <div className="container mx-auto px-4 py-20">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
               Um sistema completo, <span className="text-primary relative inline-block">sem a complexidade<svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none"><path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" /></svg></span> de um sistema tradicional
@@ -395,7 +395,7 @@ const LandingPage = () => {
           </div>
 
           {/* Feature 1 — Lançamentos */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
+          <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center mb-16 lg:mb-20">
             <div className="space-y-4">
               <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px]">Lançamentos</Badge>
               <h3 className="text-2xl font-extrabold tracking-tight text-foreground">Lançamento de Receitas e Despesas</h3>
@@ -469,7 +469,7 @@ const LandingPage = () => {
           </div>
 
           {/* Feature 2 — Fluxo de Caixa com imagem real */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
+          <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center mb-16 lg:mb-20">
             <div className="order-2 md:order-1 flex justify-center">
               <DashboardMockup />
             </div>
@@ -483,7 +483,7 @@ const LandingPage = () => {
           </div>
 
           {/* Feature 3 — Controle de Contas */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
+          <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center mb-16 lg:mb-20">
             <div className="space-y-4">
               <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px]">Contas</Badge>
               <h3 className="text-2xl font-extrabold tracking-tight text-foreground">Controle de Contas</h3>
@@ -497,7 +497,7 @@ const LandingPage = () => {
           </div>
 
           {/* Feature 4 — Relatórios */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
+          <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center mb-16 lg:mb-20">
             <div className="order-2 md:order-1 flex justify-center">
               <PhoneMockup className="scale-90">
                 <div className="bg-muted/30 px-3 py-2 border-b border-border/30">
@@ -526,7 +526,7 @@ const LandingPage = () => {
           </div>
 
           {/* Feature 5 — Integrações */}
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="space-y-4">
               <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px]">Integrações</Badge>
               <h3 className="text-2xl font-extrabold tracking-tight text-foreground">Integração com Plataformas</h3>
@@ -542,23 +542,23 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 5: PARA QUEM É ===== */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="text-center mb-12">
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+        <div className="text-center mb-12 lg:mb-16">
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
             Para quem é o <span className="text-primary relative inline-block">Contabiliza AI<svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none"><path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" /></svg></span>?
           </h2>
-          <p className="mt-3 text-muted-foreground text-lg">
+          <p className="mt-3 text-muted-foreground text-lg max-w-xl mx-auto">
             Criado para quem precisa de agilidade e não tem tempo para tarefas engessadas.
           </p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
           {[
             { emoji: "🚀", title: "Infoprodutores", desc: "Controle vendas digitais, comissões e custos de tráfego em um só lugar." },
             { emoji: "📢", title: "Donos de Agências", desc: "Gerencie o financeiro de múltiplos clientes e projetos simultaneamente." },
             { emoji: "🛠️", title: "Prestadores de Serviço", desc: "Organize receitas por projeto e acompanhe pagamentos de clientes." },
             { emoji: "🎓", title: "Profissionais Liberais", desc: "Controle honorários, despesas e tenha relatórios prontos para o contador." },
           ].map((item) => (
-            <div key={item.title} className="glass-card rounded-2xl p-6 text-center space-y-3 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+            <div key={item.title} className="glass-card rounded-2xl p-6 lg:p-7 text-center space-y-3 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group relative overflow-hidden flex flex-col justify-between">
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{
                 background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%)"
               }} />
@@ -573,14 +573,14 @@ const LandingPage = () => {
 
       {/* ===== SEÇÃO 6: PLANOS E PREÇOS ===== */}
       <section className="border-t border-border/40">
-        <div className="container mx-auto px-4 py-20">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
           <div className="text-center mb-4">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">Planos e Preços</h2>
             <p className="mt-3 text-muted-foreground text-lg max-w-xl mx-auto">
               Escolha o formato ideal para o momento da sua empresa. Teste por 30 dias grátis em qualquer opção e cancele quando quiser.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12 items-center">
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-4xl mx-auto mt-12 items-stretch px-2">
             <PricingCard
               title="Plano Mensal"
               price="R$ 197"
@@ -607,13 +607,17 @@ const LandingPage = () => {
 
       {/* Footer */}
       <footer className="border-t border-border/40 glass-surface">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-12">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
                 <BarChart3 className="h-4 w-4 text-primary" />
               </div>
-              <span className="font-semibold text-foreground">Contabiliza AI</span>
+              <span className="font-bold text-foreground">Contabiliza AI</span>
+            </div>
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <button onClick={() => navigate("/login")} className="hover:text-foreground transition-colors">Entrar</button>
+              <button onClick={() => navigate("/register")} className="hover:text-foreground transition-colors">Criar Conta</button>
             </div>
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} ContabilizaAI. Todos os direitos reservados.
