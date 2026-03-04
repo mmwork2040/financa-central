@@ -17,11 +17,23 @@ interface DashboardSummary {
   despesasPrevistas: number;
 }
 
+interface CaixaBreakdownItem {
+  id: string;
+  descricao: string;
+  tipo: string;
+  valor: number;
+  data_vencimento: string;
+  status: string;
+}
+
 interface CaixaData {
   caixaAtual: number;
   caixaPrevisto: number;
   mesesDeCaixa: number;
   saldoInvestido: number;
+  receitasPendentesAcumuladas: number;
+  despesasPendentesAcumuladas: number;
+  itensPendentes: CaixaBreakdownItem[];
 }
 
 interface LancamentoRecente {
@@ -63,7 +75,7 @@ export const useDashboardData = () => {
     despesasPrevistas: 0,
   });
   
-  const [caixa, setCaixa] = useState<CaixaData>({ caixaAtual: 0, caixaPrevisto: 0, mesesDeCaixa: 0, saldoInvestido: 0 });
+  const [caixa, setCaixa] = useState<CaixaData>({ caixaAtual: 0, caixaPrevisto: 0, mesesDeCaixa: 0, saldoInvestido: 0, receitasPendentesAcumuladas: 0, despesasPendentesAcumuladas: 0, itensPendentes: [] });
   const [lancamentosRecentes, setLancamentosRecentes] = useState<LancamentoRecente[]>([]);
   const [contasProximas, setContasProximas] = useState<ContaProxima[]>([]);
   const [receitasPendentes, setReceitasPendentes] = useState<ContaProxima[]>([]);
@@ -193,7 +205,7 @@ export const useDashboardData = () => {
       // Includes overdue items that haven't been paid yet, since they still impact the bank balance
       const { data: pendentesAteMonthEnd } = await supabase
         .from('lancamentos')
-        .select('tipo, valor, status, origem')
+        .select('id, descricao, tipo, valor, status, origem, data_vencimento')
         .in('status', ['pendente', 'aberto'])
         .lte('data_vencimento', monthEnd);
 
@@ -204,6 +216,15 @@ export const useDashboardData = () => {
       const despesasPendentesAcumuladas = pendSemTransf
         .filter(l => l.tipo === 'despesa')
         .reduce((sum, l) => sum + (l.valor || 0), 0);
+
+      const itensPendentes: CaixaBreakdownItem[] = pendSemTransf.map(l => ({
+        id: (l as any).id,
+        descricao: (l as any).descricao,
+        tipo: l.tipo,
+        valor: l.valor || 0,
+        data_vencimento: (l as any).data_vencimento,
+        status: l.status,
+      })).sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime());
 
       const caixaPrevisto = caixaAtual + receitasPendentesAcumuladas - despesasPendentesAcumuladas;
 
@@ -232,7 +253,7 @@ export const useDashboardData = () => {
         .filter(l => l.tipo === 'investimento' && (l.status === 'pago' || l.status === 'recebido'))
         .reduce((sum, l) => sum + (l.valor || 0), 0);
 
-      setCaixa({ caixaAtual, caixaPrevisto, mesesDeCaixa, saldoInvestido });
+      setCaixa({ caixaAtual, caixaPrevisto, mesesDeCaixa, saldoInvestido, receitasPendentesAcumuladas, despesasPendentesAcumuladas, itensPendentes });
 
       // Saldo do mês = caixa + receitas recebidas - despesas pagas
       const saldoAtual = caixaAtual + totalReceitas - totalDespesas;
