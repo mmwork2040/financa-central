@@ -628,7 +628,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
           // Atualizar saldo da conta se pago/recebido
           if (data && data[0] && formData.conta_bancaria_id && ["pago", "recebido"].includes(formData.status)) {
-            const delta = formData.tipo === "receita" ? formData.valor : -formData.valor;
+            const delta = formData.tipo === "receita" ? formData.valor : formData.tipo === "investimento" ? 0 : -formData.valor;
             const { data: contaAtual } = await supabase
               .from("contas_bancarias")
               .select("saldo_atual")
@@ -706,7 +706,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
         if (!wasPaid && isPaid) {
           // Entrando em pago/recebido: aplicar delta
-          const delta = lancamento.tipo === "receita" ? lancamento.valor : -lancamento.valor;
+          const delta = lancamento.tipo === "receita" ? lancamento.valor : lancamento.tipo === "investimento" ? 0 : -lancamento.valor;
           const { data: contaAtual } = await supabase
             .from("contas_bancarias")
             .select("saldo_atual")
@@ -718,7 +718,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           }
         } else if (wasPaid && !isPaid) {
           // Saindo de pago/recebido: reverter delta
-          const delta = lancamento.tipo === "receita" ? -lancamento.valor : lancamento.valor;
+          const delta = lancamento.tipo === "receita" ? -lancamento.valor : lancamento.tipo === "investimento" ? 0 : lancamento.valor;
           const { data: contaAtual } = await supabase
             .from("contas_bancarias")
             .select("saldo_atual")
