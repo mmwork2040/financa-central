@@ -33,6 +33,7 @@ import {
   ScrollText,
   Briefcase,
   Code2,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
@@ -120,6 +121,8 @@ export const Sidebar = () => {
   const showExpanded = isExpanded || isMobile;
   
   // Simplified menu structure
+  const TELEGRAM_URL = "https://t.me/meu_agente_financeir";
+
   const mainItems = [
     { name: "Dashboard", icon: Home, path: "/dashboard" },
     { name: "Lançamentos", icon: Files, path: "/transactions" },
@@ -345,6 +348,17 @@ export const Sidebar = () => {
         <ul className="space-y-0.5 px-2">
           {/* Main items */}
           {mainItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
+
+          {/* Lançamentos via Chat (Telegram) */}
+          <li>
+            <button
+              onClick={() => window.open(TELEGRAM_URL, "_blank")}
+              className="sidebar-link w-full"
+            >
+              <Send size={18} />
+              {showExpanded && <span className="text-sm">Lançamentos via Chat</span>}
+            </button>
+          </li>
           
           {/* Cadastros collapsible */}
           {showExpanded ? (
