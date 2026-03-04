@@ -112,10 +112,18 @@ serve(async (req) => {
       });
     }
 
-    // Update perfil empresa_id to the new one
+    // Map user_roles role to perfis permissao
+    const roleToPermissao: Record<string, string> = {
+      admin: "admin",
+      usuario: "editor",
+      leitura: "leitura",
+    };
+    const permissaoValue = roleToPermissao[invite.role] || "leitura";
+
+    // Update perfil empresa_id and permissao to match the invite
     await supabaseAdmin
       .from("perfis")
-      .update({ empresa_id: invite.empresa_id })
+      .update({ empresa_id: invite.empresa_id, permissao: permissaoValue })
       .eq("id", userId);
 
     // Copy permissions from invite code to user
