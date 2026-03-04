@@ -15,14 +15,8 @@ interface Plano {
   destaque: boolean;
   badge: string | null;
   link_acesso: string | null;
+  itens: string[];
 }
-
-const features = [
-  "Lançamentos ilimitados",
-  "Chat com IA",
-  "Dashboard completo",
-  "Relatórios personalizados",
-];
 
 const PlanosExpirados = () => {
   const navigate = useNavigate();
@@ -41,7 +35,7 @@ const PlanosExpirados = () => {
         .eq("ativo", true)
         .order("ordem");
       if (error) throw error;
-      setPlanos(data || []);
+      setPlanos((data || []).map((p: any) => ({ ...p, itens: Array.isArray(p.itens) ? p.itens : [] })));
     } catch {
       // fallback
     } finally {
@@ -111,8 +105,8 @@ const PlanosExpirados = () => {
                 <span className="text-sm text-muted-foreground ml-1">/ mês</span>
               </div>
               <ul className="space-y-2.5 mb-6 flex-1 relative z-10">
-                {features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-foreground">
+                {(plano.itens.length > 0 ? plano.itens : ["Acesso ao sistema"]).map((f, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-foreground">
                     <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                     {f}
                   </li>
