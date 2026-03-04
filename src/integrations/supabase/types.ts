@@ -804,6 +804,8 @@ export type Database = {
       }
       perfis: {
         Row: {
+          assinatura_plano_id: string | null
+          assinatura_status: string
           created_at: string
           email: string
           empresa_id: string | null
@@ -813,9 +815,12 @@ export type Database = {
           nome: string
           permissao: string
           telegram_id: string | null
+          trial_started_at: string
           updated_at: string
         }
         Insert: {
+          assinatura_plano_id?: string | null
+          assinatura_status?: string
           created_at?: string
           email: string
           empresa_id?: string | null
@@ -825,9 +830,12 @@ export type Database = {
           nome: string
           permissao?: string
           telegram_id?: string | null
+          trial_started_at?: string
           updated_at?: string
         }
         Update: {
+          assinatura_plano_id?: string | null
+          assinatura_status?: string
           created_at?: string
           email?: string
           empresa_id?: string | null
@@ -837,9 +845,17 @@ export type Database = {
           nome?: string
           permissao?: string
           telegram_id?: string | null
+          trial_started_at?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "perfis_assinatura_plano_id_fkey"
+            columns: ["assinatura_plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos_assinatura"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "perfis_empresa_id_fkey"
             columns: ["empresa_id"]
@@ -883,6 +899,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      planos_assinatura: {
+        Row: {
+          ativo: boolean
+          badge: string | null
+          created_at: string
+          descricao: string | null
+          destaque: boolean
+          id: string
+          link_acesso: string | null
+          nome: string
+          ordem: number
+          periodo: string
+          preco: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          badge?: string | null
+          created_at?: string
+          descricao?: string | null
+          destaque?: boolean
+          id?: string
+          link_acesso?: string | null
+          nome: string
+          ordem?: number
+          periodo?: string
+          preco?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          badge?: string | null
+          created_at?: string
+          descricao?: string | null
+          destaque?: boolean
+          id?: string
+          link_acesso?: string | null
+          nome?: string
+          ordem?: number
+          periodo?: string
+          preco?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       projetos: {
         Row: {
