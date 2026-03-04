@@ -19,6 +19,7 @@ interface UserFormProps {
   onSave: (formData: FormData) => Promise<void>;
   selectedUser?: User | null;
   loading: boolean;
+  isPersonalOwner?: boolean;
 }
 
 export const UserForm = ({
@@ -27,6 +28,7 @@ export const UserForm = ({
   onSave,
   selectedUser,
   loading,
+  isPersonalOwner = false,
 }: UserFormProps) => {
   const [formData, setFormData] = useState<FormData>({
     nome: "",
@@ -129,8 +131,9 @@ export const UserForm = ({
             Permissão <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={formData.permissao}
+            value={isPersonalOwner ? "admin" : formData.permissao}
             onValueChange={handleSelectChange}
+            disabled={isPersonalOwner}
           >
             <SelectTrigger className="col-span-3">
               <SelectValue placeholder="Selecione o nível de acesso" />
@@ -143,6 +146,11 @@ export const UserForm = ({
               </SelectGroup>
             </SelectContent>
           </Select>
+          {isPersonalOwner && (
+            <p className="col-span-3 col-start-2 text-xs text-muted-foreground">
+              O proprietário da empresa pessoal é sempre Administrador.
+            </p>
+          )}
         </div>
       </div>
     </FormModal>
