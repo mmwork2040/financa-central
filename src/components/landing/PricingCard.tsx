@@ -41,9 +41,10 @@ const PricingCard = ({ title, price, period, description, highlighted = false, b
       )}
 
       {badge && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs gap-1.5 rounded-full shadow-lg shadow-primary/30 whitespace-nowrap">
-            <Star className="h-3 w-3 fill-current" />{badge}
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
+          <Badge className="bg-primary text-primary-foreground px-4 py-1.5 text-xs font-semibold gap-1.5 rounded-full shadow-lg shadow-primary/30 whitespace-nowrap border-2 border-background">
+            <Star className="h-3 w-3 fill-current" />
+            {badge}
           </Badge>
         </div>
       )}
