@@ -1,53 +1,30 @@
 
 
-## Plano: Landing Page Premium com Design System Visual
+## Plan: Sincronizar cores de receitas (verde) e despesas (vermelho) na aba de Lançamentos
 
-### Objetivo
-Elevar o visual da landing page aplicando os padrões do design system anexo e inspiracao das imagens NITUX: floating cards no hero, gradientes radiais, sombras premium, elementos decorativos flutuantes, e mais profundidade visual.
+### Locais a alterar
 
-### Mudancas Principais
+**1. `src/components/lancamentos/LancamentosTable.tsx`**
+- **Linha 187 (mobile)** e **linha 356 (desktop)**: O valor de receitas usa `text-primary` (laranja). Trocar para `text-green-600`.
+- Investimentos podem manter `text-blue-600`.
 
-**1. Hero Section - Estilo NITUX**
-- Fundo com container arredondado e gradiente radial (como o hero card da NITUX)
-- Floating stat cards ao redor do phone mockup: "R$ 24.500 receitas este mes", "95% precisao da IA", "R$ 10.300 saldo"
-- Circulos decorativos flutuantes (dots brancos com sombra, como na imagem)
-- Badge pill acima do titulo: "N1 EM GESTAO FINANCEIRA COM IA"
-- Dois botoes: CTA primario + "Ver Demo" outline
+**2. `src/components/lancamentos/LancamentosSummary.tsx`**
+- **Linha 41**: "Receitas Executadas" usa `iconColor="text-primary"`. Trocar para `"text-green-600"`.
+- Receitas Previstas (linha 57) usa `text-amber-500` — manter ou trocar para `text-green-500` para consistência visual com receitas.
 
-**2. Secao Dor - Metricas visuais**
-- Adicionar barra de stats como na NITUX: "+85% Economia de tempo", "98% Precisao", "2min por lancamento"
-- Cards glassmorphism com tint radial para os icones de planilha/calculadora
+**3. `src/contexts/LancamentosContext.tsx`**
+- A função `getTipoBadgeClass` já retorna `bg-green-100 text-green-800` para receitas — OK.
+- Verificar `getStatusBadgeClass` para garantir consistência (status "recebido" deve usar verde).
 
-**3. Como Funciona - Cards premium**
-- Cards com `::before` radial gradient overlay (do design system)
-- Hover com translateY(-2px) e shadow-2
-- Linha conectora visual entre os passos
+**4. `src/components/lancamentos/LancamentosTable.tsx` linha 365**
+- O badge "✓ Executado" usa `bg-primary/10 text-primary`. Trocar para `bg-green-100 text-green-700` para receitas ou manter genérico.
 
-**4. Funcionalidades - Mockups aprimorados**
-- DashboardMockup: adicionar tooltip flutuante sobre o grafico (como no design system .tooltip)
-- ContasListMockup: aplicar itemrow styling do design system
-- IntegrationsMockup: logos maiores com glow effect
+### Resumo das mudanças
 
-**5. Pricing - Estilo premium**
-- Card destacado com borda gradiente e glow shadow
-- Background com tint radial no card anual
+| Arquivo | O que muda |
+|---|---|
+| `LancamentosTable.tsx` | Valor de receita: `text-primary` → `text-green-600` (2 locais) |
+| `LancamentosSummary.tsx` | iconColor de "Receitas Executadas": `text-primary` → `text-green-600` |
 
-**6. Nova secao: Social Proof / Numeros**
-- Secao entre features e pricing com metricas: "+500 empresas", "R$ 50M gerenciados", "4.9 avaliacao"
-
-### Arquivos Modificados
-- `src/pages/LandingPage.tsx` — Hero redesenhado com floating cards, dots decorativos, badge pill, secao de stats
-- `src/components/landing/PhoneMockup.tsx` — Sombra premium e glow
-- `src/components/landing/DashboardMockup.tsx` — Tooltip flutuante, gradiente radial de fundo
-- `src/components/landing/ContasListMockup.tsx` — Itemrow com design system styling
-- `src/components/landing/IntegrationsMockup.tsx` — Glow nos logos
-- `src/components/landing/PricingCard.tsx` — Gradiente de borda no destacado, sombra glow
-- `src/components/landing/ChatBubble.tsx` — Sem mudancas
-
-### Detalhes Tecnicos
-- Tudo em Tailwind + inline styles para gradientes radiais especificos
-- Floating cards com `absolute` positioning no hero
-- Dots decorativos com divs circulares `bg-white/60` e shadow
-- Stats section com grid de 3-4 colunas
-- Sem dependencias novas
+Alterações pontuais em 2 arquivos, sem mudança de lógica.
 
