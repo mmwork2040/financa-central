@@ -61,6 +61,8 @@ type AuthContextType = {
   needsPhone: boolean;
   planControles: PlanoControles;
   isTrialActive: boolean;
+  trialDaysRemaining: number | null;
+  assinaturaStatus: string;
   canAccessRoute: (path: string) => boolean;
   canAccessScreen: (screenKey: string) => boolean;
   canPerformAction: (screenKey: string, action: 'pode_incluir' | 'pode_alterar' | 'pode_excluir') => boolean;
@@ -83,6 +85,8 @@ const AuthContext = createContext<AuthContextType>({
   needsPhone: false,
   planControles: defaultPlanoControles,
   isTrialActive: true,
+  trialDaysRemaining: null,
+  assinaturaStatus: 'trial',
   canAccessRoute: () => true,
   canAccessScreen: () => true,
   canPerformAction: () => false,
@@ -102,6 +106,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [empresas, setEmpresas] = useState<EmpresaInfo[]>([]);
   const [planControles, setPlanControles] = useState<PlanoControles>(defaultPlanoControles);
   const [isTrialActive, setIsTrialActive] = useState(true);
+  const [trialDaysRemaining, setTrialDaysRemaining] = useState<number | null>(null);
+  const [assinaturaStatus, setAssinaturaStatus] = useState('trial');
   const isSuperAdmin = userRole === 'super_admin';
   const isPessoal = empresas.find(e => e.empresa_id === empresaId)?.pessoal === true;
   const needsPhone = !!user && !!userProfile && !userProfile.evolution_webhook_url;
@@ -121,11 +127,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const status = profile.assinatura_status || 'trial';
     const trialStarted = profile.trial_started_at || profile.created_at;
     
+    setAssinaturaStatus(status);
+    
     if (status === 'trial' && trialStarted) {
       const trialEnd = new Date(trialStarted);
       trialEnd.setDate(trialEnd.getDate() + 30);
-      if (new Date() <= trialEnd) {
-        // Trial active - full access
+      const now = new Date();
+      const diffMs = trialEnd.getTime() - now.getTime();
+      const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      setTrialDaysRemaining(daysLeft);
+      if (now <= trialEnd) {
         setIsTrialActive(true);
         setPlanControles(defaultPlanoControles);
         return;
@@ -133,6 +144,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     
     setIsTrialActive(false);
+    setTrialDaysRemaining(0);
     
     // Fetch plan controls if user has a plan
     if (profile.assinatura_plano_id && status === 'ativo') {
@@ -426,6 +438,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         refreshProfile,
         planControles: isSuperAdmin ? defaultPlanoControles : planControles,
         isTrialActive: isSuperAdmin ? true : isTrialActive,
+        trialDaysRemaining: isSuperAdmin ? null : trialDaysRemaining,
+        assinaturaStatus: isSuperAdmin ? 'ativo' : assinaturaStatus,
       }}
     >
       {children}
