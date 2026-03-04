@@ -35,6 +35,7 @@ import ChatBubble from "@/components/landing/ChatBubble";
 import DashboardMockup from "@/components/landing/DashboardMockup";
 import ContasListMockup from "@/components/landing/ContasListMockup";
 import IntegrationsMockup from "@/components/landing/IntegrationsMockup";
+import ReportsMockup from "@/components/landing/ReportsMockup";
 import PricingCard from "@/components/landing/PricingCard";
 import SocialProofSection from "@/components/landing/SocialProofSection";
 import FloatingStatCard from "@/components/landing/FloatingStatCard";
@@ -504,20 +505,7 @@ const LandingPage = () => {
           <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center mb-16 lg:mb-20">
             <div className="order-2 md:order-1 flex justify-center">
               <PhoneMockup className="scale-90">
-                <div className="bg-muted/30 px-3 py-2 border-b border-border/30">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center">
-                      <BarChart3 className="h-3 w-3 text-primary" />
-                    </div>
-                    <p className="text-[10px] font-semibold text-foreground">Contabiliza AI</p>
-                  </div>
-                </div>
-                <div className="px-3 py-3 space-y-2.5">
-                  <ChatBubble message="Qual foi meu lucro em fevereiro?" time="10:15" />
-                  <ChatBubble isBot message="📊 Resumo de Fevereiro:\n\n💰 Receitas: R$ 32.400\n💸 Despesas: R$ 19.800\n✅ Lucro: R$ 12.600\n\nO maior gasto foi com Anúncios (R$ 8.200). Quer ver o detalhamento por categoria?" time="10:15" />
-                  <ChatBubble message="Sim, por favor" time="10:16" />
-                  <ChatBubble isBot message="📋 Top categorias de despesa:\n1. Anúncios — R$ 8.200\n2. Equipe — R$ 5.400\n3. Ferramentas — R$ 3.100\n4. Outros — R$ 3.100" time="10:16" />
-                </div>
+                <ReportsMockup />
               </PhoneMockup>
             </div>
             <div className="order-1 md:order-2 space-y-4">
