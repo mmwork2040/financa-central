@@ -121,7 +121,7 @@ const LogsIntegracoes = () => {
             <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
               <ScrollText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold">Logs de Integrações</h1>
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">Logs de Integrações</h1>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground">Histórico de eventos enviados e recebidos</p>
         </div>

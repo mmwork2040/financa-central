@@ -48,7 +48,7 @@ const DashboardContent = () => {
           <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-primary/10">
             <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Olá, {userProfile?.nome?.split(' ')[0] || 'Usuário'}! 👋</h1>
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">Olá, {userProfile?.nome?.split(' ')[0] || 'Usuário'}! 👋</h1>
         </div>
         <p className="text-xs sm:text-sm text-muted-foreground">Aqui está o resumo do seu financeiro</p>
       </div>
