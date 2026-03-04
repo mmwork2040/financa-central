@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 
-const TELEGRAM_URL = "https://t.me/meu_agente_financeir";
+const TELEGRAM_URL = "https://t.me/meu_agente_financeiro_bot";
 
 type NavItem = {
   name: string;

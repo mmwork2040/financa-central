@@ -4,7 +4,7 @@ import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const TELEGRAM_URL = "https://t.me/meu_agente_financeir";
+const TELEGRAM_URL = "https://t.me/meu_agente_financeiro_bot";
 
 const FloatingTelegramButton: React.FC = () => {
   const content = (
