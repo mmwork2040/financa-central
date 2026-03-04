@@ -255,8 +255,8 @@ export const useDashboardData = () => {
 
       setCaixa({ caixaAtual, caixaPrevisto, mesesDeCaixa, saldoInvestido, receitasPendentesAcumuladas, despesasPendentesAcumuladas, itensPendentes });
 
-      // Saldo do mês = caixa + receitas recebidas - despesas pagas
-      const saldoAtual = caixaAtual + totalReceitas - totalDespesas;
+      // Saldo do mês = caixa atual (já reflete todas as transações executadas)
+      const saldoAtual = caixaAtual;
 
       setSummary({
         totalReceitas,
