@@ -27,7 +27,15 @@ export const ProtectedRoute = ({ path, children }: ProtectedRouteProps) => {
     );
   }
 
-  if (!canAccessRoute(path)) return <Navigate to="/dashboard" replace />;
+  if (!canAccessRoute(path)) {
+    // If blocked from dashboard, try to find first accessible route
+    if (path === "/dashboard") {
+      const fallbackRoutes = ["/transactions", "/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods", "/reports", "/projetos"];
+      const firstAccessible = fallbackRoutes.find(r => canAccessRoute(r));
+      if (firstAccessible) return <Navigate to={firstAccessible} replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
   if (isPessoal && PESSOAL_BLOCKED_ROUTES.includes(path)) return <Navigate to="/dashboard" replace />;
 
   return <>{children}</>;
