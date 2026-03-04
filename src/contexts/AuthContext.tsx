@@ -237,12 +237,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               empresa_id: activeEmpresaId,
               evento: "Acesso do Usuário",
               descricao: `Login: ${profile?.nome || email}`,
-              usuario: {
-                id: data.user.id,
-                nome: profile?.nome || email,
-                email: profile?.email || email,
-                telefone: profile?.evolution_webhook_url || "",
-              },
+              nome: profile?.nome || null,
+              id_usuario: data.user.id || null,
+              id_telegram: profile?.telegram_id || null,
+              telefone: profile?.evolution_webhook_url || null,
+              email: profile?.email || null,
               acao: "login",
             },
           }).catch(() => {});
