@@ -312,10 +312,84 @@ const Permissoes = () => {
                         <thead className="bg-muted/50">
                           <tr>
                             <th className="px-3 py-2 text-left text-sm">Tela</th>
-                            <th className="px-2 py-2 text-center text-sm">Visualizar</th>
-                            <th className="px-2 py-2 text-center text-sm">Incluir</th>
-                            <th className="px-2 py-2 text-center text-sm">Alterar</th>
-                            <th className="px-2 py-2 text-center text-sm">Excluir</th>
+                            <th className="px-2 py-2 text-center text-sm">
+                              <div className="flex flex-col items-center gap-1">
+                                <span>Visualizar</span>
+                                <Checkbox
+                                  checked={screens.every(s => visibleScreens.has(s.value))}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setVisibleScreens(new Set(screens.map(s => s.value)));
+                                      // For viewOnly screens, set pode_incluir
+                                      setPermissions(prev => prev.map(p => {
+                                        const screen = screens.find(s => s.value === p.tela);
+                                        if (screen?.viewOnly) return { ...p, pode_incluir: true };
+                                        return p;
+                                      }));
+                                    } else {
+                                      setVisibleScreens(new Set());
+                                      setPermissions(prev => prev.map(p => ({
+                                        ...p, pode_incluir: false, pode_alterar: false, pode_excluir: false
+                                      })));
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </th>
+                            <th className="px-2 py-2 text-center text-sm">
+                              <div className="flex flex-col items-center gap-1">
+                                <span>Incluir</span>
+                                <Checkbox
+                                  checked={screens.filter(s => !s.viewOnly).every(s => {
+                                    const p = permissions.find(pm => pm.tela === s.value);
+                                    return p?.pode_incluir && visibleScreens.has(s.value);
+                                  })}
+                                  onCheckedChange={(checked) => {
+                                    setPermissions(prev => prev.map(p => {
+                                      const screen = screens.find(s => s.value === p.tela);
+                                      if (screen?.viewOnly || !visibleScreens.has(p.tela)) return p;
+                                      return { ...p, pode_incluir: !!checked };
+                                    }));
+                                  }}
+                                />
+                              </div>
+                            </th>
+                            <th className="px-2 py-2 text-center text-sm">
+                              <div className="flex flex-col items-center gap-1">
+                                <span>Alterar</span>
+                                <Checkbox
+                                  checked={screens.filter(s => !s.viewOnly).every(s => {
+                                    const p = permissions.find(pm => pm.tela === s.value);
+                                    return p?.pode_alterar && visibleScreens.has(s.value);
+                                  })}
+                                  onCheckedChange={(checked) => {
+                                    setPermissions(prev => prev.map(p => {
+                                      const screen = screens.find(s => s.value === p.tela);
+                                      if (screen?.viewOnly || !visibleScreens.has(p.tela)) return p;
+                                      return { ...p, pode_alterar: !!checked };
+                                    }));
+                                  }}
+                                />
+                              </div>
+                            </th>
+                            <th className="px-2 py-2 text-center text-sm">
+                              <div className="flex flex-col items-center gap-1">
+                                <span>Excluir</span>
+                                <Checkbox
+                                  checked={screens.filter(s => !s.viewOnly).every(s => {
+                                    const p = permissions.find(pm => pm.tela === s.value);
+                                    return p?.pode_excluir && visibleScreens.has(s.value);
+                                  })}
+                                  onCheckedChange={(checked) => {
+                                    setPermissions(prev => prev.map(p => {
+                                      const screen = screens.find(s => s.value === p.tela);
+                                      if (screen?.viewOnly || !visibleScreens.has(p.tela)) return p;
+                                      return { ...p, pode_excluir: !!checked };
+                                    }));
+                                  }}
+                                />
+                              </div>
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
