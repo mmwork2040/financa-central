@@ -1,28 +1,45 @@
 
 
-## Plano: Telegram como atalho no menu e na barra mobile
+## Plano: Gestão de múltiplas empresas independentes com cobrança individual
 
-### Mudanças
+### Situação atual
 
-#### 1. `src/components/Sidebar.tsx`
-- Importar o ícone `Send` do lucide-react.
-- Adicionar um item de menu **"Lançamentos via Chat"** no nível principal (após "Anúncios", antes de "Cadastros"), que abre `https://t.me/meu_agente_financeir` em nova aba via `window.open`.
-- Usar o ícone `Send` (mesmo do botão flutuante atual).
+O sistema **já suporta** múltiplas empresas por usuário:
+- `user_roles` permite vincular um usuário a N empresas
+- O sidebar já tem um switcher de empresa funcional
+- O convite por código já funciona (onboarding e sidebar)
+- `switchEmpresa` troca o contexto ativo
 
-#### 2. `src/components/common/MobileBottomNav.tsx`
-- Substituir um dos itens ou adicionar o item **"Chat"** com ícone `Send` na barra inferior.
-- Ao clicar, abre o link do Telegram em nova aba (em vez de navegar internamente).
-- Substituir "Anúncios" por "Chat" na barra mobile (5 itens é o limite visual confortável), ou manter os 5 atuais e trocar "Config" por "Chat" (Config já está acessível pela sidebar).
+### O que falta
 
-#### 3. `src/components/common/FloatingTelegramButton.tsx`
-- Remover o botão flutuante, já que o atalho estará no menu e na barra mobile.
+1. **Criar nova empresa após o onboarding** — Hoje, só é possível criar empresa durante o primeiro acesso. Depois, o usuário só pode "entrar com código de convite". Falta a opção "Criar nova empresa" no dropdown do switcher.
 
-#### 4. `src/layouts/AppLayout.tsx`
-- Remover a importação e renderização do `FloatingTelegramButton`.
+2. **Cobrança por empresa (Stripe)** — Cada empresa deve ter uma assinatura independente. Isso requer integração com Stripe para gerenciar planos por empresa.
 
-### Arquivos afetados
-- `src/components/Sidebar.tsx` — novo item de menu
-- `src/components/common/MobileBottomNav.tsx` — novo item na barra
-- `src/components/common/FloatingTelegramButton.tsx` — remover
-- `src/layouts/AppLayout.tsx` — remover referência ao floating button
+### Mudanças propostas
+
+#### Fase 1: Criar nova empresa a partir do switcher (sem Stripe)
+
+**`src/components/Sidebar.tsx`**
+- Adicionar opção **"Criar nova empresa"** no dropdown do switcher (ao lado de "Entrar com código de convite").
+- Ao clicar, abrir um Dialog com o formulário de criação de empresa (nome, CNPJ, email, telefone — reutilizando a lógica do `OnboardingScreen`).
+- Chamar a edge function `create-empresa` existente e, após sucesso, recarregar para entrar na nova empresa.
+
+**`supabase/functions/create-empresa/index.ts`**
+- Verificar se já funciona para usuários que já têm empresa (provavelmente sim, mas validar).
+
+#### Fase 2: Cobrança por empresa (Stripe) — etapa futura
+
+Essa fase exige habilitar a integração Stripe no projeto. A estrutura seria:
+- Tabela `assinaturas` vinculada a `empresa_id` com status do plano.
+- Cada empresa criada inicia em período de teste (trial).
+- Tela de planos/assinatura acessível nas configurações da empresa.
+- Bloqueio de acesso quando a assinatura expira.
+
+### Recomendação
+
+Sugiro implementar a **Fase 1** agora (criar empresa pelo switcher) e discutir a Fase 2 (Stripe/cobrança) separadamente, pois envolve decisões de negócio (planos, preços, trial, etc.).
+
+### Arquivos afetados (Fase 1)
+- `src/components/Sidebar.tsx` — novo item "Criar nova empresa" + Dialog com formulário
 
