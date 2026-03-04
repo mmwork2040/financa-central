@@ -22,6 +22,7 @@ function translateAuthError(msg: string): string {
 
 export type PlanoControles = {
   max_lancamentos: number;
+  max_empresas: number;
   chat_ia: boolean;
   dashboard_completo: boolean;
   relatorios_personalizados: boolean;
@@ -29,6 +30,7 @@ export type PlanoControles = {
 
 const defaultPlanoControles: PlanoControles = {
   max_lancamentos: 0,
+  max_empresas: 999,
   chat_ia: true,
   dashboard_completo: true,
   relatorios_personalizados: true,
@@ -166,6 +168,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // No active plan - restrict everything
     setPlanControles({
       max_lancamentos: 10,
+      max_empresas: 1,
       chat_ia: false,
       dashboard_completo: false,
       relatorios_personalizados: false,

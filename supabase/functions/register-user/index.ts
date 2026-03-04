@@ -66,14 +66,37 @@ serve(async (req) => {
       );
     }
 
-    // Save phone to perfis (trigger creates the record, so we update it)
     if (authData.user) {
+      const userId = authData.user.id;
+
       // Small delay to ensure trigger has created the perfis record
       await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Save phone to perfis
       await supabaseAdmin
         .from("perfis")
         .update({ evolution_webhook_url: phoneClean })
-        .eq("id", authData.user.id);
+        .eq("id", userId);
+
+      // Auto-create personal empresa
+      const { data: empresa, error: empresaError } = await supabaseAdmin
+        .from("empresas")
+        .insert({
+          nome: `Pessoal - ${nome}`,
+          email: email,
+          pessoal: true,
+        })
+        .select("id")
+        .single();
+
+      if (!empresaError && empresa) {
+        // Create admin role for personal empresa
+        await supabaseAdmin
+          .from("user_roles")
+          .insert({ user_id: userId, empresa_id: empresa.id, role: "admin" });
+
+        // NOTE: Do NOT set empresa_id on perfis here so onboarding still shows
+      }
     }
 
     return new Response(
