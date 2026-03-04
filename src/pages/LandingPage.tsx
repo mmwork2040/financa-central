@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   BarChart3,
   ArrowRight,
@@ -13,9 +14,16 @@ import {
   XCircle,
   Lightbulb,
   Megaphone,
-  Briefcase,
   Wrench,
   GraduationCap,
+  TrendingUp,
+  Clock,
+  Target,
+  Zap,
+  Users,
+  DollarSign,
+  Star,
+  Play,
 } from "lucide-react";
 import PhoneMockup from "@/components/landing/PhoneMockup";
 import ChatBubble from "@/components/landing/ChatBubble";
@@ -23,6 +31,8 @@ import DashboardMockup from "@/components/landing/DashboardMockup";
 import ContasListMockup from "@/components/landing/ContasListMockup";
 import IntegrationsMockup from "@/components/landing/IntegrationsMockup";
 import PricingCard from "@/components/landing/PricingCard";
+import SocialProofSection from "@/components/landing/SocialProofSection";
+import FloatingStatCard from "@/components/landing/FloatingStatCard";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -40,35 +50,80 @@ const LandingPage = () => {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => navigate("/login")}>Entrar</Button>
-            <Button onClick={() => navigate("/register")}>Criar Conta</Button>
+            <Button onClick={() => navigate("/register")} className="rounded-full px-6">Criar Conta</Button>
           </div>
         </div>
       </nav>
 
       {/* ===== SEÇÃO 1: HERO ===== */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
+        {/* Background decorativo */}
+        <div className="absolute inset-0" style={{
+          background: "radial-gradient(ellipse 80% 60% at 50% 0%, hsla(25, 95%, 53%, 0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 80%, hsla(25, 95%, 53%, 0.05) 0%, transparent 50%)"
+        }} />
+        {/* Dots decorativos */}
+        <div className="absolute top-20 left-[10%] h-3 w-3 rounded-full bg-primary/20 shadow-lg animate-pulse hidden md:block" />
+        <div className="absolute top-40 right-[15%] h-2 w-2 rounded-full bg-primary/30 shadow-md animate-pulse hidden md:block" />
+        <div className="absolute bottom-32 left-[20%] h-4 w-4 rounded-full bg-primary/10 shadow-lg hidden md:block" />
+        <div className="absolute top-60 right-[8%] h-2.5 w-2.5 rounded-full bg-primary/15 shadow-md hidden md:block" />
+
         <div className="container mx-auto px-4 py-16 md:py-24 relative">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             {/* Texto */}
             <div className="space-y-6 text-center md:text-left">
+              <Badge className="rounded-full px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 text-xs font-semibold tracking-wide">
+                <Zap className="h-3 w-3 mr-1.5" />
+                Nº1 EM GESTÃO FINANCEIRA COM IA
+              </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
                 Seu departamento financeiro a uma{" "}
-                <span className="text-primary">mensagem de distância</span>
+                <span className="text-primary relative">
+                  mensagem de distância
+                  <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
+                    <path d="M2 8C50 2 100 2 150 6C200 10 250 4 298 8" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" opacity="0.3" />
+                  </svg>
+                </span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-lg mx-auto md:mx-0">
                 Conheça sua nova plataforma de gestão financeira para sua empresa, acelerada por inteligência artificial.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-                <Button size="lg" onClick={() => navigate("/register")} className="text-base px-8">
+                <Button size="lg" onClick={() => navigate("/register")} className="text-base px-8 rounded-full shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
                   Testar por 30 dias grátis
                   <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+                <Button size="lg" variant="outline" className="text-base px-8 rounded-full" onClick={() => navigate("/login")}>
+                  <Play className="mr-2 h-4 w-4" />
+                  Ver Demo
                 </Button>
               </div>
             </div>
 
-            {/* Phone mockup */}
-            <div className="flex justify-center">
+            {/* Phone mockup com floating cards */}
+            <div className="flex justify-center relative">
+              {/* Floating stat cards */}
+              <FloatingStatCard
+                icon={<TrendingUp className="h-4 w-4 text-primary" />}
+                label="Receitas do mês"
+                value="R$ 24.500"
+                className="absolute -left-4 top-8 md:-left-12 z-10"
+                delay="0s"
+              />
+              <FloatingStatCard
+                icon={<Target className="h-4 w-4 text-primary" />}
+                label="Precisão da IA"
+                value="95%"
+                className="absolute -right-4 top-24 md:-right-8 z-10"
+                delay="0.5s"
+              />
+              <FloatingStatCard
+                icon={<DollarSign className="h-4 w-4 text-primary" />}
+                label="Saldo atual"
+                value="R$ 10.300"
+                className="absolute -left-2 bottom-16 md:-left-6 z-10"
+                delay="1s"
+              />
+
               <PhoneMockup>
                 <div className="bg-muted/30 px-3 py-2 border-b border-border/30">
                   <div className="flex items-center gap-2">
@@ -96,15 +151,17 @@ const LandingPage = () => {
 
       {/* ===== SEÇÃO 2: CONEXÃO COM A DOR ===== */}
       <section className="relative border-y border-border/40">
-        <div className="absolute inset-0 bg-gradient-to-b from-muted/30 to-transparent" />
+        <div className="absolute inset-0" style={{
+          background: "radial-gradient(ellipse 60% 80% at 50% 50%, hsla(25, 95%, 53%, 0.04) 0%, transparent 60%)"
+        }} />
         <div className="container mx-auto px-4 py-20 relative">
-          <div className="max-w-3xl mx-auto text-center space-y-6">
-            <div className="flex justify-center gap-6 mb-6">
-              <div className="relative">
+          <div className="max-w-3xl mx-auto text-center space-y-8">
+            <div className="flex justify-center gap-8 mb-6">
+              <div className="relative glass-card rounded-2xl p-4 group hover:-translate-y-1 transition-transform">
                 <Table2 className="h-10 w-10 text-muted-foreground/40" />
                 <XCircle className="h-5 w-5 text-destructive absolute -top-1 -right-1" />
               </div>
-              <div className="relative">
+              <div className="relative glass-card rounded-2xl p-4 group hover:-translate-y-1 transition-transform">
                 <Calculator className="h-10 w-10 text-muted-foreground/40" />
                 <XCircle className="h-5 w-5 text-destructive absolute -top-1 -right-1" />
               </div>
@@ -117,6 +174,23 @@ const LandingPage = () => {
               <span className="text-foreground font-semibold">vender mais e escalar o seu negócio</span>.
               A burocracia não pode ser um obstáculo para o seu crescimento.
             </p>
+
+            {/* Stats bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto pt-4">
+              {[
+                { icon: Clock, value: "+85%", label: "Economia de tempo" },
+                { icon: Target, value: "98%", label: "Precisão nos dados" },
+                { icon: Zap, value: "2 min", label: "Por lançamento" },
+              ].map((stat) => (
+                <div key={stat.label} className="glass-card rounded-2xl p-4 text-center hover:-translate-y-1 transition-all duration-300" style={{
+                  background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%), rgba(255,255,255,0.72)"
+                }}>
+                  <stat.icon className="h-5 w-5 text-primary mx-auto mb-2" />
+                  <p className="text-2xl font-extrabold text-foreground">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -129,22 +203,29 @@ const LandingPage = () => {
           </h2>
           <p className="mt-3 text-muted-foreground text-lg">Veja como é simples fazer os lançamentos e ter o controle total.</p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+          {/* Linha conectora (desktop) */}
+          <div className="hidden lg:block absolute top-16 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-primary/10 via-primary/30 to-primary/10" />
+          
           {[
             { step: 1, icon: MessageSquare, title: "Acesse o chat", desc: "Abra o chat diretamente do seu celular, onde estiver." },
             { step: 2, icon: UserPlus, title: "Cadastre-se", desc: "Crie sua conta na plataforma em poucos segundos." },
             { step: 3, icon: Mic, title: "Faça lançamentos", desc: "Envie mensagens de texto, áudios ou fotos de forma natural." },
             { step: 4, icon: FileBarChart, title: "Peça relatórios", desc: "Solicite relatórios à IA e gerencie seu financeiro na palma da mão." },
           ].map((item) => (
-            <div key={item.step} className="glass-card rounded-2xl p-6 text-center space-y-3 group hover:shadow-lg transition-all relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md">
+            <div key={item.step} className="glass-card rounded-2xl p-6 text-center space-y-3 group hover:-translate-y-1 hover:shadow-xl transition-all duration-300 relative overflow-hidden">
+              {/* Radial tint */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{
+                background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.08) 0%, transparent 70%)"
+              }} />
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md z-10">
                 {item.step}
               </div>
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mt-2 group-hover:bg-primary/20 transition-colors">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mt-2 group-hover:bg-primary/20 transition-colors relative z-10">
                 <item.icon className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-base font-semibold text-foreground">{item.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              <h3 className="text-base font-semibold text-foreground relative z-10">{item.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed relative z-10">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -160,8 +241,9 @@ const LandingPage = () => {
           </div>
 
           {/* Feature 1 — Lançamentos */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
             <div className="space-y-4">
+              <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px]">Lançamentos</Badge>
               <h3 className="text-2xl font-bold text-foreground">Lançamento de Receitas e Despesas</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Registre entradas e saídas em segundos, conversando com a IA. Envie um áudio, uma foto do recibo ou simplesmente digite — a IA cuida do resto.
@@ -187,12 +269,13 @@ const LandingPage = () => {
             </div>
           </div>
 
-          {/* Feature 2 — Fluxo de Caixa */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+          {/* Feature 2 — Fluxo de Caixa com imagem real */}
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
             <div className="order-2 md:order-1 flex justify-center">
               <DashboardMockup />
             </div>
             <div className="order-1 md:order-2 space-y-4">
+              <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px]">Dashboard</Badge>
               <h3 className="text-2xl font-bold text-foreground">Fluxo de Caixa</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Visualize a saúde financeira do seu negócio com clareza e previsibilidade. Dashboard completo com gráficos, resumos e indicadores em tempo real.
@@ -201,8 +284,9 @@ const LandingPage = () => {
           </div>
 
           {/* Feature 3 — Controle de Contas */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
             <div className="space-y-4">
+              <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px]">Contas</Badge>
               <h3 className="text-2xl font-bold text-foreground">Controle de Contas</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Saiba exatamente o que foi pago, o que está pendente e não perca nenhum vencimento. Status visuais para acompanhar tudo rapidamente.
@@ -214,7 +298,7 @@ const LandingPage = () => {
           </div>
 
           {/* Feature 4 — Relatórios */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
             <div className="order-2 md:order-1 flex justify-center">
               <PhoneMockup className="scale-90">
                 <div className="bg-muted/30 px-3 py-2 border-b border-border/30">
@@ -234,6 +318,7 @@ const LandingPage = () => {
               </PhoneMockup>
             </div>
             <div className="order-1 md:order-2 space-y-4">
+              <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px]">Relatórios</Badge>
               <h3 className="text-2xl font-bold text-foreground">Relatórios Personalizados</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Precisa saber o lucro do mês? O gasto com anúncios? Peça pelo chat e receba na hora. A IA entrega resumos financeiros direto na conversa.
@@ -244,6 +329,7 @@ const LandingPage = () => {
           {/* Feature 5 — Integrações */}
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-4">
+              <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px]">Integrações</Badge>
               <h3 className="text-2xl font-bold text-foreground">Integração com Plataformas</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Conecte suas vendas e seus custos de tráfego em um só lugar de forma inteligente. Meta Ads, Google Ads, Hotmart, Kiwify e muito mais.
@@ -273,16 +359,22 @@ const LandingPage = () => {
             { icon: Wrench, title: "Prestadores de Serviço", desc: "Organize receitas por projeto e acompanhe pagamentos de clientes." },
             { icon: GraduationCap, title: "Profissionais Liberais", desc: "Controle honorários, despesas e tenha relatórios prontos para o contador." },
           ].map((item) => (
-            <div key={item.title} className="glass-card rounded-2xl p-6 text-center space-y-3 hover:shadow-lg transition-all">
-              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <div key={item.title} className="glass-card rounded-2xl p-6 text-center space-y-3 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{
+                background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%)"
+              }} />
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto relative z-10">
                 <item.icon className="h-7 w-7 text-primary" />
               </div>
-              <h3 className="text-base font-semibold text-foreground">{item.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              <h3 className="text-base font-semibold text-foreground relative z-10">{item.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed relative z-10">{item.desc}</p>
             </div>
           ))}
         </div>
       </section>
+
+      {/* ===== SOCIAL PROOF ===== */}
+      <SocialProofSection />
 
       {/* ===== SEÇÃO 6: PLANOS E PREÇOS ===== */}
       <section className="border-t border-border/40">

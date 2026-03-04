@@ -9,6 +9,10 @@ interface PhoneMockupProps {
 const PhoneMockup = ({ children, className = "" }: PhoneMockupProps) => {
   return (
     <div className={`relative mx-auto ${className}`} style={{ width: 280, maxWidth: "100%" }}>
+      {/* Glow effect */}
+      <div className="absolute -inset-4 rounded-[3rem] opacity-30 blur-2xl pointer-events-none" style={{
+        background: "radial-gradient(ellipse at 50% 30%, hsla(25, 95%, 53%, 0.25) 0%, transparent 70%)"
+      }} />
       {/* Phone frame */}
       <div className="relative rounded-[2.5rem] border-[6px] border-foreground/90 bg-background shadow-2xl overflow-hidden">
         {/* Notch */}
