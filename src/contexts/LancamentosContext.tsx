@@ -584,10 +584,11 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         );
         toast.success("O lançamento foi atualizado com sucesso.");
       } else {
-        // Create new lancamento — check for parcelas
+        // Create new lancamento
         const totalParcelas = dataToSave.total_parcelas;
-        if (dataToSave.recorrente && totalParcelas && totalParcelas > 1) {
-          // Insert multiple parcelas with divided value
+        
+        if (!dataToSave.recorrente && totalParcelas && totalParcelas > 1) {
+          // PARCELADO: divide valor total em N parcelas independentes
           const valorParcela = Math.round((dataToSave.valor / totalParcelas) * 100) / 100;
           const baseDate = new Date(dataToSave.data_vencimento);
           const parcelas = Array.from({ length: totalParcelas }, (_, i) => ({
@@ -595,6 +596,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
             valor: valorParcela,
             parcela_atual: i + 1,
             total_parcelas: totalParcelas,
+            recorrente: false,
             data_vencimento: format(addMonths(baseDate, i), "yyyy-MM-dd"),
             descricao: `${dataToSave.descricao} (${i + 1}/${totalParcelas})`,
             empresa_id: empresaId,
@@ -609,7 +611,8 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           setLancamentos([...lancamentos, ...(data as unknown as Lancamento[])]);
           toast.success(`${totalParcelas} parcelas criadas com sucesso.`);
         } else {
-          // Single insert
+          // ÚNICO ou RECORRENTE: insere um único registro
+          // Para recorrente, a edge function generate-recurring cria os próximos
           const { data, error } = await supabase
             .from("lancamentos")
             .insert([{ ...dataToSave, empresa_id: empresaId }])
@@ -632,7 +635,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           }
 
           setLancamentos([...lancamentos, ...(data as unknown as Lancamento[])]);
-          toast.success("O lançamento foi criado com sucesso.");
+          toast.success(dataToSave.recorrente ? "Lançamento recorrente criado com sucesso." : "O lançamento foi criado com sucesso.");
         }
       }
 
