@@ -36,15 +36,15 @@ export const DashboardChart = ({ data, saldoAtual }: DashboardChartProps) => {
 
   return (
     <Card className="col-span-1 lg:col-span-2">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2">
         <div>
           <p className="text-sm text-muted-foreground">Saldo atual</p>
-          <CardTitle className="text-2xl sm:text-3xl font-bold">
+          <CardTitle className="text-xl sm:text-3xl font-bold">
             {maskValue(formatCurrency(saldoAtual), visible)}
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-0.5">Visão geral do balanço</p>
         </div>
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-primary" />
             Receitas
