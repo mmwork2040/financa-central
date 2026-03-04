@@ -38,7 +38,7 @@ export const LancamentosSummary = () => {
         value={formatCurrency(receitasExecutadas)}
         description={`${countExecReceitas} recebidos`}
         icon={CheckCircle2}
-        iconColor="text-primary"
+        iconColor="text-green-600"
         isCurrency
       />
       <SummaryCard
