@@ -30,6 +30,7 @@ const FloatingChatButton: React.FC = () => {
   const [chatAvailable, setChatAvailable] = useState(false);
   const [checking, setChecking] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const [conversas, setConversas] = useState<Conversa[]>([]);
   const [activeConversa, setActiveConversa] = useState<Conversa | null>(null);
@@ -150,8 +151,25 @@ const FloatingChatButton: React.FC = () => {
 
   // Clear unread when opening chat
   useEffect(() => {
-    if (open) setUnreadCount(0);
+    if (open) {
+      setUnreadCount(0);
+      setShowTooltip(false);
+    }
   }, [open]);
+
+  // Show tooltip popup on first visit (once per session)
+  useEffect(() => {
+    if (!chatAvailable || checking) return;
+    const key = `chat_tooltip_shown_${user?.id}`;
+    const alreadyShown = sessionStorage.getItem(key);
+    if (!alreadyShown) {
+      const timer = setTimeout(() => {
+        setShowTooltip(true);
+        sessionStorage.setItem(key, "true");
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [chatAvailable, checking, user?.id]);
 
   // Auto-scroll
   useEffect(() => {
@@ -272,6 +290,36 @@ const FloatingChatButton: React.FC = () => {
           </span>
         )}
       </Button>
+
+      {/* Tooltip popup */}
+      {showTooltip && !open && (
+        <div className="fixed bottom-36 md:bottom-[5.5rem] right-4 md:right-6 z-[9999] animate-fade-in" style={{ position: 'fixed' }}>
+          <div
+            className="bg-card border border-border shadow-2xl rounded-2xl p-4 max-w-[280px] cursor-pointer group hover:shadow-primary/10 transition-shadow relative"
+            onClick={() => { setShowTooltip(false); setOpen(true); }}
+          >
+            <button
+              className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={(e) => { e.stopPropagation(); setShowTooltip(false); }}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+            <div className="flex items-start gap-3">
+              <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                <MessageCircle className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground leading-snug">Assistente Inteligente</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  Você pode fazer lançamentos e controlar relatórios pelo seu assistente inteligente, <span className="text-primary font-medium">clique aqui para acessar</span>.
+                </p>
+              </div>
+            </div>
+            {/* Arrow pointing down to the button */}
+            <div className="absolute -bottom-2 right-6 w-4 h-4 bg-card border-r border-b border-border rotate-45" />
+          </div>
+        </div>
+      )}
 
       {open && (
         <div className="fixed bottom-24 right-6 z-[9998] w-[360px] max-w-[calc(100vw-2rem)] h-[500px] max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
