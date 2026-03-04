@@ -78,10 +78,10 @@ const DashboardContent = () => {
         <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className="rounded-full bg-primary/10 p-1.5"><ArrowUpRight className="h-4 w-4 text-primary" /></div>
+              <div className="rounded-full bg-green-100 p-1.5"><ArrowUpRight className="h-4 w-4 text-green-600" /></div>
               <span className="text-xs text-muted-foreground">Você já recebeu</span>
             </div>
-            <p className="text-lg sm:text-xl font-bold text-primary">
+            <p className="text-lg sm:text-xl font-bold text-green-600">
               {maskValue(formatCurrency(summary.totalReceitas), visible)}
             </p>
           </CardContent>
@@ -115,7 +115,9 @@ const DashboardContent = () => {
               <div className="rounded-full bg-amber-100 p-1.5"><AlertTriangle className="h-4 w-4 text-amber-600" /></div>
               <span className="text-xs text-muted-foreground">Contas a Pagar</span>
             </div>
-            <p className="text-lg sm:text-xl font-bold text-amber-600">{summary.contasProximas}</p>
+            <p className="text-lg sm:text-xl font-bold text-amber-600">
+              {maskValue(formatCurrency(summary.despesasPrevistas), visible)}
+            </p>
             {summary.emAtraso > 0 && (
               <p className="text-[10px] text-destructive font-medium mt-0.5">{summary.emAtraso} em atraso</p>
             )}
@@ -206,7 +208,7 @@ const DashboardContent = () => {
                           <p className="text-xs text-muted-foreground">{formatDate(conta.data_vencimento)}</p>
                         </div>
                         <div className="text-right shrink-0 ml-3">
-                          <p className={cn("text-sm font-semibold", conta.tipo === 'receita' ? 'text-primary' : 'text-destructive')}>
+                          <p className={cn("text-sm font-semibold", conta.tipo === 'receita' ? 'text-green-600' : 'text-destructive')}>
                             {maskValue(formatCurrency(conta.valor), visible)}
                           </p>
                           <Badge variant="outline" className="text-[10px]">
@@ -255,7 +257,7 @@ const DashboardContent = () => {
                         <div className="text-right shrink-0 ml-3">
                           <p className={cn(
                             "text-sm font-semibold",
-                            l.tipo === 'receita' ? 'text-primary' : l.tipo === 'investimento' ? 'text-blue-600' : 'text-destructive'
+                            l.tipo === 'receita' ? 'text-green-600' : l.tipo === 'investimento' ? 'text-blue-600' : 'text-destructive'
                           )}>
                             {l.tipo === 'receita' ? '+' : '-'}{maskValue(formatCurrency(l.valor), visible)}
                           </p>

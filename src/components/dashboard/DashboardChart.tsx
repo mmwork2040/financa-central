@@ -46,7 +46,7 @@ export const DashboardChart = ({ data, saldoAtual }: DashboardChartProps) => {
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+            <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
             Receitas
           </span>
           <span className="flex items-center gap-1.5">
@@ -84,7 +84,7 @@ export const DashboardChart = ({ data, saldoAtual }: DashboardChartProps) => {
                 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.5)" }} />
-              <Bar dataKey="receitas" name="Receitas" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="receitas" name="Receitas" fill="#22c55e" radius={[6, 6, 0, 0]} />
               <Bar dataKey="despesas" name="Despesas" fill="hsl(var(--destructive))" radius={[6, 6, 0, 0]} />
               <Bar dataKey="investimentos" name="Investimentos" fill="hsl(217, 91%, 60%)" radius={[6, 6, 0, 0]} />
             </BarChart>

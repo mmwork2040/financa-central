@@ -11,7 +11,7 @@ interface DonutChartProps {
 }
 
 const COLORS = [
-  "hsl(var(--primary))",
+  "#22c55e",
   "hsl(var(--destructive))",
 ];
 
@@ -65,7 +65,7 @@ export const DashboardDonutChart = ({ receitas, despesas, saldo }: DonutChartPro
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-[10px] text-muted-foreground">Saldo</span>
-              <span className={`text-sm font-bold ${saldo >= 0 ? "text-primary" : "text-destructive"}`}>
+              <span className={`text-sm font-bold ${saldo >= 0 ? "text-green-600" : "text-destructive"}`}>
                 {maskValue(formatCurrency(saldo), visible)}
               </span>
             </div>
@@ -74,7 +74,7 @@ export const DashboardDonutChart = ({ receitas, despesas, saldo }: DonutChartPro
         <div className="w-full space-y-2">
           <div className="flex items-center justify-between text-xs">
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+              <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
               Receitas
             </span>
             <span className="font-medium">{maskValue(formatCurrency(receitas), visible)}</span>
