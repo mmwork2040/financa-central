@@ -51,7 +51,7 @@ const LandingPage = () => {
             <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
               <BarChart3 className="h-5 w-5 text-primary" />
             </div>
-            <span className="text-xl font-bold text-foreground">Contabiliza AI</span>
+            <span className="text-xl font-extrabold tracking-tight text-foreground">Contabiliza AI</span>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => navigate("/login")}>Entrar</Button>
