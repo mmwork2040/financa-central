@@ -39,16 +39,23 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Missing authorization");
+    if (!authHeader?.startsWith("Bearer ")) throw new Error("Missing authorization");
+
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) throw new Error("Unauthorized");
+    const { data: claimsData, error: authError } = await userClient.auth.getClaims(token);
+    if (authError || !claimsData?.claims) throw new Error("Unauthorized");
+
+    const userId = claimsData.claims.sub;
 
     const { data: perfil } = await supabase
       .from("perfis")
       .select("empresa_id")
-      .eq("id", user.id)
+      .eq("id", userId)
       .single();
 
     if (!perfil?.empresa_id) throw new Error("No empresa found");
