@@ -224,12 +224,17 @@ const Assinaturas = () => {
     }
   };
 
-  const getControleItems = (controles: PlanoControles): string[] => {
+  const getControleItems = (controles: PlanoControles, maxEmpresas?: number): string[] => {
     const items: string[] = [];
     if (controles.max_lancamentos === 0) {
       items.push("Lançamentos ilimitados");
     } else if (controles.max_lancamentos > 0) {
       items.push(`Até ${controles.max_lancamentos} lançamentos`);
+    }
+    if (maxEmpresas === 0) {
+      items.push("Empresas ilimitadas");
+    } else if (maxEmpresas && maxEmpresas > 0) {
+      items.push(`Até ${maxEmpresas} empresa${maxEmpresas > 1 ? 's' : ''}`);
     }
     if (controles.chat_ia) items.push("Chat IA");
     if (controles.dashboard_completo) items.push("Dashboard Completo");
@@ -272,7 +277,7 @@ const Assinaturas = () => {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {planos.map((plano) => {
-            const controleItems = getControleItems(plano.controles);
+            const controleItems = getControleItems(plano.controles, (plano as any).max_empresas);
             const allItems = [...controleItems, ...plano.itens];
             return (
               <div
@@ -417,6 +422,17 @@ const Assinaturas = () => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label className="text-xs">Empresas (0 = ilimitadas)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={form.max_empresas}
+                  onChange={(e) => setForm(prev => ({ ...prev, max_empresas: parseInt(e.target.value) ?? 0 }))}
+                  placeholder="0"
+                />
+              </div>
+
               <div className="flex items-center justify-between">
                 <Label className="text-xs flex items-center gap-1.5">
                   <MessageSquare className="h-3.5 w-3.5 text-primary" />
@@ -491,15 +507,9 @@ const Assinaturas = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Ordem</Label>
-                <Input type="number" value={form.ordem} onChange={(e) => setForm(prev => ({ ...prev, ordem: parseInt(e.target.value) || 0 }))} />
-              </div>
-              <div className="space-y-2">
-                <Label>Máx. Empresas</Label>
-                <Input type="number" min="1" value={form.max_empresas} onChange={(e) => setForm(prev => ({ ...prev, max_empresas: parseInt(e.target.value) || 1 }))} placeholder="1" />
-              </div>
+            <div className="space-y-2">
+              <Label>Ordem</Label>
+              <Input type="number" value={form.ordem} onChange={(e) => setForm(prev => ({ ...prev, ordem: parseInt(e.target.value) || 0 }))} />
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
