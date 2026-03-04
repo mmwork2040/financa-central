@@ -1,4 +1,5 @@
 import React from "react";
+import FeatureBlocked from "@/components/common/FeatureBlocked";
 import { ArrowUpRight, ArrowDownRight, Wallet, AlertTriangle, Clock, Activity, Eye, EyeOff, LayoutDashboard, Landmark, TrendingUp, Calendar } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
@@ -360,6 +361,12 @@ const DashboardContent = () => {
 };
 
 const Dashboard = () => {
+  const { planControles, isSuperAdmin } = useAuth();
+  
+  if (!isSuperAdmin && !planControles.dashboard_completo) {
+    return <FeatureBlocked title="Dashboard Completo" description="O Dashboard Completo não está disponível no seu plano atual. Faça upgrade para acessar análises detalhadas." />;
+  }
+
   return (
     <LancamentosProvider>
       <ValuesVisibilityProvider>
