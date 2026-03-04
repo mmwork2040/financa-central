@@ -210,6 +210,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const fetchLancamentos = useCallback(async () => {
     setLoading(true);
     try {
+      // Silently generate recurring transactions for future months
+      supabase.functions.invoke("generate-recurring").catch(() => {});
+
       // Query 1: lancamentos do mês selecionado
       let query = (supabase as any).from("lancamentos").select(`
         *,
@@ -720,70 +723,27 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
       }
 
-      // Auto-generate next occurrence for recurring transactions
-      if (lancamento && lancamento.recorrente && !lancamento.total_parcelas && ["pago", "recebido"].includes(status)) {
+      // When cancelling a recurring transaction, cancel all future pending ones in the same chain
+      if (lancamento && lancamento.recorrente && !lancamento.total_parcelas && status === "cancelado") {
         try {
-          const lastDate = new Date(lancamento.data_vencimento);
-          let nextDate: Date;
-          switch (lancamento.recorrencia_tipo) {
-            case "semanal":
-              nextDate = new Date(lastDate);
-              nextDate.setDate(nextDate.getDate() + 7);
-              break;
-            case "quinzenal":
-              nextDate = new Date(lastDate);
-              nextDate.setDate(nextDate.getDate() + 15);
-              break;
-            case "trimestral":
-              nextDate = new Date(lastDate);
-              nextDate.setMonth(nextDate.getMonth() + 3);
-              break;
-            case "anual":
-              nextDate = new Date(lastDate);
-              nextDate.setFullYear(nextDate.getFullYear() + 1);
-              break;
-            default: // mensal
-              nextDate = new Date(lastDate);
-              nextDate.setMonth(nextDate.getMonth() + 1);
-              break;
-          }
-
-          const nextDateStr = nextDate.toISOString().split("T")[0];
-
-          // Check recorrencia_fim
-          if (!lancamento.recorrencia_fim || nextDateStr <= lancamento.recorrencia_fim) {
-            // Check if next occurrence already exists
-            const { data: existing } = await supabase
-              .from("lancamentos")
-              .select("id")
-              .eq("descricao", lancamento.descricao)
-              .eq("data_vencimento", nextDateStr)
-              .eq("valor", lancamento.valor)
-              .limit(1);
-
-            if (!existing || existing.length === 0) {
-              await supabase.from("lancamentos").insert({
-                empresa_id: empresaId,
-                descricao: lancamento.descricao,
-                valor: lancamento.valor,
-                tipo: lancamento.tipo,
-                status: "pendente",
-                data_vencimento: nextDateStr,
-                categoria_id: lancamento.categoria_id,
-                fornecedor_id: lancamento.fornecedor_id,
-                cliente_id: lancamento.cliente_id,
-                conta_bancaria_id: lancamento.conta_bancaria_id,
-                forma_pagamento_id: lancamento.forma_pagamento_id,
-                projeto_id: lancamento.projeto_id,
-                recorrente: true,
-                recorrencia_tipo: lancamento.recorrencia_tipo,
-                recorrencia_fim: lancamento.recorrencia_fim,
-              } as any);
-            }
-          }
+          const today = new Date().toISOString().split("T")[0];
+          await supabase
+            .from("lancamentos")
+            .update({ status: "cancelado" })
+            .eq("descricao", lancamento.descricao)
+            .eq("valor", lancamento.valor)
+            .eq("recorrente", true)
+            .eq("status", "pendente")
+            .gt("data_vencimento", today);
         } catch (err) {
-          console.warn("Erro ao gerar próxima ocorrência recorrente:", err);
+          console.warn("Erro ao cancelar recorrências futuras:", err);
         }
+      }
+
+      // Auto-generate next occurrence for recurring transactions when paying
+      if (lancamento && lancamento.recorrente && !lancamento.total_parcelas && ["pago", "recebido"].includes(status)) {
+        // Trigger the edge function to fill future months
+        supabase.functions.invoke("generate-recurring").catch(() => {});
       }
 
       setLancamentos(
