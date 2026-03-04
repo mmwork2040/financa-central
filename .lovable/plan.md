@@ -1,41 +1,29 @@
 
 
-## Diagnóstico
+## Exclusão de dados de teste da Hotmart
 
-Dois problemas principais foram identificados:
+Foram identificados os seguintes registros de teste no banco:
 
-### 1. Valores errados (Hotmart)
-O parser do Hotmart no `webhook-receiver` divide os valores por 100 (`/ 100`), assumindo que a Hotmart envia valores em centavos. Porém, a Hotmart envia os valores **ja em reais**. Exemplo: "Comunidade - O Segredo do viajante" deveria ser R$1.293,57 mas foi registrada como R$12,94 (1293.57 / 100).
+### Vendas Digitais (6 registros)
+| Produto | Cliente | Valor | Data |
+|---------|---------|-------|------|
+| Curso Teste | Teste Hotmart | R$9.900 | 21/02/2026 |
+| Curso Teste | Teste Hotmart | R$9.900 | 21/02/2026 |
+| Curso Marketing | Maria Silva | R$15.000 | 27/11/2017 |
+| Curso Marketing | Maria Silva | R$15.000 | 27/11/2017 |
+| Produto test postback2 | Teste Comprador | R$1.500 | 27/11/2017 |
+| Produto test postback2 | Teste Comprador | R$1.500 | 27/11/2017 |
 
-Linha problemática:
-```
-valor_bruto: Number(purchase?.price?.value || ...) / 100
-```
+### Lançamentos vinculados (3 registros)
+- Hotmart - Curso Teste (R$9.900)
+- Hotmart - Curso Marketing (R$15.000)
+- Hotmart - Produto test postback2 (R$1.500)
 
-### 2. Lançamentos entrando como "pago" em vez de "pendente"
-Apesar de `dias_recebimento = 30` estar configurado na integração, os lançamentos existentes estão todos com `status: pago` e `data_pagamento` preenchida. Isso indica que no momento do registro, a lógica de crédito de 30 dias não estava ativa ou havia um bug. Além disso, o usuário quer que as vendas **nunca** sejam convertidas automaticamente para "recebido" -- somente quando ele manualmente marcar.
+## Plano
 
----
+1. **Excluir lançamentos de teste** -- DELETE dos 3 lançamentos com origem `integracao` referentes a esses produtos
+2. **Excluir vendas digitais de teste** -- DELETE dos 6 registros de vendas digitais identificados acima (IDs específicos)
+3. **Verificar recebimentos_digitais** -- Checar e excluir eventuais registros na tabela `recebimentos_digitais` vinculados a essas vendas
 
-## Plano de Implementação
-
-### Etapa 1 -- Corrigir parser Hotmart (webhook-receiver)
-- Remover a divisão por 100 no `parseHotmart` para `valor_bruto`, `taxa` e `valor_liquido`
-- A Hotmart ja envia valores em reais no campo `price.value`
-
-### Etapa 2 -- Garantir que vendas aprovadas entrem como "pendente"
-- No `webhook-receiver`, confirmar que vendas aprovadas com `diasRecebimento > 0` criam lançamentos com `status: "pendente"`, `data_pagamento: null`, e `data_vencimento` = data_venda + diasRecebimento
-- Remover a lógica de conversão automática da Edge Function `process-digital-receipts`, ja que o usuário quer controle manual
-
-### Etapa 3 -- Corrigir dados existentes no banco
-- Atualizar os valores das vendas digitais e lançamentos existentes que vieram do Hotmart (multiplicar por 100 para restaurar o valor correto)
-- Alterar status dos lançamentos de integração de "pago" para "pendente" e limpar `data_pagamento`, ja que devem ser receitas futuras
-
-### Etapa 4 -- Remover auto-conversão (process-digital-receipts)
-- Alterar a Edge Function `process-digital-receipts` para que **não** converta automaticamente lançamentos pendentes para recebido. O usuário controlará isso manualmente pela tela de lançamentos
-
-### Arquivos afetados
-- `supabase/functions/webhook-receiver/index.ts` (fix Hotmart parser + garantir pendente)
-- `supabase/functions/process-digital-receipts/index.ts` (remover auto-conversão)
-- Dados no banco (correção via queries de atualização)
+Nenhuma alteração de schema necessária, apenas exclusão de dados via ferramenta de insert/data.
 
