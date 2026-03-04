@@ -168,7 +168,7 @@ const Assinaturas = () => {
         ativo: form.ativo,
         link_acesso: form.link_acesso || null,
         ordem: form.ordem,
-        max_empresas: form.max_empresas || 1,
+        max_empresas: form.max_empresas ?? 1,
         itens: serializeItensToDb(form.itens, form.controles),
       };
 
@@ -428,7 +428,7 @@ const Assinaturas = () => {
                   type="number"
                   min="0"
                   value={form.max_empresas}
-                  onChange={(e) => setForm(prev => ({ ...prev, max_empresas: parseInt(e.target.value) ?? 0 }))}
+                  onChange={(e) => { const v = e.target.value; setForm(prev => ({ ...prev, max_empresas: v === '' ? 0 : parseInt(v, 10) || 0 })); }}
                   placeholder="0"
                 />
               </div>
