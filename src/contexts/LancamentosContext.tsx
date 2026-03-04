@@ -543,6 +543,11 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         status: formData.status as "pendente" | "pago" | "recebido" | "cancelado"
       };
 
+      if (!selectedId && (!empresaId || empresaId.trim() === '')) {
+        toast.error("Empresa não selecionada. Tente recarregar a página.");
+        return;
+      }
+
       if (selectedId) {
         // Update existing lancamento
         const { error } = await supabase

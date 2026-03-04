@@ -151,7 +151,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('id', userId)
         .single();
 
-      const activeEmpresaId = profile?.empresa_id || (roles && roles.length > 0 ? roles[0].empresa_id : empresasList[0]?.empresa_id);
+      const rawEmpresaId = profile?.empresa_id || (roles && roles.length > 0 ? roles[0].empresa_id : empresasList[0]?.empresa_id);
+      const activeEmpresaId = rawEmpresaId && String(rawEmpresaId).trim() !== '' ? rawEmpresaId : null;
       
       if (superAdmin) {
         setUserRole('super_admin');
