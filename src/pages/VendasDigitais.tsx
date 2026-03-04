@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ShoppingCart, Search, RefreshCw, X, Plug, CheckCircle2, AlertTriangle, Plus, Eye, Edit } from "lucide-react";
+import { ShoppingCart, Search, RefreshCw, X, Plug, CheckCircle2, AlertTriangle, Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const PLATAFORMAS_VENDAS = ["hotmart", "eduzz", "monetizze", "kiwify"];
 
@@ -41,6 +52,8 @@ const VendasDigitais = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editingVenda, setEditingVenda] = useState<any>(null);
   const [detailVenda, setDetailVenda] = useState<any>(null);
+  const [deleteVenda, setDeleteVenda] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const plataformas = useMemo(() => {
     const set = new Set(vendas.map(v => v.plataforma).filter(Boolean));
@@ -89,6 +102,30 @@ const VendasDigitais = () => {
       console.error("Erro ao carregar vendas:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteVenda = async () => {
+    if (!deleteVenda) return;
+    setDeleting(true);
+    try {
+      // Delete linked lancamento if exists
+      if (deleteVenda.lancamento_id) {
+        await supabase.from("lancamentos").delete().eq("id", deleteVenda.lancamento_id);
+      }
+      // Delete the venda
+      const { error } = await (supabase as any)
+        .from("vendas_digitais")
+        .delete()
+        .eq("id", deleteVenda.id);
+      if (error) throw error;
+      setVendas(vendas.filter(v => v.id !== deleteVenda.id));
+      toast.success("Venda excluída com sucesso");
+      setDeleteVenda(null);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao excluir venda");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -289,6 +326,9 @@ const VendasDigitais = () => {
                           <Edit className="h-3 w-3" />
                         </Button>
                       )}
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => setDeleteVenda(venda)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -338,6 +378,29 @@ const VendasDigitais = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteVenda} onOpenChange={(o) => !o && setDeleteVenda(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Venda</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a venda <strong>"{deleteVenda?.produto || 'Produto'}"</strong> de <strong>{deleteVenda ? formatCurrency(deleteVenda.valor_liquido) : ''}</strong>?
+              {deleteVenda?.lancamento_id && (
+                <span className="block mt-2 text-destructive font-medium">
+                  ⚠️ O lançamento financeiro vinculado também será excluído.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteVenda} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
