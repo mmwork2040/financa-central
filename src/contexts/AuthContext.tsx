@@ -153,11 +153,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const { data } = await (supabase as any)
           .from('planos_assinatura')
-          .select('itens')
+          .select('itens, max_empresas')
           .eq('id', profile.assinatura_plano_id)
           .single();
         if (data) {
-          setPlanControles(parseControlesFromItens(data.itens));
+          const parsed = parseControlesFromItens(data.itens);
+          parsed.max_empresas = data.max_empresas ?? 1;
+          setPlanControles(parsed);
           return;
         }
       } catch (e) {

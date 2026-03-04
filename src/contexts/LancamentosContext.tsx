@@ -169,7 +169,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [formasPagamento, setFormasPagamento] = useState<FormaPagamento[]>([]);
   const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
   const [projetos, setProjetos] = useState<ProjetoSimple[]>([]);
-  const { empresaId, user, userProfile } = useAuth();
+  const { empresaId, user, userProfile, planControles, isSuperAdmin } = useAuth();
   const { monthStart, monthEnd } = useMonthFilter();
 
   // Add sort state
@@ -546,6 +546,28 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (!selectedId && (!empresaId || empresaId.trim() === '')) {
         toast.error("Empresa não selecionada. Tente recarregar a página.");
         return;
+      }
+
+      // Check max_lancamentos limit for new lancamentos
+      if (!selectedId && !isSuperAdmin && planControles.max_lancamentos > 0) {
+        try {
+          const { count, error: countError } = await supabase
+            .from("lancamentos")
+            .select("id", { count: "exact", head: true })
+            .eq("empresa_id", empresaId!);
+          
+          if (!countError && count !== null) {
+            const newCount = dataToSave.total_parcelas && dataToSave.total_parcelas > 1 
+              ? dataToSave.total_parcelas 
+              : 1;
+            if (count + newCount > planControles.max_lancamentos) {
+              toast.error(`Limite de ${planControles.max_lancamentos} lançamentos atingido no seu plano. Faça upgrade para continuar.`);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn("Erro ao verificar limite de lançamentos:", e);
+        }
       }
 
       if (selectedId) {
