@@ -66,7 +66,7 @@ const DashboardContent = () => {
           <p className="text-xs text-amber-700 dark:text-amber-400">
             Você tem <span className="font-bold">{trialDaysRemaining} {trialDaysRemaining === 1 ? 'dia' : 'dias'}</span> restantes no período de teste gratuito.
           </p>
-          <Button variant="link" size="sm" className="ml-auto text-xs text-amber-700 dark:text-amber-400 p-0 h-auto" onClick={() => navigate("/planos-expirados")}>
+          <Button variant="link" size="sm" className="ml-auto text-xs text-amber-700 dark:text-amber-400 p-0 h-auto" onClick={() => navigate("/ver-planos")}>
             Ver planos
           </Button>
         </div>

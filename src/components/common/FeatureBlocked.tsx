@@ -23,7 +23,7 @@ const FeatureBlocked: React.FC<FeatureBlockedProps> = ({ title, description }) =
           <p className="text-sm text-muted-foreground">
             {description || "Esta funcionalidade não está disponível no seu plano atual. Faça upgrade para ter acesso."}
           </p>
-          <Button onClick={() => navigate("/planos-expirados")} className="mt-2">
+          <Button onClick={() => navigate("/ver-planos")} className="mt-2">
             Ver planos disponíveis
           </Button>
         </CardContent>
