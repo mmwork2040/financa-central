@@ -16,11 +16,25 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const body = await req.json();
-    console.log("[fire-webhook] received body:", JSON.stringify(body));
-    const { empresa_id, evento, tabela, data, valor, descricao, usuario, acao, registro, assunto, mensagem, conversa_id, nome, id_usuario, id_telegram, telefone, email } = body;
+    let { empresa_id, evento, tabela, data, valor, descricao, usuario, acao, registro, assunto, mensagem, conversa_id, nome, id_usuario, id_telegram, telefone, email } = body;
 
     if (!empresa_id || !evento) {
       throw new Error("empresa_id and evento are required");
+    }
+
+    // If id_telegram is missing but we have id_usuario, fetch it from perfis
+    if (!id_telegram && id_usuario) {
+      const { data: perfilData } = await supabase
+        .from("perfis")
+        .select("telegram_id, nome, evolution_webhook_url, email")
+        .eq("id", id_usuario)
+        .single();
+      if (perfilData) {
+        id_telegram = perfilData.telegram_id || id_telegram;
+        if (!nome) nome = perfilData.nome;
+        if (!telefone) telefone = perfilData.evolution_webhook_url;
+        if (!email) email = perfilData.email;
+      }
     }
 
     // Fetch empresa name
