@@ -1,32 +1,42 @@
 
 
-## Plano: Gerar lançamentos futuros para recorrentes e parcelados existentes
+## Plano: Integrar vendas digitais nos relatórios e refletir dados em tempo real
 
-### Problema
+### Problema atual
 
-Lançamentos recorrentes (sem `total_parcelas`) que já foram pagos/recebidos só geram a próxima ocorrência ao mudar o status. Se o usuário não acessou o sistema por meses, os meses intermediários ficam vazios. Além disso, lançamentos parcelados já existentes podem não ter todas as parcelas criadas para meses futuros.
+O hook `useRelatoriosData` consulta **apenas** a tabela `lancamentos`. As vendas digitais (`vendas_digitais`) que representam receitas de plataformas (Hotmart, Kiwify, etc.) nao sao consideradas nos relatórios. Alem disso, os relatórios nao distinguem entre receitas confirmadas e receitas previstas.
 
-### Solução
+### Solucao
 
-Expandir a edge function `generate-recurring` para cobrir **dois cenários**:
+**1. `src/hooks/useRelatoriosData.tsx`** -- Incluir vendas digitais como receitas:
 
-**1. Recorrentes sem parcelas** — Iterar desde a última ocorrência paga/recebida até 12 meses à frente, gerando todas as ocorrências faltantes com status `pendente`. Se o lançamento mais recente foi cancelado, parar de gerar (o cancelamento interrompe a cadeia).
+- Apos buscar `lancamentos`, tambem buscar `vendas_digitais` no mesmo periodo (filtro por `data_venda`)
+- Vendas com status `recebido` contam como receita executada
+- Vendas com status `aprovada` ou `pendente` contam como receita prevista
+- Agrupar vendas por plataforma como categoria (ex: "Hotmart", "Kiwify")
+- Mesclar nos dados de `dataReceitas`, `dataFluxo` e `topReceitas`
+- Adicionar estados `receitasExecutadas` e `receitasPrevistas` ao retorno do hook para uso no ResumoFinanceiro
 
-**2. Cancelamento interrompe a cadeia** — Quando o usuário cancela um lançamento recorrente no `LancamentosContext`, também cancelar todos os lançamentos futuros pendentes da mesma cadeia (mesma descrição + recorrente + valor).
+**2. `src/components/relatorios/ResumoFinanceiro.tsx`** -- Expandir para mostrar receitas executadas vs previstas:
 
-### Mudanças
+- Receber props adicionais: `receitasExecutadas`, `receitasPrevistas`, `despesasExecutadas`, `despesasPrevistas`
+- Exibir as 4 linhas detalhadas (executadas + previstas) alem dos totais
+- Badge visual para "Previsto" em amarelo
 
-**`supabase/functions/generate-recurring/index.ts`**
-- Remover o limite de 30 dias. Gerar até 12 meses à frente
-- Para cada recorrente pago/recebido, iterar em loop gerando múltiplas ocorrências futuras (não apenas a próxima)
-- Agrupar por `descricao + valor` para encontrar a data mais recente e gerar a partir dela
-- Verificar se existe algum lançamento cancelado na cadeia — se sim, não gerar mais
+**3. `src/pages/Relatorios.tsx`** -- Passar os novos dados para o ResumoFinanceiro
 
-**`src/contexts/LancamentosContext.tsx`**
-- No `handleStatus`, quando status = `cancelado` e o lançamento é recorrente: deletar/cancelar todos os lançamentos futuros pendentes com mesma descrição + valor + recorrente
-- Chamar `generate-recurring` ao carregar o contexto de lançamentos (no `fetchLancamentos`) para garantir que os meses futuros estejam populados
+**4. `src/components/relatorios/FluxoCaixaChart.tsx`** -- Adicionar barras para receitas previstas vs executadas (opcional, se complexidade permitir, senao manter receitas totais)
+
+### Regras de negocio
+
+- Vendas digitais com `status = 'recebido'` -> receita confirmada do mes
+- Vendas digitais com `status != 'recebido'` (aprovada, pendente) -> receita prevista
+- Lancamentos com `status = 'pago'` ou `'recebido'` -> executado
+- Lancamentos com `status = 'pendente'` -> previsto
+- Evitar duplicidade: vendas digitais que ja possuem `lancamento_id` nao devem ser contadas duas vezes (o lancamento vinculado ja esta na tabela lancamentos)
 
 ### Arquivos afetados
-- `supabase/functions/generate-recurring/index.ts`
-- `src/contexts/LancamentosContext.tsx`
+- `src/hooks/useRelatoriosData.tsx`
+- `src/components/relatorios/ResumoFinanceiro.tsx`
+- `src/pages/Relatorios.tsx`
 
