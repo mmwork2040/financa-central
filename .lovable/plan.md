@@ -1,58 +1,63 @@
 
 
-## Plano: Filtros de Período Avançados + Dashboard de Fechamento de Ciclo
+## Plano: Refazer a Landing Page com apresentação visual premium
 
 ### Visão Geral
-Transformar a página de Relatórios para suportar:
-1. **Filtros de visualização futura**: próximo mês, próximos 3, 6 e 12 meses
-2. **Período personalizado**: date picker com data início e data fim definidos pelo usuário
-3. **Nova aba "Fechamento"**: dashboard detalhado para fechamento de ciclos (mês, trimestre, semestre, ano) com ranking de categorias de maior gasto/receita, percentuais, comparativos
+Reescrever completamente a `LandingPage.tsx` seguindo as 6 seções do briefing, com visual moderno, glassmorphism, e mockups visuais construídos em CSS/HTML puro simulando telas do sistema e conversas no Telegram.
 
-### Alterações
+### Estrutura das Seções
 
----
+**1. Hero Section** — "Seu departamento financeiro a uma mensagem de distância"
+- Headline impactante com destaque em laranja
+- Subtítulo sobre IA
+- Mockup de celular construído em CSS com conversa simulada de chat (bolhas de mensagem estilo Telegram)
+- CTA: "Testar por 30 dias grátis"
 
-**1. `src/hooks/useRelatoriosData.tsx`** — Refatorar para suportar todos os modos de período
+**2. Conexão com a Dor** — "Chega de planilhas..."
+- Layout texto centralizado com ícones de planilhas/calculadora riscados
+- Parágrafo persuasivo sobre perda de tempo
+- Fundo com gradiente sutil para separação visual
 
-- Aceitar `periodo` com novos valores: `'mes'`, `'trimestre'`, `'semestre'`, `'ano'`, `'proximo_mes'`, `'proximos_3'`, `'proximos_6'`, `'proximos_12'`, `'personalizado'`
-- Aceitar parâmetros opcionais `dataInicio?: Date` e `dataFim?: Date` para período personalizado
-- Para períodos futuros (`proximo_*`), calcular `dataInicio = hoje` e `dataFim` conforme meses à frente
-- Aplicar o filtro de data na query do Supabase (que hoje está sem filtro!) usando `gte('data_vencimento', dataInicioStr).lte('data_vencimento', dataFimStr)`
-- Alterar `processarFluxoCaixa` para agrupar por mês real (usando `data_vencimento`) em vez de retornar apenas "Total" — cada barra do gráfico será um mês
-- Retornar também dados adicionais: `topDespesas` e `topReceitas` (top 5 categorias ordenadas por valor)
+**3. Como Funciona** — 4 passos horizontais/verticais
+- Timeline visual com 4 passos numerados (ícones + texto)
+- Cada passo com ícone animado (chat, cadastro, mensagem/áudio, relatório)
 
----
+**4. Funcionalidades** — 5 features com mockups visuais
+- Cada funcionalidade em layout alternado (texto esquerda/imagem direita e vice-versa)
+- Mockups CSS simulando:
+  - Conversa de chat com confirmação de lançamento
+  - Dashboard com gráfico de barras (componente estilizado)
+  - Lista de contas com badges de status (pago/pendente/vencido)
+  - Chat com resumo financeiro
+  - Grid de logos de plataformas (Meta Ads, Google Ads, Hotmart, etc.)
 
-**2. `src/pages/Relatorios.tsx`** — Novos filtros + nova aba Fechamento
+**5. Para quem é** — Cards com perfis de público-alvo
+- 4 cards glassmorphism: Infoprodutores, Donos de agências, Prestadores de serviço, Profissionais liberais
+- Ícones representativos para cada perfil
 
-- Substituir o `<Select>` atual por um com 3 grupos de opções:
-  - **Passado**: Último mês, Último trimestre, Último semestre, Último ano
-  - **Futuro**: Próximo mês, Próximos 3 meses, Próximos 6 meses, Próximos 12 meses
-  - **Personalizado**: abre dois `Popover` com `Calendar` (data início / data fim)
-- Quando `periodo === 'personalizado'`, mostrar date pickers inline ao lado do select
-- Adicionar nova aba **"Fechamento"** na `TabsList`
-- Passar `dataInicio`/`dataFim` para o hook quando personalizado
+**6. Planos e Preços** — 3 cards de preço
+- Mensal R$197, Trimestral R$147, Anual R$79 (destacado como "Melhor Escolha")
+- Badge "30 dias grátis" em cada plano
+- Card anual com borda laranja e badge especial
 
----
+**Footer** — Mantém estilo atual com branding Contabiliza AI
 
-**3. Novo componente `src/components/relatorios/FechamentoCiclo.tsx`** — Dashboard de Fechamento
+### Detalhes Técnicos
 
-Recebe `dataReceitas`, `dataDespesas`, `dataFluxo`, `periodo` e exibe:
+- **Arquivo modificado**: `src/pages/LandingPage.tsx` (reescrita completa)
+- **Componentes auxiliares**: Criar `src/components/landing/` com subcomponentes para organização:
+  - `PhoneMockup.tsx` — Frame de celular reutilizável com conteúdo interno
+  - `ChatBubble.tsx` — Bolhas de chat simulando conversa com IA
+  - `DashboardMockup.tsx` — Mini dashboard estilizado
+  - `PricingCard.tsx` — Card de plano de preço
+- **Sem dependências novas** — Tudo construído com Tailwind + Lucide icons
+- **Responsivo** — Mobile-first, adaptação em todas as seções
+- **Navegação**: Navbar sticky com scroll suave para seções, CTAs apontam para `/register`
 
-- **Resumo do ciclo**: cards com Total Receitas, Total Despesas, Saldo, Margem (%)
-- **Top 5 Categorias de Despesa**: tabela ranqueada com nome, valor, % do total, barra visual de progresso
-- **Top 5 Categorias de Receita**: mesma estrutura
-- **Comparativo Receita vs Despesa**: gráfico de barras horizontal lado a lado
-- **Indicadores**: margem líquida, ticket médio por lançamento, categoria que mais cresceu/reduziu
-- Seletor de ciclo próprio (Mês atual, Trimestre atual, Semestre atual, Ano atual) que define o intervalo de datas automaticamente
-
----
-
-### Arquivos
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/hooks/useRelatoriosData.tsx` | Suportar períodos futuros, personalizado e filtro real por data; agrupar fluxo por mês; retornar top categorias |
-| `src/pages/Relatorios.tsx` | Novos valores no Select com grupos; date pickers para personalizado; nova aba Fechamento |
-| `src/components/relatorios/FechamentoCiclo.tsx` | **Novo** — Dashboard completo de fechamento de ciclo |
+### Mockups Visuais (construídos em CSS)
+Como não é possível usar screenshots reais do sistema em runtime, serão construídas representações visuais fiéis usando:
+- Divs estilizadas simulando a interface do dashboard (barras de gráfico coloridas, cards de saldo)
+- Bolhas de chat com avatares simulando interação com a IA
+- Listas com badges de status (verde/amarelo/vermelho) para contas
+- Frame de celular com bordas arredondadas e notch
 
