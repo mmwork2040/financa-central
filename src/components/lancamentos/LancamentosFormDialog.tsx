@@ -80,7 +80,7 @@ export const LancamentosFormDialog = () => {
   // Function to handle date changes
   const handleDateChange = (field: string, date: Date | null) => {
     if (date) {
-      const isoDate = date.toISOString().split('T')[0];
+      const isoDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       const syntheticEvent = {
         target: {
           name: field,

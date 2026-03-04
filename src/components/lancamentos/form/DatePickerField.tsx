@@ -13,9 +13,16 @@ interface DatePickerFieldProps {
 }
 
 export const DatePickerField = ({ label, value, onChange }: DatePickerFieldProps) => {
+  const parseLocalDate = (v: string): Date => {
+    const [y, m, d] = v.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+
   const formatDate = (date?: Date | null) => {
     return date ? format(date, 'dd/MM/yyyy') : '';
   };
+
+  const selectedDate = value ? parseLocalDate(value) : undefined;
 
   return (
     <div className="grid grid-cols-4 items-center gap-4">
@@ -28,13 +35,13 @@ export const DatePickerField = ({ label, value, onChange }: DatePickerFieldProps
               className="w-full justify-start text-left font-normal"
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {value ? formatDate(new Date(value)) : `Selecione a data`}
+              {selectedDate ? formatDate(selectedDate) : `Selecione a data`}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0">
             <Calendar
               mode="single"
-              selected={value ? new Date(value) : undefined}
+              selected={selectedDate}
               onSelect={onChange}
               initialFocus
             />
