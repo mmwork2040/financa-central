@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -39,7 +40,7 @@ const PlanosAssinaturaConfig = () => {
   const [form, setForm] = useState({
     nome: "",
     descricao: "",
-    preco: "",
+    preco: 0,
     periodo: "mensal",
     destaque: false,
     badge: "",
@@ -71,7 +72,7 @@ const PlanosAssinaturaConfig = () => {
 
   const openNew = () => {
     setEditingPlano(null);
-    setForm({ nome: "", descricao: "", preco: "", periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, max_empresas: "1" });
+    setForm({ nome: "", descricao: "", preco: 0, periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, max_empresas: "1" });
     setDialogOpen(true);
   };
 
@@ -80,7 +81,7 @@ const PlanosAssinaturaConfig = () => {
     setForm({
       nome: plano.nome,
       descricao: plano.descricao || "",
-      preco: String(plano.preco),
+      preco: plano.preco,
       periodo: plano.periodo,
       destaque: plano.destaque,
       badge: plano.badge || "",
@@ -102,7 +103,7 @@ const PlanosAssinaturaConfig = () => {
       const payload = {
         nome: form.nome,
         descricao: form.descricao || null,
-        preco: parseFloat(form.preco),
+        preco: form.preco,
         periodo: form.periodo,
         destaque: form.destaque,
         badge: form.badge || null,
@@ -276,7 +277,13 @@ const PlanosAssinaturaConfig = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Preço (R$) *</Label>
-                <Input type="number" value={form.preco} onChange={(e) => setForm(prev => ({ ...prev, preco: e.target.value }))} placeholder="197" />
+                <CurrencyInput
+                  id="preco-plano"
+                  name="preco"
+                  value={form.preco}
+                  onValueChange={(val) => setForm(prev => ({ ...prev, preco: parseFloat(val?.replace(/\./g, '').replace(',', '.') || '0') || 0 }))}
+                  placeholder="0,00"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Período</Label>
