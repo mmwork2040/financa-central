@@ -160,7 +160,9 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                         <p className="font-medium text-foreground text-sm truncate">
                           {l.descricao}
                           {(l as any)._virtual && (
-                            <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-100 text-blue-700">Previsto</span>
+                            <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+                              <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-100 text-blue-700 cursor-help">Previsto</span>
+                            </TooltipTrigger><TooltipContent><p>Data prevista: {new Date(l.data_vencimento).toLocaleDateString('pt-BR')}</p></TooltipContent></Tooltip></TooltipProvider>
                           )}
                         </p>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -340,7 +342,9 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                   <TableCell className="font-medium">
                     {lancamento.descricao}
                     {(lancamento as any)._virtual && (
-                      <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-100 text-blue-700">Previsto</span>
+                      <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+                        <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-100 text-blue-700 cursor-help">Previsto</span>
+                      </TooltipTrigger><TooltipContent><p>Data prevista: {new Date(lancamento.data_vencimento).toLocaleDateString('pt-BR')}</p></TooltipContent></Tooltip></TooltipProvider>
                     )}
                     <div className="text-xs text-muted-foreground">
                       {lancamento.fornecedor ? `Fornecedor: ${lancamento.fornecedor.nome}` : 
@@ -364,7 +368,9 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                       {(lancamento.status === 'pago' || lancamento.status === 'recebido') ? (
                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${lancamento.tipo === "receita" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>✓ Executado</span>
                       ) : lancamento.status === 'pendente' ? (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-700">🕐 Previsto</span>
+                        <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-700 cursor-help">🕐 Previsto</span>
+                        </TooltipTrigger><TooltipContent><p>Data prevista: {new Date(lancamento.data_vencimento).toLocaleDateString('pt-BR')}</p></TooltipContent></Tooltip></TooltipProvider>
                       ) : null}
                     </div>
                   </TableCell>
