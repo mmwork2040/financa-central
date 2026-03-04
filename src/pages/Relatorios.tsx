@@ -39,7 +39,7 @@ const RelatoriosContent = () => {
   const [customStart, setCustomStart] = useState<Date | undefined>();
   const [customEnd, setCustomEnd] = useState<Date | undefined>();
 
-  const { loading, dataReceitas, dataDespesas, dataFluxo, fetchRelatoriosData } = useRelatoriosData(
+  const { loading, dataReceitas, dataDespesas, dataFluxo, receitasExecutadas, receitasPrevistas, despesasExecutadas, despesasPrevistas, fetchRelatoriosData } = useRelatoriosData(
     periodo,
     customStart,
     customEnd
@@ -114,8 +114,8 @@ const RelatoriosContent = () => {
 
   const handleExport = (f: "csv" | "pdf") => (f === "csv" ? exportToCSV() : generatePDF());
 
-  const totalReceitas = dataFluxo.reduce((s, i) => s + i.receitas, 0);
-  const totalDespesas = dataFluxo.reduce((s, i) => s + i.despesas, 0);
+  const totalReceitas = receitasExecutadas + receitasPrevistas;
+  const totalDespesas = despesasExecutadas + despesasPrevistas;
 
   const handlePeriodoChange = (v: string) => {
     setPeriodo(v);
@@ -233,7 +233,7 @@ const RelatoriosContent = () => {
           <TabsContent value="fluxo" className="space-y-4">
             <FluxoCaixaChart data={dataFluxo} />
             <div className="grid gap-4 md:grid-cols-2">
-              <ResumoFinanceiro totalReceitas={totalReceitas} totalDespesas={totalDespesas} />
+              <ResumoFinanceiro totalReceitas={totalReceitas} totalDespesas={totalDespesas} receitasExecutadas={receitasExecutadas} receitasPrevistas={receitasPrevistas} despesasExecutadas={despesasExecutadas} despesasPrevistas={despesasPrevistas} />
               <TrendAnalysis dataFluxo={dataFluxo} periodo={periodo} totalReceitas={totalReceitas} totalDespesas={totalDespesas} />
             </div>
           </TabsContent>
