@@ -30,15 +30,13 @@ Deno.serve(async (req) => {
       .single();
     if (empresaData) empresaNome = empresaData.nome;
 
-    // Search webhooks matching by nome (ação) AND tabela together
+    // Search webhooks matching globally (all empresas) by nome AND tabela
     let webhooks: any[] = [];
 
     if (tabela) {
-      // Try matching both nome + tabela
       const { data: matched } = await supabase
         .from("webhooks_empresa")
         .select("*")
-        .eq("empresa_id", empresa_id)
         .eq("ativo", true)
         .eq("nome", evento)
         .eq("tabela", tabela);
@@ -50,7 +48,6 @@ Deno.serve(async (req) => {
       const { data: byNome } = await supabase
         .from("webhooks_empresa")
         .select("*")
-        .eq("empresa_id", empresa_id)
         .eq("ativo", true)
         .eq("nome", evento);
       webhooks = byNome || [];
@@ -61,7 +58,6 @@ Deno.serve(async (req) => {
       const { data: byEvento } = await supabase
         .from("webhooks_empresa")
         .select("*")
-        .eq("empresa_id", empresa_id)
         .eq("evento", evento)
         .eq("ativo", true);
       webhooks = byEvento || [];
