@@ -74,7 +74,7 @@ const DashboardContent = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
         <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -95,6 +95,18 @@ const DashboardContent = () => {
             <p className="text-lg sm:text-xl font-bold text-destructive">
               {maskValue(formatCurrency(summary.totalDespesas), visible)}
             </p>
+          </CardContent>
+        </Card>
+        <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="rounded-full bg-amber-100 p-1.5"><Clock className="h-4 w-4 text-amber-600" /></div>
+              <span className="text-xs text-muted-foreground">Receita Pendente</span>
+            </div>
+            <p className="text-lg sm:text-xl font-bold text-amber-600">
+              {maskValue(formatCurrency(summary.receitasPrevistas), visible)}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Receitas a receber</p>
           </CardContent>
         </Card>
         <Card className="hover:-translate-y-0.5 transition-all hover:shadow-lg">
