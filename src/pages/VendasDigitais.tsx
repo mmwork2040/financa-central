@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useMemo } from "react";
-import { ShoppingCart, Search, RefreshCw, X, Plug, CheckCircle2, AlertTriangle } from "lucide-react";
+import { ShoppingCart, Search, RefreshCw, X, Plug, CheckCircle2, AlertTriangle, Plus, Eye, Edit } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,15 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import ExportDropdown from "@/components/common/ExportDropdown";
+import { exportVendas } from "@/components/vendas/VendasExport";
+import VendaFormDialog from "@/components/vendas/VendaFormDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const PLATAFORMAS_VENDAS = ["hotmart", "eduzz", "monetizze", "kiwify"];
 
@@ -30,6 +38,9 @@ const VendasDigitais = () => {
   const [dataInicio, setDataInicio] = useState<Date | undefined>();
   const [dataFim, setDataFim] = useState<Date | undefined>();
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingVenda, setEditingVenda] = useState<any>(null);
+  const [detailVenda, setDetailVenda] = useState<any>(null);
 
   const plataformas = useMemo(() => {
     const set = new Set(vendas.map(v => v.plataforma).filter(Boolean));
@@ -82,9 +93,10 @@ const VendasDigitais = () => {
   };
 
   const filtered = vendas.filter(v => {
-    const matchSearch = !search || 
+    const matchSearch = !search ||
       v.produto?.toLowerCase().includes(search.toLowerCase()) ||
       v.cliente?.toLowerCase().includes(search.toLowerCase()) ||
+      v.cliente_email?.toLowerCase().includes(search.toLowerCase()) ||
       v.plataforma?.toLowerCase().includes(search.toLowerCase());
     const matchPlataforma = filtroPlataforma === "all" || v.plataforma === filtroPlataforma;
     const matchStatus = filtroStatus === "all" || v.status === filtroStatus;
@@ -108,14 +120,22 @@ const VendasDigitais = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
-            <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">Vendas</h1>
           </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">Vendas Digitais</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Registre vendas manuais e receba vendas das plataformas conectadas</p>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground">Vendas recebidas das plataformas conectadas</p>
+        <div className="flex items-center gap-2">
+          <ExportDropdown onExport={(fmt) => exportVendas(filtered, fmt)} />
+          <Button onClick={() => { setEditingVenda(null); setFormOpen(true); }} size="sm">
+            <Plus className="h-4 w-4 mr-1" /> Nova Venda
+          </Button>
+        </div>
       </div>
 
       {/* Connected platforms status */}
@@ -129,14 +149,7 @@ const VendasDigitais = () => {
             {PLATAFORMAS_VENDAS.map(p => {
               const isConnected = connectedPlatforms.includes(p);
               return (
-                <Badge
-                  key={p}
-                  variant="outline"
-                  className={cn(
-                    "text-xs gap-1 cursor-default",
-                    isConnected ? "border-green-300 bg-green-50 text-green-700" : "border-muted text-muted-foreground"
-                  )}
-                >
+                <Badge key={p} variant="outline" className={cn("text-xs gap-1 cursor-default", isConnected ? "border-green-300 bg-green-50 text-green-700" : "border-muted text-muted-foreground")}>
                   {isConnected ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
                   {p.charAt(0).toUpperCase() + p.slice(1)}
                 </Badge>
@@ -146,9 +159,7 @@ const VendasDigitais = () => {
           {disconnectedPlatforms.length > 0 && (
             <p className="text-[11px] text-muted-foreground mt-2">
               {disconnectedPlatforms.length} plataforma(s) não conectada(s).{" "}
-              <button onClick={() => navigate("/settings/integracoes")} className="text-primary underline hover:no-underline">
-                Configurar integrações
-              </button>
+              <button onClick={() => navigate("/settings/integracoes")} className="text-primary underline hover:no-underline">Configurar integrações</button>
             </p>
           )}
         </CardContent>
@@ -158,41 +169,27 @@ const VendasDigitais = () => {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por produto, cliente ou plataforma..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-9"
-            />
+            <Input placeholder="Buscar por produto, cliente, email..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => { setRefreshing(true); await fetchVendas(); setRefreshing(false); }}
-            disabled={refreshing}
-          >
-            <RefreshCw className={`h-4 w-4 mr-1 ${refreshing ? "animate-spin" : ""}`} />
-            Atualizar
+          <Button variant="outline" size="sm" onClick={async () => { setRefreshing(true); await fetchVendas(); setRefreshing(false); }} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${refreshing ? "animate-spin" : ""}`} /> Atualizar
           </Button>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <Select value={filtroPlataforma} onValueChange={setFiltroPlataforma}>
-            <SelectTrigger className="w-[160px] h-9 text-xs">
-              <SelectValue placeholder="Plataforma" />
-            </SelectTrigger>
+            <SelectTrigger className="w-[160px] h-9 text-xs"><SelectValue placeholder="Plataforma" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas plataformas</SelectItem>
-              {plataformas.map(p => (
+              <SelectItem value="manual">Manual</SelectItem>
+              {plataformas.filter(p => p !== "manual").map(p => (
                 <SelectItem key={p} value={p}>{p}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
           <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-            <SelectTrigger className="w-[140px] h-9 text-xs">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
+            <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos status</SelectItem>
               <SelectItem value="aprovada">Aprovada</SelectItem>
@@ -243,43 +240,104 @@ const VendasDigitais = () => {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <ShoppingCart className="h-12 w-12 text-muted-foreground/30 mb-4" />
-            <h3 className="text-lg font-semibold mb-1">Nenhuma venda digital ainda</h3>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Conecte suas plataformas em <strong>Configurações → Integrações</strong> para começar a receber vendas automaticamente.
+            <h3 className="text-lg font-semibold mb-1">Nenhuma venda registrada</h3>
+            <p className="text-sm text-muted-foreground max-w-md mb-4">
+              Registre vendas manualmente ou conecte suas plataformas em <strong>Configurações → Integrações</strong>.
             </p>
+            <Button onClick={() => { setEditingVenda(null); setFormOpen(true); }}>
+              <Plus className="h-4 w-4 mr-1" /> Registrar Primeira Venda
+            </Button>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
           {filtered.map(venda => (
-            <Card key={venda.id}>
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-sm font-semibold truncate">{venda.produto || "Produto"}</p>
-                    <Badge variant="outline" className="text-[10px] shrink-0">{venda.plataforma}</Badge>
+            <Card key={venda.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <p className="text-sm font-semibold truncate">{venda.produto || "Produto"}</p>
+                      <Badge variant="outline" className="text-[10px] shrink-0">{venda.plataforma}</Badge>
+                      {venda.origem === "manual" && <Badge variant="secondary" className="text-[10px]">Manual</Badge>}
+                    </div>
+                    <div className="text-xs text-muted-foreground space-y-0.5">
+                      <p>
+                        <span className="font-medium">{venda.cliente || "—"}</span>
+                        {venda.cliente_email && <span> • {venda.cliente_email}</span>}
+                        {venda.cliente_telefone && <span> • {venda.cliente_telefone}</span>}
+                      </p>
+                      <p>
+                        Venda: {formatDate(venda.data_venda)}
+                        {venda.cliente_documento && <span> • Doc: {venda.cliente_documento}</span>}
+                      </p>
+                      {venda.observacoes && <p className="italic text-muted-foreground/70 truncate max-w-md">"{venda.observacoes}"</p>}
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {venda.cliente || "—"} • Venda: {formatDate(venda.data_venda)}
-                    {venda.created_at && ` • Registro: ${formatDate(venda.created_at)}`}
-                  </p>
-                </div>
-                <div className="text-right shrink-0 ml-3">
-                  <p className={cn("text-sm font-bold", venda.status === "reembolsada" || venda.status === "chargeback" ? "text-red-600" : "text-green-600")}>
-                    {(venda.status === "reembolsada" || venda.status === "chargeback") ? "-" : ""}{formatCurrency(venda.valor_liquido)}
-                  </p>
-                  {venda.taxa > 0 && (
-                    <p className="text-[10px] text-muted-foreground">Taxa: {formatCurrency(venda.taxa)}</p>
-                  )}
-                  <Badge className={cn("text-[10px] mt-1", statusColors[venda.status] || "")}>
-                    {venda.status}
-                  </Badge>
+                  <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                    <p className={cn("text-sm font-bold", venda.status === "reembolsada" || venda.status === "chargeback" ? "text-destructive" : "text-green-600")}>
+                      {(venda.status === "reembolsada" || venda.status === "chargeback") ? "-" : ""}{formatCurrency(venda.valor_liquido)}
+                    </p>
+                    {venda.taxa > 0 && <p className="text-[10px] text-muted-foreground">Taxa: {formatCurrency(venda.taxa)}</p>}
+                    <Badge className={cn("text-[10px]", statusColors[venda.status] || "")}>{venda.status}</Badge>
+                    <div className="flex gap-1 mt-1">
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDetailVenda(venda)}>
+                        <Eye className="h-3 w-3" />
+                      </Button>
+                      {venda.origem === "manual" && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingVenda(venda); setFormOpen(true); }}>
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Form Dialog */}
+      <VendaFormDialog open={formOpen} onOpenChange={setFormOpen} onSuccess={fetchVendas} venda={editingVenda} />
+
+      {/* Detail Dialog */}
+      <Dialog open={!!detailVenda} onOpenChange={(o) => !o && setDetailVenda(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Venda</DialogTitle>
+          </DialogHeader>
+          {detailVenda && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-2">
+                <div><span className="text-muted-foreground">Produto:</span> <strong>{detailVenda.produto || "-"}</strong></div>
+                <div><span className="text-muted-foreground">Plataforma:</span> <strong>{detailVenda.plataforma}</strong></div>
+                <div><span className="text-muted-foreground">Data:</span> <strong>{formatDate(detailVenda.data_venda)}</strong></div>
+                <div><span className="text-muted-foreground">Status:</span> <Badge className={cn("text-[10px]", statusColors[detailVenda.status] || "")}>{detailVenda.status}</Badge></div>
+                <div><span className="text-muted-foreground">Valor Bruto:</span> <strong>{formatCurrency(detailVenda.valor_bruto)}</strong></div>
+                <div><span className="text-muted-foreground">Taxa:</span> <strong>{formatCurrency(detailVenda.taxa)}</strong></div>
+                <div><span className="text-muted-foreground">Valor Líquido:</span> <strong className="text-green-600">{formatCurrency(detailVenda.valor_liquido)}</strong></div>
+                <div><span className="text-muted-foreground">Origem:</span> <strong>{detailVenda.origem || "integracao"}</strong></div>
+              </div>
+              <hr />
+              <p className="font-medium">Dados do Cliente</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div><span className="text-muted-foreground">Nome:</span> <strong>{detailVenda.cliente || "-"}</strong></div>
+                <div><span className="text-muted-foreground">Email:</span> <strong>{detailVenda.cliente_email || "-"}</strong></div>
+                <div><span className="text-muted-foreground">Telefone:</span> <strong>{detailVenda.cliente_telefone || "-"}</strong></div>
+                <div><span className="text-muted-foreground">Documento:</span> <strong>{detailVenda.cliente_documento || "-"}</strong></div>
+                <div className="col-span-2"><span className="text-muted-foreground">Endereço:</span> <strong>{detailVenda.cliente_endereco || "-"}</strong></div>
+              </div>
+              {detailVenda.observacoes && (
+                <>
+                  <hr />
+                  <div><span className="text-muted-foreground">Observações:</span> <p className="mt-1">{detailVenda.observacoes}</p></div>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
