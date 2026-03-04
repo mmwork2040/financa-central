@@ -261,7 +261,7 @@ const PlanosAssinaturaConfig = () => {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingPlano ? "Editar Plano" : "Novo Plano"}</DialogTitle>
           </DialogHeader>
@@ -281,7 +281,7 @@ const PlanosAssinaturaConfig = () => {
                   id="preco-plano"
                   name="preco"
                   value={form.preco}
-                  onValueChange={(val) => setForm(prev => ({ ...prev, preco: parseFloat(val?.replace(/\./g, '').replace(',', '.') || '0') || 0 }))}
+                  onValueChange={(val) => setForm(prev => ({ ...prev, preco: val ? parseInt(val) / 100 : 0 }))}
                   placeholder="0,00"
                 />
                 {form.preco > 0 && form.periodo !== 'mensal' && (() => {
