@@ -13,7 +13,7 @@ interface OnboardingScreenProps {
 }
 
 const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
-  const { logout } = useAuth();
+  const { logout, planControles, isSuperAdmin, isTrialActive, assinaturaStatus } = useAuth();
   const [mode, setMode] = useState<"choose" | "create" | "invite">("choose");
   const [loading, setLoading] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
@@ -75,6 +75,8 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
     }
   };
 
+  const canCreateMore = isSuperAdmin || (isTrialActive || assinaturaStatus === 'ativo');
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-lg space-y-6">
@@ -85,7 +87,7 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
 
         {mode === "choose" && (
           <div className="grid gap-4">
-            <Card className="cursor-pointer transition-all hover:border-primary hover:shadow-md" onClick={() => setMode("create")}>
+            <Card className="cursor-pointer transition-all hover:border-primary hover:shadow-md" onClick={() => canCreateMore ? setMode("create") : toast.error("Seu plano expirou. Assine para criar empresas.")}>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg"><Building2 className="h-5 w-5 text-primary" />Criar minha empresa</CardTitle>
                 <CardDescription>Crie uma nova empresa e comece a gerenciar suas finanças.</CardDescription>

@@ -46,7 +46,77 @@ serve(async (req) => {
 
     const userId = callerData.user.id;
 
-    // Create empresa with full details
+    // Check if user is super_admin (bypass limits)
+    const { data: isSA } = await supabaseAdmin.rpc("is_super_admin", { _user_id: userId });
+
+    if (!isSA) {
+      // Get user profile to check subscription
+      const { data: perfil } = await supabaseAdmin
+        .from("perfis")
+        .select("assinatura_status, assinatura_plano_id, trial_started_at, created_at")
+        .eq("id", userId)
+        .single();
+
+      // Count non-personal empresas the user owns (admin role)
+      const { data: userRoles } = await supabaseAdmin
+        .from("user_roles")
+        .select("empresa_id")
+        .eq("user_id", userId)
+        .eq("role", "admin");
+
+      const empresaIds = userRoles?.map((r: any) => r.empresa_id) || [];
+      let nonPersonalCount = 0;
+
+      if (empresaIds.length > 0) {
+        const { count } = await supabaseAdmin
+          .from("empresas")
+          .select("id", { count: "exact", head: true })
+          .eq("pessoal", false)
+          .in("id", empresaIds);
+        nonPersonalCount = count || 0;
+      }
+
+      // Determine max_empresas
+      let maxEmpresas = 1; // default for non-subscribers
+
+      const status = perfil?.assinatura_status || "trial";
+
+      if (status === "ativo" && perfil?.assinatura_plano_id) {
+        // Get plan limit
+        const { data: plano } = await supabaseAdmin
+          .from("planos_assinatura")
+          .select("max_empresas")
+          .eq("id", perfil.assinatura_plano_id)
+          .single();
+
+        if (plano) {
+          maxEmpresas = plano.max_empresas ?? 999; // if null, unlimited
+        }
+      } else if (status === "trial") {
+        // Check if trial is still active
+        const trialStarted = perfil?.trial_started_at || perfil?.created_at;
+        if (trialStarted) {
+          const trialEnd = new Date(trialStarted);
+          trialEnd.setDate(trialEnd.getDate() + 30);
+          if (new Date() > trialEnd) {
+            maxEmpresas = 0; // trial expired
+          }
+        }
+      } else {
+        maxEmpresas = 0; // expired/cancelled
+      }
+
+      if (nonPersonalCount >= maxEmpresas) {
+        const msg = maxEmpresas === 0
+          ? "Sua assinatura expirou. Assine um plano para criar empresas."
+          : `Você atingiu o limite de ${maxEmpresas} empresa(s) do seu plano. Faça upgrade para criar mais.`;
+        return new Response(JSON.stringify({ error: msg }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Create empresa
     const { data: empresa, error: empresaError } = await supabaseAdmin
       .from("empresas")
       .insert({

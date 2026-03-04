@@ -21,6 +21,7 @@ interface Plano {
   ativo: boolean;
   link_acesso: string | null;
   ordem: number;
+  max_empresas: number;
 }
 
 const periodoOptions = [
@@ -45,6 +46,7 @@ const PlanosAssinaturaConfig = () => {
     ativo: true,
     link_acesso: "",
     ordem: 0,
+    max_empresas: "1",
   });
 
   useEffect(() => {
@@ -69,7 +71,7 @@ const PlanosAssinaturaConfig = () => {
 
   const openNew = () => {
     setEditingPlano(null);
-    setForm({ nome: "", descricao: "", preco: "", periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1 });
+    setForm({ nome: "", descricao: "", preco: "", periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, max_empresas: "1" });
     setDialogOpen(true);
   };
 
@@ -85,6 +87,7 @@ const PlanosAssinaturaConfig = () => {
       ativo: plano.ativo,
       link_acesso: plano.link_acesso || "",
       ordem: plano.ordem,
+      max_empresas: String(plano.max_empresas ?? 1),
     });
     setDialogOpen(true);
   };
@@ -106,6 +109,7 @@ const PlanosAssinaturaConfig = () => {
         ativo: form.ativo,
         link_acesso: form.link_acesso || null,
         ordem: form.ordem,
+        max_empresas: parseInt(form.max_empresas) || 1,
       };
 
       if (editingPlano) {
@@ -284,10 +288,14 @@ const PlanosAssinaturaConfig = () => {
               <Label>Badge (rótulo)</Label>
               <Input value={form.badge} onChange={(e) => setForm(prev => ({ ...prev, badge: e.target.value }))} placeholder="Ex: Melhor Escolha" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Ordem</Label>
                 <Input type="number" value={form.ordem} onChange={(e) => setForm(prev => ({ ...prev, ordem: parseInt(e.target.value) || 0 }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Máx. Empresas</Label>
+                <Input type="number" value={form.max_empresas} onChange={(e) => setForm(prev => ({ ...prev, max_empresas: e.target.value }))} placeholder="1" />
               </div>
               <div className="flex items-center gap-2 pt-6">
                 <Switch checked={form.destaque} onCheckedChange={(v) => setForm(prev => ({ ...prev, destaque: v }))} />
