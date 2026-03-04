@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const TELEGRAM_URL = "https://t.me/meu_agente_financeiro_bot";
 
 const FloatingChatButton: React.FC = () => {
-  const { user } = useAuth();
+  const { user, planControles, isSuperAdmin } = useAuth();
   const [showTooltip, setShowTooltip] = useState(false);
 
   // Show tooltip popup on first visit (once per session)
@@ -25,7 +25,7 @@ const FloatingChatButton: React.FC = () => {
     }
   }, [user]);
 
-  if (!user) return null;
+  if (!user || (!isSuperAdmin && !planControles.chat_ia)) return null;
 
   const content = (
     <>

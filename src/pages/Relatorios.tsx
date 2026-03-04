@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import FeatureBlocked from "@/components/common/FeatureBlocked";
 import {
   Select,
   SelectContent,
@@ -269,10 +271,18 @@ const RelatoriosContent = () => {
   );
 };
 
-const Relatorios = () => (
-  <ValuesVisibilityProvider>
-    <RelatoriosContent />
-  </ValuesVisibilityProvider>
-);
+const Relatorios = () => {
+  const { planControles, isSuperAdmin } = useAuth();
+  
+  if (!isSuperAdmin && !planControles.relatorios_personalizados) {
+    return <FeatureBlocked title="Relatórios Personalizados" description="Os Relatórios Personalizados não estão disponíveis no seu plano atual. Faça upgrade para acessar análises avançadas." />;
+  }
+
+  return (
+    <ValuesVisibilityProvider>
+      <RelatoriosContent />
+    </ValuesVisibilityProvider>
+  );
+};
 
 export default Relatorios;

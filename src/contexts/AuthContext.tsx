@@ -20,6 +20,27 @@ function translateAuthError(msg: string): string {
   return authErrorMessages[msg] || msg;
 }
 
+export type PlanoControles = {
+  max_lancamentos: number;
+  chat_ia: boolean;
+  dashboard_completo: boolean;
+  relatorios_personalizados: boolean;
+};
+
+const defaultPlanoControles: PlanoControles = {
+  max_lancamentos: 0,
+  chat_ia: true,
+  dashboard_completo: true,
+  relatorios_personalizados: true,
+};
+
+function parseControlesFromItens(raw: any): PlanoControles {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw) && raw.controles) {
+    return { ...defaultPlanoControles, ...raw.controles };
+  }
+  return { ...defaultPlanoControles };
+}
+
 type EmpresaInfo = {
   empresa_id: string;
   role: string;
@@ -38,6 +59,8 @@ type AuthContextType = {
   isPessoal: boolean;
   empresas: EmpresaInfo[];
   needsPhone: boolean;
+  planControles: PlanoControles;
+  isTrialActive: boolean;
   canAccessRoute: (path: string) => boolean;
   canAccessScreen: (screenKey: string) => boolean;
   canPerformAction: (screenKey: string, action: 'pode_incluir' | 'pode_alterar' | 'pode_excluir') => boolean;
@@ -58,6 +81,8 @@ const AuthContext = createContext<AuthContextType>({
   isPessoal: false,
   empresas: [],
   needsPhone: false,
+  planControles: defaultPlanoControles,
+  isTrialActive: true,
   canAccessRoute: () => true,
   canAccessScreen: () => true,
   canPerformAction: () => false,
@@ -75,6 +100,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [empresas, setEmpresas] = useState<EmpresaInfo[]>([]);
+  const [planControles, setPlanControles] = useState<PlanoControles>(defaultPlanoControles);
+  const [isTrialActive, setIsTrialActive] = useState(true);
   const isSuperAdmin = userRole === 'super_admin';
   const isPessoal = empresas.find(e => e.empresa_id === empresaId)?.pessoal === true;
   const needsPhone = !!user && !!userProfile && !userProfile.evolution_webhook_url;
@@ -85,6 +112,52 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (user) {
       await fetchUserProfile(user.id);
     }
+  };
+
+  const fetchPlanControles = async (profile: any) => {
+    if (!profile) return;
+    
+    // Check if user is in trial
+    const status = profile.assinatura_status || 'trial';
+    const trialStarted = profile.trial_started_at || profile.created_at;
+    
+    if (status === 'trial' && trialStarted) {
+      const trialEnd = new Date(trialStarted);
+      trialEnd.setDate(trialEnd.getDate() + 30);
+      if (new Date() <= trialEnd) {
+        // Trial active - full access
+        setIsTrialActive(true);
+        setPlanControles(defaultPlanoControles);
+        return;
+      }
+    }
+    
+    setIsTrialActive(false);
+    
+    // Fetch plan controls if user has a plan
+    if (profile.assinatura_plano_id && status === 'ativo') {
+      try {
+        const { data } = await (supabase as any)
+          .from('planos_assinatura')
+          .select('itens')
+          .eq('id', profile.assinatura_plano_id)
+          .single();
+        if (data) {
+          setPlanControles(parseControlesFromItens(data.itens));
+          return;
+        }
+      } catch (e) {
+        console.error("Erro ao carregar controles do plano:", e);
+      }
+    }
+    
+    // No active plan - restrict everything
+    setPlanControles({
+      max_lancamentos: 10,
+      chat_ia: false,
+      dashboard_completo: false,
+      relatorios_personalizados: false,
+    });
   };
 
   const fetchUserProfile = async (userId: string) => {
@@ -103,6 +176,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       setUserProfile(data);
+      // Fetch plan controls based on profile
+      fetchPlanControles(data);
       return data;
     } catch (error) {
       console.error("Erro ao carregar perfil:", error);
@@ -349,6 +424,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         logout,
         switchEmpresa,
         refreshProfile,
+        planControles: isSuperAdmin ? defaultPlanoControles : planControles,
+        isTrialActive: isSuperAdmin ? true : isTrialActive,
       }}
     >
       {children}
