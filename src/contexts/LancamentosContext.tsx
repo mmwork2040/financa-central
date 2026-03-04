@@ -468,9 +468,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         throw error;
       }
 
-      setLancamentos(lancamentos.filter((lancamento) => lancamento.id !== selectedId));
       toast.success("O lançamento foi excluído com sucesso.");
       setOpenDeleteModal(false);
+      await fetchLancamentos();
     } catch (error: any) {
       toast.error(error.message || "Erro ao excluir lançamento");
     }
@@ -745,12 +745,8 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         await supabase.functions.invoke("generate-recurring");
       }
 
-      setLancamentos(
-        lancamentos.map((lancamento) =>
-          lancamento.id === id ? { ...lancamento, status } : lancamento
-        )
-      );
       toast.success("O status do lançamento foi atualizado com sucesso.");
+      await fetchLancamentos();
     } catch (error: any) {
       toast.error(error.message || "Erro ao atualizar status");
     }

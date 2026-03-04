@@ -312,6 +312,24 @@ export const useDashboardData = () => {
     fetchDashboardData();
   }, [monthStart, monthEnd]);
 
+  // Realtime listener for lancamentos changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('dashboard-lancamentos')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lancamentos' },
+        () => {
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [monthStart, monthEnd]);
+
   return {
     loading,
     summary,
