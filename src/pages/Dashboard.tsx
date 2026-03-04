@@ -82,10 +82,13 @@ const DashboardContent = () => {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-green-100 p-1.5"><ArrowUpRight className="h-4 w-4 text-green-600" /></div>
-              <span className="text-xs text-muted-foreground">Você já recebeu</span>
+              <span className="text-xs text-muted-foreground">Receitas</span>
             </div>
             <p className="text-lg sm:text-xl font-bold text-green-600">
-              {maskValue(formatCurrency(summary.totalReceitas), visible)}
+              {maskValue(formatCurrency(summary.totalReceitas + summary.receitasPrevistas), visible)}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {maskValue(formatCurrency(summary.totalReceitas), visible)} já recebido
             </p>
           </CardContent>
         </Card>
@@ -93,10 +96,13 @@ const DashboardContent = () => {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="rounded-full bg-destructive/10 p-1.5"><ArrowDownRight className="h-4 w-4 text-destructive" /></div>
-              <span className="text-xs text-muted-foreground">Você já pagou</span>
+              <span className="text-xs text-muted-foreground">Despesas</span>
             </div>
             <p className="text-lg sm:text-xl font-bold text-destructive">
-              {maskValue(formatCurrency(summary.totalDespesas), visible)}
+              {maskValue(formatCurrency(summary.totalDespesas + summary.despesasPrevistas), visible)}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {maskValue(formatCurrency(summary.totalDespesas), visible)} já pago
             </p>
           </CardContent>
         </Card>
