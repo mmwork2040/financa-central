@@ -25,7 +25,7 @@ const tourSteps: TourStep[] = [
   {
     section: "lancamentos",
     title: "Lançamentos",
-    description: "Registre receitas e despesas em segundos. Organize por categorias, projetos e formas de pagamento — inclusive pelo Telegram.",
+    description: "Registre todas as suas receitas e despesas em segundos — direto por um chat no Telegram! Organize por categorias, projetos e formas de pagamento sem precisar abrir o sistema.",
     icon: Files,
   },
   {
