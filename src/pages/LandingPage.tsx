@@ -553,18 +553,16 @@ const LandingPage = () => {
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { icon: Lightbulb, title: "Infoprodutores", desc: "Controle vendas digitais, comissões e custos de tráfego em um só lugar." },
-            { icon: Megaphone, title: "Donos de Agências", desc: "Gerencie o financeiro de múltiplos clientes e projetos simultaneamente." },
-            { icon: Wrench, title: "Prestadores de Serviço", desc: "Organize receitas por projeto e acompanhe pagamentos de clientes." },
-            { icon: GraduationCap, title: "Profissionais Liberais", desc: "Controle honorários, despesas e tenha relatórios prontos para o contador." },
+            { emoji: "🚀", title: "Infoprodutores", desc: "Controle vendas digitais, comissões e custos de tráfego em um só lugar." },
+            { emoji: "📢", title: "Donos de Agências", desc: "Gerencie o financeiro de múltiplos clientes e projetos simultaneamente." },
+            { emoji: "🛠️", title: "Prestadores de Serviço", desc: "Organize receitas por projeto e acompanhe pagamentos de clientes." },
+            { emoji: "🎓", title: "Profissionais Liberais", desc: "Controle honorários, despesas e tenha relatórios prontos para o contador." },
           ].map((item) => (
             <div key={item.title} className="glass-card rounded-2xl p-6 text-center space-y-3 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{
                 background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%)"
               }} />
-              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto relative z-10">
-                <item.icon className="h-7 w-7 text-primary" />
-              </div>
+              <div className="text-4xl mx-auto relative z-10">{item.emoji}</div>
               <h3 className="text-base font-semibold text-foreground relative z-10">{item.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed relative z-10">{item.desc}</p>
             </div>
