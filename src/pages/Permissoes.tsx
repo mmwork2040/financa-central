@@ -44,6 +44,7 @@ type Screen = {
 };
 
 const screens: Screen[] = [
+  { name: "Dashboard", value: "dashboard", description: "Visualização do painel financeiro", viewOnly: true },
   { name: "Usuários", value: "users", description: "Gerenciamento de usuários" },
   { name: "Permissões", value: "permissions", description: "Configuração de permissões de acesso" },
   { name: "Fornecedores", value: "fornecedores", description: "Cadastro de fornecedores" },
@@ -54,6 +55,7 @@ const screens: Screen[] = [
   { name: "Lançamentos", value: "lancamentos", description: "Lançamentos financeiros" },
   { name: "Relatórios", value: "relatorios", description: "Visualização de relatórios" },
   { name: "Projetos", value: "projetos", description: "Gerenciamento de projetos" },
+  { name: "Integrações", value: "integracoes", description: "Configuração de integrações externas" },
   { name: "Vendas", value: "vendas_digitais", description: "Gestão de vendas manuais e automáticas", viewOnly: true },
   { name: "Anúncios Digitais", value: "anuncios", description: "Dados gerados automaticamente — apenas visualização", viewOnly: true },
 ];

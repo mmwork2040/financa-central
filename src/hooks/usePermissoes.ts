@@ -10,6 +10,7 @@ export type ScreenPermission = {
 
 // Map route paths to screen permission keys
 const routeToScreenMap: Record<string, string> = {
+  "/dashboard": "dashboard",
   "/users": "users",
   "/permissions": "permissions",
   "/fornecedores": "fornecedores",
@@ -69,7 +70,7 @@ export const usePermissoes = (userId: string | null, userRole: string | null, is
   }, [fetchPermissions]);
 
   // Screens that only have view permission (stored as pode_incluir)
-  const viewOnlyScreens = ["vendas_digitais", "anuncios"];
+  const viewOnlyScreens = ["vendas_digitais", "anuncios", "dashboard"];
 
   /** Check if user can view a screen (has any permission for it, or it's dashboard/settings) */
   const canAccessScreen = useCallback((screenKey: string): boolean => {
@@ -96,8 +97,8 @@ export const usePermissoes = (userId: string | null, userRole: string | null, is
 
   /** Check if user can view a route path */
   const canAccessRoute = useCallback((path: string): boolean => {
-    // Dashboard and settings are always accessible
-    if (path === "/dashboard" || path === "/settings" || path === "/settings/integracoes" || path === "/settings/webhooks") return true;
+    // Settings root is always accessible
+    if (path === "/settings") return true;
 
     const screenKey = routeToScreenMap[path];
     if (!screenKey) return true;
