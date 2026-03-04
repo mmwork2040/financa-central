@@ -212,7 +212,7 @@ export const useDashboardData = () => {
         .in('status', ['pendente', 'aberto'])
         .lte('data_vencimento', monthEnd);
 
-      const pendSemTransf = pendentesAteMonthEnd?.filter(l => (l as any).origem !== 'transferencia') || [];
+      const pendSemTransf = pendentesAteMonthEnd?.filter(l => (l as any).origem !== 'transferencia' && l.tipo !== 'investimento') || [];
       const receitasPendentesAcumuladas = pendSemTransf
         .filter(l => l.tipo === 'receita')
         .reduce((sum, l) => sum + (l.valor || 0), 0);
