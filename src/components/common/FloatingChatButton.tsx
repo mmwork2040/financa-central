@@ -157,10 +157,10 @@ const FloatingChatButton: React.FC = () => {
     }
   }, [open]);
 
-  // Show tooltip popup on first visit (once per session)
+  // Show tooltip popup on first visit (once per session) - always for logged users
   useEffect(() => {
-    if (!chatAvailable || checking) return;
-    const key = `chat_tooltip_shown_${user?.id}`;
+    if (!user || checking) return;
+    const key = `chat_tooltip_shown_${user.id}`;
     const alreadyShown = sessionStorage.getItem(key);
     if (!alreadyShown) {
       const timer = setTimeout(() => {
@@ -169,7 +169,7 @@ const FloatingChatButton: React.FC = () => {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [chatAvailable, checking, user?.id]);
+  }, [user, checking]);
 
   // Auto-scroll
   useEffect(() => {
@@ -273,12 +273,18 @@ const FloatingChatButton: React.FC = () => {
     toast.success("Todas as conversas foram excluídas.");
   };
 
-  if (checking || !chatAvailable) return null;
+  if (checking) return null;
 
   const content = (
     <>
       <Button
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (!chatAvailable) {
+            toast.info("O chat ainda não está configurado. Entre em contato com o administrador.");
+            return;
+          }
+          setOpen(!open);
+        }}
         className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[9999] h-14 w-14 rounded-full shadow-xl relative bg-primary hover:bg-primary/90"
         size="icon"
         style={{ position: 'fixed', right: '1rem' }}
