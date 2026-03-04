@@ -318,10 +318,10 @@ const Assinaturas = () => {
                   </ul>
                 )}
                 {plano.link_acesso && (
-                  <div className="text-xs text-muted-foreground mb-3 flex items-center gap-1 truncate">
+                  <a href={plano.link_acesso} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline mb-3 flex items-center gap-1 truncate">
                     <ExternalLink className="h-3 w-3 shrink-0" />
                     <span className="truncate">{plano.link_acesso}</span>
-                  </div>
+                  </a>
                 )}
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => openEdit(plano)}>
