@@ -589,7 +589,7 @@ const LandingPage = () => {
             />
             <PricingCard
               title="Plano Anual"
-              price="R$ 79"
+              price="R$ 97"
               period="mês"
               description="A opção mais inteligente e econômica para o ano todo."
               highlighted
