@@ -25,7 +25,7 @@ const ResumoFinanceiro: React.FC<ResumoFinanceiroProps> = ({ totalReceitas, tota
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Total de Receitas</span>
-            <span className="font-bold text-primary">{display(totalReceitas)}</span>
+            <span className="font-bold text-green-600">{display(totalReceitas)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Total de Despesas</span>
