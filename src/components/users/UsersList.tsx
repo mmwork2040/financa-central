@@ -1,7 +1,7 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, UserX, User as UserIcon } from "lucide-react";
+import { Pencil, Trash2, UserX } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -13,6 +13,14 @@ import SortableTableHead from "@/components/common/SortableTableHead";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -33,6 +41,7 @@ interface UsersListProps {
   onRevoke?: (userId: string, empresaId: string) => void;
   isSuperAdmin?: boolean;
   currentUserId?: string;
+  onRefresh?: () => void;
 }
 
 const getPermissaoLabel = (permissao: string): string => {
@@ -53,15 +62,16 @@ const getPermissaoClass = (permissao: string): string => {
   }
 };
 
+const statusOptions = [
+  { value: "trial", label: "Trial" },
+  { value: "ativo", label: "Ativo" },
+  { value: "vencido", label: "Vencido" },
+  { value: "cancelled", label: "Cancelado" },
+  { value: "expired", label: "Expirado" },
+];
+
 const getAssinaturaLabel = (status?: string): string => {
-  switch (status) {
-    case "ativo": return "Ativo";
-    case "trial": return "Trial";
-    case "vencido": return "Vencido";
-    case "cancelled": return "Cancelado";
-    case "expired": return "Expirado";
-    default: return status || "Trial";
-  }
+  return statusOptions.find(s => s.value === status)?.label || status || "Trial";
 };
 
 const getAssinaturaBadgeVariant = (status?: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -85,7 +95,57 @@ const getInitials = (nome: string) => {
     .toUpperCase();
 };
 
-export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, currentUserId }: UsersListProps) => {
+const AssinaturaBadge = ({ user, isSuperAdmin, onRefresh }: { user: User; isSuperAdmin?: boolean; onRefresh?: () => void }) => {
+  const [updating, setUpdating] = useState(false);
+
+  const handleChangeStatus = async (newStatus: string) => {
+    if (newStatus === (user.assinatura_status || "trial")) return;
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from("perfis")
+        .update({ assinatura_status: newStatus })
+        .eq("id", user.id);
+      if (error) throw error;
+      toast.success(`Assinatura de ${user.nome} alterada para "${getAssinaturaLabel(newStatus)}".`);
+      onRefresh?.();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao alterar status.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const badge = (
+    <Badge
+      variant={getAssinaturaBadgeVariant(user.assinatura_status)}
+      className={`text-[10px] ${isSuperAdmin ? "cursor-pointer hover:opacity-80" : ""}`}
+    >
+      {updating ? "..." : getAssinaturaLabel(user.assinatura_status)}
+    </Badge>
+  );
+
+  if (!isSuperAdmin) return badge;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>{badge}</DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[120px]">
+        {statusOptions.map(opt => (
+          <DropdownMenuItem
+            key={opt.value}
+            onClick={() => handleChangeStatus(opt.value)}
+            className={opt.value === (user.assinatura_status || "trial") ? "font-semibold bg-muted" : ""}
+          >
+            {opt.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, currentUserId, onRefresh }: UsersListProps) => {
   const isMobile = useIsMobile();
   const { canPerformAction } = useAuth();
   const canAlterar = canPerformAction("users", "pode_alterar");
@@ -120,9 +180,7 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getPermissaoClass(user.permissao)}`}>
                           {isTargetSuperAdmin ? "Super Admin" : getPermissaoLabel(user.permissao)}
                         </span>
-                        <Badge variant={getAssinaturaBadgeVariant(user.assinatura_status)} className="text-[10px]">
-                          {getAssinaturaLabel(user.assinatura_status)}
-                        </Badge>
+                        <AssinaturaBadge user={user} isSuperAdmin={isSuperAdmin} onRefresh={onRefresh} />
                       </div>
                     </div>
                   </div>
@@ -196,9 +254,7 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                   </span>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getAssinaturaBadgeVariant(user.assinatura_status)} className="text-[10px]">
-                    {getAssinaturaLabel(user.assinatura_status)}
-                  </Badge>
+                  <AssinaturaBadge user={user} isSuperAdmin={isSuperAdmin} onRefresh={onRefresh} />
                 </TableCell>
                 <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                 <TableCell>

@@ -4,6 +4,7 @@ import { useUsers, User, FormData } from "@/hooks/useUsers";
 
 interface UsersContextType {
   users: User[];
+  fetchUsers: () => Promise<void>;
   loading: boolean;
   saving: boolean;
   deleting: boolean;
@@ -20,6 +21,7 @@ interface UsersContextType {
 
 const defaultContext: UsersContextType = {
   users: [],
+  fetchUsers: async () => {},
   loading: true,
   saving: false,
   deleting: false,
@@ -41,7 +43,7 @@ interface UsersProviderProps {
 }
 
 export const UsersProvider = ({ children }: UsersProviderProps) => {
-  const { users, loading, saving, deleting, saveUser, deleteUser, revokeUser, isSuperAdmin } = useUsers();
+  const { users, loading, saving, deleting, saveUser, deleteUser, revokeUser, isSuperAdmin, fetchUsers } = useUsers();
   const [searchQuery, setSearchQuery] = React.useState("");
 
   // Hide super admins from non-super-admin users
@@ -80,6 +82,7 @@ export const UsersProvider = ({ children }: UsersProviderProps) => {
 
   const value = {
     users,
+    fetchUsers,
     loading,
     saving,
     deleting,

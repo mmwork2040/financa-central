@@ -24,6 +24,7 @@ export const UsersContainer = () => {
     deleteUser,
     revokeUser,
     isSuperAdmin,
+    fetchUsers,
     getPermissaoLabel,
     getPermissaoClass
   } = useUsersContext();
@@ -157,6 +158,7 @@ export const UsersContainer = () => {
           onRevoke={handleOpenRevokeModal}
           isSuperAdmin={isSuperAdmin}
           currentUserId={currentUserId}
+          onRefresh={fetchUsers}
         />
       )}
       
