@@ -74,7 +74,7 @@ const Register = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success("Conta criada! Verifique seu e-mail para confirmar o cadastro antes de fazer login.");
+      toast.success("Conta criada com sucesso! Você já pode fazer login.");
       navigate("/login");
     } catch (error: any) {
       toast.error(error.message || "Ocorreu um erro inesperado.");
