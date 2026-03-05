@@ -818,23 +818,36 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     fetchLancamentos();
   };
 
-  const exportToCSV = () => {
-    const enriched = lancamentos.map((l) => ({
-      ...l,
-      conta_bancaria_nome: contasBancarias.find((c) => c.id === l.conta_bancaria_id)?.nome || "",
-      forma_pagamento_nome: formasPagamento.find((f) => f.id === l.forma_pagamento_id)?.descricao || "",
-    }));
-    import("@/utils/lancamentosExport").then(({ exportLancamentosCSV }) => exportLancamentosCSV(enriched));
+  const getEmpresaExportInfo = async () => {
+    if (!empresaId) return undefined;
+    const { data } = await supabase
+      .from("empresas")
+      .select("nome, cnpj, email, telefone, endereco")
+      .eq("id", empresaId)
+      .single();
+    return data || undefined;
   };
 
-  const exportToPDF = () => {
-    const enriched = lancamentos.map((l) => ({
+  const enrichLancamentos = () =>
+    lancamentos.map((l) => ({
       ...l,
       conta_bancaria_nome: contasBancarias.find((c) => c.id === l.conta_bancaria_id)?.nome || "",
       forma_pagamento_nome: formasPagamento.find((f) => f.id === l.forma_pagamento_id)?.descricao || "",
     }));
+
+  const exportToCSV = async () => {
+    const enriched = enrichLancamentos();
+    const empresa = await getEmpresaExportInfo();
+    const { exportLancamentosCSV } = await import("@/utils/lancamentosExport");
+    exportLancamentosCSV(enriched, empresa);
+  };
+
+  const exportToPDF = async () => {
+    const enriched = enrichLancamentos();
+    const empresa = await getEmpresaExportInfo();
     const periodo = `${monthStart} a ${monthEnd}`;
-    import("@/utils/lancamentosExport").then(({ exportLancamentosPDF }) => exportLancamentosPDF(enriched, periodo));
+    const { exportLancamentosPDF } = await import("@/utils/lancamentosExport");
+    exportLancamentosPDF(enriched, periodo, empresa);
   };
 
   const aplicarFiltros = () => {
