@@ -14,7 +14,7 @@ export const AuthContainer = ({ children, title, description }: AuthContainerPro
       <div className="w-full max-w-md space-y-8 glass-card rounded-2xl p-6 md:p-8">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <img src={logoContabiliza} alt="Contabiliza AI" className="h-40 w-auto" />
+            <img src={logoContabiliza} alt="Contabiliza AI" className="h-[70px] w-auto" />
           </div>
           <p className="mt-1 text-sm text-muted-foreground">Tudo com o auxílio de Inteligência Artificial</p>
         </div>
