@@ -8,6 +8,7 @@ export interface User {
   empresa_id?: string | null;
   empresa_nome?: string | null;
   is_super_admin?: boolean;
+  assinatura_status?: string;
 }
 
 export type FormData = {
