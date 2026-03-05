@@ -12,6 +12,7 @@ import { useTableSort } from "@/hooks/useTableSort";
 import SortableTableHead from "@/components/common/SortableTableHead";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
 
 interface User {
   id: string;
@@ -22,6 +23,7 @@ interface User {
   empresa_id?: string | null;
   empresa_nome?: string | null;
   is_super_admin?: boolean;
+  assinatura_status?: string;
 }
 
 interface UsersListProps {
@@ -48,6 +50,28 @@ const getPermissaoClass = (permissao: string): string => {
     case "editor": return "bg-accent text-accent-foreground";
     case "leitura": return "bg-primary/10 text-primary";
     default: return "bg-muted text-muted-foreground";
+  }
+};
+
+const getAssinaturaLabel = (status?: string): string => {
+  switch (status) {
+    case "ativo": return "Ativo";
+    case "trial": return "Trial";
+    case "vencido": return "Vencido";
+    case "cancelled": return "Cancelado";
+    case "expired": return "Expirado";
+    default: return status || "Trial";
+  }
+};
+
+const getAssinaturaBadgeVariant = (status?: string): "default" | "secondary" | "destructive" | "outline" => {
+  switch (status) {
+    case "ativo": return "default";
+    case "trial": return "secondary";
+    case "vencido":
+    case "expired":
+    case "cancelled": return "destructive";
+    default: return "secondary";
   }
 };
 
@@ -92,9 +116,14 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                       {isSuperAdmin && (
                         <span className="text-[10px] text-muted-foreground">{user.empresa_nome || "Sem empresa"}</span>
                       )}
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getPermissaoClass(user.permissao)}`}>
-                        {isTargetSuperAdmin ? "Super Admin" : getPermissaoLabel(user.permissao)}
-                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getPermissaoClass(user.permissao)}`}>
+                          {isTargetSuperAdmin ? "Super Admin" : getPermissaoLabel(user.permissao)}
+                        </span>
+                        <Badge variant={getAssinaturaBadgeVariant(user.assinatura_status)} className="text-[10px]">
+                          {getAssinaturaLabel(user.assinatura_status)}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-0.5 ml-2">
@@ -133,6 +162,7 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
             <SortableTableHead label="Email" sortKey="email" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
             {isSuperAdmin && <SortableTableHead label="Empresa" sortKey="empresa_nome" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />}
             <SortableTableHead label="Permissão" sortKey="permissao" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
+            <SortableTableHead label="Assinatura" sortKey="assinatura_status" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
             <SortableTableHead label="Data de Cadastro" sortKey="created_at" currentSortKey={sortKey} currentSortDir={sortDir} onSort={toggleSort} />
             <TableHead className="w-[140px] text-center">Ações</TableHead>
           </TableRow>
@@ -164,6 +194,11 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPermissaoClass(user.permissao)}`}>
                     {isTargetSuperAdmin ? "Super Admin" : getPermissaoLabel(user.permissao)}
                   </span>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={getAssinaturaBadgeVariant(user.assinatura_status)} className="text-[10px]">
+                    {getAssinaturaLabel(user.assinatura_status)}
+                  </Badge>
                 </TableCell>
                 <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                 <TableCell>

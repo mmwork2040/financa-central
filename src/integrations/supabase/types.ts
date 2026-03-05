@@ -41,6 +41,39 @@ export type Database = {
         }
         Relationships: []
       }
+      asaas_config: {
+        Row: {
+          ambiente: string
+          api_key: string
+          ativo: boolean
+          created_at: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+          webhook_token: string | null
+        }
+        Insert: {
+          ambiente?: string
+          api_key: string
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          webhook_token?: string | null
+        }
+        Update: {
+          ambiente?: string
+          api_key?: string
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          webhook_token?: string | null
+        }
+        Relationships: []
+      }
       categorias: {
         Row: {
           created_at: string
@@ -834,6 +867,7 @@ export type Database = {
       }
       perfis: {
         Row: {
+          asaas_customer_id: string | null
           assinatura_plano_id: string | null
           assinatura_status: string
           created_at: string
@@ -849,6 +883,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          asaas_customer_id?: string | null
           assinatura_plano_id?: string | null
           assinatura_status?: string
           created_at?: string
@@ -864,6 +899,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          asaas_customer_id?: string | null
           assinatura_plano_id?: string | null
           assinatura_status?: string
           created_at?: string
