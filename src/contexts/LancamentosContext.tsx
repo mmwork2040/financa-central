@@ -819,11 +819,22 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   };
 
   const exportToCSV = () => {
-    toast.success("Função em desenvolvimento.");
+    const enriched = lancamentos.map((l) => ({
+      ...l,
+      conta_bancaria_nome: contasBancarias.find((c) => c.id === l.conta_bancaria_id)?.nome || "",
+      forma_pagamento_nome: formasPagamento.find((f) => f.id === l.forma_pagamento_id)?.descricao || "",
+    }));
+    import("@/utils/lancamentosExport").then(({ exportLancamentosCSV }) => exportLancamentosCSV(enriched));
   };
 
   const exportToPDF = () => {
-    toast.success("Função em desenvolvimento.");
+    const enriched = lancamentos.map((l) => ({
+      ...l,
+      conta_bancaria_nome: contasBancarias.find((c) => c.id === l.conta_bancaria_id)?.nome || "",
+      forma_pagamento_nome: formasPagamento.find((f) => f.id === l.forma_pagamento_id)?.descricao || "",
+    }));
+    const periodo = `${monthStart} a ${monthEnd}`;
+    import("@/utils/lancamentosExport").then(({ exportLancamentosPDF }) => exportLancamentosPDF(enriched, periodo));
   };
 
   const aplicarFiltros = () => {
