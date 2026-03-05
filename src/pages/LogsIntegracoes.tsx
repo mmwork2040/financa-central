@@ -201,9 +201,12 @@ const LogsIntegracoes = () => {
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards - Clickable as filters */}
       <div className="grid grid-cols-3 gap-3">
-        <Card>
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md ${filtroStatus === "todos" ? "ring-2 ring-primary" : ""}`}
+          onClick={() => setFiltroStatus("todos")}
+        >
           <CardContent className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
             <ScrollText className="h-5 w-5 text-muted-foreground shrink-0" />
             <div>
@@ -212,7 +215,10 @@ const LogsIntegracoes = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md ${filtroStatus === "success" ? "ring-2 ring-green-500" : ""}`}
+          onClick={() => setFiltroStatus(filtroStatus === "success" ? "todos" : "success")}
+        >
           <CardContent className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
             <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
             <div>
@@ -221,7 +227,10 @@ const LogsIntegracoes = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md ${filtroStatus === "error" ? "ring-2 ring-destructive" : ""}`}
+          onClick={() => setFiltroStatus(filtroStatus === "error" ? "todos" : "error")}
+        >
           <CardContent className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
             <XCircle className="h-5 w-5 text-destructive shrink-0" />
             <div>
