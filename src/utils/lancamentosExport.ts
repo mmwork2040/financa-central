@@ -21,6 +21,14 @@ type LancamentoExport = {
   forma_pagamento_nome?: string;
 };
 
+export type EmpresaExportInfo = {
+  nome: string;
+  cnpj?: string | null;
+  email?: string | null;
+  telefone?: string | null;
+  endereco?: string | null;
+};
+
 const statusLabel = (s: string, tipo: string) => {
   if (s === "recebido" && tipo === "receita") return "Recebido";
   if (s === "pago") return "Pago";
@@ -69,16 +77,46 @@ const csvHeaders: Record<string, string> = {
   parcelas: "Parcelas",
 };
 
+const now = () => {
+  const d = new Date();
+  return `${d.toLocaleDateString("pt-BR")} às ${d.toLocaleTimeString("pt-BR")}`;
+};
+
+const empresaBlock = (e?: EmpresaExportInfo) => {
+  if (!e) return "";
+  const parts: string[] = [];
+  parts.push(`Empresa: ${e.nome}`);
+  if (e.cnpj) parts.push(`CNPJ: ${e.cnpj}`);
+  if (e.email) parts.push(`Email: ${e.email}`);
+  if (e.telefone) parts.push(`Telefone: ${e.telefone}`);
+  if (e.endereco) parts.push(`Endereço: ${e.endereco}`);
+  return parts.join(" | ");
+};
+
 // ──── CSV ────
-export const exportLancamentosCSV = (lancamentos: LancamentoExport[]) => {
+export const exportLancamentosCSV = (lancamentos: LancamentoExport[], empresa?: EmpresaExportInfo) => {
   try {
     if (!lancamentos.length) {
       toast.error("Nenhum lançamento para exportar");
       return;
     }
     const rows = buildRows(lancamentos);
+    let csv = "\uFEFF"; // BOM for Excel UTF-8
+
+    // Company identification header
+    if (empresa) {
+      csv += `"IDENTIFICAÇÃO DA EMPRESA",,,,,,,,,,,,\n`;
+      csv += `"Razão Social / Nome","${empresa.nome}",,,,,,,,,,\n`;
+      if (empresa.cnpj) csv += `"CNPJ","${empresa.cnpj}",,,,,,,,,,\n`;
+      if (empresa.email) csv += `"Email","${empresa.email}",,,,,,,,,,\n`;
+      if (empresa.telefone) csv += `"Telefone","${empresa.telefone}",,,,,,,,,,\n`;
+      if (empresa.endereco) csv += `"Endereço","${empresa.endereco}",,,,,,,,,,\n`;
+      csv += `"Data/Hora da Geração","${now()}",,,,,,,,,,\n`;
+      csv += `,,,,,,,,,,,,\n`;
+    }
+
     const headerRow = Object.values(csvHeaders).join(",");
-    let csv = "\uFEFF" + headerRow + "\n"; // BOM for Excel UTF-8
+    csv += headerRow + "\n";
 
     rows.forEach((row) => {
       const line = Object.keys(csvHeaders)
@@ -121,7 +159,7 @@ export const exportLancamentosCSV = (lancamentos: LancamentoExport[]) => {
 };
 
 // ──── PDF ────
-export const exportLancamentosPDF = (lancamentos: LancamentoExport[], periodoLabel?: string) => {
+export const exportLancamentosPDF = (lancamentos: LancamentoExport[], periodoLabel?: string, empresa?: EmpresaExportInfo) => {
   try {
     if (!lancamentos.length) {
       toast.error("Nenhum lançamento para exportar");
@@ -143,6 +181,18 @@ export const exportLancamentosPDF = (lancamentos: LancamentoExport[], periodoLab
       return;
     }
 
+    const empresaHtml = empresa ? `
+      <div class="empresa-info">
+        <h2>${empresa.nome}</h2>
+        <div class="empresa-details">
+          ${empresa.cnpj ? `<span><strong>CNPJ:</strong> ${empresa.cnpj}</span>` : ""}
+          ${empresa.email ? `<span><strong>Email:</strong> ${empresa.email}</span>` : ""}
+          ${empresa.telefone ? `<span><strong>Tel:</strong> ${empresa.telefone}</span>` : ""}
+        </div>
+        ${empresa.endereco ? `<div class="empresa-details"><span><strong>Endereço:</strong> ${empresa.endereco}</span></div>` : ""}
+      </div>
+    ` : "";
+
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -154,6 +204,9 @@ export const exportLancamentosPDF = (lancamentos: LancamentoExport[], periodoLab
   .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1a1a1a; padding-bottom: 12px; }
   .header h1 { font-size: 18px; margin-bottom: 4px; }
   .header p { color: #555; font-size: 11px; }
+  .empresa-info { text-align: center; margin-bottom: 8px; }
+  .empresa-info h2 { font-size: 15px; color: #333; margin-bottom: 4px; }
+  .empresa-details { font-size: 10px; color: #555; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
   .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
   .summary-card { border: 1px solid #ddd; border-radius: 6px; padding: 10px; text-align: center; }
   .summary-card .label { font-size: 10px; color: #666; text-transform: uppercase; }
@@ -180,8 +233,9 @@ export const exportLancamentosPDF = (lancamentos: LancamentoExport[], periodoLab
 </head>
 <body>
   <div class="header">
+    ${empresaHtml}
     <h1>Relatório Contábil de Lançamentos</h1>
-    <p>${periodoLabel || ""} &mdash; Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p>
+    <p>${periodoLabel ? `Período: ${periodoLabel} &mdash; ` : ""}Gerado em ${now()}</p>
     <p>Total de registros: ${lancamentos.length}</p>
   </div>
 
@@ -227,7 +281,8 @@ export const exportLancamentosPDF = (lancamentos: LancamentoExport[], periodoLab
   </table>
 
   <div class="footer">
-    <p>Relatório para fins de contabilidade e conciliação bancária &mdash; Sistema Financeiro</p>
+    <p>${empresa ? empresa.nome + " &mdash; " : ""}Relatório para fins de contabilidade e conciliação bancária</p>
+    <p>Documento gerado eletronicamente em ${now()}</p>
   </div>
 </body>
 </html>`;
