@@ -40,7 +40,7 @@ export const fetchUsersData = async (isSuperAdmin: boolean = false) => {
   }));
 };
 
-export const updateUser = async (userId: string, userData: { nome: string; permissao: string }) => {
+export const updateUser = async (userId: string, userData: { nome: string; permissao: string }, empresaId?: string | null) => {
   // Check if target is super_admin — only self can edit
   const { data: targetRoles } = await supabase
     .from('user_roles')
@@ -84,7 +84,7 @@ export const updateUser = async (userId: string, userData: { nome: string; permi
 
   if (error) throw error;
 
-  // Also update user_roles role
+  // Also update user_roles role — scoped by empresa_id to avoid cross-empresa changes
   const roleMap: Record<string, "admin" | "usuario" | "leitura"> = {
     admin: 'admin',
     editor: 'usuario',
@@ -92,10 +92,20 @@ export const updateUser = async (userId: string, userData: { nome: string; permi
   };
   const role = roleMap[userData.permissao] || 'leitura';
   
-  await supabase
-    .from('user_roles')
-    .update({ role })
-    .eq('user_id', userId);
+  if (empresaId) {
+    // Scoped update: only change role for the specific empresa
+    await supabase
+      .from('user_roles')
+      .update({ role })
+      .eq('user_id', userId)
+      .eq('empresa_id', empresaId);
+  } else {
+    // Fallback: update all roles for this user (legacy behavior, less secure)
+    await supabase
+      .from('user_roles')
+      .update({ role })
+      .eq('user_id', userId);
+  }
 
   return true;
 };
@@ -148,19 +158,13 @@ export const deleteUserAccount = async (userId: string) => {
       throw new Error("Não é possível excluir um Super Admin.");
     }
 
-    // Delete user_roles first
-    await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', userId);
+    // Call the edge function that handles full user deletion including auth.users
+    const { data, error } = await supabase.functions.invoke("delete-auth-user", {
+      body: { userId },
+    });
 
-    // Delete profile
-    const { error: profileError } = await supabase
-      .from('perfis')
-      .delete()
-      .eq('id', userId);
-
-    if (profileError) throw profileError;
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
     
     return true;
   } catch (error) {

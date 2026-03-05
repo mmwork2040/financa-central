@@ -304,9 +304,26 @@ Deno.serve(async (req) => {
     };
     console.log("📥 [n8n-query] REQUEST:", JSON.stringify(requestLog, null, 2));
 
+    // ─── UUID VALIDATION ───
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
     if (!empresa_id) {
       console.log("❌ [n8n-query] ERRO: empresa_id ausente");
       return new Response(JSON.stringify({ error: "empresa_id is required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!uuidRegex.test(empresa_id)) {
+      console.log(`❌ [n8n-query] ERRO: empresa_id inválido: ${empresa_id}`);
+      return new Response(JSON.stringify({ error: "empresa_id must be a valid UUID" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (user_id && !uuidRegex.test(user_id)) {
+      console.log(`❌ [n8n-query] ERRO: user_id inválido: ${user_id}`);
+      return new Response(JSON.stringify({ error: "user_id must be a valid UUID" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -361,9 +378,35 @@ Deno.serve(async (req) => {
       "excluir-lancamento": { tela: "lancamentos", tipo: "pode_excluir" },
     };
 
-    // Check permissions if user_id is provided and action requires it
+    // Check permissions — user_id is MANDATORY for actions that require permissions
     const permRule = actionPermissionMap[action];
-    if (user_id && permRule) {
+    if (permRule) {
+      if (!user_id) {
+        console.log(`🚫 [n8n-query] Acesso negado: user_id ausente para ação '${action}' que requer permissão`);
+        return new Response(JSON.stringify({
+          error: "Acesso negado",
+          message: "user_id é obrigatório para esta ação. Identifique o usuário antes de prosseguir.",
+        }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Verify user belongs to this empresa
+      const { data: userBelongs } = await supabase.rpc("user_belongs_to_empresa", {
+        _user_id: user_id,
+        _empresa_id: empresa_id,
+      });
+
+      if (!userBelongs) {
+        console.log(`🚫 [n8n-query] Acesso negado: user ${user_id} não pertence à empresa ${empresa_id}`);
+        return new Response(JSON.stringify({
+          error: "Acesso negado",
+          message: "Você não pertence a esta empresa.",
+        }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Check if user is admin or super_admin (they have full access)
       const { data: userRole } = await supabase
         .from("user_roles")
@@ -384,39 +427,7 @@ Deno.serve(async (req) => {
 
         const perms = userPerms || [];
 
-        // If user has permissions defined, check access
-        if (perms.length > 0) {
-          const screenPerm = perms.find((p: any) => p.tela === permRule.tela);
-
-          if (!screenPerm) {
-            // User has permissions but not for this screen → blocked
-            console.log(`🚫 [n8n-query] Acesso negado: user ${user_id} sem permissão para tela '${permRule.tela}'`);
-            return new Response(JSON.stringify({
-              error: "Acesso negado",
-              message: `Você não tem permissão para acessar '${permRule.tela}'.`,
-            }), {
-              status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-
-          // Check specific action permission (create/edit/delete/view)
-          if (permRule.tipo && !screenPerm[permRule.tipo]) {
-            // For view-only screens (vendas_digitais, anuncios), pode_incluir means "pode visualizar"
-            const viewOnlyScreens = ["vendas_digitais", "anuncios", "dashboard"];
-            const tipoLabel = viewOnlyScreens.includes(permRule.tela) && permRule.tipo === "pode_incluir"
-              ? "visualizar"
-              : permRule.tipo === "pode_incluir" ? "incluir" : permRule.tipo === "pode_alterar" ? "alterar" : "excluir";
-            console.log(`🚫 [n8n-query] Acesso negado: user ${user_id} sem permissão '${tipoLabel}' na tela '${permRule.tela}'`);
-            return new Response(JSON.stringify({
-              error: "Acesso negado",
-              message: `Você não tem permissão para ${tipoLabel} em '${permRule.tela}'.`,
-            }), {
-              status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-        }
         // If perms.length === 0 → no permissions defined, block ALL access (deny by default)
-        // This matches the frontend behavior where users without permissions cannot access any screen
         if (perms.length === 0) {
           const tipoLabel = permRule.tipo 
             ? (permRule.tipo === "pode_incluir" ? "incluir" : permRule.tipo === "pode_alterar" ? "alterar" : "excluir")
@@ -425,6 +436,35 @@ Deno.serve(async (req) => {
           return new Response(JSON.stringify({
             error: "Acesso negado",
             message: `Você não tem permissão para acessar '${permRule.tela}'. Solicite ao administrador.`,
+          }), {
+            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // If user has permissions defined, check access
+        const screenPerm = perms.find((p: any) => p.tela === permRule.tela);
+
+        if (!screenPerm) {
+          // User has permissions but not for this screen → blocked
+          console.log(`🚫 [n8n-query] Acesso negado: user ${user_id} sem permissão para tela '${permRule.tela}'`);
+          return new Response(JSON.stringify({
+            error: "Acesso negado",
+            message: `Você não tem permissão para acessar '${permRule.tela}'.`,
+          }), {
+            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Check specific action permission (create/edit/delete/view)
+        if (permRule.tipo && !screenPerm[permRule.tipo]) {
+          const viewOnlyScreens = ["vendas_digitais", "anuncios", "dashboard"];
+          const tipoLabel = viewOnlyScreens.includes(permRule.tela) && permRule.tipo === "pode_incluir"
+            ? "visualizar"
+            : permRule.tipo === "pode_incluir" ? "incluir" : permRule.tipo === "pode_alterar" ? "alterar" : "excluir";
+          console.log(`🚫 [n8n-query] Acesso negado: user ${user_id} sem permissão '${tipoLabel}' na tela '${permRule.tela}'`);
+          return new Response(JSON.stringify({
+            error: "Acesso negado",
+            message: `Você não tem permissão para ${tipoLabel} em '${permRule.tela}'.`,
           }), {
             status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });

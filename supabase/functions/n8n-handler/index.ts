@@ -13,6 +13,20 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // ─── AUTHENTICATION ───
+    // Require service role key or apikey header for all requests
+    const authHeader = req.headers.get("Authorization");
+    const apikeyHeader = req.headers.get("apikey");
+    const token = authHeader?.replace("Bearer ", "") || apikeyHeader || "";
+
+    if (token !== serviceRoleKey) {
+      console.log("🚫 [n8n-handler] Acesso negado: credencial inválida");
+      return new Response(JSON.stringify({ error: "Não autorizado. Envie a service_role_key no header Authorization ou apikey." }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const reqUrl = new URL(req.url);

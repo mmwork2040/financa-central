@@ -43,7 +43,7 @@ export const useUsers = () => {
         await updateUser(selectedId, {
           nome: formData.nome,
           permissao: formData.permissao,
-        });
+        }, empresaId);
         toast.success("Usuário atualizado com sucesso");
       } else {
         try {
