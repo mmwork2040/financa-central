@@ -10,6 +10,7 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CreditCard, Plus, Pencil, Trash2, Loader2, Star, ExternalLink, CheckCircle2, X, MessageSquare, BarChart3, FileText, Layers } from "lucide-react";
+import AsaasConfigCard from "@/components/configuracoes/AsaasConfigCard";
 
 interface PlanoControles {
   max_lancamentos: number;
@@ -512,6 +513,9 @@ const Assinaturas = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Asaas Integration Config */}
+      <AsaasConfigCard />
     </div>
   );
 };
