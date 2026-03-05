@@ -325,30 +325,36 @@ Deno.serve(async (req) => {
 
         results.push(metrics);
 
-        // Log success
-        await adminSupabase.from("logs_integracoes").insert({
-          empresa_id,
-          plataforma: integ.plataforma,
-          evento: "sync_ads_data",
-          status: "success",
-          payload: {
-            periodo,
-            totalGasto: metrics.totalGasto,
-            totalReceita: metrics.totalReceita,
-            campanhas_count: metrics.campanhas.length,
-          },
-        });
+        // Log success (only if logs enabled)
+        const { data: empConfig } = await adminSupabase.from("empresas").select("logs_enabled").eq("id", empresa_id).single();
+        if (empConfig?.logs_enabled !== false) {
+          await adminSupabase.from("logs_integracoes").insert({
+            empresa_id,
+            plataforma: integ.plataforma,
+            evento: "sync_ads_data",
+            status: "success",
+            payload: {
+              periodo,
+              totalGasto: metrics.totalGasto,
+              totalReceita: metrics.totalReceita,
+              campanhas_count: metrics.campanhas.length,
+            },
+          });
+        }
       } catch (err: any) {
         console.error(`Error fetching ${integ.plataforma}:`, err.message);
 
-        // Log error
-        await adminSupabase.from("logs_integracoes").insert({
-          empresa_id,
-          plataforma: integ.plataforma,
-          evento: "sync_ads_data",
-          status: "error",
-          payload: { error: err.message, periodo },
-        });
+        // Log error (only if logs enabled)
+        const { data: empErrConfig } = await adminSupabase.from("empresas").select("logs_enabled").eq("id", empresa_id).single();
+        if (empErrConfig?.logs_enabled !== false) {
+          await adminSupabase.from("logs_integracoes").insert({
+            empresa_id,
+            plataforma: integ.plataforma,
+            evento: "sync_ads_data",
+            status: "error",
+            payload: { error: err.message, periodo },
+          });
+        }
 
         // Return platform with zero data and error info
         results.push({

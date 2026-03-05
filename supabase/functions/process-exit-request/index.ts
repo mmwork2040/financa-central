@@ -25,6 +25,8 @@ Deno.serve(async (req) => {
     }
 
     async function logExitAction(admin: any, empresaId: string, userId: string, resultado: string, detalhes: string) {
+      const { data: empConfig } = await admin.from("empresas").select("logs_enabled").eq("id", empresaId).single();
+      if (empConfig?.logs_enabled === false) return;
       await admin.from("logs_integracoes").insert({
         empresa_id: empresaId,
         plataforma: "sistema",

@@ -1403,6 +1403,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_screen_permission: {
+        Args: { _acao: string; _tela: string; _user_id: string }
+        Returns: boolean
+      }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       user_belongs_to_empresa: {
         Args: { _empresa_id: string; _user_id: string }

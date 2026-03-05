@@ -259,14 +259,22 @@ Deno.serve(async (req) => {
       status = "warning";
     }
 
-    // Log the test
-    await adminSupabase.from("logs_integracoes").insert({
-      empresa_id,
-      plataforma,
-      evento: "test_connection",
-      status: status === "success" ? "success" : "error",
-      payload: { http_status: response.status, message },
-    });
+    // Log the test (only if logs are enabled for this empresa)
+    const { data: empresaConfig } = await adminSupabase
+      .from("empresas")
+      .select("logs_enabled")
+      .eq("id", empresa_id)
+      .single();
+    
+    if (empresaConfig?.logs_enabled !== false) {
+      await adminSupabase.from("logs_integracoes").insert({
+        empresa_id,
+        plataforma,
+        evento: "test_connection",
+        status: status === "success" ? "success" : "error",
+        payload: { http_status: response.status, message },
+      });
+    }
 
     return new Response(
       JSON.stringify({ success: status === "success", status, message }),
