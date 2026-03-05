@@ -222,6 +222,14 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    // Check if logs are enabled for this empresa
+    const { data: empresaConfig } = await supabase
+      .from("empresas")
+      .select("logs_enabled")
+      .eq("id", empresaId)
+      .single();
+    const logsEnabled = empresaConfig?.logs_enabled !== false;
+
     // Verify integration exists and is active
     const { data: integration, error: integError } = await supabase
       .from("integracoes")
@@ -284,18 +292,20 @@ Deno.serve(async (req) => {
 
       if (existingVenda) {
         // Log duplicate and return success (idempotent)
-        await supabase.from("logs_integracoes").insert({
-          empresa_id: empresaId,
-          plataforma: platform,
-          evento: saleData.evento || "duplicate_ignored",
-          status: "duplicate",
-          payload: {
-            source: "webhook_receiver",
-            message: "Webhook duplicado ignorado",
-            existing_venda_id: existingVenda.id,
-            sale_data: saleData,
-          },
-        });
+        if (logsEnabled) {
+          await supabase.from("logs_integracoes").insert({
+            empresa_id: empresaId,
+            plataforma: platform,
+            evento: saleData.evento || "duplicate_ignored",
+            status: "duplicate",
+            payload: {
+              source: "webhook_receiver",
+              message: "Webhook duplicado ignorado",
+              existing_venda_id: existingVenda.id,
+              sale_data: saleData,
+            },
+          });
+        }
 
         return new Response(
           JSON.stringify({
@@ -506,20 +516,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Log the webhook
-    await supabase.from("logs_integracoes").insert({
-      empresa_id: empresaId,
-      plataforma: platform,
-      evento: saleData?.evento || "unknown",
-      status: "success",
-      payload: {
-        source: "webhook_receiver",
-        sale_data: saleData,
-        venda_id: vendaId,
-        lancamento_id: lancamentoId,
-        raw_body: body,
-      },
-    });
+    // Log the webhook (only if logs are enabled)
+    if (logsEnabled) {
+      await supabase.from("logs_integracoes").insert({
+        empresa_id: empresaId,
+        plataforma: platform,
+        evento: saleData?.evento || "unknown",
+        status: "success",
+        payload: {
+          source: "webhook_receiver",
+          sale_data: saleData,
+          venda_id: vendaId,
+          lancamento_id: lancamentoId,
+          raw_body: body,
+        },
+      });
+    }
 
     return new Response(
       JSON.stringify({
