@@ -318,6 +318,9 @@ Deno.serve(async (req) => {
       "lancamentos": { tela: "lancamentos" },
       "despesas-pendentes": { tela: "lancamentos" },
       "receitas-pendentes": { tela: "lancamentos" },
+      "resumo-financeiro": { tela: "dashboard" },
+      "resumo-categorias": { tela: "dashboard" },
+      "fluxo-caixa": { tela: "dashboard" },
       "clientes": { tela: "clientes" },
       "fornecedores": { tela: "fornecedores" },
       "categorias": { tela: "categorias" },
@@ -326,7 +329,7 @@ Deno.serve(async (req) => {
       "projetos": { tela: "projetos" },
       "vendas-digitais": { tela: "vendas_digitais" },
       "recebimentos-digitais": { tela: "vendas_digitais" },
-      "listar-anuncios": { tela: "vendas_digitais" },
+      "listar-anuncios": { tela: "anuncios" },
       "listar-usuarios": { tela: "users" },
       "extrato-conta": { tela: "contas_bancarias" },
       
@@ -347,6 +350,7 @@ Deno.serve(async (req) => {
       "editar-forma-pagamento": { tela: "formas_pagamento", tipo: "pode_alterar" },
       "editar-projeto": { tela: "projetos", tipo: "pode_alterar" },
       "editar-lancamento": { tela: "lancamentos", tipo: "pode_alterar" },
+      "atualizar-telegram-cliente": { tela: "clientes", tipo: "pode_alterar" },
       // Exclusão (pode_excluir)
       "excluir-cliente": { tela: "clientes", tipo: "pode_excluir" },
       "excluir-fornecedor": { tela: "fornecedores", tipo: "pode_excluir" },
@@ -398,7 +402,7 @@ Deno.serve(async (req) => {
           // Check specific action permission (create/edit/delete/view)
           if (permRule.tipo && !screenPerm[permRule.tipo]) {
             // For view-only screens (vendas_digitais, anuncios), pode_incluir means "pode visualizar"
-            const viewOnlyScreens = ["vendas_digitais", "anuncios"];
+            const viewOnlyScreens = ["vendas_digitais", "anuncios", "dashboard"];
             const tipoLabel = viewOnlyScreens.includes(permRule.tela) && permRule.tipo === "pode_incluir"
               ? "visualizar"
               : permRule.tipo === "pode_incluir" ? "incluir" : permRule.tipo === "pode_alterar" ? "alterar" : "excluir";
@@ -411,14 +415,16 @@ Deno.serve(async (req) => {
             });
           }
         }
-        // If perms.length === 0 → no restrictions defined, allow access (view-only default)
-        // But still block creation if no explicit permission
-        if (perms.length === 0 && permRule.tipo) {
-          const tipoLabel = permRule.tipo === "pode_incluir" ? "incluir" : permRule.tipo === "pode_alterar" ? "alterar" : "excluir";
-          console.log(`🚫 [n8n-query] Acesso negado: user ${user_id} sem permissões definidas, tentou '${tipoLabel}'`);
+        // If perms.length === 0 → no permissions defined, block ALL access (deny by default)
+        // This matches the frontend behavior where users without permissions cannot access any screen
+        if (perms.length === 0) {
+          const tipoLabel = permRule.tipo 
+            ? (permRule.tipo === "pode_incluir" ? "incluir" : permRule.tipo === "pode_alterar" ? "alterar" : "excluir")
+            : "visualizar";
+          console.log(`🚫 [n8n-query] Acesso negado: user ${user_id} sem permissões definidas, tentou '${tipoLabel}' na tela '${permRule.tela}'`);
           return new Response(JSON.stringify({
             error: "Acesso negado",
-            message: `Você não tem permissão para ${tipoLabel}. Solicite ao administrador.`,
+            message: `Você não tem permissão para acessar '${permRule.tela}'. Solicite ao administrador.`,
           }), {
             status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
