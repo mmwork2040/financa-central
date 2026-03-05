@@ -2008,20 +2008,23 @@ Deno.serve(async (req) => {
     };
     console.log("📤 [n8n-query] RESPONSE:", JSON.stringify(responseLog, null, 2));
 
-    // Salvar log no banco
+    // Salvar log no banco (somente se logs habilitados)
     try {
-      await supabase.from("logs_integracoes").insert({
-        empresa_id,
-        plataforma: "n8n-query",
-        evento: action,
-        status: "sucesso",
-        payload: {
-          request: { action, periodo, filters, user_id },
-          response: { duration_ms: duration, result_count: responseLog.result_count },
-          endpoint: `${supabaseUrl}/functions/v1/n8n-query`,
-          format: { method: "POST", content_type: "application/json", body_schema: { action: "string", empresa_id: "uuid", periodo: "string?", filters: "object?" } },
-        },
-      });
+      const { data: empLogConfig } = await supabase.from("empresas").select("logs_enabled").eq("id", empresa_id).single();
+      if (empLogConfig?.logs_enabled !== false) {
+        await supabase.from("logs_integracoes").insert({
+          empresa_id,
+          plataforma: "n8n-query",
+          evento: action,
+          status: "sucesso",
+          payload: {
+            request: { action, periodo, filters, user_id },
+            response: { duration_ms: duration, result_count: responseLog.result_count },
+            endpoint: `${supabaseUrl}/functions/v1/n8n-query`,
+            format: { method: "POST", content_type: "application/json", body_schema: { action: "string", empresa_id: "uuid", periodo: "string?", filters: "object?" } },
+          },
+        });
+      }
     } catch (logErr) {
       console.warn("⚠️ [n8n-query] Falha ao salvar log:", logErr);
     }
@@ -2032,18 +2035,22 @@ Deno.serve(async (req) => {
   } catch (error: any) {
     console.error("❌ [n8n-query] ERROR:", error);
 
-    // Tentar salvar log de erro
+    // Tentar salvar log de erro (somente se logs habilitados)
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const sbLog = createClient(supabaseUrl, serviceRoleKey);
-      await sbLog.from("logs_integracoes").insert({
-        empresa_id: empresa_id || "00000000-0000-0000-0000-000000000000",
-        plataforma: "n8n-query",
-        evento: action || "unknown",
-        status: "erro",
-        payload: { error: error.message, stack: error.stack?.substring(0, 500), request: { action, empresa_id, user_id, periodo, filters } },
-      });
+      const eid = empresa_id || "00000000-0000-0000-0000-000000000000";
+      const { data: empErrLogConfig } = await sbLog.from("empresas").select("logs_enabled").eq("id", eid).single();
+      if (empErrLogConfig?.logs_enabled !== false) {
+        await sbLog.from("logs_integracoes").insert({
+          empresa_id: eid,
+          plataforma: "n8n-query",
+          evento: action || "unknown",
+          status: "erro",
+          payload: { error: error.message, stack: error.stack?.substring(0, 500), request: { action, empresa_id, user_id, periodo, filters } },
+        });
+      }
     } catch (_) { /* ignore */ }
 
     return new Response(JSON.stringify({ error: error.message }), {
