@@ -978,6 +978,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         refreshFormasPagamento: fetchFormasPagamento,
         refreshContasBancarias: fetchContasBancarias,
         refreshProjetos: fetchProjetos,
+        refreshCartoesCredito: fetchCartoesCredito,
         refreshLancamentos: fetchLancamentos,
         searchQuery,
         setSearchQuery,
