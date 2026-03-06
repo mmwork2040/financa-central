@@ -622,6 +622,7 @@ export type Database = {
           parcela_atual: number | null
           projeto_id: string | null
           recorrencia_fim: string | null
+          recorrencia_grupo_id: string | null
           recorrencia_tipo: string | null
           recorrente: boolean
           status: string
@@ -646,6 +647,7 @@ export type Database = {
           parcela_atual?: number | null
           projeto_id?: string | null
           recorrencia_fim?: string | null
+          recorrencia_grupo_id?: string | null
           recorrencia_tipo?: string | null
           recorrente?: boolean
           status?: string
@@ -670,6 +672,7 @@ export type Database = {
           parcela_atual?: number | null
           projeto_id?: string | null
           recorrencia_fim?: string | null
+          recorrencia_grupo_id?: string | null
           recorrencia_tipo?: string | null
           recorrente?: boolean
           status?: string

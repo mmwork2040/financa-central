@@ -1113,13 +1113,74 @@ Deno.serve(async (req) => {
           });
         }
 
+        // ── Recorrência e parcelamento ──
+        const recorrente = body.recorrente === true || body.recorrente === "true";
+        const recorrencia_tipo = sanitize(body.recorrencia_tipo) || "mensal";
+        const recorrencia_inicio = sanitize(body.recorrencia_inicio);
+        const recorrencia_fim = sanitize(body.recorrencia_fim);
+        const total_parcelas_raw = body.total_parcelas;
+        const totalParcelas = total_parcelas_raw ? parseInt(String(total_parcelas_raw)) : null;
+
+        if (recorrente && totalParcelas && totalParcelas > 1) {
+          return new Response(JSON.stringify({ 
+            error: "Recorrente e parcelado são mutuamente exclusivos",
+            message: "Envie recorrente=true OU total_parcelas, não ambos."
+          }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        // ── Parcelamento: dividir valor em N parcelas ──
+        if (!recorrente && totalParcelas && totalParcelas > 1) {
+          const valorParcela = Math.round((valorNumerico / totalParcelas) * 100) / 100;
+          const baseDate = new Date(data_vencimento);
+          const parcelas = Array.from({ length: totalParcelas }, (_, i) => {
+            const d = new Date(baseDate);
+            d.setMonth(d.getMonth() + i);
+            return {
+              empresa_id,
+              descricao: `${descricao} (${i + 1}/${totalParcelas})`,
+              valor: valorParcela,
+              tipo,
+              status: status_lanc,
+              data_vencimento: d.toISOString().split("T")[0],
+              origem: "n8n",
+              parcela_atual: i + 1,
+              total_parcelas: totalParcelas,
+              recorrente: false,
+              ...(categoria_id ? { categoria_id } : {}),
+              ...(cliente_id ? { cliente_id } : {}),
+              ...(fornecedor_id ? { fornecedor_id } : {}),
+              ...(conta_bancaria_id ? { conta_bancaria_id } : {}),
+              ...(forma_pagamento_id ? { forma_pagamento_id } : {}),
+              ...(projeto_id ? { projeto_id } : {}),
+              ...(i === 0 && data_pagamento ? { data_pagamento } : {}),
+            };
+          });
+
+          const { data: newLancs, error: insertError } = await supabase
+            .from("lancamentos")
+            .insert(parcelas)
+            .select("*");
+
+          if (insertError) throw insertError;
+
+          result = {
+            parcelas_criadas: totalParcelas,
+            valor_parcela: valorParcela,
+            valor_total: valorNumerico,
+            lancamentos: newLancs,
+            ...(Object.keys(registros_criados).length > 0 ? { registros_criados } : {}),
+          };
+          break;
+        }
+
+        // ── Único ou Recorrente ──
         const insertData: any = {
           empresa_id,
           descricao,
           valor: valorNumerico,
           tipo,
           status: status_lanc,
-          data_vencimento,
+          data_vencimento: recorrente && recorrencia_inicio ? recorrencia_inicio : data_vencimento,
           origem: "n8n",
         };
         if (categoria_id) insertData.categoria_id = categoria_id;
@@ -1129,6 +1190,13 @@ Deno.serve(async (req) => {
         if (forma_pagamento_id) insertData.forma_pagamento_id = forma_pagamento_id;
         if (projeto_id) insertData.projeto_id = projeto_id;
         if (data_pagamento) insertData.data_pagamento = data_pagamento;
+
+        if (recorrente) {
+          insertData.recorrente = true;
+          insertData.recorrencia_tipo = recorrencia_tipo;
+          insertData.recorrencia_grupo_id = crypto.randomUUID();
+          if (recorrencia_fim) insertData.recorrencia_fim = recorrencia_fim;
+        }
 
         const { data: newLanc, error: insertError } = await supabase
           .from("lancamentos")
@@ -1155,8 +1223,23 @@ Deno.serve(async (req) => {
           }
         }
 
+        // ── Se recorrente, chamar generate-recurring para criar ocorrências futuras ──
+        if (recorrente) {
+          try {
+            const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+            const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+            // Use service role to call generate-recurring internally
+            const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+            // Note: generate-recurring requires user auth, so we skip auto-generation here
+            // The user can trigger it from the UI or via cron
+          } catch (e) {
+            console.warn("Could not trigger generate-recurring:", e);
+          }
+        }
+
         result = {
           lancamento: newLanc,
+          ...(recorrente ? { recorrente: true, recorrencia_tipo, recorrencia_grupo_id: insertData.recorrencia_grupo_id } : {}),
           ...(Object.keys(registros_criados).length > 0 ? { registros_criados } : {}),
         };
         break;
