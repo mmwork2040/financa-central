@@ -272,6 +272,7 @@ export type Database = {
         Row: {
           bairro: string | null
           cep: string | null
+          certificado_digital_url: string | null
           cidade: string | null
           cnpj: string | null
           complemento: string | null
@@ -280,20 +281,27 @@ export type Database = {
           email: string | null
           endereco: string | null
           estado: string | null
+          fiscal_configurado: boolean | null
           id: string
+          inscricao_estadual: string | null
+          inscricao_municipal: string | null
           llm_padrao: string | null
           logo_url: string | null
           logs_enabled: boolean
           nome: string
           numero: string | null
           pessoal: boolean
+          razao_social: string | null
+          regime_tributario: string | null
           rua: string | null
+          spedy_company_id: string | null
           telefone: string | null
           updated_at: string
         }
         Insert: {
           bairro?: string | null
           cep?: string | null
+          certificado_digital_url?: string | null
           cidade?: string | null
           cnpj?: string | null
           complemento?: string | null
@@ -302,20 +310,27 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           estado?: string | null
+          fiscal_configurado?: boolean | null
           id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
           llm_padrao?: string | null
           logo_url?: string | null
           logs_enabled?: boolean
           nome: string
           numero?: string | null
           pessoal?: boolean
+          razao_social?: string | null
+          regime_tributario?: string | null
           rua?: string | null
+          spedy_company_id?: string | null
           telefone?: string | null
           updated_at?: string
         }
         Update: {
           bairro?: string | null
           cep?: string | null
+          certificado_digital_url?: string | null
           cidade?: string | null
           cnpj?: string | null
           complemento?: string | null
@@ -324,14 +339,20 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           estado?: string | null
+          fiscal_configurado?: boolean | null
           id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
           llm_padrao?: string | null
           logo_url?: string | null
           logs_enabled?: boolean
           nome?: string
           numero?: string | null
           pessoal?: boolean
+          razao_social?: string | null
+          regime_tributario?: string | null
           rua?: string | null
+          spedy_company_id?: string | null
           telefone?: string | null
           updated_at?: string
         }
