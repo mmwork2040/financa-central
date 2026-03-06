@@ -15,6 +15,8 @@ const ProjetoDetalhe = () => {
   const navigate = useNavigate();
   const { visible, toggle } = useValuesVisibility();
   const [projeto, setProjeto] = useState<Projeto | null>(null);
+  const [lancamentos, setLancamentos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
