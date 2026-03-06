@@ -559,6 +559,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       conta_bancaria_id: lancamento.conta_bancaria_id,
       forma_pagamento_id: lancamento.forma_pagamento_id,
       projeto_id: lancamento.projeto_id || null,
+      cartao_credito_id: (lancamento as any).cartao_credito_id || null,
       recorrente: lancamento.recorrente,
       recorrencia_grupo_id: lancamento.recorrencia_grupo_id || null,
       parcela_atual: lancamento.parcela_atual,
