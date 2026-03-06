@@ -117,6 +117,9 @@ const DashboardPessoal = () => {
         </Card>
       </div>
 
+      {/* Resumo Faturas Cartões */}
+      <ResumoFaturasCartoes />
+
       {/* Chart Receitas vs Despesas */}
       <DashboardChart data={monthlyChartData} saldoAtual={summary.saldoAtual} />
 
