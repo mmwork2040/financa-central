@@ -808,38 +808,106 @@ const LandingPage = () => {
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
           <ScrollReveal direction="up">
             <div className="text-center mb-4">
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">Planos e Preços</h2>
-              <p className="mt-3 text-muted-foreground text-lg max-w-xl mx-auto">
-                Escolha o formato ideal para o momento da sua empresa. Teste por 30 dias grátis em qualquer opção e
-                cancele quando quiser.
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+                💳 Escolha o plano ideal para o momento do seu negócio
+              </h2>
+              <p className="mt-4 text-muted-foreground text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+                Não existe CNPJ forte com CPF fraco. Em todos os planos, o Contabiliza AI entrega a nossa dupla gestão inteligente: controle as finanças da sua empresa e a sua vida pessoal (organizando desde o fluxo de caixa dos seus lançamentos até as faturas dos seus cartões de crédito e acúmulo de milhas) em um único lugar, a uma mensagem de distância.
               </p>
             </div>
           </ScrollReveal>
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-4xl mx-auto mt-12 items-stretch px-2">
+
+          {/* Toggle Mensal / Anual */}
+          <ScrollReveal direction="up" delay={50}>
+            <div className="flex items-center justify-center gap-2 mt-8 mb-12">
+              <button
+                onClick={() => setBillingPeriod("mensal")}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                  billingPeriod === "mensal"
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
+                }`}
+              >
+                Mensal
+              </button>
+              <button
+                onClick={() => setBillingPeriod("anual")}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                  billingPeriod === "anual"
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
+                }`}
+              >
+                Anual
+                <Badge className="ml-2 bg-green-500/90 text-white text-[10px] px-1.5 py-0 rounded-full border-0">Economia</Badge>
+              </button>
+            </div>
+          </ScrollReveal>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-5 max-w-6xl mx-auto items-stretch px-2">
             <ScrollReveal direction="up" delay={0}>
               <PricingCard
-                title="Plano Mensal"
-                price="R$ 197"
-                period="mês"
-                description="Ideal para quem quer liberdade e pagamento mês a mês."
+                emoji="🟢"
+                title="Plano Start"
+                description="Para quem está dando os primeiros passos no digital e quer estruturar a base do jeito certo, sem misturar as contas."
+                monthlyPrice={79}
+                annualPrice={49}
+                billingPeriod={billingPeriod}
+                features={[
+                  "Até 100 lançamentos/mês",
+                  "Até 50 Notas Fiscais/mês",
+                  "Gestão Dupla: CPF + CNPJ",
+                  "Integração: Vendas e Meta Ads",
+                ]}
+                buttonLabel="Começar meu teste grátis"
               />
             </ScrollReveal>
             <ScrollReveal direction="up" delay={100}>
               <PricingCard
-                title="Plano Anual"
-                price="R$ 97"
-                period="mês"
-                description="A opção mais inteligente e econômica para o ano todo."
+                emoji="🚀"
+                title="Plano Growth"
+                description="Para negócios em aceleração e infoprodutores que precisam de automação financeira para focar em escalar suas campanhas."
+                monthlyPrice={147}
+                annualPrice={97}
+                billingPeriod={billingPeriod}
                 highlighted
-                badge="Melhor Escolha"
+                badge="Mais Popular"
+                features={[
+                  "Até 500 lançamentos/mês",
+                  "Até 250 Notas Fiscais/mês",
+                  "Gestão Dupla: CPF + CNPJ",
+                  "Integração: Vendas e Meta Ads",
+                ]}
+                buttonLabel="Escalar com o Growth"
               />
             </ScrollReveal>
             <ScrollReveal direction="up" delay={200}>
               <PricingCard
-                title="Plano Trimestral"
-                price="R$ 147"
-                period="mês"
-                description="Perfeito para sentir o impacto real em um ciclo de 90 dias."
+                emoji="💎"
+                title="Plano Pro"
+                description="Para operações robustas e marcas já consolidadas no mercado que exigem alta capacidade de processamento."
+                monthlyPrice={349}
+                annualPrice={297}
+                billingPeriod={billingPeriod}
+                features={[
+                  "Lançamentos Ilimitados",
+                  "Até 1.500 Notas Fiscais/mês",
+                  "Gestão Dupla: CPF + CNPJ",
+                  "Integração: Vendas e Meta Ads",
+                ]}
+                buttonLabel="Dominar com o Pro"
+              />
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={300}>
+              <PricingCard
+                emoji="🏢"
+                title="Enterprise / Alto Volume"
+                description=""
+                isEnterprise
+                enterpriseDescription="Sua operação emite mais de 1.500 Notas Fiscais por mês ou sua equipe de desenvolvedores precisa de acesso via API e documentação aberta para integrações personalizadas com seus sistemas internos? Nós montamos uma infraestrutura dedicada para o seu tamanho."
+                features={[]}
+                buttonLabel="Falar com um Especialista"
+                whatsappUrl="https://wa.me/5511999999999"
               />
             </ScrollReveal>
           </div>
