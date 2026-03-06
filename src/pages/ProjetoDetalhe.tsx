@@ -77,7 +77,8 @@ const ProjetoDetalhe = () => {
           <h1 className="text-xl font-bold truncate">{projeto.nome}</h1>
           <span className={`px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusClass}`}>
             {statusLabel}
-          </span>
+        </span>
+        </div>
         <TooltipProvider delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
