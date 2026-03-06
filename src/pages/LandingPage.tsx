@@ -394,7 +394,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 3: COMO FUNCIONA — TRILHA VISUAL ===== */}
-      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+      <section id="dashboards" className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
         <ScrollReveal direction="up">
           <div className="text-center mb-16 lg:mb-20">
             <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px] mb-4">
