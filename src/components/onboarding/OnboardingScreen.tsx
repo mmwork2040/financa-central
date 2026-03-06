@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Building2, Ticket, Loader2, ArrowRight, LogOut, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import FiscalOnboardingDialog from "@/components/onboarding/FiscalOnboardingDialog";
 
 interface OnboardingScreenProps {
   userName: string;
@@ -18,6 +19,8 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
   const [loading, setLoading] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [empresa, setEmpresa] = useState({ nome: "", cnpj: "", email: "", telefone: "", endereco: "" });
+  const [fiscalDialogOpen, setFiscalDialogOpen] = useState(false);
+  const [newEmpresaId, setNewEmpresaId] = useState<string | null>(null);
 
   const handleChange = (field: string, value: string) => {
     setEmpresa(prev => ({ ...prev, [field]: value }));
@@ -36,7 +39,13 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success(`"${empresa.nome}" foi criada com sucesso.`);
-      setTimeout(() => window.location.reload(), 1000);
+      // If empresa has CNPJ, show fiscal config dialog
+      if (empresa.cnpj.trim() && data?.empresaId) {
+        setNewEmpresaId(data.empresaId);
+        setFiscalDialogOpen(true);
+      } else {
+        setTimeout(() => window.location.reload(), 1000);
+      }
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -157,6 +166,17 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {newEmpresaId && (
+          <FiscalOnboardingDialog
+            open={fiscalDialogOpen}
+            onOpenChange={(open) => {
+              setFiscalDialogOpen(open);
+              if (!open) setTimeout(() => window.location.reload(), 500);
+            }}
+            empresaId={newEmpresaId}
+          />
         )}
       </div>
     </div>

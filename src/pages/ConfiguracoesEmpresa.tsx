@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Building2, Upload, Loader2, User, Trash2 } from "lucide-react";
 import InviteCodesCard from "@/components/convites/InviteCodesCard";
 import SpedyConfigCard from "@/components/configuracoes/SpedyConfigCard";
+import ConfiguracaoFiscal from "@/components/configuracoes/ConfiguracaoFiscal";
 
 import CepAddressFields, { AddressData } from "@/components/common/CepAddressFields";
 import { phoneInputMask } from "@/utils/format";
@@ -276,6 +277,14 @@ const ConfiguracoesEmpresa = () => {
       )}
 
       {!isPessoal && <InviteCodesCard />}
+
+      {!isPessoal && isAdmin && (
+        <Card>
+          <CardContent className="pt-6">
+            <ConfiguracaoFiscal empresaId={empresaId!} />
+          </CardContent>
+        </Card>
+      )}
 
       {isSuperAdmin && <SpedyConfigCard />}
     </div>
