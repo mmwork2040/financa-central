@@ -824,7 +824,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 5: PARA QUEM É ===== */}
-      <section id="para-quem" className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+      <section id="para-quem" className="scroll-mt-20 container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
         <ScrollReveal direction="up">
           <div className="text-center mb-12 lg:mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
