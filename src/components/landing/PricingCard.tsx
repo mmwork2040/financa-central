@@ -83,12 +83,12 @@ const PricingCard = ({
       {!isEnterprise && currentPrice != null && (
         <div className="mb-5 relative z-10">
           <span className="text-3xl font-extrabold text-foreground">
-            R$ {currentPrice}
+            R$ {currentPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-          <span className="text-sm text-muted-foreground ml-1">/ mês</span>
+          <span className="text-sm text-muted-foreground ml-1">/ {billingPeriod === "anual" ? "ano" : "mês"}</span>
           {altPrice != null && (
             <p className="text-xs text-muted-foreground mt-1">
-              ou R$ {altPrice},00 no plano {altLabel}
+              ou R$ {altPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} no plano {altLabel}
             </p>
           )}
         </div>
