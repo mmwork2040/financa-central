@@ -45,8 +45,11 @@ export const LancamentosFormDialog = () => {
   const [selectedStatus, setSelectedStatus] = useState<"pendente" | "pago" | "recebido" | "cancelado">(formData.status || "pendente");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [modo, setModo] = useState<LancamentoModo>("unico");
+  const [recorrenciaInicio, setRecorrenciaInicio] = useState<string | null>(null);
 
-  // Only sync modo from formData when the modal opens (edit scenario)
+  // Detect if editing an existing recurring lancamento
+  const isEditingRecorrente = !!selectedId && formData.recorrente && !!(formData as any).recorrencia_grupo_id;
+
   useEffect(() => {
     setSelectedTipo(formData.tipo || "despesa");
     setSelectedStatus(formData.status || "pendente");
@@ -62,10 +65,12 @@ export const LancamentosFormDialog = () => {
       } else {
         setModo("unico");
       }
+      setRecorrenciaInicio(null);
     }
   }, [openModal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTipoChange = (value: string) => {
+    if (isEditingRecorrente) return; // block tipo change on recurring edit
     const tipoValue = value as "despesa" | "receita" | "investimento";
     setSelectedTipo(tipoValue);
     handleSelectChange('tipo', value);
@@ -77,22 +82,16 @@ export const LancamentosFormDialog = () => {
     handleSelectChange('status', value);
   };
 
-  // Function to handle date changes
   const handleDateChange = (field: string, date: Date | null) => {
     if (date) {
       const isoDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       const syntheticEvent = {
-        target: {
-          name: field,
-          value: isoDate
-        }
+        target: { name: field, value: isoDate }
       } as React.ChangeEvent<HTMLInputElement>;
-      
       handleInputChange(syntheticEvent);
     }
   };
 
-  // Function to handle modo change
   const handleModoChange = (newModo: LancamentoModo) => {
     setModo(newModo);
     if (newModo === "unico") {
@@ -103,11 +102,10 @@ export const LancamentosFormDialog = () => {
       handleParcelasChange(null);
     } else if (newModo === "parcelado") {
       handleRecorrenciaChange(false);
-      handleParcelasChange(null); // user will fill in
+      handleParcelasChange(null);
     }
   };
 
-  // Function to handle recurrence toggle
   const handleRecorrenciaChange = (checked: boolean) => {
     const syntheticEvent = {
       target: { name: 'recorrente', value: checked }
@@ -129,7 +127,6 @@ export const LancamentosFormDialog = () => {
     handleInputChange(syntheticEvent);
   };
 
-  // Function to handle parcelas change
   const handleParcelasChange = (value: number | null) => {
     const syntheticEvent = {
       target: { name: 'total_parcelas', value }
@@ -137,16 +134,24 @@ export const LancamentosFormDialog = () => {
     handleInputChange(syntheticEvent);
   };
 
-  // Function to handle valor change
   const handleValorChange = (value: number) => {
     const syntheticEvent = {
-      target: {
-        name: 'valor',
-        value: value
-      }
+      target: { name: 'valor', value: value }
     } as unknown as React.ChangeEvent<HTMLInputElement>;
-    
     handleInputChange(syntheticEvent);
+  };
+
+  const handleSaveWithRecorrencia = () => {
+    // Inject recorrencia_inicio into formData before saving
+    if (modo === "recorrente" && recorrenciaInicio) {
+      const syntheticEvent = {
+        target: { name: 'recorrencia_inicio', value: recorrenciaInicio }
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
+      handleInputChange(syntheticEvent);
+    }
+    setConfirmOpen(false);
+    // Small delay to let state propagate
+    setTimeout(() => handleSave(), 50);
   };
 
   return (
@@ -157,7 +162,11 @@ export const LancamentosFormDialog = () => {
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <TipoSelect value={selectedTipo} onChange={handleTipoChange} />
-          <DescricaoInput value={formData.descricao || ""} onChange={handleInputChange} />
+          <DescricaoInput 
+            value={formData.descricao || ""} 
+            onChange={handleInputChange} 
+            disabled={isEditingRecorrente}
+          />
           <ValorInput valor={formData.valor} onValorChange={handleValorChange} />
           <DatePickerField 
             label="Data de Vencimento"
@@ -166,7 +175,6 @@ export const LancamentosFormDialog = () => {
           />
           <StatusSelect value={selectedStatus} onChange={handleStatusChange} tipo={selectedTipo} />
           
-          {/* Conditional data_pagamento field */}
           {(selectedStatus === "pago" || selectedStatus === "recebido") && (
             <DatePickerField 
               label={`Data de ${selectedTipo === "receita" ? "Recebimento" : "Pagamento"}`}
@@ -182,9 +190,12 @@ export const LancamentosFormDialog = () => {
             onRecorrenciaTipoChange={handleRecorrenciaTipoChange}
             recorrenciaFim={(formData as any).recorrencia_fim}
             onRecorrenciaFimChange={handleRecorrenciaFimChange}
+            recorrenciaInicio={recorrenciaInicio}
+            onRecorrenciaInicioChange={setRecorrenciaInicio}
             totalParcelas={formData.total_parcelas}
             onTotalParcelasChange={handleParcelasChange}
             valorTotal={formData.valor || 0}
+            isEditingRecorrente={isEditingRecorrente}
           />
           
           <CategoriaSelect 
@@ -262,11 +273,21 @@ export const LancamentosFormDialog = () => {
                   <p><strong>Valor:</strong> {formatCurrency(formData.valor || 0)}</p>
                   <p><strong>Vencimento:</strong> {formData.data_vencimento ? new Date(formData.data_vencimento + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</p>
                   <p><strong>Status:</strong> {selectedStatus === "pendente" ? "Pendente" : selectedStatus === "pago" ? "Pago" : selectedStatus === "recebido" ? "Recebido" : "Cancelado"}</p>
-                  {modo === "recorrente" && (
-                    <p className="text-primary font-medium">{formatCurrency(formData.valor || 0)}/{(formData as any).recorrencia_tipo === "mensal" ? "mês" : (formData as any).recorrencia_tipo || "mês"} — repete {(formData as any).recorrencia_tipo || "mensalmente"}</p>
+                  {modo === "recorrente" && !isEditingRecorrente && (
+                    <>
+                      <p className="text-primary font-medium">
+                        {formatCurrency(formData.valor || 0)}/{(formData as any).recorrencia_tipo === "mensal" ? "mês" : (formData as any).recorrencia_tipo || "mês"} — repete {(formData as any).recorrencia_tipo || "mensalmente"}
+                      </p>
+                      {recorrenciaInicio && (
+                        <p className="text-xs text-muted-foreground">Início retroativo: {new Date(recorrenciaInicio + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+                      )}
+                    </>
                   )}
                   {modo === "parcelado" && formData.total_parcelas && formData.total_parcelas > 1 && (
                     <p className="text-primary font-medium">{formatCurrency(formData.valor || 0)} total → {formData.total_parcelas}x de {formatCurrency(Math.round(((formData.valor || 0) / formData.total_parcelas) * 100) / 100)}</p>
+                  )}
+                  {isEditingRecorrente && (
+                    <p className="text-xs text-amber-600 font-medium">⚠ Apenas esta ocorrência será alterada. A cadeia recorrente não será afetada.</p>
                   )}
                 </div>
               </div>
@@ -274,7 +295,7 @@ export const LancamentosFormDialog = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Voltar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setConfirmOpen(false); handleSave(); }}>
+            <AlertDialogAction onClick={handleSaveWithRecorrencia}>
               Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>

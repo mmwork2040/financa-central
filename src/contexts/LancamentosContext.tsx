@@ -30,9 +30,11 @@ export type Lancamento = {
   recorrente: boolean;
   recorrencia_fim?: string | null;
   recorrencia_tipo?: string | null;
+  recorrencia_grupo_id?: string | null;
   parcela_atual: number | null;
   total_parcelas: number | null;
   data_pagamento: string | null;
+  recorrencia_inicio?: string | null;
   // Add these for join data
   fornecedor?: { id: string; nome: string };
   cliente?: { id: string; nome: string };
@@ -527,6 +529,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       forma_pagamento_id: lancamento.forma_pagamento_id,
       projeto_id: lancamento.projeto_id || null,
       recorrente: lancamento.recorrente,
+      recorrencia_grupo_id: lancamento.recorrencia_grupo_id || null,
       parcela_atual: lancamento.parcela_atual,
       total_parcelas: lancamento.total_parcelas,
       data_pagamento: lancamento.data_pagamento,
@@ -640,10 +643,26 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           toast.success(`${totalParcelas} parcelas criadas com sucesso.`);
         } else {
           // ÚNICO ou RECORRENTE: insere um único registro
-          // Para recorrente, a edge function generate-recurring cria os próximos
+          const insertData: any = { ...dataToSave, empresa_id: empresaId };
+          
+          // Para recorrente, gerar grupo_id e usar data_inicio retroativa se definida
+          if (dataToSave.recorrente) {
+            const grupoId = crypto.randomUUID();
+            insertData.recorrencia_grupo_id = grupoId;
+            
+            // Se tem data de início retroativa, usar como data_vencimento do primeiro
+            const recorrenciaInicio = (dataToSave as any).recorrencia_inicio;
+            if (recorrenciaInicio) {
+              insertData.data_vencimento = recorrenciaInicio;
+            }
+          }
+          
+          // Remove campo auxiliar antes de salvar
+          delete insertData.recorrencia_inicio;
+
           const { data, error } = await supabase
             .from("lancamentos")
-            .insert([{ ...dataToSave, empresa_id: empresaId }])
+            .insert([insertData])
             .select();
 
           if (error) throw error;
@@ -659,6 +678,18 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
             if (contaAtual) {
               await (supabase.from("contas_bancarias").update({ saldo_atual: Number(contaAtual.saldo_atual) + delta } as any) as any)
                 .eq("id", formData.conta_bancaria_id);
+            }
+          }
+
+          // Se recorrente, chamar generate-recurring para criar ocorrências
+          if (dataToSave.recorrente) {
+            try {
+              const { data: session } = await supabase.auth.getSession();
+              await supabase.functions.invoke("generate-recurring", {
+                headers: { Authorization: `Bearer ${session?.session?.access_token}` },
+              });
+            } catch (err) {
+              console.warn("Erro ao gerar recorrências:", err);
             }
           }
 
