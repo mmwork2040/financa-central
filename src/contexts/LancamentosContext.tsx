@@ -81,6 +81,15 @@ export type ContaBancaria = {
   principal?: boolean;
 };
 
+export type CartaoCreditoSimple = {
+  id: string;
+  nome: string;
+  dia_fechamento: number;
+  dia_vencimento: number;
+  bandeira?: string | null;
+  ultimos_digitos?: string | null;
+};
+
 type FiltrosType = {
   tipo?: "receita" | "despesa" | "investimento" | null;
   status?: string | null;
