@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ShoppingCart, Search, RefreshCw, X, Plug, CheckCircle2, AlertTriangle, Plus, Eye, Edit, Trash2 } from "lucide-react";
+import { ShoppingCart, Search, RefreshCw, X, Plug, CheckCircle2, AlertTriangle, Plus, Eye, Edit, Trash2, FileText, Download, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const PLATAFORMAS_VENDAS = ["hotmart", "eduzz", "monetizze", "kiwify"];
 
@@ -57,6 +58,7 @@ const VendasDigitais = () => {
   const [detailVenda, setDetailVenda] = useState<any>(null);
   const [deleteVenda, setDeleteVenda] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+  const [emittingId, setEmittingId] = useState<string | null>(null);
 
   const plataformas = useMemo(() => {
     const set = new Set(vendas.map(v => v.plataforma).filter(Boolean));
@@ -130,6 +132,56 @@ const VendasDigitais = () => {
     } finally {
       setDeleting(false);
     }
+  };
+
+  const handleEmitInvoice = async (vendaId: string) => {
+    setEmittingId(vendaId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/spedy-emit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ venda_id: vendaId }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || result.details || "Erro ao emitir nota");
+      toast.success("Nota enviada para processamento!");
+      await fetchVendas();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao emitir nota fiscal");
+    } finally {
+      setEmittingId(null);
+    }
+  };
+
+  const invoiceStatusBadge = (venda: any) => {
+    const status = venda.invoice_status;
+    if (!status || status === "PENDING_EMISSION") return null;
+    const map: Record<string, { label: string; className: string }> = {
+      PROCESSING: { label: "🟡 Processando NF", className: "bg-amber-100 text-amber-700" },
+      AUTHORIZED: { label: "🟢 NF Emitida", className: "bg-green-100 text-green-700" },
+      REJECTED: { label: "🔴 NF Rejeitada", className: "bg-red-100 text-red-700" },
+      CANCELED: { label: "⚪ NF Cancelada", className: "bg-muted text-muted-foreground" },
+    };
+    const info = map[status] || { label: status, className: "" };
+    if (status === "REJECTED" && venda.invoice_error_message) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Badge className={cn("text-[10px] cursor-help", info.className)}>{info.label}</Badge>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="text-xs">{venda.invoice_error_message}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    return <Badge className={cn("text-[10px]", info.className)}>{info.label}</Badge>;
   };
 
   const filtered = vendas.filter(v => {
@@ -324,7 +376,42 @@ const VendasDigitais = () => {
                     </p>
                     {venda.taxa > 0 && <p className="text-[10px] text-muted-foreground">Taxa: {formatCurrency(venda.taxa)}</p>}
                     <Badge className={cn("text-[10px]", statusColors[venda.status] || "")}>{venda.status}</Badge>
+                    {invoiceStatusBadge(venda)}
                     <div className="flex gap-1 mt-1">
+                      {/* Emit invoice button */}
+                      {canAlterar && venda.status === "aprovada" && (!venda.invoice_status || venda.invoice_status === "PENDING_EMISSION" || venda.invoice_status === "REJECTED") && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-primary"
+                                disabled={emittingId === venda.id}
+                                onClick={() => handleEmitInvoice(venda.id)}
+                              >
+                                {emittingId === venda.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p className="text-xs">Emitir Nota Fiscal</p></TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {/* PDF download */}
+                      {venda.invoice_pdf_url && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-green-600" asChild>
+                                <a href={venda.invoice_pdf_url} target="_blank" rel="noopener noreferrer">
+                                  <Download className="h-3 w-3" />
+                                </a>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p className="text-xs">Baixar DANFE (PDF)</p></TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDetailVenda(venda)}>
                         <Eye className="h-3 w-3" />
                       </Button>
@@ -381,6 +468,32 @@ const VendasDigitais = () => {
                 <>
                   <hr />
                   <div><span className="text-muted-foreground">Observações:</span> <p className="mt-1">{detailVenda.observacoes}</p></div>
+                </>
+              )}
+              {/* Invoice section */}
+              {detailVenda.invoice_status && detailVenda.invoice_status !== "PENDING_EMISSION" && (
+                <>
+                  <hr />
+                  <p className="font-medium">Nota Fiscal</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><span className="text-muted-foreground">Status NF:</span> {invoiceStatusBadge(detailVenda)}</div>
+                    <div><span className="text-muted-foreground">ID Spedy:</span> <strong className="font-mono text-xs">{detailVenda.spedy_order_id || "-"}</strong></div>
+                  </div>
+                  {detailVenda.invoice_pdf_url && (
+                    <a href={detailVenda.invoice_pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary underline">
+                      <Download className="h-3 w-3" /> Baixar DANFE (PDF)
+                    </a>
+                  )}
+                  {detailVenda.invoice_xml_url && (
+                    <a href={detailVenda.invoice_xml_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary underline ml-3">
+                      <Download className="h-3 w-3" /> Baixar XML
+                    </a>
+                  )}
+                  {detailVenda.invoice_error_message && (
+                    <div className="rounded border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive">
+                      {detailVenda.invoice_error_message}
+                    </div>
+                  )}
                 </>
               )}
             </div>
