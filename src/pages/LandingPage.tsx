@@ -217,40 +217,108 @@ const LandingPage = () => {
               </div>
             </ScrollReveal>
 
-            {/* 3 Pilares */}
+            {/* 3 Pilares — layout visual expandido */}
             <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mb-16">
               {[
                 {
-                  icon: FileText,
                   title: "Emissão de Notas Fiscais",
-                  desc: "Notas emitidas automaticamente a cada venda, sem você precisar abrir uma única tela. A IA preenche, valida e envia — tudo no piloto automático.",
+                  desc: "Notas emitidas automaticamente a cada venda, sem você precisar abrir uma única tela. A IA preenche, valida e envia.",
                   accent: "📄",
+                  mockup: (
+                    <div className="glass-card rounded-xl p-3 mt-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold text-foreground">NF-e #4.281</span>
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold">Emitida ✓</span>
+                      </div>
+                      <div className="h-px bg-border/60" />
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold text-foreground">NF-e #4.282</span>
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold">Emitida ✓</span>
+                      </div>
+                      <div className="h-px bg-border/60" />
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold text-foreground">NF-e #4.283</span>
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold animate-pulse">Emitindo...</span>
+                      </div>
+                    </div>
+                  ),
                 },
                 {
-                  icon: FileBarChart,
                   title: "Relatórios Automáticos",
-                  desc: "Relatórios mensais, trimestrais e anuais gerados sem esforço. DRE, fluxo de caixa e conciliação bancária prontos para o seu contador.",
+                  desc: "Relatórios mensais, trimestrais e anuais gerados sem esforço. DRE, fluxo de caixa e conciliação prontos.",
                   accent: "📊",
+                  mockup: (
+                    <div className="glass-card rounded-xl p-3 mt-4">
+                      <div className="flex items-end gap-1.5 h-16 justify-center">
+                        {[35, 52, 40, 68, 55, 72, 80, 65, 90, 75, 85, 95].map((h, i) => (
+                          <div
+                            key={i}
+                            className="rounded-sm w-3 transition-all duration-500"
+                            style={{
+                              height: `${h}%`,
+                              background: i >= 9
+                                ? "hsl(var(--primary))"
+                                : i >= 6
+                                  ? "hsla(25, 95%, 53%, 0.5)"
+                                  : "hsla(25, 95%, 53%, 0.2)",
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex justify-between mt-2">
+                        <span className="text-[9px] text-muted-foreground">Jan</span>
+                        <span className="text-[9px] text-muted-foreground">Jun</span>
+                        <span className="text-[9px] text-muted-foreground">Dez</span>
+                      </div>
+                    </div>
+                  ),
                 },
                 {
-                  icon: Sparkles,
                   title: "Controle com IA",
-                  desc: "Receitas e despesas categorizadas automaticamente por inteligência artificial. Sem digitação manual, sem erro humano, sem retrabalho.",
+                  desc: "Receitas e despesas categorizadas automaticamente. Sem digitação manual, sem erro humano, sem retrabalho.",
                   accent: "🤖",
+                  mockup: (
+                    <div className="glass-card rounded-xl p-3 mt-4 space-y-2">
+                      {[
+                        { cat: "Meta Ads", val: "- R$ 3.450", color: "text-destructive" },
+                        { cat: "Hotmart", val: "+ R$ 12.800", color: "text-green-600" },
+                        { cat: "Fornecedor", val: "- R$ 1.200", color: "text-destructive" },
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="h-2 w-2 rounded-full bg-primary/60" />
+                            <span className="text-[10px] text-foreground font-medium">{item.cat}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-[10px] font-bold ${item.color}`}>{item.val}</span>
+                            <Sparkles className="h-3 w-3 text-primary/50" />
+                          </div>
+                        </div>
+                      ))}
+                      <div className="text-[9px] text-center text-primary/70 font-medium pt-1">
+                        ✨ Categorizado pela IA
+                      </div>
+                    </div>
+                  ),
                 },
               ].map((item, i) => (
                 <ScrollReveal key={item.title} direction="up" delay={i * 100}>
-                  <div className="glass-card rounded-2xl p-6 h-full hover:-translate-y-1 transition-all duration-300 hover:shadow-lg group relative overflow-hidden">
+                  <div className="glass-card rounded-2xl p-6 h-full hover:-translate-y-2 transition-all duration-300 hover:shadow-xl group relative overflow-hidden border border-border/50 hover:border-primary/20">
                     <div
-                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                       style={{
-                        background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.08) 0%, transparent 70%)",
+                        background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.10) 0%, transparent 70%)",
                       }}
                     />
                     <div className="relative z-10">
-                      <span className="text-3xl mb-3 block">{item.accent}</span>
-                      <h3 className="text-base font-bold text-foreground mb-2">{item.title}</h3>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl shrink-0">
+                          {item.accent}
+                        </div>
+                        <h3 className="text-base font-bold text-foreground">{item.title}</h3>
+                      </div>
                       <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                      {item.mockup}
                     </div>
                   </div>
                 </ScrollReveal>
