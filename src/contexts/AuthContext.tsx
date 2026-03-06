@@ -397,26 +397,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const queryClient = useQueryClient();
+
   const switchEmpresa = async (targetEmpresaId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke("switch-empresa", {
-        body: { empresaId: targetEmpresaId },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      setEmpresaId(targetEmpresaId);
-      if (data.role === 'super_admin') {
-        setUserRole('super_admin');
-      } else {
-        setUserRole(data.role);
+      const targetEmpresa = empresas.find(e => e.empresa_id === targetEmpresaId);
+      if (!targetEmpresa && !isSuperAdmin) {
+        toast.error("Você não pertence a esta empresa");
+        return;
       }
 
+      const { error } = await supabase
+        .from("perfis")
+        .update({ empresa_id: targetEmpresaId })
+        .eq("id", user!.id);
+
+      if (error) throw error;
+
+      setEmpresaId(targetEmpresaId);
+      setUserRole(isSuperAdmin ? 'super_admin' : (targetEmpresa?.role || userRole));
       setUserProfile((prev: any) => prev ? { ...prev, empresa_id: targetEmpresaId } : prev);
 
-      toast.success("Você está agora na empresa selecionada.");
-      window.location.reload();
+      queryClient.invalidateQueries();
+
+      toast.success("Empresa alterada com sucesso.");
+      navigate("/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Erro ao trocar empresa");
     }
