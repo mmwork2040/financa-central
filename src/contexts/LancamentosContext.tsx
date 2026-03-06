@@ -131,6 +131,7 @@ interface LancamentosContextType {
   formasPagamento: FormaPagamento[];
   contasBancarias: ContaBancaria[];
   projetos: ProjetoSimple[];
+  cartoesCredito: CartaoCreditoSimple[];
   handleDateChange: (field: string, date: Date | null) => void;
   openDeleteModal: boolean;
   setOpenDeleteModal: (open: boolean) => void;
