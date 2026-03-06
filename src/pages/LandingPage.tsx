@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import { Menu, X } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,21 @@ import ScrollReveal from "@/components/common/ScrollReveal";
 const LandingPage = () => {
   const navigate = useNavigate();
   const [billingPeriod, setBillingPeriod] = useState<"mensal" | "anual">("anual");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const scrollTo = useCallback((id: string) => {
+    setMobileMenuOpen(false);
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const navLinks = [
+    { label: "Funcionalidades", id: "funcionalidades" },
+    { label: "Dashboards", id: "dashboards" },
+    { label: "Para quem é", id: "para-quem" },
+    { label: "Integrações", id: "integracoes" },
+    { label: "Planos", id: "planos" },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,15 +75,54 @@ const LandingPage = () => {
             </div>
             <span className="text-xl font-extrabold tracking-tight text-foreground">Contabiliza AI</span>
           </div>
+
+          {/* Desktop nav links */}
+          <div className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => scrollTo(link.id)}
+                className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50"
+              >
+                {link.label}
+              </button>
+            ))}
+          </div>
+
           <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={() => navigate("/login")}>
+            <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:inline-flex">
               Entrar
             </Button>
             <Button onClick={() => navigate("/register")} className="rounded-full px-6">
               Criar Conta
             </Button>
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg hover:bg-muted/50 text-foreground"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-md px-4 pb-4 pt-2 space-y-1">
+            {navLinks.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => scrollTo(link.id)}
+                className="block w-full text-left px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
+              >
+                {link.label}
+              </button>
+            ))}
+            <Button variant="ghost" onClick={() => navigate("/login")} className="w-full justify-start sm:hidden">
+              Entrar
+            </Button>
+          </div>
+        )}
       </nav>
 
       {/* ===== SEÇÃO 1: HERO ===== */}
@@ -183,7 +238,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 2: PARE DE PERDER TEMPO ===== */}
-      <section className="relative border-y border-border/40 overflow-hidden">
+      <section id="funcionalidades" className="relative border-y border-border/40 overflow-hidden scroll-mt-20">
         <div
           className="absolute inset-0"
           style={{
@@ -387,7 +442,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 3: COMO FUNCIONA — TRILHA VISUAL ===== */}
-      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+      <section id="dashboards" className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24 scroll-mt-20">
         <ScrollReveal direction="up">
           <div className="text-center mb-16 lg:mb-20">
             <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px] mb-4">
@@ -608,7 +663,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 4: FUNCIONALIDADES ===== */}
-      <section className="border-y border-border/40">
+      <section id="integracoes" className="border-y border-border/40 scroll-mt-20">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
           <div className="max-w-6xl mx-auto">
             <ScrollReveal direction="up">
@@ -815,7 +870,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 5: PARA QUEM É ===== */}
-      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+      <section id="para-quem" className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24 scroll-mt-20">
         <ScrollReveal direction="up">
           <div className="text-center mb-12 lg:mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
@@ -926,7 +981,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 7: PLANOS E PREÇOS ===== */}
-      <section className="border-t border-border/40">
+      <section id="planos" className="border-t border-border/40 scroll-mt-20">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
           <ScrollReveal direction="up">
             <div className="text-center mb-4">
