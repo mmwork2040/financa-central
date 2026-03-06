@@ -1,29 +1,41 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Users, Truck, BarChart3, Landmark, ShoppingCart } from "lucide-react";
+import { Plus, Users, Truck, BarChart3, Landmark, ShoppingCart, Tags } from "lucide-react";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Shortcut {
   label: string;
   icon: React.ComponentType<any>;
   route?: string;
   action?: string;
+  businessOnly?: boolean;
 }
 
 const shortcuts: Shortcut[] = [
   { label: "Novo Lançamento", icon: Plus, action: "openModal" },
-  { label: "Clientes", icon: Users, route: "/clientes" },
-  { label: "Fornecedores", icon: Truck, route: "/fornecedores" },
+  { label: "Clientes", icon: Users, route: "/clientes", businessOnly: true },
+  { label: "Fornecedores", icon: Truck, route: "/fornecedores", businessOnly: true },
   { label: "Relatórios", icon: BarChart3, route: "/relatorios" },
   { label: "Contas Bancárias", icon: Landmark, route: "/bank-accounts" },
-  { label: "Vendas", icon: ShoppingCart, route: "/vendas-digitais" },
+  { label: "Vendas", icon: ShoppingCart, route: "/vendas-digitais", businessOnly: true },
+];
+
+const pessoalShortcuts: Shortcut[] = [
+  { label: "Novo Lançamento", icon: Plus, action: "openModal" },
+  { label: "Contas Bancárias", icon: Landmark, route: "/bank-accounts" },
+  { label: "Categorias", icon: Tags, route: "/categorias" },
+  { label: "Relatórios", icon: BarChart3, route: "/relatorios" },
 ];
 
 export const DashboardShortcuts = () => {
   const navigate = useNavigate();
   const { handleOpenModal } = useLancamentosContext();
+  const { isPessoal } = useAuth();
 
-  const handleClick = (shortcut: typeof shortcuts[number]) => {
+  const activeShortcuts = isPessoal ? pessoalShortcuts : shortcuts;
+
+  const handleClick = (shortcut: Shortcut) => {
     if (shortcut.action === "openModal") {
       handleOpenModal();
     } else if (shortcut.route) {
@@ -32,8 +44,8 @@ export const DashboardShortcuts = () => {
   };
 
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-      {shortcuts.map((s) => {
+    <div className={`grid grid-cols-${isPessoal ? '4' : '3'} sm:grid-cols-${isPessoal ? '4' : '6'} gap-3`}>
+      {activeShortcuts.map((s) => {
         const Icon = s.icon;
         return (
           <button

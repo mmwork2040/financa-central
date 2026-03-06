@@ -146,36 +146,39 @@ export const Sidebar = () => {
   // Simplified menu structure
   const TELEGRAM_URL = "https://t.me/meu_agente_financeiro_bot";
 
-  const mainItems = [
+  const allMainItems = [
     { name: "Dashboard", icon: Home, path: "/dashboard" },
     { name: "Lançamentos", icon: Files, path: "/transactions" },
-    { name: "Vendas", icon: ShoppingCart, path: "/vendas-digitais" },
-    { name: "Anúncios", icon: Megaphone, path: "/anuncios" },
-    { name: "Projetos", icon: Briefcase, path: "/projetos" },
+    { name: "Vendas", icon: ShoppingCart, path: "/vendas-digitais", businessOnly: true },
+    { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true },
+    { name: "Projetos", icon: Briefcase, path: "/projetos", businessOnly: true },
   ];
+  const mainItems = isPessoal ? allMainItems.filter(i => !i.businessOnly) : allMainItems;
 
-  const cadastrosItems = [
-    { name: "Clientes", icon: UsersRound, path: "/clientes" },
-    { name: "Fornecedores", icon: Truck, path: "/fornecedores" },
+  const allCadastrosItems = [
+    { name: "Clientes", icon: UsersRound, path: "/clientes", businessOnly: true },
+    { name: "Fornecedores", icon: Truck, path: "/fornecedores", businessOnly: true },
     { name: "Categorias", icon: Tags, path: "/categorias" },
     { name: "Contas Bancárias", icon: Building2, path: "/bank-accounts" },
     { name: "Formas de Pagamento", icon: CreditCard, path: "/payment-methods" },
-    { name: "Usuários", icon: Users, path: "/users" },
+    { name: "Usuários", icon: Users, path: "/users", businessOnly: true },
   ];
+  const cadastrosItems = isPessoal ? allCadastrosItems.filter(i => !i.businessOnly) : allCadastrosItems;
 
   const bottomItems = [
     { name: "Relatórios", icon: PieChart, path: "/reports" },
   ];
 
-  const configItems = [
-    { name: "Empresa", icon: Settings, path: "/settings" },
-    { name: "Integrações", icon: Plug, path: "/settings/integracoes" },
+  const allConfigItems = [
+    { name: isPessoal ? "Pessoal" : "Empresa", icon: Settings, path: "/settings" },
+    { name: "Integrações", icon: Plug, path: "/settings/integracoes", businessOnly: true },
     ...(isSuperAdmin ? [{ name: "Assinaturas", icon: CreditCard, path: "/settings/assinaturas" }] : []),
     ...(isSuperAdmin ? [{ name: "Termos e Políticas", icon: ScrollText, path: "/settings/termos" }] : []),
     ...(isSuperAdmin ? [{ name: "Webhooks", icon: Webhook, path: "/settings/webhooks" }] : []),
     ...(isSuperAdmin ? [{ name: "n8n Templates", icon: Code2, path: "/settings/n8n-templates" }] : []),
     ...(isSuperAdmin ? [{ name: "Logs", icon: ScrollText, path: "/settings/logs" }] : []),
   ];
+  const configItems = isPessoal ? allConfigItems.filter(i => !(i as any).businessOnly) : allConfigItems;
 
   const adminItems = [
     { name: "Permissões", icon: ShieldCheck, path: "/permissions" },

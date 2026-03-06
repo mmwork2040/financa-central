@@ -373,11 +373,25 @@ const DashboardContent = () => {
   );
 };
 
+const DashboardPessoalLazy = React.lazy(() => import("@/components/dashboard/DashboardPessoal"));
+
 const Dashboard = () => {
-  const { planControles, isSuperAdmin } = useAuth();
+  const { planControles, isSuperAdmin, isPessoal } = useAuth();
   
   if (!isSuperAdmin && !planControles.dashboard_completo) {
     return <FeatureBlocked title="Dashboard Completo" description="O Dashboard Completo não está disponível no seu plano atual. Faça upgrade para acessar análises detalhadas." />;
+  }
+
+  if (isPessoal) {
+    return (
+      <LancamentosProvider>
+        <ValuesVisibilityProvider>
+          <React.Suspense fallback={<div className="flex justify-center items-center h-64"><p className="text-muted-foreground">Carregando...</p></div>}>
+            <DashboardPessoalLazy />
+          </React.Suspense>
+        </ValuesVisibilityProvider>
+      </LancamentosProvider>
+    );
   }
 
   return (

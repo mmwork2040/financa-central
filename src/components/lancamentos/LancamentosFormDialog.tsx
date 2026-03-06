@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { TipoSelect } from "./form/TipoSelect";
 import { DescricaoInput } from "./form/DescricaoInput";
 import { ValorInput } from "./form/ValorInput";
@@ -40,6 +41,8 @@ export const LancamentosFormDialog = () => {
     refreshContasBancarias,
     refreshProjetos,
   } = useLancamentosContext();
+
+  const { isPessoal } = useAuth();
 
   const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita" | "investimento">(formData.tipo || "despesa");
   const [selectedStatus, setSelectedStatus] = useState<"pendente" | "pago" | "recebido" | "cancelado">(formData.status || "pendente");
@@ -206,17 +209,19 @@ export const LancamentosFormDialog = () => {
             onRefresh={refreshCategorias}
           />
           
-          <ClienteFornecedorSelect 
-            tipo={selectedTipo}
-            clienteId={formData.cliente_id}
-            fornecedorId={formData.fornecedor_id}
-            onClienteChange={(value) => handleSelectChange('cliente_id', value)}
-            onFornecedorChange={(value) => handleSelectChange('fornecedor_id', value)}
-            clientes={clientes}
-            fornecedores={fornecedores}
-            onRefreshClientes={refreshClientes}
-            onRefreshFornecedores={refreshFornecedores}
-          />
+          {!isPessoal && (
+            <ClienteFornecedorSelect 
+              tipo={selectedTipo}
+              clienteId={formData.cliente_id}
+              fornecedorId={formData.fornecedor_id}
+              onClienteChange={(value) => handleSelectChange('cliente_id', value)}
+              onFornecedorChange={(value) => handleSelectChange('fornecedor_id', value)}
+              clientes={clientes}
+              fornecedores={fornecedores}
+              onRefreshClientes={refreshClientes}
+              onRefreshFornecedores={refreshFornecedores}
+            />
+          )}
           
           <GenericSelect 
             label="Forma de Pagamento"

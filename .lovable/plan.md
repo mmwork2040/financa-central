@@ -1,63 +1,57 @@
 
 
-## Plano: Modo Pessoa Física com Dashboard Simplificado
+## Scroll Animations for Landing Page Sections
 
-### Situação Atual
-- O sistema já possui o conceito de `isPessoal` (campo `pessoal` na tabela `empresas`) e a criação de conta pessoal via onboarding ("Usar individualmente").
-- Porém, o array `PESSOAL_BLOCKED_ROUTES` está vazio e a sidebar/dashboard não diferencia o modo pessoal do empresarial.
+### Overview
+Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
 
-### O que será implementado
+### Approach
+Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
 
-**1. Filtrar menu da Sidebar para contas pessoais**
+### Implementation Details
 
-No `Sidebar.tsx`, quando `isPessoal === true`, ocultar os itens:
-- Vendas, Anúncios, Projetos (do `mainItems`)
-- Clientes, Fornecedores, Usuários (do `cadastrosItems`)
-- Integrações, Webhooks, NF/Fiscal (do `configItems`)
+**1. Create `src/hooks/useScrollReveal.ts`**
+- A custom hook that returns a `ref` callback
+- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
+- Adds a CSS class (e.g., `revealed`) when the element is visible
+- Fires once per element (unobserves after reveal)
 
-Manter visíveis: Dashboard, Lançamentos, Categorias, Contas Bancárias, Formas de Pagamento, Relatórios, Configurações Pessoais.
+**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
+- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
+- Accepts optional `delay` (stagger support) and `className`
+- Starts with opacity-0 and a small transform offset
+- On intersection, transitions to opacity-1 and transform-none
+- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
 
-**2. Bloquear rotas no ProtectedRoute**
+**3. Update `src/pages/LandingPage.tsx`**
+Wrap each section's content with `<ScrollReveal>`:
 
-Preencher `PESSOAL_BLOCKED_ROUTES` com:
-`/vendas-digitais`, `/anuncios`, `/clientes`, `/fornecedores`, `/projetos`, `/users`, `/permissions`, `/settings/integracoes`, `/settings/webhooks`
-
-**3. Dashboard Pessoal simplificado**
-
-Criar um componente `DashboardPessoal` dentro de `Dashboard.tsx` que será renderizado quando `isPessoal === true`. Conterá:
-- Saudação simples
-- Toggle de visibilidade de valores
-- 3 cards: Receitas do mês, Despesas do mês, Saldo
-- 1 card: Saldo Investido (destaque para controle de investimentos)
-- Gráfico de barras mensal (receitas vs despesas)
-- Lista de últimas movimentações
-- Sem: saúde financeira complexa, caixa previsto, meses de caixa, contas a pagar/receber separadas
-
-**4. Atalhos do Dashboard para modo pessoal**
-
-No `DashboardShortcuts.tsx`, filtrar atalhos removendo Clientes, Fornecedores e Vendas quando `isPessoal`. Substituir por: Novo Lançamento, Contas Bancárias, Categorias, Relatórios.
-
-**5. Lançamentos em modo pessoal**
-
-No formulário de lançamentos (`LancamentosFormDialog`), quando `isPessoal`:
-- Ocultar campos de Cliente e Fornecedor (não são obrigatórios)
-- Manter: descrição, valor, tipo, categoria, conta bancária, forma de pagamento, status, data
-
-**6. Configurações Pessoais**
-
-Na `ConfiguracoesEmpresa.tsx`, já existe diferenciação parcial (`isPessoal`). Garantir que a seção de Configuração Fiscal e Códigos de Convite fiquem ocultas para contas pessoais.
-
-### Arquivos a modificar
-
-| Arquivo | Alteração |
+| Section | Animation |
 |---------|-----------|
-| `src/components/Sidebar.tsx` | Filtrar itens de menu por `isPessoal` |
-| `src/components/auth/ProtectedRoute.tsx` | Popular `PESSOAL_BLOCKED_ROUTES` |
-| `src/pages/Dashboard.tsx` | Criar `DashboardPessoal` e renderizar condicionalmente |
-| `src/components/dashboard/DashboardShortcuts.tsx` | Filtrar atalhos por `isPessoal` |
-| `src/components/lancamentos/LancamentosFormDialog.tsx` | Ocultar cliente/fornecedor quando pessoal |
-| `src/pages/ConfiguracoesEmpresa.tsx` | Ocultar seção fiscal para pessoal |
+| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
+| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
+| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
+| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
+| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
+| Social Proof | Scale for stat cards |
+| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
+| Footer | Simple fade-up |
 
-### Sem alterações no banco de dados
-A coluna `pessoal` na tabela `empresas` já existe e é utilizada. Nenhuma migration necessária.
+**4. Add base CSS to `src/index.css`**
+```css
+.scroll-reveal {
+  opacity: 0;
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: none !important;
+}
+```
+
+### Key Decisions
+- No new dependencies -- uses native `IntersectionObserver`
+- CSS transitions (not JS-driven animations) for performance
+- Each animation fires only once (no re-hide on scroll up) for a polished feel
+- Stagger delays on card grids (50-100ms increments) for a cascading effect
 
