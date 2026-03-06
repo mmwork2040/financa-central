@@ -1116,32 +1116,58 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-lancamento",
     toolName: "editar_lancamento",
     label: "Editar Lançamento",
-    description: "Altera dados de um lançamento pendente (bloqueado se já pago/recebido)",
+    description: "Altera dados de um lançamento pendente (bloqueado se já pago/recebido). Suporta edição de recorrência.",
     toolDescription: `Altera dados de um lançamento financeiro existente.
 
 ⚠️ REGRA DE SEGURANÇA: Lançamentos com status "pago" ou "recebido" NÃO podem ser alterados.
 
 ⚠️ IMPORTANTE: Use as ferramentas de listagem (categorias, clientes, fornecedores, etc.) para obter IDs válidos antes de atualizar campos de relacionamento.
 
+PROTEÇÃO DE CADEIA RECORRENTE:
+- Se o lançamento pertence a uma cadeia recorrente (possui recorrencia_grupo_id), apenas os seguintes campos podem ser alterados: valor, status, data_vencimento, data_pagamento, categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id.
+- Campos bloqueados em lançamentos recorrentes: descricao, tipo, recorrencia_tipo, recorrencia_fim. Alterar esses campos quebraria a cadeia.
+- Para alterar a frequência ou encerrar uma recorrência, use os campos recorrencia_tipo e recorrencia_fim APENAS em lançamentos NÃO recorrentes que estejam sendo convertidos.
+
+RECORRÊNCIA E PARCELAMENTO:
+- Para tornar um lançamento único em recorrente, envie:
+  - recorrente: true
+  - recorrencia_tipo: semanal, quinzenal, mensal (padrão), trimestral ou anual
+  - recorrencia_inicio: YYYY-MM-DD (data de início, aceita retroativas. Se vazio, usa data_vencimento)
+  - recorrencia_fim: YYYY-MM-DD (data fim, vazio = indefinido)
+- Para alterar o fim da recorrência de um lançamento já recorrente:
+  - recorrencia_fim: YYYY-MM-DD (nova data fim)
+- Recorrente e parcelado são MUTUAMENTE EXCLUSIVOS.
+
 Parâmetros:
 - empresa_id (obrigatório)
 - id (obrigatório — UUID do lançamento)
 - descricao, valor, tipo, status, data_vencimento, data_pagamento (opcionais)
 - categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id (opcionais)
+- recorrente, recorrencia_tipo, recorrencia_inicio, recorrencia_fim (opcionais — para controle de recorrência)
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "id", type: "string", required: true, description: "UUID do lançamento" },
-      { name: "descricao", type: "string", required: false, description: "Nova descrição" },
+      { name: "descricao", type: "string", required: false, description: "Nova descrição (bloqueado em recorrentes)" },
       { name: "valor", type: "number", required: false, description: "Novo valor" },
-      { name: "tipo", type: "string", required: false, description: "receita ou despesa" },
-      { name: "status", type: "string", required: false, description: "pendente ou pago" },
+      { name: "tipo", type: "string", required: false, description: "receita ou despesa (bloqueado em recorrentes)" },
+      { name: "status", type: "string", required: false, description: "pendente, pago ou recebido" },
       { name: "data_vencimento", type: "string", required: false, description: "Nova data de vencimento YYYY-MM-DD" },
+      { name: "data_pagamento", type: "string", required: false, description: "Data de pagamento YYYY-MM-DD" },
+      { name: "recorrente", type: "boolean", required: false, description: "true para tornar recorrente. Não altere se já for recorrente" },
+      { name: "recorrencia_tipo", type: "string", required: false, description: "semanal, quinzenal, mensal, trimestral ou anual" },
+      { name: "recorrencia_inicio", type: "string", required: false, description: "Data início recorrência YYYY-MM-DD (aceita retroativas)" },
+      { name: "recorrencia_fim", type: "string", required: false, description: "Data fim recorrência YYYY-MM-DD. Vazio = indefinido" },
       { name: "categoria_id", type: "string", required: false, description: "UUID da categoria" },
+      { name: "cliente_id", type: "string", required: false, description: "UUID do cliente" },
+      { name: "fornecedor_id", type: "string", required: false, description: "UUID do fornecedor" },
+      { name: "conta_bancaria_id", type: "string", required: false, description: "UUID da conta bancária" },
+      { name: "forma_pagamento_id", type: "string", required: false, description: "UUID da forma de pagamento" },
+      { name: "projeto_id", type: "string", required: false, description: "UUID do projeto" },
     ],
-    body: { action: "editar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição. Deixe vazio se não mudar') }}", valor: "{{ $fromAI('valor', 'Novo valor. Deixe vazio se não mudar') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa. Deixe vazio se não mudar') }}", status: "{{ $fromAI('status', 'pendente ou pago. Deixe vazio se não mudar') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'YYYY-MM-DD. Deixe vazio se não mudar') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Deixe vazio se não mudar') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Deixe vazio se não mudar') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor. Deixe vazio se não mudar') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária. Deixe vazio se não mudar') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento. Deixe vazio se não mudar') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não mudar') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'YYYY-MM-DD. Deixe vazio se não mudar') }}" },
+    body: { action: "editar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição. Deixe vazio se não mudar. BLOQUEADO em recorrentes') }}", valor: "{{ $fromAI('valor', 'Novo valor. Deixe vazio se não mudar') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa. Deixe vazio se não mudar. BLOQUEADO em recorrentes') }}", status: "{{ $fromAI('status', 'pendente, pago ou recebido. Deixe vazio se não mudar') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'YYYY-MM-DD. Deixe vazio se não mudar') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'YYYY-MM-DD. Deixe vazio se não mudar') }}", recorrente: "{{ $fromAI('recorrente', 'true para tornar recorrente. Deixe vazio se não mudar') }}", recorrencia_tipo: "{{ $fromAI('recorrencia_tipo', 'semanal, quinzenal, mensal, trimestral ou anual. Deixe vazio se não mudar') }}", recorrencia_inicio: "{{ $fromAI('recorrencia_inicio', 'Data início recorrência YYYY-MM-DD. Aceita retroativas. Deixe vazio se não mudar') }}", recorrencia_fim: "{{ $fromAI('recorrencia_fim', 'Data fim recorrência YYYY-MM-DD. Vazio = indefinido. Deixe vazio se não mudar') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Deixe vazio se não mudar') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Deixe vazio se não mudar') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor. Deixe vazio se não mudar') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária. Deixe vazio se não mudar') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento. Deixe vazio se não mudar') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não mudar') }}" },
   },
   // ─── EXCLUIR ───
   {
