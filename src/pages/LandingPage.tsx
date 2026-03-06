@@ -238,7 +238,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 2: PARE DE PERDER TEMPO ===== */}
-      <section className="relative border-y border-border/40 overflow-hidden">
+      <section id="funcionalidades" className="relative border-y border-border/40 overflow-hidden scroll-mt-20">
         <div
           className="absolute inset-0"
           style={{
