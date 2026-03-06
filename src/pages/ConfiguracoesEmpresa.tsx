@@ -277,7 +277,7 @@ const ConfiguracoesEmpresa = () => {
 
       {!isPessoal && <InviteCodesCard />}
 
-      
+      {isSuperAdmin && <SpedyConfigCard />}
     </div>
   );
 };
