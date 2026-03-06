@@ -182,7 +182,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ===== SEÇÃO 2: CONEXÃO COM A DOR ===== */}
+      {/* ===== SEÇÃO 2: PARE DE PERDER TEMPO ===== */}
       <section className="relative border-y border-border/40">
         <div
           className="absolute inset-0"
@@ -190,121 +190,189 @@ const LandingPage = () => {
             background: "radial-gradient(ellipse 60% 80% at 50% 50%, hsla(25, 95%, 53%, 0.04) 0%, transparent 60%)",
           }}
         />
-        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24 relative">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
-            <ScrollReveal direction="scale">
-              <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8 mb-8">
-                {/* Grupo "antes" */}
-                <div className="flex items-center gap-2 sm:gap-3">
-                  {/* Planilha riscada */}
-                  <div className="relative glass-card rounded-xl sm:rounded-2xl p-3 sm:p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg">
-                    <div
-                      className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{
-                        background: "radial-gradient(ellipse at 50% 0%, hsla(0, 84%, 60%, 0.08) 0%, transparent 70%)",
-                      }}
-                    />
-                    <Table2 className="h-7 w-7 sm:h-10 sm:w-10 text-muted-foreground/30" />
-                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 drop-shadow-sm" />
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1.5 sm:mt-2 font-medium">
-                      Planilhas
-                    </p>
-                  </div>
-
-                  {/* Calculadora riscada */}
-                  <div className="relative glass-card rounded-xl sm:rounded-2xl p-3 sm:p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg">
-                    <div
-                      className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{
-                        background: "radial-gradient(ellipse at 50% 0%, hsla(0, 84%, 60%, 0.08) 0%, transparent 70%)",
-                      }}
-                    />
-                    <Calculator className="h-7 w-7 sm:h-10 sm:w-10 text-muted-foreground/30" />
-                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 drop-shadow-sm" />
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1.5 sm:mt-2 font-medium text-center">
-                      Cálculos
-                      <br className="sm:hidden" /> manuais
-                    </p>
-                  </div>
-                </div>
-
-                {/* Seta animada */}
-                <div className="flex flex-col items-center gap-0.5 sm:gap-1 px-1 sm:px-2 shrink-0">
-                  <div className="h-px w-6 sm:w-10 bg-gradient-to-r from-destructive/40 to-primary/60" />
-                  <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6 text-primary animate-pulse" />
-                  <div className="h-px w-6 sm:w-10 bg-gradient-to-r from-destructive/40 to-primary/60" />
-                </div>
-
-                {/* IA solução */}
-                <div className="relative glass-card rounded-xl sm:rounded-2xl p-3 sm:p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg border-primary/20">
-                  <div
-                    className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-60 group-hover:opacity-100 transition-opacity"
-                    style={{
-                      background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.1) 0%, transparent 70%)",
-                    }}
-                  />
-                  <Sparkles className="h-7 w-7 sm:h-10 sm:w-10 text-primary" />
-                  <div className="h-4 w-4 sm:h-5 sm:w-5 bg-primary rounded-full flex items-center justify-center absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 shadow-md">
-                    <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary-foreground" />
-                  </div>
-                  <p className="text-[9px] sm:text-[10px] text-primary mt-1.5 sm:mt-2 font-semibold">IA Financeira</p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            <ScrollReveal direction="up" delay={100}>
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
-                Chega de planilhas ou sistemas{" "}
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-28 relative">
+          {/* Header */}
+          <ScrollReveal direction="up">
+            <div className="text-center mb-14 lg:mb-20 max-w-3xl mx-auto">
+              <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px] mb-4">
+                Chega de burocracia
+              </Badge>
+              <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-extrabold tracking-tight text-foreground leading-tight">
+                Pare de preencher planilha, gastar horas emitindo nota fiscal e{" "}
                 <span className="text-primary relative inline-block">
-                  ineficientes
-                  <svg
-                    className="absolute -bottom-1.5 left-0 w-full"
-                    viewBox="0 0 200 8"
-                    fill="none"
-                    preserveAspectRatio="none"
-                  >
-                    <path
-                      d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      opacity="0.3"
-                    />
+                  não focar no que importa
+                  <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
+                    <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
                   </svg>
                 </span>
               </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto mt-4">
-                O tempo que você perde tentando conciliar números, caçando recibos e preenchendo células complexas é o
-                tempo que você deveria investir em{" "}
-                <span className="text-foreground font-semibold">vender mais e escalar o seu negócio</span>. A burocracia
-                não pode ser um obstáculo para o seu crescimento.
+              <p className="text-lg text-muted-foreground leading-relaxed mt-5">
+                O sistema faz o trabalho pesado por você: emite notas, gera relatórios e controla suas finanças com inteligência artificial.
               </p>
+            </div>
+          </ScrollReveal>
+
+          {/* 3 Feature Cards with Mockups */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto mb-16 lg:mb-20">
+            {/* Card 1 — Notas Fiscais */}
+            <ScrollReveal direction="up" delay={0}>
+              <div className="glass-card rounded-2xl p-6 group hover:-translate-y-2 transition-all duration-300 hover:shadow-xl h-full"
+                style={{ background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%), rgba(255,255,255,0.72)" }}>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">Notas Fiscais no Automático</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+                  Cada venda gera uma NF-e ou NFS-e automaticamente. Sem digitar, sem esquecer, sem multa.
+                </p>
+                {/* Mini mockup — NF feed */}
+                <div className="rounded-xl bg-muted/40 border border-border/30 p-3 space-y-2">
+                  {[
+                    { nf: "NF-e #1042", cliente: "João Silva", valor: "R$ 1.200", status: "Emitida", color: "bg-green-500" },
+                    { nf: "NF-e #1043", cliente: "Maria Costa", valor: "R$ 850", status: "Emitida", color: "bg-green-500" },
+                    { nf: "NF-e #1044", cliente: "Tech Corp", valor: "R$ 3.400", status: "Emitindo...", color: "bg-amber-500" },
+                  ].map((item) => (
+                    <div key={item.nf} className="flex items-center justify-between rounded-lg bg-background/80 px-2.5 py-2 text-[10px]">
+                      <div>
+                        <p className="font-semibold text-foreground">{item.nf}</p>
+                        <p className="text-muted-foreground">{item.cliente}</p>
+                      </div>
+                      <div className="text-right flex items-center gap-2">
+                        <span className="font-semibold text-foreground">{item.valor}</span>
+                        <span className={`inline-flex items-center gap-1 text-[8px] font-medium text-primary-foreground px-1.5 py-0.5 rounded-full ${item.color}`}>
+                          {item.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </ScrollReveal>
 
-            {/* Stats bar */}
-            <ScrollReveal direction="up" delay={200}>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6 max-w-2xl mx-auto pt-4">
-                {[
-                  { icon: Clock, value: "+85%", label: "Economia de tempo" },
-                  { icon: Target, value: "98%", label: "Precisão nos dados" },
-                  { icon: Zap, value: "1 min", label: "Por lançamento" },
-                ].map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="glass-card rounded-2xl p-4 text-center hover:-translate-y-1 transition-all duration-300"
-                    style={{
-                      background:
-                        "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%), rgba(255,255,255,0.72)",
-                    }}
-                  >
-                    <stat.icon className="h-5 w-5 text-primary mx-auto mb-2" />
-                    <p className="text-2xl font-extrabold text-foreground">{stat.value}</p>
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+            {/* Card 2 — Relatórios */}
+            <ScrollReveal direction="up" delay={100}>
+              <div className="glass-card rounded-2xl p-6 group hover:-translate-y-2 transition-all duration-300 hover:shadow-xl h-full"
+                style={{ background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%), rgba(255,255,255,0.72)" }}>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">Relatórios Inteligentes</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+                  DRE, fluxo de caixa e balanço gerados automaticamente — mensal, trimestral e anual.
+                </p>
+                {/* Mini mockup — chart bars */}
+                <div className="rounded-xl bg-muted/40 border border-border/30 p-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[9px] font-semibold text-foreground">Receita vs Despesa</span>
+                    <span className="text-[8px] text-muted-foreground">2026</span>
                   </div>
-                ))}
+                  <div className="flex items-end gap-1.5 h-20 justify-center">
+                    {[
+                      { h: 40, type: "r" }, { h: 25, type: "d" },
+                      { h: 55, type: "r" }, { h: 30, type: "d" },
+                      { h: 50, type: "r" }, { h: 35, type: "d" },
+                      { h: 70, type: "r" }, { h: 40, type: "d" },
+                      { h: 65, type: "r" }, { h: 38, type: "d" },
+                      { h: 85, type: "r" }, { h: 42, type: "d" },
+                      { h: 90, type: "r" }, { h: 45, type: "d" },
+                      { h: 95, type: "r" }, { h: 48, type: "d" },
+                    ].map((bar, i) => (
+                      <div
+                        key={i}
+                        className="rounded-sm w-2.5 transition-all duration-500"
+                        style={{
+                          height: `${bar.h}%`,
+                          background: bar.type === "r"
+                            ? "hsl(var(--primary))"
+                            : "hsl(var(--muted-foreground) / 0.25)",
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-center gap-4 mt-2">
+                    <div className="flex items-center gap-1">
+                      <div className="h-2 w-2 rounded-full bg-primary" />
+                      <span className="text-[8px] text-muted-foreground">Receitas</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="h-2 w-2 rounded-full bg-muted-foreground/25" />
+                      <span className="text-[8px] text-muted-foreground">Despesas</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* Card 3 — Controle com IA */}
+            <ScrollReveal direction="up" delay={200}>
+              <div className="glass-card rounded-2xl p-6 group hover:-translate-y-2 transition-all duration-300 hover:shadow-xl h-full"
+                style={{ background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%), rgba(255,255,255,0.72)" }}>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">Controle com IA</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+                  Receitas e despesas categorizadas automaticamente. Sem planilha, sem erro humano.
+                </p>
+                {/* Mini mockup — AI categorization feed */}
+                <div className="rounded-xl bg-muted/40 border border-border/30 p-3 space-y-2">
+                  {[
+                    { desc: "Venda Hotmart", valor: "+ R$ 297", cat: "Receita", emoji: "🟢" },
+                    { desc: "Meta Ads", valor: "- R$ 180", cat: "Marketing", emoji: "🔴" },
+                    { desc: "Assinatura SaaS", valor: "- R$ 49", cat: "Software", emoji: "🔴" },
+                  ].map((item) => (
+                    <div key={item.desc} className="flex items-center justify-between rounded-lg bg-background/80 px-2.5 py-2 text-[10px]">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-3 w-3 text-primary/60" />
+                        <div>
+                          <p className="font-semibold text-foreground">{item.desc}</p>
+                          <p className="text-[8px] text-muted-foreground">Categoria: {item.cat}</p>
+                        </div>
+                      </div>
+                      <span className={`font-bold ${item.emoji === "🟢" ? "text-green-600" : "text-destructive"}`}>
+                        {item.valor}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </ScrollReveal>
           </div>
+
+          {/* Economy Stats */}
+          <ScrollReveal direction="up" delay={100}>
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl md:text-3xl font-extrabold text-foreground">
+                  A economia que isso gera no seu{" "}
+                  <span className="text-primary">bolso e no seu tempo</span>
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+                {[
+                  { emoji: "⏱️", value: "+20h", sub: "/ mês", desc: "Economizadas em tarefas manuais" },
+                  { emoji: "💰", value: "R$ 2.500", sub: "/ mês", desc: "Equivalente a um auxiliar financeiro" },
+                  { emoji: "🎯", value: "Zero", sub: "erros", desc: "IA reconcilia tudo automaticamente" },
+                  { emoji: "🚀", value: "+40%", sub: "foco", desc: "Mais tempo para vendas e estratégia" },
+                ].map((stat) => (
+                  <div
+                    key={stat.value}
+                    className="glass-card rounded-2xl p-5 text-center hover:-translate-y-1 transition-all duration-300"
+                    style={{
+                      background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%), rgba(255,255,255,0.72)",
+                    }}
+                  >
+                    <span className="text-2xl">{stat.emoji}</span>
+                    <p className="text-2xl md:text-3xl font-extrabold text-foreground mt-1">
+                      {stat.value}
+                      <span className="text-sm font-medium text-muted-foreground"> {stat.sub}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">{stat.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
