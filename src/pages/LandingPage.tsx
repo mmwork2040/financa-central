@@ -183,7 +183,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 2: PARE DE PERDER TEMPO ===== */}
-      <section className="relative border-y border-border/40">
+      <section className="relative border-y border-border/40 overflow-hidden">
         <div
           className="absolute inset-0"
           style={{
@@ -192,137 +192,147 @@ const LandingPage = () => {
         />
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-28 relative">
           <div className="max-w-5xl mx-auto">
-            {/* Headline */}
+            {/* Headline curta */}
             <ScrollReveal direction="up">
-              <div className="text-center mb-14">
+              <div className="text-center mb-12">
                 <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px] mb-4">
                   Automação inteligente
                 </Badge>
                 <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
-                  Pare de preencher{" "}
+                  A IA cuida da{" "}
                   <span className="text-primary relative inline-block">
-                    planilhas
+                    burocracia
                     <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
                       <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
                     </svg>
-                  </span>{" "}
-                  e comece a crescer
+                  </span>
+                  , você cuida de vender
                 </h2>
-                <p className="mt-4 text-lg text-muted-foreground leading-relaxed max-w-3xl mx-auto">
-                  Enquanto você gasta horas emitindo nota fiscal, conferindo extrato e tentando fechar o mês numa planilha,
-                  o seu concorrente já está escalando. O <span className="text-foreground font-semibold">Contabiliza AI</span> automatiza
-                  a burocracia financeira para que você foque no que realmente importa:
-                  {" "}<span className="text-foreground font-semibold">vender mais e faturar mais</span>.
+                <p className="mt-3 text-base text-muted-foreground max-w-xl mx-auto">
+                  Notas fiscais, relatórios e categorização — tudo automático.
                 </p>
               </div>
             </ScrollReveal>
 
-            {/* 3 Pilares — layout visual expandido */}
-            <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mb-16">
-              {[
-                {
-                  title: "Emissão de Notas Fiscais",
-                  desc: "Notas emitidas automaticamente a cada venda, sem você precisar abrir uma única tela. A IA preenche, valida e envia.",
-                  accent: "📄",
-                  mockup: (
-                    <div className="glass-card rounded-xl p-3 mt-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-foreground">NF-e #4.281</span>
-                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold">Emitida ✓</span>
-                      </div>
-                      <div className="h-px bg-border/60" />
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-foreground">NF-e #4.282</span>
-                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold">Emitida ✓</span>
-                      </div>
-                      <div className="h-px bg-border/60" />
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-foreground">NF-e #4.283</span>
-                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold animate-pulse">Emitindo...</span>
-                      </div>
+            {/* 3 Pilares — visual-first, mockup grande */}
+            <div className="grid md:grid-cols-3 gap-5 lg:gap-6 mb-16">
+              {/* Card 1: Notas Fiscais */}
+              <ScrollReveal direction="up" delay={0}>
+                <div className="glass-card rounded-2xl p-5 h-full hover:-translate-y-2 transition-all duration-300 hover:shadow-xl group relative overflow-hidden border border-border/50 hover:border-primary/20">
+                  <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.10) 0%, transparent 70%)" }} />
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-lg">📄</div>
+                      <h3 className="text-sm font-bold text-foreground">Notas Fiscais no automático</h3>
                     </div>
-                  ),
-                },
-                {
-                  title: "Relatórios Automáticos",
-                  desc: "Relatórios mensais, trimestrais e anuais gerados sem esforço. DRE, fluxo de caixa e conciliação prontos.",
-                  accent: "📊",
-                  mockup: (
-                    <div className="glass-card rounded-xl p-3 mt-4">
-                      <div className="flex items-end gap-1.5 h-16 justify-center">
-                        {[35, 52, 40, 68, 55, 72, 80, 65, 90, 75, 85, 95].map((h, i) => (
-                          <div
-                            key={i}
-                            className="rounded-sm w-3 transition-all duration-500"
-                            style={{
-                              height: `${h}%`,
-                              background: i >= 9
-                                ? "hsl(var(--primary))"
-                                : i >= 6
-                                  ? "hsla(25, 95%, 53%, 0.5)"
-                                  : "hsla(25, 95%, 53%, 0.2)",
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <div className="flex justify-between mt-2">
-                        <span className="text-[9px] text-muted-foreground">Jan</span>
-                        <span className="text-[9px] text-muted-foreground">Jun</span>
-                        <span className="text-[9px] text-muted-foreground">Dez</span>
-                      </div>
-                    </div>
-                  ),
-                },
-                {
-                  title: "Controle com IA",
-                  desc: "Receitas e despesas categorizadas automaticamente. Sem digitação manual, sem erro humano, sem retrabalho.",
-                  accent: "🤖",
-                  mockup: (
-                    <div className="glass-card rounded-xl p-3 mt-4 space-y-2">
+                    <div className="glass-card rounded-xl p-3 space-y-2.5">
                       {[
-                        { cat: "Meta Ads", val: "- R$ 3.450", color: "text-destructive" },
-                        { cat: "Hotmart", val: "+ R$ 12.800", color: "text-green-600" },
-                        { cat: "Fornecedor", val: "- R$ 1.200", color: "text-destructive" },
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-primary/60" />
-                            <span className="text-[10px] text-foreground font-medium">{item.cat}</span>
+                        { nf: "NF-e #4.281", cli: "João M.", val: "R$ 497", status: "Emitida ✓", sc: "bg-green-500/10 text-green-600" },
+                        { nf: "NF-e #4.282", cli: "Ana S.", val: "R$ 1.290", status: "Emitida ✓", sc: "bg-green-500/10 text-green-600" },
+                        { nf: "NF-e #4.283", cli: "Pedro R.", val: "R$ 797", status: "Emitida ✓", sc: "bg-green-500/10 text-green-600" },
+                        { nf: "NF-e #4.284", cli: "Carla T.", val: "R$ 2.100", status: "Emitindo...", sc: "bg-primary/10 text-primary animate-pulse" },
+                      ].map((row, i) => (
+                        <div key={i}>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-[10px] font-semibold text-foreground">{row.nf}</p>
+                              <p className="text-[9px] text-muted-foreground">{row.cli} · {row.val}</p>
+                            </div>
+                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${row.sc}`}>{row.status}</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className={`text-[10px] font-bold ${item.color}`}>{item.val}</span>
-                            <Sparkles className="h-3 w-3 text-primary/50" />
-                          </div>
+                          {i < 3 && <div className="h-px bg-border/40 mt-2.5" />}
                         </div>
                       ))}
-                      <div className="text-[9px] text-center text-primary/70 font-medium pt-1">
-                        ✨ Categorizado pela IA
-                      </div>
-                    </div>
-                  ),
-                },
-              ].map((item, i) => (
-                <ScrollReveal key={item.title} direction="up" delay={i * 100}>
-                  <div className="glass-card rounded-2xl p-6 h-full hover:-translate-y-2 transition-all duration-300 hover:shadow-xl group relative overflow-hidden border border-border/50 hover:border-primary/20">
-                    <div
-                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                      style={{
-                        background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.10) 0%, transparent 70%)",
-                      }}
-                    />
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl shrink-0">
-                          {item.accent}
-                        </div>
-                        <h3 className="text-base font-bold text-foreground">{item.title}</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-                      {item.mockup}
                     </div>
                   </div>
-                </ScrollReveal>
-              ))}
+                </div>
+              </ScrollReveal>
+
+              {/* Card 2: Relatórios */}
+              <ScrollReveal direction="up" delay={100}>
+                <div className="glass-card rounded-2xl p-5 h-full hover:-translate-y-2 transition-all duration-300 hover:shadow-xl group relative overflow-hidden border border-border/50 hover:border-primary/20">
+                  <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.10) 0%, transparent 70%)" }} />
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-lg">📊</div>
+                      <h3 className="text-sm font-bold text-foreground">Relatórios prontos</h3>
+                    </div>
+                    <div className="glass-card rounded-xl p-3">
+                      <div className="flex items-end gap-1 h-20 justify-center mb-3">
+                        {[28, 42, 35, 58, 48, 65, 72, 60, 82, 70, 78, 90].map((h, i) => (
+                          <div key={i} className="flex-1">
+                            <div
+                              className="w-full rounded-sm min-w-[6px]"
+                              style={{
+                                height: `${h}%`,
+                                background: i === 11 ? "hsl(var(--primary))" : i >= 8 ? "hsla(25, 95%, 53%, 0.6)" : "hsla(25, 95%, 53%, 0.18)",
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-[8px] text-muted-foreground mb-3">
+                        <span>Jan</span><span>Abr</span><span>Jul</span><span>Out</span><span>Dez</span>
+                      </div>
+                      <div className="h-px bg-border/40 mb-2.5" />
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <p className="text-[10px] font-bold text-green-600">R$ 84k</p>
+                          <p className="text-[8px] text-muted-foreground">Receita</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-destructive">R$ 31k</p>
+                          <p className="text-[8px] text-muted-foreground">Despesa</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-primary">R$ 53k</p>
+                          <p className="text-[8px] text-muted-foreground">Lucro</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+
+              {/* Card 3: Controle com IA */}
+              <ScrollReveal direction="up" delay={200}>
+                <div className="glass-card rounded-2xl p-5 h-full hover:-translate-y-2 transition-all duration-300 hover:shadow-xl group relative overflow-hidden border border-border/50 hover:border-primary/20">
+                  <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.10) 0%, transparent 70%)" }} />
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-lg">🤖</div>
+                      <h3 className="text-sm font-bold text-foreground">IA categoriza tudo</h3>
+                    </div>
+                    <div className="glass-card rounded-xl p-3 space-y-2">
+                      {[
+                        { cat: "Tráfego Pago", plat: "Meta Ads", val: "- R$ 3.450", color: "text-destructive", icon: "🎯" },
+                        { cat: "Venda Digital", plat: "Hotmart", val: "+ R$ 12.800", color: "text-green-600", icon: "🛒" },
+                        { cat: "Fornecedor", plat: "Adobe CC", val: "- R$ 290", color: "text-destructive", icon: "🏢" },
+                        { cat: "Venda Digital", plat: "Kiwify", val: "+ R$ 4.700", color: "text-green-600", icon: "🛒" },
+                        { cat: "Pró-labore", plat: "Transferência", val: "- R$ 5.000", color: "text-destructive", icon: "👤" },
+                      ].map((item, i) => (
+                        <div key={i}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs">{item.icon}</span>
+                              <div>
+                                <p className="text-[10px] font-semibold text-foreground">{item.cat}</p>
+                                <p className="text-[8px] text-muted-foreground">{item.plat}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className={`text-[10px] font-bold ${item.color}`}>{item.val}</span>
+                              <Sparkles className="h-2.5 w-2.5 text-primary/40" />
+                            </div>
+                          </div>
+                          {i < 4 && <div className="h-px bg-border/40 mt-2" />}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[9px] text-center text-primary/60 font-medium mt-2">✨ Categorizado pela IA</p>
+                  </div>
+                </div>
+              </ScrollReveal>
             </div>
 
             {/* Economia de tempo e dinheiro */}
