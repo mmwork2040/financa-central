@@ -182,7 +182,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ===== SEÇÃO 2: CONEXÃO COM A DOR ===== */}
+      {/* ===== SEÇÃO 2: PARE DE PERDER TEMPO ===== */}
       <section className="relative border-y border-border/40">
         <div
           className="absolute inset-0"
@@ -190,118 +190,118 @@ const LandingPage = () => {
             background: "radial-gradient(ellipse 60% 80% at 50% 50%, hsla(25, 95%, 53%, 0.04) 0%, transparent 60%)",
           }}
         />
-        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24 relative">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
-            <ScrollReveal direction="scale">
-              <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8 mb-8">
-                {/* Grupo "antes" */}
-                <div className="flex items-center gap-2 sm:gap-3">
-                  {/* Planilha riscada */}
-                  <div className="relative glass-card rounded-xl sm:rounded-2xl p-3 sm:p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg">
-                    <div
-                      className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{
-                        background: "radial-gradient(ellipse at 50% 0%, hsla(0, 84%, 60%, 0.08) 0%, transparent 70%)",
-                      }}
-                    />
-                    <Table2 className="h-7 w-7 sm:h-10 sm:w-10 text-muted-foreground/30" />
-                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 drop-shadow-sm" />
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1.5 sm:mt-2 font-medium">
-                      Planilhas
-                    </p>
-                  </div>
-
-                  {/* Calculadora riscada */}
-                  <div className="relative glass-card rounded-xl sm:rounded-2xl p-3 sm:p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg">
-                    <div
-                      className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{
-                        background: "radial-gradient(ellipse at 50% 0%, hsla(0, 84%, 60%, 0.08) 0%, transparent 70%)",
-                      }}
-                    />
-                    <Calculator className="h-7 w-7 sm:h-10 sm:w-10 text-muted-foreground/30" />
-                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 drop-shadow-sm" />
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1.5 sm:mt-2 font-medium text-center">
-                      Cálculos
-                      <br className="sm:hidden" /> manuais
-                    </p>
-                  </div>
-                </div>
-
-                {/* Seta animada */}
-                <div className="flex flex-col items-center gap-0.5 sm:gap-1 px-1 sm:px-2 shrink-0">
-                  <div className="h-px w-6 sm:w-10 bg-gradient-to-r from-destructive/40 to-primary/60" />
-                  <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6 text-primary animate-pulse" />
-                  <div className="h-px w-6 sm:w-10 bg-gradient-to-r from-destructive/40 to-primary/60" />
-                </div>
-
-                {/* IA solução */}
-                <div className="relative glass-card rounded-xl sm:rounded-2xl p-3 sm:p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg border-primary/20">
-                  <div
-                    className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-60 group-hover:opacity-100 transition-opacity"
-                    style={{
-                      background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.1) 0%, transparent 70%)",
-                    }}
-                  />
-                  <Sparkles className="h-7 w-7 sm:h-10 sm:w-10 text-primary" />
-                  <div className="h-4 w-4 sm:h-5 sm:w-5 bg-primary rounded-full flex items-center justify-center absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 shadow-md">
-                    <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary-foreground" />
-                  </div>
-                  <p className="text-[9px] sm:text-[10px] text-primary mt-1.5 sm:mt-2 font-semibold">IA Financeira</p>
-                </div>
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-28 relative">
+          <div className="max-w-5xl mx-auto">
+            {/* Headline */}
+            <ScrollReveal direction="up">
+              <div className="text-center mb-14">
+                <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px] mb-4">
+                  Automação inteligente
+                </Badge>
+                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+                  Pare de preencher{" "}
+                  <span className="text-primary relative inline-block">
+                    planilhas
+                    <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
+                      <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
+                    </svg>
+                  </span>{" "}
+                  e comece a crescer
+                </h2>
+                <p className="mt-4 text-lg text-muted-foreground leading-relaxed max-w-3xl mx-auto">
+                  Enquanto você gasta horas emitindo nota fiscal, conferindo extrato e tentando fechar o mês numa planilha,
+                  o seu concorrente já está escalando. O <span className="text-foreground font-semibold">Contabiliza AI</span> automatiza
+                  a burocracia financeira para que você foque no que realmente importa:
+                  {" "}<span className="text-foreground font-semibold">vender mais e faturar mais</span>.
+                </p>
               </div>
             </ScrollReveal>
 
-            <ScrollReveal direction="up" delay={100}>
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
-                Chega de planilhas ou sistemas{" "}
-                <span className="text-primary relative inline-block">
-                  ineficientes
-                  <svg
-                    className="absolute -bottom-1.5 left-0 w-full"
-                    viewBox="0 0 200 8"
-                    fill="none"
-                    preserveAspectRatio="none"
-                  >
-                    <path
-                      d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      opacity="0.3"
+            {/* 3 Pilares */}
+            <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mb-16">
+              {[
+                {
+                  icon: FileText,
+                  title: "Emissão de Notas Fiscais",
+                  desc: "Notas emitidas automaticamente a cada venda, sem você precisar abrir uma única tela. A IA preenche, valida e envia — tudo no piloto automático.",
+                  accent: "📄",
+                },
+                {
+                  icon: FileBarChart,
+                  title: "Relatórios Automáticos",
+                  desc: "Relatórios mensais, trimestrais e anuais gerados sem esforço. DRE, fluxo de caixa e conciliação bancária prontos para o seu contador.",
+                  accent: "📊",
+                },
+                {
+                  icon: Sparkles,
+                  title: "Controle com IA",
+                  desc: "Receitas e despesas categorizadas automaticamente por inteligência artificial. Sem digitação manual, sem erro humano, sem retrabalho.",
+                  accent: "🤖",
+                },
+              ].map((item, i) => (
+                <ScrollReveal key={item.title} direction="up" delay={i * 100}>
+                  <div className="glass-card rounded-2xl p-6 h-full hover:-translate-y-1 transition-all duration-300 hover:shadow-lg group relative overflow-hidden">
+                    <div
+                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{
+                        background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.08) 0%, transparent 70%)",
+                      }}
                     />
-                  </svg>
-                </span>
-              </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto mt-4">
-                O tempo que você perde tentando conciliar números, caçando recibos e preenchendo células complexas é o
-                tempo que você deveria investir em{" "}
-                <span className="text-foreground font-semibold">vender mais e escalar o seu negócio</span>. A burocracia
-                não pode ser um obstáculo para o seu crescimento.
-              </p>
-            </ScrollReveal>
-
-            {/* Stats bar */}
-            <ScrollReveal direction="up" delay={200}>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6 max-w-2xl mx-auto pt-4">
-                {[
-                  { icon: Clock, value: "+85%", label: "Economia de tempo" },
-                  { icon: Target, value: "98%", label: "Precisão nos dados" },
-                  { icon: Zap, value: "1 min", label: "Por lançamento" },
-                ].map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="glass-card rounded-2xl p-4 text-center hover:-translate-y-1 transition-all duration-300"
-                    style={{
-                      background:
-                        "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%), rgba(255,255,255,0.72)",
-                    }}
-                  >
-                    <stat.icon className="h-5 w-5 text-primary mx-auto mb-2" />
-                    <p className="text-2xl font-extrabold text-foreground">{stat.value}</p>
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    <div className="relative z-10">
+                      <span className="text-3xl mb-3 block">{item.accent}</span>
+                      <h3 className="text-base font-bold text-foreground mb-2">{item.title}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                    </div>
                   </div>
-                ))}
+                </ScrollReveal>
+              ))}
+            </div>
+
+            {/* Economia de tempo e dinheiro */}
+            <ScrollReveal direction="up" delay={100}>
+              <div className="glass-card rounded-3xl p-8 md:p-10 relative overflow-hidden">
+                <div
+                  className="absolute inset-0 rounded-3xl"
+                  style={{
+                    background: "radial-gradient(ellipse at 30% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, hsla(25, 95%, 53%, 0.04) 0%, transparent 50%)",
+                  }}
+                />
+                <div className="relative z-10">
+                  <div className="text-center mb-8">
+                    <h3 className="text-2xl md:text-3xl font-extrabold text-foreground">
+                      Quanto custa <span className="text-primary">não automatizar</span>?
+                    </h3>
+                    <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
+                      Faça as contas: o tempo que você gasta com burocracia financeira é tempo (e dinheiro) que nunca volta.
+                    </p>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    {[
+                      { emoji: "⏱️", value: "+20h", sub: "/ mês economizadas", desc: "Horas que você gastava preenchendo planilhas, emitindo notas e conferindo extratos." },
+                      { emoji: "💰", value: "R$ 2.500", sub: "/ mês em economia", desc: "Custo médio de um assistente financeiro que você não precisará contratar." },
+                      { emoji: "🎯", value: "Zero", sub: "erros manuais", desc: "A IA categoriza e concilia automaticamente, eliminando falhas humanas." },
+                      { emoji: "📈", value: "+40%", sub: "mais foco em vendas", desc: "Tempo livre que volta para estratégia, tráfego e crescimento real." },
+                    ].map((stat, i) => (
+                      <div
+                        key={i}
+                        className="glass-card rounded-2xl p-5 text-center hover:-translate-y-1 transition-all duration-300"
+                      >
+                        <span className="text-2xl block mb-2">{stat.emoji}</span>
+                        <p className="text-2xl font-extrabold text-foreground">{stat.value}</p>
+                        <p className="text-xs font-semibold text-primary">{stat.sub}</p>
+                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{stat.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="text-center mt-8">
+                    <Button onClick={() => navigate("/register")} size="lg" className="rounded-full px-8 shadow-lg shadow-primary/20">
+                      Começar meu teste grátis de 30 dias
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </ScrollReveal>
           </div>
