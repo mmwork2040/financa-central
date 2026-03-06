@@ -334,7 +334,6 @@ const LandingPage = () => {
                 </div>
               </ScrollReveal>
             </div>
-            </div>
 
             {/* Economia de tempo e dinheiro */}
             <ScrollReveal direction="up" delay={100}>
