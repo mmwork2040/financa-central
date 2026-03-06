@@ -64,7 +64,7 @@ const LandingPage = () => {
       </nav>
 
       {/* ===== SEÇÃO 1: HERO ===== */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-x-clip">
         {/* Background decorativo */}
         <div className="absolute inset-0" style={{
           background: "radial-gradient(ellipse 80% 60% at 50% 0%, hsla(25, 95%, 53%, 0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 80%, hsla(25, 95%, 53%, 0.05) 0%, transparent 50%)"
