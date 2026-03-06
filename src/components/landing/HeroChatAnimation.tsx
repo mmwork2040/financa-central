@@ -143,7 +143,7 @@ const HeroChatAnimation = () => {
   }, [currentMsgIndex, typedLength, phase]);
 
   return (
-    <div ref={scrollRef} className="px-3 py-3 space-y-2.5 overflow-y-auto max-h-[380px] touch-none pointer-events-none">
+    <div ref={scrollRef} className="px-3 py-3 space-y-2.5 overflow-y-auto max-h-[380px] pointer-events-none">
       {messages.map((msg, idx) => {
         if (idx > currentMsgIndex) return null;
 
