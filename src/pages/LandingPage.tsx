@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,13 +39,14 @@ import ContasListMockup from "@/components/landing/ContasListMockup";
 import IntegrationsMockup from "@/components/landing/IntegrationsMockup";
 import ReportsMockup from "@/components/landing/ReportsMockup";
 import PricingCard from "@/components/landing/PricingCard";
+import PersonalDashboardMockup from "@/components/landing/PersonalDashboardMockup";
 import SocialProofSection from "@/components/landing/SocialProofSection";
 import FloatingStatCard from "@/components/landing/FloatingStatCard";
 import ScrollReveal from "@/components/common/ScrollReveal";
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const [billingPeriod, setBillingPeriod] = React.useState<"mensal" | "anual">("anual");
+  const [billingPeriod, setBillingPeriod] = useState<"mensal" | "anual">("anual");
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,7 +96,7 @@ const LandingPage = () => {
                   Nº1 EM GESTÃO FINANCEIRA COM IA
                 </Badge>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
-                  O controle financeiro do seu negócio digital a uma{" "}
+                  O controle financeiro do seu negócio e da sua vida a uma{" "}
                   <span className="text-primary relative">
                     mensagem de distância
                     <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
@@ -109,7 +111,7 @@ const LandingPage = () => {
                   </span>
                 </h1>
                 <p className="text-lg text-muted-foreground max-w-lg mx-auto md:mx-0 leading-relaxed">
-                  Conheça a plataforma de gestão financeira focada no mercado digital, acelerada por inteligência
+                  Conheça sua nova plataforma de gestão financeira para sua empresa, acelerada por inteligência
                   artificial.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start pt-2">
@@ -804,106 +806,230 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ===== SEÇÃO 6: PLANOS E PREÇOS ===== */}
+      {/* ===== SEÇÃO 6: GESTÃO PESSOAL ===== */}
+      <section className="relative border-t border-border/40">
+        <div className="absolute inset-0" style={{
+          background: "radial-gradient(ellipse 80% 60% at 50% 30%, hsla(25, 95%, 53%, 0.06) 0%, transparent 60%)"
+        }} />
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24 relative">
+          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <ScrollReveal direction="left">
+              <div className="space-y-5">
+                <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px]">
+                  Incluso em todos os planos
+                </Badge>
+                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground leading-tight">
+                  Como não existe CNPJ forte sem CPF forte, em todos os planos você terá o{" "}
+                  <span className="text-primary relative inline-block">
+                    Contabiliza AI Pessoal
+                    <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
+                      <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
+                    </svg>
+                  </span>
+                </h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  Controle suas finanças pessoais em paralelo: organize receitas e despesas do CPF, acompanhe faturas dos seus cartões de crédito, acumule milhas e tenha visão total do seu patrimônio — tudo no mesmo sistema, a uma mensagem de distância.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {["Receitas e Despesas Pessoais", "Faturas de Cartões", "Patrimônio e Investimentos", "Tudo via Chat com IA"].map((item) => (
+                    <span key={item} className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-medium">
+                      <Check className="h-3 w-3" />
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </ScrollReveal>
+            <ScrollReveal direction="right" delay={150}>
+              <PersonalDashboardMockup />
+            </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== SEÇÃO 7: PLANOS E PREÇOS ===== */}
       <section className="border-t border-border/40">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
           <ScrollReveal direction="up">
             <div className="text-center mb-4">
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">Planos e Preços</h2>
-              <p className="mt-3 text-muted-foreground text-lg max-w-xl mx-auto">
-                Escolha o formato ideal para o momento da sua empresa. Teste por 30 dias grátis em qualquer opção e
-                cancele quando quiser.
-              </p>
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+                💳 Escolha o plano ideal para o momento do seu{" "}
+                <span className="text-primary relative inline-block">
+                  negócio
+                  <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
+                    <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
+                  </svg>
+                </span>
+              </h2>
             </div>
           </ScrollReveal>
 
-          {/* Toggle mensal/anual */}
-          <div className="flex justify-center mt-8 mb-12">
-            <div className="inline-flex items-center gap-1 rounded-full bg-muted p-1">
+          {/* Toggle Mensal / Anual */}
+          <ScrollReveal direction="up" delay={50}>
+            <div className="flex items-center justify-center gap-2 mt-8 mb-12">
               <button
                 onClick={() => setBillingPeriod("mensal")}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${billingPeriod === "mensal" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                  billingPeriod === "mensal"
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
+                }`}
               >
                 Mensal
               </button>
               <button
                 onClick={() => setBillingPeriod("anual")}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${billingPeriod === "anual" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                  billingPeriod === "anual"
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
+                }`}
               >
                 Anual
+                <Badge className="ml-2 bg-green-500/90 text-white text-[10px] px-1.5 py-0 rounded-full border-0">Economia</Badge>
               </button>
             </div>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-6xl mx-auto items-stretch px-2">
+          {/* 3 cards principais */}
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto items-stretch px-2">
             <ScrollReveal direction="up" delay={0}>
               <PricingCard
-                title="Start"
-                emoji="🚀"
-                monthlyPrice={97}
-                annualPrice={57}
+                emoji="🟢"
+                title="Plano Start"
+                description="Para quem está dando os primeiros passos no digital e quer estruturar a base do jeito certo, sem misturar as contas."
+                monthlyPrice={79}
+                annualPrice={49}
                 billingPeriod={billingPeriod}
-                description="Para quem está começando a organizar as finanças."
-                buttonLabel="Começar grátis"
                 features={[
-                  "100 transações/mês",
-                  "50 Notas Fiscais/mês",
-                  "Gestão Pessoal + Empresarial",
-                  "Suporte por chat",
+                  "Até 100 lançamentos/mês",
+                  "Até 50 Notas Fiscais/mês",
+                  "Gestão Dupla: CPF + CNPJ",
+                  "Integração: Vendas e Meta Ads",
                 ]}
+                buttonLabel="Começar meu teste grátis"
               />
             </ScrollReveal>
             <ScrollReveal direction="up" delay={100}>
               <PricingCard
-                title="Growth"
-                emoji="📈"
-                monthlyPrice={197}
-                annualPrice={147}
+                emoji="🚀"
+                title="Plano Growth"
+                description="Para negócios em aceleração e infoprodutores que precisam de automação financeira para focar em escalar suas campanhas."
+                monthlyPrice={147}
+                annualPrice={97}
                 billingPeriod={billingPeriod}
-                description="Ideal para empresas em crescimento acelerado."
                 highlighted
                 badge="Mais Popular"
-                buttonLabel="Começar grátis"
                 features={[
-                  "500 transações/mês",
-                  "250 Notas Fiscais/mês",
-                  "Gestão Pessoal + Empresarial",
-                  "Relatórios avançados",
-                  "Suporte prioritário",
+                  "Até 500 lançamentos/mês",
+                  "Até 250 Notas Fiscais/mês",
+                  "Gestão Dupla: CPF + CNPJ",
+                  "Integração: Vendas e Meta Ads",
                 ]}
+                buttonLabel="Escalar com o Growth"
               />
             </ScrollReveal>
             <ScrollReveal direction="up" delay={200}>
               <PricingCard
-                title="Pro"
                 emoji="💎"
-                monthlyPrice={397}
+                title="Plano Pro"
+                description="Para operações robustas e marcas já consolidadas no mercado que exigem alta capacidade de processamento."
+                monthlyPrice={349}
                 annualPrice={297}
                 billingPeriod={billingPeriod}
-                description="Para operações robustas que exigem o máximo."
-                buttonLabel="Começar grátis"
                 features={[
-                  "Transações ilimitadas",
-                  "1.500 Notas Fiscais/mês",
-                  "Gestão Pessoal + Empresarial",
-                  "IA avançada",
-                  "Relatórios completos",
-                  "Suporte VIP",
+                  "Lançamentos Ilimitados",
+                  "Até 1.500 Notas Fiscais/mês",
+                  "Gestão Dupla: CPF + CNPJ",
+                  "Integração: Vendas e Meta Ads",
                 ]}
+                buttonLabel="Dominar com o Pro"
               />
             </ScrollReveal>
-            <ScrollReveal direction="up" delay={300}>
-              <PricingCard
-                title="Enterprise"
-                emoji="🏢"
-                isEnterprise
-                description="Para operações de alto volume."
-                enterpriseDescription="Plano personalizado com acesso via API, múltiplas empresas, integrações avançadas e suporte dedicado. Fale com nosso time."
-                buttonLabel="Falar com vendas"
-                whatsappUrl="https://wa.me/5500000000000"
-                features={[]}
-              />
-            </ScrollReveal>
+          </div>
+
+          {/* Enterprise — banner sutil abaixo */}
+          <ScrollReveal direction="up" delay={300}>
+            <div className="max-w-5xl mx-auto mt-10 px-2">
+              <div className="glass-card rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 md:gap-8 border border-border/60">
+                <div className="text-3xl shrink-0">🏢</div>
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-lg font-bold text-foreground mb-1">Enterprise / Alto Volume</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Sua operação emite mais de 1.500 Notas Fiscais por mês ou sua equipe precisa de acesso via API? Nós montamos uma infraestrutura dedicada para o seu tamanho.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="rounded-full px-6 shrink-0"
+                  onClick={() => window.open("https://wa.me/5511999999999", "_blank")}
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Falar com um Especialista
+                </Button>
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ===== SEÇÃO 8: FAQ ===== */}
+      <section className="border-t border-border/40">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+          <ScrollReveal direction="up">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+                ❓ Perguntas{" "}
+                <span className="text-primary relative inline-block">
+                  Frequentes
+                  <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
+                    <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
+                  </svg>
+                </span>
+              </h2>
+            </div>
+          </ScrollReveal>
+
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="space-y-3">
+              {[
+                {
+                  q: 'O que o sistema considera como "lançamento" (transação)?',
+                  a: 'Cada movimentação financeira registrada no sistema é um lançamento. Isso inclui as vendas que entram pelas plataformas (Hotmart, Kiwify, etc.), os pagamentos de anúncios no Meta Ads, o pagamento de um fornecedor e as suas despesas pessoais (já que você controla CNPJ e CPF no mesmo lugar). Se o seu volume aumentar no meio do mês, você pode fazer o upgrade de plano a qualquer momento com apenas um clique.',
+                },
+                {
+                  q: 'Como funciona essa gestão de CNPJ e CPF juntos? Vai misturar tudo?',
+                  a: 'Pelo contrário, vai separar do jeito certo! O lema "Não existe CNPJ forte com CPF fraco" significa que você terá as duas visões consolidadas na mesma conta, mas organizadas de forma independente. Você saberá exatamente o que é dinheiro da empresa e o que é o seu pró-labore ou despesa pessoal, acabando com a confusão na hora de fechar o mês.',
+                },
+                {
+                  q: 'Gasto muito com Meta Ads no cartão de crédito. O Contabiliza AI me ajuda com isso?',
+                  a: 'Com certeza. O sistema faz a conciliação inteligente das faturas dos seus cartões de crédito PJ cruzando com os seus gastos em anúncios. Inclusive, ao organizar essas faturas de alto volume de tráfego aliado à sua visão de pessoa física (CPF), fica muito mais fácil ter previsibilidade para gerenciar os pontos e as milhas aéreas geradas pelos gastos da empresa, transformando esse custo em benefício real.',
+                },
+                {
+                  q: 'O Contabiliza AI substitui o meu contador?',
+                  a: 'Não. Nós somos o melhor amigo do seu contador. O Contabiliza AI organiza a bagunça diária, emite as notas fiscais no automático e categoriza suas despesas com Inteligência Artificial. No final do mês, seu contador recebe tudo mastigado, em formato de relatório ou exportação, evitando multas e dores de cabeça com a Receita Federal.',
+                },
+                {
+                  q: 'E se eu ultrapassar o limite de notas fiscais do meu plano? Minhas vendas vão parar?',
+                  a: 'De forma alguma! Suas notas continuarão sendo emitidas normalmente. Quando você atingir 100% do limite do seu plano, o sistema enviará um aviso amigável sugerindo o upgrade para a próxima categoria, garantindo que sua operação (e seus lançamentos) nunca travem por questões de sistema.',
+                },
+                {
+                  q: 'É seguro conectar minhas contas e plataformas?',
+                  a: 'Totalmente. O Contabiliza AI utiliza integrações oficiais (APIs) e leitura de dados bancários com criptografia de ponta. A nossa Inteligência Artificial apenas lê e categoriza os dados para facilitar a sua vida, sem permissão para realizar transferências ou movimentações não autorizadas.',
+                },
+              ].map((item, i) => (
+                <ScrollReveal key={i} direction="up" delay={i * 60}>
+                  <AccordionItem value={`faq-${i}`} className="glass-card rounded-2xl border border-border/60 px-5 overflow-hidden">
+                    <AccordionTrigger className="text-sm font-semibold text-foreground text-left py-4 hover:no-underline gap-3">
+                      {item.q}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-4">
+                      {item.a}
+                    </AccordionContent>
+                  </AccordionItem>
+                </ScrollReveal>
+              ))}
+            </Accordion>
           </div>
         </div>
       </section>
