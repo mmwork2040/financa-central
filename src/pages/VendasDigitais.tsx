@@ -403,24 +403,36 @@ const VendasDigitais = () => {
                     {invoiceStatusBadge(venda)}
                     <div className="flex gap-1 mt-1">
                       {/* Emit invoice button */}
-                      {canAlterar && venda.status === "aprovada" && (!venda.invoice_status || venda.invoice_status === "PENDING_EMISSION" || venda.invoice_status === "REJECTED") && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 text-primary"
-                                disabled={emittingId === venda.id}
-                                onClick={() => handleEmitInvoice(venda.id)}
-                              >
-                                {emittingId === venda.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p className="text-xs">Emitir Nota Fiscal</p></TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
+                      {canAlterar && venda.status === "aprovada" && (!venda.invoice_status || venda.invoice_status === "PENDING_EMISSION" || venda.invoice_status === "REJECTED") && (() => {
+                        const { ready, missing } = getInvoiceReadiness(venda);
+                        return (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={cn("h-6 w-6", ready ? "text-primary" : "text-amber-500")}
+                                  disabled={emittingId === venda.id}
+                                  onClick={() => handleEmitInvoice(venda.id)}
+                                >
+                                  {emittingId === venda.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {ready ? (
+                                  <p className="text-xs">Emitir Nota Fiscal</p>
+                                ) : (
+                                  <div className="text-xs space-y-0.5">
+                                    <p className="font-semibold">Campos obrigatórios faltando:</p>
+                                    {missing.map(m => <p key={m}>• {m}</p>)}
+                                  </div>
+                                )}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        );
+                      })()}
                       {/* PDF download */}
                       {venda.invoice_pdf_url && (
                         <TooltipProvider>
