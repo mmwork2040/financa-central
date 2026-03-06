@@ -134,6 +134,56 @@ const VendasDigitais = () => {
     }
   };
 
+  const handleEmitInvoice = async (vendaId: string) => {
+    setEmittingId(vendaId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/spedy-emit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ venda_id: vendaId }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || result.details || "Erro ao emitir nota");
+      toast.success("Nota enviada para processamento!");
+      await fetchVendas();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao emitir nota fiscal");
+    } finally {
+      setEmittingId(null);
+    }
+  };
+
+  const invoiceStatusBadge = (venda: any) => {
+    const status = venda.invoice_status;
+    if (!status || status === "PENDING_EMISSION") return null;
+    const map: Record<string, { label: string; className: string }> = {
+      PROCESSING: { label: "🟡 Processando NF", className: "bg-amber-100 text-amber-700" },
+      AUTHORIZED: { label: "🟢 NF Emitida", className: "bg-green-100 text-green-700" },
+      REJECTED: { label: "🔴 NF Rejeitada", className: "bg-red-100 text-red-700" },
+      CANCELED: { label: "⚪ NF Cancelada", className: "bg-muted text-muted-foreground" },
+    };
+    const info = map[status] || { label: status, className: "" };
+    if (status === "REJECTED" && venda.invoice_error_message) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Badge className={cn("text-[10px] cursor-help", info.className)}>{info.label}</Badge>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="text-xs">{venda.invoice_error_message}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    return <Badge className={cn("text-[10px]", info.className)}>{info.label}</Badge>;
+  };
+
   const filtered = vendas.filter(v => {
     const matchSearch = !search ||
       v.produto?.toLowerCase().includes(search.toLowerCase()) ||
