@@ -19,6 +19,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Plus, UserPlus } from "lucide-react";
+import { QuickAddClienteModal } from "@/components/lancamentos/form/QuickAddClienteModal";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -361,18 +362,23 @@ const VendaFormDialog: React.FC<VendaFormDialogProps> = ({
           {/* Cliente */}
           <div className="space-y-1.5">
             <Label>Cliente</Label>
-            <Select value={clienteId || "none"} onValueChange={(v) => handleClienteSelect(v === "none" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhum</SelectItem>
-                {clientes.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                ))}
-                <SelectItem value="new">
-                  <span className="flex items-center gap-1"><UserPlus className="h-3 w-3" /> Novo cliente</span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Select value={clienteId || "none"} onValueChange={(v) => handleClienteSelect(v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {clientes.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                    ))}
+                    <SelectItem value="new">
+                      <span className="flex items-center gap-1"><UserPlus className="h-3 w-3" /> Novo cliente</span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <QuickAddClienteModal onSuccess={fetchClientes} />
+            </div>
           </div>
 
           {/* New client inline */}
