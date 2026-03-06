@@ -959,6 +959,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         formasPagamento,
         contasBancarias,
         projetos,
+        cartoesCredito,
         handleDateChange,
         openDeleteModal,
         setOpenDeleteModal,
