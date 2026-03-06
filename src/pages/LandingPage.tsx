@@ -915,8 +915,8 @@ const LandingPage = () => {
                 emoji="🚀"
                 title="Plano Growth"
                 description="Para negócios em aceleração e infoprodutores que precisam de automação financeira para focar em escalar suas campanhas."
-                monthlyPrice={147}
-                annualPrice={97}
+                monthlyPrice={129}
+                annualPrice={1290}
                 billingPeriod={billingPeriod}
                 highlighted
                 badge="Mais Popular"
