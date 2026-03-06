@@ -800,7 +800,8 @@ const LandingPage = () => {
             </ScrollReveal>
 
             {/* Feature 5 — Integrações */}
-            <ScrollReveal direction="left" delay={100} id="integracoes">
+            <div id="integracoes">
+            <ScrollReveal direction="left" delay={100}>
               <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
                 <div className="space-y-4">
                   <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px]">
