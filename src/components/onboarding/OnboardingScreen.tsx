@@ -39,7 +39,13 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success(`"${empresa.nome}" foi criada com sucesso.`);
-      setTimeout(() => window.location.reload(), 1000);
+      // If empresa has CNPJ, show fiscal config dialog
+      if (empresa.cnpj.trim() && data?.empresaId) {
+        setNewEmpresaId(data.empresaId);
+        setFiscalDialogOpen(true);
+      } else {
+        setTimeout(() => window.location.reload(), 1000);
+      }
     } catch (error: any) {
       toast.error(error.message);
     } finally {
