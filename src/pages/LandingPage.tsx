@@ -44,6 +44,7 @@ import ScrollReveal from "@/components/common/ScrollReveal";
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const [billingPeriod, setBillingPeriod] = React.useState<"mensal" | "anual">("anual");
 
   return (
     <div className="min-h-screen bg-background">
