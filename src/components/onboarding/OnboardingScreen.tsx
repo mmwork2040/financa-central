@@ -19,6 +19,8 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
   const [loading, setLoading] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [empresa, setEmpresa] = useState({ nome: "", cnpj: "", email: "", telefone: "", endereco: "" });
+  const [fiscalDialogOpen, setFiscalDialogOpen] = useState(false);
+  const [newEmpresaId, setNewEmpresaId] = useState<string | null>(null);
 
   const handleChange = (field: string, value: string) => {
     setEmpresa(prev => ({ ...prev, [field]: value }));
