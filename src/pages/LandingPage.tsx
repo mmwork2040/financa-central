@@ -818,100 +818,93 @@ const LandingPage = () => {
           </ScrollReveal>
 
           {/* Toggle mensal/anual */}
-          {(() => {
-            const [billingPeriod, setBillingPeriod] = React.useState<"mensal" | "anual">("anual");
-            return (
-              <>
-                <div className="flex justify-center mt-8 mb-12">
-                  <div className="inline-flex items-center gap-1 rounded-full bg-muted p-1">
-                    <button
-                      onClick={() => setBillingPeriod("mensal")}
-                      className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${billingPeriod === "mensal" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      Mensal
-                    </button>
-                    <button
-                      onClick={() => setBillingPeriod("anual")}
-                      className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${billingPeriod === "anual" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      Anual
-                    </button>
-                  </div>
-                </div>
+          <div className="flex justify-center mt-8 mb-12">
+            <div className="inline-flex items-center gap-1 rounded-full bg-muted p-1">
+              <button
+                onClick={() => setBillingPeriod("mensal")}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${billingPeriod === "mensal" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Mensal
+              </button>
+              <button
+                onClick={() => setBillingPeriod("anual")}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${billingPeriod === "anual" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Anual
+              </button>
+            </div>
+          </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-6xl mx-auto items-stretch px-2">
-                  <ScrollReveal direction="up" delay={0}>
-                    <PricingCard
-                      title="Start"
-                      emoji="🚀"
-                      monthlyPrice={97}
-                      annualPrice={57}
-                      billingPeriod={billingPeriod}
-                      description="Para quem está começando a organizar as finanças."
-                      buttonLabel="Começar grátis"
-                      features={[
-                        "100 transações/mês",
-                        "50 Notas Fiscais/mês",
-                        "Gestão Pessoal + Empresarial",
-                        "Suporte por chat",
-                      ]}
-                    />
-                  </ScrollReveal>
-                  <ScrollReveal direction="up" delay={100}>
-                    <PricingCard
-                      title="Growth"
-                      emoji="📈"
-                      monthlyPrice={197}
-                      annualPrice={147}
-                      billingPeriod={billingPeriod}
-                      description="Ideal para empresas em crescimento acelerado."
-                      highlighted
-                      badge="Mais Popular"
-                      buttonLabel="Começar grátis"
-                      features={[
-                        "500 transações/mês",
-                        "250 Notas Fiscais/mês",
-                        "Gestão Pessoal + Empresarial",
-                        "Relatórios avançados",
-                        "Suporte prioritário",
-                      ]}
-                    />
-                  </ScrollReveal>
-                  <ScrollReveal direction="up" delay={200}>
-                    <PricingCard
-                      title="Pro"
-                      emoji="💎"
-                      monthlyPrice={397}
-                      annualPrice={297}
-                      billingPeriod={billingPeriod}
-                      description="Para operações robustas que exigem o máximo."
-                      buttonLabel="Começar grátis"
-                      features={[
-                        "Transações ilimitadas",
-                        "1.500 Notas Fiscais/mês",
-                        "Gestão Pessoal + Empresarial",
-                        "IA avançada",
-                        "Relatórios completos",
-                        "Suporte VIP",
-                      ]}
-                    />
-                  </ScrollReveal>
-                  <ScrollReveal direction="up" delay={300}>
-                    <PricingCard
-                      title="Enterprise"
-                      emoji="🏢"
-                      isEnterprise
-                      description="Para operações de alto volume."
-                      enterpriseDescription="Plano personalizado com acesso via API, múltiplas empresas, integrações avançadas e suporte dedicado. Fale com nosso time."
-                      buttonLabel="Falar com vendas"
-                      whatsappUrl="https://wa.me/5500000000000"
-                      features={[]}
-                    />
-                  </ScrollReveal>
-                </div>
-              </>
-            );
-          })()}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-6xl mx-auto items-stretch px-2">
+            <ScrollReveal direction="up" delay={0}>
+              <PricingCard
+                title="Start"
+                emoji="🚀"
+                monthlyPrice={97}
+                annualPrice={57}
+                billingPeriod={billingPeriod}
+                description="Para quem está começando a organizar as finanças."
+                buttonLabel="Começar grátis"
+                features={[
+                  "100 transações/mês",
+                  "50 Notas Fiscais/mês",
+                  "Gestão Pessoal + Empresarial",
+                  "Suporte por chat",
+                ]}
+              />
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={100}>
+              <PricingCard
+                title="Growth"
+                emoji="📈"
+                monthlyPrice={197}
+                annualPrice={147}
+                billingPeriod={billingPeriod}
+                description="Ideal para empresas em crescimento acelerado."
+                highlighted
+                badge="Mais Popular"
+                buttonLabel="Começar grátis"
+                features={[
+                  "500 transações/mês",
+                  "250 Notas Fiscais/mês",
+                  "Gestão Pessoal + Empresarial",
+                  "Relatórios avançados",
+                  "Suporte prioritário",
+                ]}
+              />
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={200}>
+              <PricingCard
+                title="Pro"
+                emoji="💎"
+                monthlyPrice={397}
+                annualPrice={297}
+                billingPeriod={billingPeriod}
+                description="Para operações robustas que exigem o máximo."
+                buttonLabel="Começar grátis"
+                features={[
+                  "Transações ilimitadas",
+                  "1.500 Notas Fiscais/mês",
+                  "Gestão Pessoal + Empresarial",
+                  "IA avançada",
+                  "Relatórios completos",
+                  "Suporte VIP",
+                ]}
+              />
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={300}>
+              <PricingCard
+                title="Enterprise"
+                emoji="🏢"
+                isEnterprise
+                description="Para operações de alto volume."
+                enterpriseDescription="Plano personalizado com acesso via API, múltiplas empresas, integrações avançadas e suporte dedicado. Fale com nosso time."
+                buttonLabel="Falar com vendas"
+                whatsappUrl="https://wa.me/5500000000000"
+                features={[]}
+              />
+            </ScrollReveal>
+          </div>
         </div>
       </section>
 
