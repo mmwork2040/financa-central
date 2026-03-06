@@ -39,7 +39,7 @@ const PricingCard = ({
 }: PricingCardProps) => {
   const navigate = useNavigate();
 
-  const currentPrice = billingPeriod === "anual" ? annualPrice : monthlyPrice;
+  const currentPrice = billingPeriod === "anual" && annualPrice ? annualPrice / 12 : monthlyPrice;
   const altPrice = billingPeriod === "anual" ? monthlyPrice : annualPrice;
   const altLabel = billingPeriod === "anual" ? "mensal" : "anual";
 
