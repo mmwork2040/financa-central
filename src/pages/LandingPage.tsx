@@ -59,23 +59,6 @@ const LandingPage = () => {
             </div>
             <span className="text-xl font-extrabold tracking-tight text-foreground">Contabiliza AI</span>
           </div>
-          <div className="hidden md:flex items-center gap-1">
-            {[
-              { label: "Funções", id: "funcoes" },
-              { label: "Dashboards", id: "dashboards" },
-              { label: "Para quem é", id: "para-quem" },
-              { label: "Integrações", id: "integracoes" },
-              { label: "Planos", id: "planos" },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent/50"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => navigate("/login")}>
               Entrar
@@ -113,9 +96,9 @@ const LandingPage = () => {
                   Nº1 EM GESTÃO FINANCEIRA COM IA
                 </Badge>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
-                  O controle financeiro do seu negócio e da sua vida a uma{" "}
+                  O controle financeiro do seu negócio digital{" "}
                   <span className="text-primary relative">
-                    mensagem de distância
+                    direto no seu Whatsapp
                     <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
                       <path
                         d="M2 8C50 2 100 2 150 6C200 10 250 4 298 8"
@@ -128,8 +111,8 @@ const LandingPage = () => {
                   </span>
                 </h1>
                 <p className="text-lg text-muted-foreground max-w-lg mx-auto md:mx-0 leading-relaxed">
-                  Conheça sua nova plataforma de gestão financeira para sua empresa, acelerada por inteligência
-                  artificial.
+                  Conheça sua nova plataforma de gestão financeira focada em empresas do digital, acelerada por
+                  inteligência artificial.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start pt-2">
                   <Button
@@ -199,7 +182,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ===== SEÇÃO 2: PARE DE PERDER TEMPO ===== */}
+      {/* ===== SEÇÃO 2: CONEXÃO COM A DOR ===== */}
       <section className="relative border-y border-border/40">
         <div
           className="absolute inset-0"
@@ -207,186 +190,118 @@ const LandingPage = () => {
             background: "radial-gradient(ellipse 60% 80% at 50% 50%, hsla(25, 95%, 53%, 0.04) 0%, transparent 60%)",
           }}
         />
-        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-28 relative">
-          <div className="max-w-5xl mx-auto">
-            {/* Headline */}
-            <ScrollReveal direction="up">
-              <div className="text-center mb-14">
-                <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px] mb-4">
-                  Automação inteligente
-                </Badge>
-                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
-                  Pare de preencher{" "}
-                  <span className="text-primary relative inline-block">
-                    planilhas
-                    <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
-                      <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
-                    </svg>
-                  </span>{" "}
-                  e comece a crescer
-                </h2>
-                <p className="mt-4 text-lg text-muted-foreground leading-relaxed max-w-3xl mx-auto">
-                  Enquanto você gasta horas emitindo nota fiscal, conferindo extrato e tentando fechar o mês numa planilha,
-                  o seu concorrente já está escalando. O <span className="text-foreground font-semibold">Contabiliza AI</span> automatiza
-                  a burocracia financeira para que você foque no que realmente importa:
-                  {" "}<span className="text-foreground font-semibold">vender mais e faturar mais</span>.
-                </p>
-              </div>
-            </ScrollReveal>
-
-            {/* 3 Pilares — layout visual expandido */}
-            <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mb-16">
-              {[
-                {
-                  title: "Emissão de Notas Fiscais",
-                  desc: "Notas emitidas automaticamente a cada venda, sem você precisar abrir uma única tela. A IA preenche, valida e envia.",
-                  accent: "📄",
-                  mockup: (
-                    <div className="glass-card rounded-xl p-3 mt-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-foreground">NF-e #4.281</span>
-                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold">Emitida ✓</span>
-                      </div>
-                      <div className="h-px bg-border/60" />
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-foreground">NF-e #4.282</span>
-                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold">Emitida ✓</span>
-                      </div>
-                      <div className="h-px bg-border/60" />
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-foreground">NF-e #4.283</span>
-                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold animate-pulse">Emitindo...</span>
-                      </div>
-                    </div>
-                  ),
-                },
-                {
-                  title: "Relatórios Automáticos",
-                  desc: "Relatórios mensais, trimestrais e anuais gerados sem esforço. DRE, fluxo de caixa e conciliação prontos.",
-                  accent: "📊",
-                  mockup: (
-                    <div className="glass-card rounded-xl p-3 mt-4">
-                      <div className="flex items-end gap-1.5 h-16 justify-center">
-                        {[35, 52, 40, 68, 55, 72, 80, 65, 90, 75, 85, 95].map((h, i) => (
-                          <div
-                            key={i}
-                            className="rounded-sm w-3 transition-all duration-500"
-                            style={{
-                              height: `${h}%`,
-                              background: i >= 9
-                                ? "hsl(var(--primary))"
-                                : i >= 6
-                                  ? "hsla(25, 95%, 53%, 0.5)"
-                                  : "hsla(25, 95%, 53%, 0.2)",
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <div className="flex justify-between mt-2">
-                        <span className="text-[9px] text-muted-foreground">Jan</span>
-                        <span className="text-[9px] text-muted-foreground">Jun</span>
-                        <span className="text-[9px] text-muted-foreground">Dez</span>
-                      </div>
-                    </div>
-                  ),
-                },
-                {
-                  title: "Controle com IA",
-                  desc: "Receitas e despesas categorizadas automaticamente. Sem digitação manual, sem erro humano, sem retrabalho.",
-                  accent: "🤖",
-                  mockup: (
-                    <div className="glass-card rounded-xl p-3 mt-4 space-y-2">
-                      {[
-                        { cat: "Meta Ads", val: "- R$ 3.450", color: "text-destructive" },
-                        { cat: "Hotmart", val: "+ R$ 12.800", color: "text-green-600" },
-                        { cat: "Fornecedor", val: "- R$ 1.200", color: "text-destructive" },
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-primary/60" />
-                            <span className="text-[10px] text-foreground font-medium">{item.cat}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className={`text-[10px] font-bold ${item.color}`}>{item.val}</span>
-                            <Sparkles className="h-3 w-3 text-primary/50" />
-                          </div>
-                        </div>
-                      ))}
-                      <div className="text-[9px] text-center text-primary/70 font-medium pt-1">
-                        ✨ Categorizado pela IA
-                      </div>
-                    </div>
-                  ),
-                },
-              ].map((item, i) => (
-                <ScrollReveal key={item.title} direction="up" delay={i * 100}>
-                  <div className="glass-card rounded-2xl p-6 h-full hover:-translate-y-2 transition-all duration-300 hover:shadow-xl group relative overflow-hidden border border-border/50 hover:border-primary/20">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24 relative">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            <ScrollReveal direction="scale">
+              <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8 mb-8">
+                {/* Grupo "antes" */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {/* Planilha riscada */}
+                  <div className="relative glass-card rounded-xl sm:rounded-2xl p-3 sm:p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg">
                     <div
-                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                      className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
                       style={{
-                        background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.10) 0%, transparent 70%)",
+                        background: "radial-gradient(ellipse at 50% 0%, hsla(0, 84%, 60%, 0.08) 0%, transparent 70%)",
                       }}
                     />
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl shrink-0">
-                          {item.accent}
-                        </div>
-                        <h3 className="text-base font-bold text-foreground">{item.title}</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-                      {item.mockup}
-                    </div>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
-
-            {/* Economia de tempo e dinheiro */}
-            <ScrollReveal direction="up" delay={100}>
-              <div className="glass-card rounded-3xl p-8 md:p-10 relative overflow-hidden">
-                <div
-                  className="absolute inset-0 rounded-3xl"
-                  style={{
-                    background: "radial-gradient(ellipse at 30% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, hsla(25, 95%, 53%, 0.04) 0%, transparent 50%)",
-                  }}
-                />
-                <div className="relative z-10">
-                  <div className="text-center mb-8">
-                    <h3 className="text-2xl md:text-3xl font-extrabold text-foreground">
-                      Quanto custa <span className="text-primary">não automatizar</span>?
-                    </h3>
-                    <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-                      Faça as contas: o tempo que você gasta com burocracia financeira é tempo (e dinheiro) que nunca volta.
+                    <Table2 className="h-7 w-7 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 drop-shadow-sm" />
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1.5 sm:mt-2 font-medium">
+                      Planilhas
                     </p>
                   </div>
 
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    {[
-                      { emoji: "⏱️", value: "+20h", sub: "/ mês economizadas", desc: "Horas que você gastava preenchendo planilhas, emitindo notas e conferindo extratos." },
-                      { emoji: "💰", value: "R$ 2.500", sub: "/ mês em economia", desc: "Custo médio de um assistente financeiro que você não precisará contratar." },
-                      { emoji: "🎯", value: "Zero", sub: "erros manuais", desc: "A IA categoriza e concilia automaticamente, eliminando falhas humanas." },
-                      { emoji: "📈", value: "+40%", sub: "mais foco em vendas", desc: "Tempo livre que volta para estratégia, tráfego e crescimento real." },
-                    ].map((stat, i) => (
-                      <div
-                        key={i}
-                        className="glass-card rounded-2xl p-5 text-center hover:-translate-y-1 transition-all duration-300"
-                      >
-                        <span className="text-2xl block mb-2">{stat.emoji}</span>
-                        <p className="text-2xl font-extrabold text-foreground">{stat.value}</p>
-                        <p className="text-xs font-semibold text-primary">{stat.sub}</p>
-                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{stat.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="text-center mt-8">
-                    <Button onClick={() => navigate("/register")} size="lg" className="rounded-full px-8 shadow-lg shadow-primary/20">
-                      Começar meu teste grátis de 30 dias
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                  {/* Calculadora riscada */}
+                  <div className="relative glass-card rounded-xl sm:rounded-2xl p-3 sm:p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg">
+                    <div
+                      className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{
+                        background: "radial-gradient(ellipse at 50% 0%, hsla(0, 84%, 60%, 0.08) 0%, transparent 70%)",
+                      }}
+                    />
+                    <Calculator className="h-7 w-7 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 drop-shadow-sm" />
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1.5 sm:mt-2 font-medium text-center">
+                      Cálculos
+                      <br className="sm:hidden" /> manuais
+                    </p>
                   </div>
                 </div>
+
+                {/* Seta animada */}
+                <div className="flex flex-col items-center gap-0.5 sm:gap-1 px-1 sm:px-2 shrink-0">
+                  <div className="h-px w-6 sm:w-10 bg-gradient-to-r from-destructive/40 to-primary/60" />
+                  <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6 text-primary animate-pulse" />
+                  <div className="h-px w-6 sm:w-10 bg-gradient-to-r from-destructive/40 to-primary/60" />
+                </div>
+
+                {/* IA solução */}
+                <div className="relative glass-card rounded-xl sm:rounded-2xl p-3 sm:p-5 group hover:-translate-y-1 transition-all duration-300 hover:shadow-lg border-primary/20">
+                  <div
+                    className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-60 group-hover:opacity-100 transition-opacity"
+                    style={{
+                      background: "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.1) 0%, transparent 70%)",
+                    }}
+                  />
+                  <Sparkles className="h-7 w-7 sm:h-10 sm:w-10 text-primary" />
+                  <div className="h-4 w-4 sm:h-5 sm:w-5 bg-primary rounded-full flex items-center justify-center absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 shadow-md">
+                    <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary-foreground" />
+                  </div>
+                  <p className="text-[9px] sm:text-[10px] text-primary mt-1.5 sm:mt-2 font-semibold">IA Financeira</p>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal direction="up" delay={100}>
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+                Chega de planilhas ou sistemas{" "}
+                <span className="text-primary relative inline-block">
+                  ineficientes
+                  <svg
+                    className="absolute -bottom-1.5 left-0 w-full"
+                    viewBox="0 0 200 8"
+                    fill="none"
+                    preserveAspectRatio="none"
+                  >
+                    <path
+                      d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      opacity="0.3"
+                    />
+                  </svg>
+                </span>
+              </h2>
+              <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto mt-4">
+                O tempo que você perde tentando conciliar números, caçando recibos e preenchendo células complexas é o
+                tempo que você deveria investir em{" "}
+                <span className="text-foreground font-semibold">vender mais e escalar o seu negócio</span>. A burocracia
+                não pode ser um obstáculo para o seu crescimento.
+              </p>
+            </ScrollReveal>
+
+            {/* Stats bar */}
+            <ScrollReveal direction="up" delay={200}>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6 max-w-2xl mx-auto pt-4">
+                {[
+                  { icon: Clock, value: "+85%", label: "Economia de tempo" },
+                  { icon: Target, value: "98%", label: "Precisão nos dados" },
+                  { icon: Zap, value: "1 min", label: "Por lançamento" },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="glass-card rounded-2xl p-4 text-center hover:-translate-y-1 transition-all duration-300"
+                    style={{
+                      background:
+                        "radial-gradient(ellipse at 50% 0%, hsla(25, 95%, 53%, 0.06) 0%, transparent 70%), rgba(255,255,255,0.72)",
+                    }}
+                  >
+                    <stat.icon className="h-5 w-5 text-primary mx-auto mb-2" />
+                    <p className="text-2xl font-extrabold text-foreground">{stat.value}</p>
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  </div>
+                ))}
               </div>
             </ScrollReveal>
           </div>
@@ -394,7 +309,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 3: COMO FUNCIONA — TRILHA VISUAL ===== */}
-      <section id="dashboards" className="scroll-mt-20 container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
         <ScrollReveal direction="up">
           <div className="text-center mb-16 lg:mb-20">
             <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px] mb-4">
@@ -615,7 +530,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 4: FUNCIONALIDADES ===== */}
-      <section id="funcoes" className="scroll-mt-20 border-y border-border/40">
+      <section className="border-y border-border/40">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
           <div className="max-w-6xl mx-auto">
             <ScrollReveal direction="up">
@@ -800,7 +715,6 @@ const LandingPage = () => {
             </ScrollReveal>
 
             {/* Feature 5 — Integrações */}
-            <div id="integracoes">
             <ScrollReveal direction="left" delay={100}>
               <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
                 <div className="space-y-4">
@@ -818,13 +732,12 @@ const LandingPage = () => {
                 </div>
               </div>
             </ScrollReveal>
-            </div>
           </div>
         </div>
       </section>
 
       {/* ===== SEÇÃO 5: PARA QUEM É ===== */}
-      <section id="para-quem" className="scroll-mt-20 container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
         <ScrollReveal direction="up">
           <div className="text-center mb-12 lg:mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
@@ -895,9 +808,12 @@ const LandingPage = () => {
 
       {/* ===== SEÇÃO 6: GESTÃO PESSOAL ===== */}
       <section className="relative border-t border-border/40">
-        <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 30%, hsla(25, 95%, 53%, 0.06) 0%, transparent 60%)"
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "radial-gradient(ellipse 80% 60% at 50% 30%, hsla(25, 95%, 53%, 0.06) 0%, transparent 60%)",
+          }}
+        />
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24 relative">
           <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
             <ScrollReveal direction="left">
@@ -909,17 +825,38 @@ const LandingPage = () => {
                   Como não existe CNPJ forte sem CPF forte, em todos os planos você terá o{" "}
                   <span className="text-primary relative inline-block">
                     Contabiliza AI Pessoal
-                    <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
-                      <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
+                    <svg
+                      className="absolute -bottom-1.5 left-0 w-full"
+                      viewBox="0 0 200 8"
+                      fill="none"
+                      preserveAspectRatio="none"
+                    >
+                      <path
+                        d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        opacity="0.3"
+                      />
                     </svg>
                   </span>
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Controle suas finanças pessoais em paralelo: organize receitas e despesas do CPF, acompanhe faturas dos seus cartões de crédito, acumule milhas e tenha visão total do seu patrimônio — tudo no mesmo sistema, a uma mensagem de distância.
+                  Controle suas finanças pessoais em paralelo: organize receitas e despesas do CPF, acompanhe faturas
+                  dos seus cartões de crédito, acumule milhas e tenha visão total do seu patrimônio — tudo no mesmo
+                  sistema, a uma mensagem de distância.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {["Receitas e Despesas Pessoais", "Faturas de Cartões", "Patrimônio e Investimentos", "Tudo via Chat com IA"].map((item) => (
-                    <span key={item} className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-medium">
+                  {[
+                    "Receitas e Despesas Pessoais",
+                    "Faturas de Cartões",
+                    "Patrimônio e Investimentos",
+                    "Tudo via Chat com IA",
+                  ].map((item) => (
+                    <span
+                      key={item}
+                      className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-medium"
+                    >
                       <Check className="h-3 w-3" />
                       {item}
                     </span>
@@ -935,7 +872,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 7: PLANOS E PREÇOS ===== */}
-      <section id="planos" className="scroll-mt-20 border-t border-border/40">
+      <section className="border-t border-border/40">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
           <ScrollReveal direction="up">
             <div className="text-center mb-4">
@@ -943,8 +880,19 @@ const LandingPage = () => {
                 💳 Escolha o plano ideal para o momento do seu{" "}
                 <span className="text-primary relative inline-block">
                   negócio
-                  <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
-                    <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
+                  <svg
+                    className="absolute -bottom-1.5 left-0 w-full"
+                    viewBox="0 0 200 8"
+                    fill="none"
+                    preserveAspectRatio="none"
+                  >
+                    <path
+                      d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      opacity="0.3"
+                    />
                   </svg>
                 </span>
               </h2>
@@ -973,7 +921,9 @@ const LandingPage = () => {
                 }`}
               >
                 Anual
-                <Badge className="ml-2 bg-green-500/90 text-white text-[10px] px-1.5 py-0 rounded-full border-0">Economia</Badge>
+                <Badge className="ml-2 bg-green-500/90 text-white text-[10px] px-1.5 py-0 rounded-full border-0">
+                  Economia
+                </Badge>
               </button>
             </div>
           </ScrollReveal>
@@ -986,7 +936,7 @@ const LandingPage = () => {
                 title="Plano Start"
                 description="Para quem está dando os primeiros passos no digital e quer estruturar a base do jeito certo, sem misturar as contas."
                 monthlyPrice={79}
-                annualPrice={790}
+                annualPrice={49}
                 billingPeriod={billingPeriod}
                 features={[
                   "Até 100 lançamentos/mês",
@@ -1002,8 +952,8 @@ const LandingPage = () => {
                 emoji="🚀"
                 title="Plano Growth"
                 description="Para negócios em aceleração e infoprodutores que precisam de automação financeira para focar em escalar suas campanhas."
-                monthlyPrice={129}
-                annualPrice={1290}
+                monthlyPrice={147}
+                annualPrice={97}
                 billingPeriod={billingPeriod}
                 highlighted
                 badge="Mais Popular"
@@ -1021,8 +971,8 @@ const LandingPage = () => {
                 emoji="💎"
                 title="Plano Pro"
                 description="Para operações robustas e marcas já consolidadas no mercado que exigem alta capacidade de processamento."
-                monthlyPrice={229}
-                annualPrice={2290}
+                monthlyPrice={349}
+                annualPrice={297}
                 billingPeriod={billingPeriod}
                 features={[
                   "Lançamentos Ilimitados",
@@ -1043,7 +993,8 @@ const LandingPage = () => {
                 <div className="flex-1 text-center md:text-left">
                   <h3 className="text-lg font-bold text-foreground mb-1">Enterprise / Alto Volume</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Sua operação emite mais de 1.500 Notas Fiscais por mês ou sua equipe precisa de acesso via API? Nós montamos uma infraestrutura dedicada para o seu tamanho.
+                    Sua operação emite mais de 1.500 Notas Fiscais por mês ou sua equipe precisa de acesso via API? Nós
+                    montamos uma infraestrutura dedicada para o seu tamanho.
                   </p>
                 </div>
                 <Button
@@ -1069,8 +1020,19 @@ const LandingPage = () => {
                 ❓ Perguntas{" "}
                 <span className="text-primary relative inline-block">
                   Frequentes
-                  <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
-                    <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
+                  <svg
+                    className="absolute -bottom-1.5 left-0 w-full"
+                    viewBox="0 0 200 8"
+                    fill="none"
+                    preserveAspectRatio="none"
+                  >
+                    <path
+                      d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      opacity="0.3"
+                    />
                   </svg>
                 </span>
               </h2>
@@ -1082,31 +1044,34 @@ const LandingPage = () => {
               {[
                 {
                   q: 'O que o sistema considera como "lançamento" (transação)?',
-                  a: 'Cada movimentação financeira registrada no sistema é um lançamento. Isso inclui as vendas que entram pelas plataformas (Hotmart, Kiwify, etc.), os pagamentos de anúncios no Meta Ads, o pagamento de um fornecedor e as suas despesas pessoais (já que você controla CNPJ e CPF no mesmo lugar). Se o seu volume aumentar no meio do mês, você pode fazer o upgrade de plano a qualquer momento com apenas um clique.',
+                  a: "Cada movimentação financeira registrada no sistema é um lançamento. Isso inclui as vendas que entram pelas plataformas (Hotmart, Kiwify, etc.), os pagamentos de anúncios no Meta Ads, o pagamento de um fornecedor e as suas despesas pessoais (já que você controla CNPJ e CPF no mesmo lugar). Se o seu volume aumentar no meio do mês, você pode fazer o upgrade de plano a qualquer momento com apenas um clique.",
                 },
                 {
-                  q: 'Como funciona essa gestão de CNPJ e CPF juntos? Vai misturar tudo?',
+                  q: "Como funciona essa gestão de CNPJ e CPF juntos? Vai misturar tudo?",
                   a: 'Pelo contrário, vai separar do jeito certo! O lema "Não existe CNPJ forte com CPF fraco" significa que você terá as duas visões consolidadas na mesma conta, mas organizadas de forma independente. Você saberá exatamente o que é dinheiro da empresa e o que é o seu pró-labore ou despesa pessoal, acabando com a confusão na hora de fechar o mês.',
                 },
                 {
-                  q: 'Gasto muito com Meta Ads no cartão de crédito. O Contabiliza AI me ajuda com isso?',
-                  a: 'Com certeza. O sistema faz a conciliação inteligente das faturas dos seus cartões de crédito PJ cruzando com os seus gastos em anúncios. Inclusive, ao organizar essas faturas de alto volume de tráfego aliado à sua visão de pessoa física (CPF), fica muito mais fácil ter previsibilidade para gerenciar os pontos e as milhas aéreas geradas pelos gastos da empresa, transformando esse custo em benefício real.',
+                  q: "Gasto muito com Meta Ads no cartão de crédito. O Contabiliza AI me ajuda com isso?",
+                  a: "Com certeza. O sistema faz a conciliação inteligente das faturas dos seus cartões de crédito PJ cruzando com os seus gastos em anúncios. Inclusive, ao organizar essas faturas de alto volume de tráfego aliado à sua visão de pessoa física (CPF), fica muito mais fácil ter previsibilidade para gerenciar os pontos e as milhas aéreas geradas pelos gastos da empresa, transformando esse custo em benefício real.",
                 },
                 {
-                  q: 'O Contabiliza AI substitui o meu contador?',
-                  a: 'Não. Nós somos o melhor amigo do seu contador. O Contabiliza AI organiza a bagunça diária, emite as notas fiscais no automático e categoriza suas despesas com Inteligência Artificial. No final do mês, seu contador recebe tudo mastigado, em formato de relatório ou exportação, evitando multas e dores de cabeça com a Receita Federal.',
+                  q: "O Contabiliza AI substitui o meu contador?",
+                  a: "Não. Nós somos o melhor amigo do seu contador. O Contabiliza AI organiza a bagunça diária, emite as notas fiscais no automático e categoriza suas despesas com Inteligência Artificial. No final do mês, seu contador recebe tudo mastigado, em formato de relatório ou exportação, evitando multas e dores de cabeça com a Receita Federal.",
                 },
                 {
-                  q: 'E se eu ultrapassar o limite de notas fiscais do meu plano? Minhas vendas vão parar?',
-                  a: 'De forma alguma! Suas notas continuarão sendo emitidas normalmente. Quando você atingir 100% do limite do seu plano, o sistema enviará um aviso amigável sugerindo o upgrade para a próxima categoria, garantindo que sua operação (e seus lançamentos) nunca travem por questões de sistema.',
+                  q: "E se eu ultrapassar o limite de notas fiscais do meu plano? Minhas vendas vão parar?",
+                  a: "De forma alguma! Suas notas continuarão sendo emitidas normalmente. Quando você atingir 100% do limite do seu plano, o sistema enviará um aviso amigável sugerindo o upgrade para a próxima categoria, garantindo que sua operação (e seus lançamentos) nunca travem por questões de sistema.",
                 },
                 {
-                  q: 'É seguro conectar minhas contas e plataformas?',
-                  a: 'Totalmente. O Contabiliza AI utiliza integrações oficiais (APIs) e leitura de dados bancários com criptografia de ponta. A nossa Inteligência Artificial apenas lê e categoriza os dados para facilitar a sua vida, sem permissão para realizar transferências ou movimentações não autorizadas.',
+                  q: "É seguro conectar minhas contas e plataformas?",
+                  a: "Totalmente. O Contabiliza AI utiliza integrações oficiais (APIs) e leitura de dados bancários com criptografia de ponta. A nossa Inteligência Artificial apenas lê e categoriza os dados para facilitar a sua vida, sem permissão para realizar transferências ou movimentações não autorizadas.",
                 },
               ].map((item, i) => (
                 <ScrollReveal key={i} direction="up" delay={i * 60}>
-                  <AccordionItem value={`faq-${i}`} className="glass-card rounded-2xl border border-border/60 px-5 overflow-hidden">
+                  <AccordionItem
+                    value={`faq-${i}`}
+                    className="glass-card rounded-2xl border border-border/60 px-5 overflow-hidden"
+                  >
                     <AccordionTrigger className="text-sm font-semibold text-foreground text-left py-4 hover:no-underline gap-3">
                       {item.q}
                     </AccordionTrigger>
