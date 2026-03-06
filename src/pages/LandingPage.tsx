@@ -38,6 +38,7 @@ import ContasListMockup from "@/components/landing/ContasListMockup";
 import IntegrationsMockup from "@/components/landing/IntegrationsMockup";
 import ReportsMockup from "@/components/landing/ReportsMockup";
 import PricingCard from "@/components/landing/PricingCard";
+import PersonalDashboardMockup from "@/components/landing/PersonalDashboardMockup";
 import SocialProofSection from "@/components/landing/SocialProofSection";
 import FloatingStatCard from "@/components/landing/FloatingStatCard";
 import ScrollReveal from "@/components/common/ScrollReveal";
