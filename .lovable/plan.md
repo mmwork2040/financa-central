@@ -1,57 +1,74 @@
 
 
-## Scroll Animations for Landing Page Sections
+## Plano: Acelerar Transição de Contas
 
-### Overview
-Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
+### Problema Identificado
 
-### Approach
-Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
+A troca de empresa faz **duas coisas lentas em sequência**:
+1. Chama a Edge Function `switch-empresa` (latência de cold start ~1-3s)
+2. Faz `window.location.reload()`, que reinicia toda a app: auth, perfil, roles, plano — **5+ queries sequenciais ao banco**
 
-### Implementation Details
+### Solução
 
-**1. Create `src/hooks/useScrollReveal.ts`**
-- A custom hook that returns a `ref` callback
-- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
-- Adds a CSS class (e.g., `revealed`) when the element is visible
-- Fires once per element (unobserves after reveal)
+**Eliminar a Edge Function e o reload**. A atualização de `perfis.empresa_id` pode ser feita diretamente pelo cliente (RLS já permite `perfis_update_self` para o próprio usuário). Após o update, atualizar o estado local sem recarregar a página.
 
-**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
-- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
-- Accepts optional `delay` (stagger support) and `className`
-- Starts with opacity-0 and a small transform offset
-- On intersection, transitions to opacity-1 and transform-none
-- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
+### Alterações
 
-**3. Update `src/pages/LandingPage.tsx`**
-Wrap each section's content with `<ScrollReveal>`:
+**1. `src/contexts/AuthContext.tsx` — Refatorar `switchEmpresa`**
 
-| Section | Animation |
-|---------|-----------|
-| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
-| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
-| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
-| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
-| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
-| Social Proof | Scale for stat cards |
-| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
-| Footer | Simple fade-up |
+Substituir a chamada à Edge Function por um update direto na tabela `perfis` e atualizar o estado em memória sem `window.location.reload()`:
 
-**4. Add base CSS to `src/index.css`**
-```css
-.scroll-reveal {
-  opacity: 0;
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-.scroll-reveal.revealed {
-  opacity: 1;
-  transform: none !important;
-}
+```typescript
+const switchEmpresa = async (targetEmpresaId: string) => {
+  try {
+    // Verificar se pertence à empresa (já temos a lista local)
+    const targetEmpresa = empresas.find(e => e.empresa_id === targetEmpresaId);
+    if (!targetEmpresa && !isSuperAdmin) {
+      toast.error("Você não pertence a esta empresa");
+      return;
+    }
+
+    // Update direto — sem Edge Function
+    const { error } = await supabase
+      .from("perfis")
+      .update({ empresa_id: targetEmpresaId })
+      .eq("id", user!.id);
+
+    if (error) throw error;
+
+    // Atualizar estado local
+    setEmpresaId(targetEmpresaId);
+    setUserRole(targetEmpresa?.role || userRole);
+    setUserProfile(prev => prev ? { ...prev, empresa_id: targetEmpresaId } : prev);
+
+    toast.success("Empresa alterada com sucesso.");
+    navigate("/dashboard");
+  } catch (error: any) {
+    toast.error(error.message || "Erro ao trocar empresa");
+  }
+};
 ```
 
-### Key Decisions
-- No new dependencies -- uses native `IntersectionObserver`
-- CSS transitions (not JS-driven animations) for performance
-- Each animation fires only once (no re-hide on scroll up) for a polished feel
-- Stagger delays on card grids (50-100ms increments) for a cascading effect
+Isso reduz a troca de ~3-5s para ~200-400ms.
+
+**2. Invalidar cache do React Query**
+
+Após trocar empresa, os dados em cache (lançamentos, categorias, etc.) precisam ser recarregados. Adicionar invalidação do `queryClient` após a troca:
+
+```typescript
+import { useQueryClient } from "@tanstack/react-query";
+// ...
+const queryClient = useQueryClient();
+// Após o update:
+queryClient.invalidateQueries();
+```
+
+### Arquivos a modificar
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/contexts/AuthContext.tsx` | Remover chamada à Edge Function, usar update direto + invalidar queries + remover `window.location.reload()` |
+
+### Sem alterações no banco
+A policy `perfis_update_self` já permite que o usuário atualize seu próprio `empresa_id`.
 
