@@ -34,7 +34,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Check phone uniqueness
+    // Check phone uniqueness (skip orphaned perfis whose auth user was deleted)
     const { data: existingPhone } = await supabaseAdmin
       .from("perfis")
       .select("id")
@@ -42,10 +42,20 @@ serve(async (req) => {
       .maybeSingle();
 
     if (existingPhone) {
-      return new Response(
-        JSON.stringify({ error: "Este número de telefone já está cadastrado." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Verify the auth user still exists; if not, clear the orphaned phone
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(existingPhone.id);
+      if (!authUser?.user) {
+        // Orphaned record – clear the phone so it can be reused
+        await supabaseAdmin
+          .from("perfis")
+          .update({ evolution_webhook_url: null })
+          .eq("id", existingPhone.id);
+      } else {
+        return new Response(
+          JSON.stringify({ error: "Este número de telefone já está cadastrado." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Create auth user (no empresa)
