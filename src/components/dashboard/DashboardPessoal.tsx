@@ -10,6 +10,7 @@ import { DashboardChart } from "@/components/dashboard/DashboardChart";
 import { DashboardShortcuts } from "@/components/dashboard/DashboardShortcuts";
 import { LancamentosFormDialog } from "@/components/lancamentos/LancamentosFormDialog";
 import PatrimonioChart from "@/components/dashboard/PatrimonioChart";
+import ResumoFaturasCartoes from "@/components/dashboard/ResumoFaturasCartoes";
 import { cn } from "@/lib/utils";
 
 const DashboardPessoal = () => {
