@@ -57,7 +57,12 @@ Deno.serve(async (req) => {
       .eq("id", userId)
       .single();
 
-    if (!perfil?.empresa_id) throw new Error("No empresa found");
+    if (!perfil?.empresa_id) {
+      return new Response(
+        JSON.stringify({ success: true, created: 0, message: "Nenhuma empresa ativa." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const empresaId = perfil.empresa_id;
     const hoje = new Date();
