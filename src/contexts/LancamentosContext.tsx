@@ -381,6 +381,20 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, []);
 
+  const fetchCartoesCredito = useCallback(async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from("cartoes_credito")
+        .select("id, nome, dia_fechamento, dia_vencimento, bandeira, ultimos_digitos")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      setCartoesCredito(data || []);
+    } catch (error: any) {
+      console.error("Erro ao carregar cartões de crédito:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchLancamentos();
     fetchCategorias();
@@ -389,6 +403,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     fetchFormasPagamento();
     fetchContasBancarias();
     fetchProjetos();
+    fetchCartoesCredito();
   }, [
     fetchLancamentos,
     fetchCategorias,
@@ -397,6 +412,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     fetchFormasPagamento,
     fetchContasBancarias,
     fetchProjetos,
+    fetchCartoesCredito,
   ]);
 
   // Realtime: auto-remove deleted lancamentos from UI
