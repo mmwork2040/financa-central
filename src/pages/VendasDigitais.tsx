@@ -376,7 +376,42 @@ const VendasDigitais = () => {
                     </p>
                     {venda.taxa > 0 && <p className="text-[10px] text-muted-foreground">Taxa: {formatCurrency(venda.taxa)}</p>}
                     <Badge className={cn("text-[10px]", statusColors[venda.status] || "")}>{venda.status}</Badge>
+                    {invoiceStatusBadge(venda)}
                     <div className="flex gap-1 mt-1">
+                      {/* Emit invoice button */}
+                      {canAlterar && venda.status === "aprovada" && (!venda.invoice_status || venda.invoice_status === "PENDING_EMISSION" || venda.invoice_status === "REJECTED") && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-primary"
+                                disabled={emittingId === venda.id}
+                                onClick={() => handleEmitInvoice(venda.id)}
+                              >
+                                {emittingId === venda.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p className="text-xs">Emitir Nota Fiscal</p></TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {/* PDF download */}
+                      {venda.invoice_pdf_url && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-green-600" asChild>
+                                <a href={venda.invoice_pdf_url} target="_blank" rel="noopener noreferrer">
+                                  <Download className="h-3 w-3" />
+                                </a>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p className="text-xs">Baixar DANFE (PDF)</p></TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDetailVenda(venda)}>
                         <Eye className="h-3 w-3" />
                       </Button>
