@@ -150,6 +150,7 @@ interface LancamentosContextType {
   refreshFormasPagamento: () => void;
   refreshContasBancarias: () => void;
   refreshProjetos: () => void;
+  refreshCartoesCredito: () => void;
   refreshLancamentos: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
