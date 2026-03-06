@@ -899,7 +899,7 @@ const LandingPage = () => {
                 title="Plano Start"
                 description="Para quem está dando os primeiros passos no digital e quer estruturar a base do jeito certo, sem misturar as contas."
                 monthlyPrice={79}
-                annualPrice={49}
+                annualPrice={790}
                 billingPeriod={billingPeriod}
                 features={[
                   "Até 100 lançamentos/mês",
