@@ -278,6 +278,14 @@ const ConfiguracoesEmpresa = () => {
 
       {!isPessoal && <InviteCodesCard />}
 
+      {!isPessoal && isAdmin && (
+        <Card>
+          <CardContent className="pt-6">
+            <ConfiguracaoFiscal empresaId={empresaId!} />
+          </CardContent>
+        </Card>
+      )}
+
       {isSuperAdmin && <SpedyConfigCard />}
     </div>
   );

@@ -167,6 +167,17 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
             </CardContent>
           </Card>
         )}
+
+        {newEmpresaId && (
+          <FiscalOnboardingDialog
+            open={fiscalDialogOpen}
+            onOpenChange={(open) => {
+              setFiscalDialogOpen(open);
+              if (!open) setTimeout(() => window.location.reload(), 500);
+            }}
+            empresaId={newEmpresaId}
+          />
+        )}
       </div>
     </div>
   );
