@@ -819,27 +819,36 @@ const LandingPage = () => {
             <ScrollReveal direction="up" delay={0}>
               <PricingCard
                 title="Plano Mensal"
-                price="R$ 197"
-                period="mês"
+                emoji="📅"
+                monthlyPrice={197}
                 description="Ideal para quem quer liberdade e pagamento mês a mês."
+                buttonLabel="Começar agora"
+                features={["Acesso completo", "Sem fidelidade", "Suporte prioritário"]}
+                billingPeriod="mensal"
               />
             </ScrollReveal>
             <ScrollReveal direction="up" delay={100}>
               <PricingCard
                 title="Plano Anual"
-                price="R$ 97"
-                period="mês"
+                emoji="🚀"
+                annualPrice={97}
                 description="A opção mais inteligente e econômica para o ano todo."
                 highlighted
                 badge="Melhor Escolha"
+                buttonLabel="Começar agora"
+                features={["Acesso completo", "Economia garantida", "Suporte prioritário"]}
+                billingPeriod="anual"
               />
             </ScrollReveal>
             <ScrollReveal direction="up" delay={200}>
               <PricingCard
                 title="Plano Trimestral"
-                price="R$ 147"
-                period="mês"
+                emoji="⚡"
+                monthlyPrice={147}
                 description="Perfeito para sentir o impacto real em um ciclo de 90 dias."
+                buttonLabel="Começar agora"
+                features={["Acesso completo", "Ciclo de 90 dias", "Suporte prioritário"]}
+                billingPeriod="mensal"
               />
             </ScrollReveal>
           </div>
