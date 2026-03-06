@@ -804,17 +804,61 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ===== SEÇÃO 6: PLANOS E PREÇOS ===== */}
+      {/* ===== SEÇÃO 6: GESTÃO PESSOAL ===== */}
+      <section className="relative border-t border-border/40">
+        <div className="absolute inset-0" style={{
+          background: "radial-gradient(ellipse 80% 60% at 50% 30%, hsla(25, 95%, 53%, 0.06) 0%, transparent 60%)"
+        }} />
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24 relative">
+          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <ScrollReveal direction="left">
+              <div className="space-y-5">
+                <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px]">
+                  Incluso em todos os planos
+                </Badge>
+                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground leading-tight">
+                  Como não existe CNPJ forte sem CPF forte, em todos os planos você terá o{" "}
+                  <span className="text-primary relative inline-block">
+                    Contabiliza AI Pessoal
+                    <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
+                      <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
+                    </svg>
+                  </span>
+                </h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  Controle suas finanças pessoais em paralelo: organize receitas e despesas do CPF, acompanhe faturas dos seus cartões de crédito, acumule milhas e tenha visão total do seu patrimônio — tudo no mesmo sistema, a uma mensagem de distância.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {["Receitas e Despesas Pessoais", "Faturas de Cartões", "Patrimônio e Investimentos", "Tudo via Chat com IA"].map((item) => (
+                    <span key={item} className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-medium">
+                      <Check className="h-3 w-3" />
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </ScrollReveal>
+            <ScrollReveal direction="right" delay={150}>
+              <PersonalDashboardMockup />
+            </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== SEÇÃO 7: PLANOS E PREÇOS ===== */}
       <section className="border-t border-border/40">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
           <ScrollReveal direction="up">
             <div className="text-center mb-4">
               <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
-                💳 Escolha o plano ideal para o momento do seu negócio
+                💳 Escolha o plano ideal para o momento do seu{" "}
+                <span className="text-primary relative inline-block">
+                  negócio
+                  <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
+                    <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
+                  </svg>
+                </span>
               </h2>
-              <p className="mt-4 text-muted-foreground text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-                Não existe CNPJ forte com CPF fraco. Em todos os planos, o Contabiliza AI entrega a nossa dupla gestão inteligente: controle as finanças da sua empresa e a sua vida pessoal (organizando desde o fluxo de caixa dos seus lançamentos até as faturas dos seus cartões de crédito e acúmulo de milhas) em um único lugar, a uma mensagem de distância.
-              </p>
             </div>
           </ScrollReveal>
 
@@ -845,7 +889,8 @@ const LandingPage = () => {
             </div>
           </ScrollReveal>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-5 max-w-6xl mx-auto items-stretch px-2">
+          {/* 3 cards principais */}
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto items-stretch px-2">
             <ScrollReveal direction="up" delay={0}>
               <PricingCard
                 emoji="🟢"
@@ -899,19 +944,30 @@ const LandingPage = () => {
                 buttonLabel="Dominar com o Pro"
               />
             </ScrollReveal>
-            <ScrollReveal direction="up" delay={300}>
-              <PricingCard
-                emoji="🏢"
-                title="Enterprise / Alto Volume"
-                description=""
-                isEnterprise
-                enterpriseDescription="Sua operação emite mais de 1.500 Notas Fiscais por mês ou sua equipe de desenvolvedores precisa de acesso via API e documentação aberta para integrações personalizadas com seus sistemas internos? Nós montamos uma infraestrutura dedicada para o seu tamanho."
-                features={[]}
-                buttonLabel="Falar com um Especialista"
-                whatsappUrl="https://wa.me/5511999999999"
-              />
-            </ScrollReveal>
           </div>
+
+          {/* Enterprise — banner sutil abaixo */}
+          <ScrollReveal direction="up" delay={300}>
+            <div className="max-w-5xl mx-auto mt-10 px-2">
+              <div className="glass-card rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 md:gap-8 border border-border/60">
+                <div className="text-3xl shrink-0">🏢</div>
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-lg font-bold text-foreground mb-1">Enterprise / Alto Volume</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Sua operação emite mais de 1.500 Notas Fiscais por mês ou sua equipe precisa de acesso via API? Nós montamos uma infraestrutura dedicada para o seu tamanho.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="rounded-full px-6 shrink-0"
+                  onClick={() => window.open("https://wa.me/5511999999999", "_blank")}
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Falar com um Especialista
+                </Button>
+              </div>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
