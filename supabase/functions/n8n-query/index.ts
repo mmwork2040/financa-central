@@ -1923,14 +1923,46 @@ Deno.serve(async (req) => {
       case "excluir-lancamento": {
         const id = sanitize(body.id);
         if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        const { data: lancDel } = await supabase.from("lancamentos").select("id, status").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
+        const { data: lancDel } = await supabase.from("lancamentos").select("id, status, recorrencia_grupo_id, recorrente").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
         if (!lancDel) return new Response(JSON.stringify({ error: "Lançamento não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         if (["pago", "recebido"].includes(lancDel.status)) {
           return new Response(JSON.stringify({ error: "Bloqueado", message: "Este lançamento já foi pago/recebido e não pode ser excluído." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
-        const { error: delLancErr } = await supabase.from("lancamentos").delete().eq("id", id).eq("empresa_id", empresa_id);
-        if (delLancErr) throw delLancErr;
-        result = { message: "Lançamento excluído com sucesso", id };
+
+        const excluirCadeia = sanitize(body.excluir_cadeia);
+        const shouldDeleteChain = excluirCadeia === true || excluirCadeia === "true";
+
+        if (shouldDeleteChain && lancDel.recorrencia_grupo_id) {
+          // Excluir todas as ocorrências pendentes da cadeia recorrente
+          const { data: cadeiaItems } = await supabase
+            .from("lancamentos")
+            .select("id, status")
+            .eq("empresa_id", empresa_id)
+            .eq("recorrencia_grupo_id", lancDel.recorrencia_grupo_id)
+            .in("status", ["pendente"]);
+
+          const idsToDelete = (cadeiaItems || []).map((l: any) => l.id);
+
+          if (idsToDelete.length > 0) {
+            const { error: delCadeiaErr } = await supabase
+              .from("lancamentos")
+              .delete()
+              .eq("empresa_id", empresa_id)
+              .in("id", idsToDelete);
+            if (delCadeiaErr) throw delCadeiaErr;
+          }
+
+          result = {
+            message: `Cadeia recorrente: ${idsToDelete.length} lançamento(s) pendente(s) excluído(s) com sucesso`,
+            ids_excluidos: idsToDelete,
+            recorrencia_grupo_id: lancDel.recorrencia_grupo_id,
+          };
+        } else {
+          // Excluir apenas esta ocorrência
+          const { error: delLancErr } = await supabase.from("lancamentos").delete().eq("id", id).eq("empresa_id", empresa_id);
+          if (delLancErr) throw delLancErr;
+          result = { message: "Lançamento excluído com sucesso", id };
+        }
         break;
       }
 

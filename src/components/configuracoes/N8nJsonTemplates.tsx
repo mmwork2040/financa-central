@@ -1303,22 +1303,29 @@ Sempre usar a empresa_id ativa.`,
     action: "excluir-lancamento",
     toolName: "excluir_lancamento",
     label: "Excluir Lançamento",
-    description: "Remove um lançamento pendente (bloqueado se já pago/recebido)",
+    description: "Remove um lançamento pendente (bloqueado se já pago/recebido). Suporta exclusão de cadeia recorrente.",
     toolDescription: `Exclui um lançamento financeiro do sistema.
 
 ⚠️ REGRA DE SEGURANÇA: Lançamentos com status "pago" ou "recebido" NÃO podem ser excluídos.
 
+LANÇAMENTOS RECORRENTES:
+- Por padrão, exclui APENAS a ocorrência informada (pelo id).
+- Para excluir TODA a cadeia recorrente (todas as ocorrências futuras pendentes do mesmo grupo), envie: excluir_cadeia: true.
+- Ocorrências já pagas/recebidas dentro da cadeia NÃO serão excluídas mesmo com excluir_cadeia = true.
+
 Parâmetros:
 - empresa_id (obrigatório)
 - id (obrigatório — UUID do lançamento)
+- excluir_cadeia (opcional — true para excluir todas as ocorrências pendentes da cadeia recorrente)
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "id", type: "string", required: true, description: "UUID do lançamento" },
+      { name: "excluir_cadeia", type: "boolean", required: false, description: "true para excluir toda a cadeia recorrente pendente" },
     ],
-    body: { action: "excluir-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento') }}" },
+    body: { action: "excluir-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento') }}", excluir_cadeia: "{{ $fromAI('excluir_cadeia', 'true para excluir toda a cadeia recorrente. Deixe vazio para excluir apenas esta ocorrência') }}" },
   },
 ];
 
