@@ -1232,6 +1232,42 @@ export type Database = {
           },
         ]
       }
+      spedy_config: {
+        Row: {
+          ambiente: string
+          api_key: string
+          api_url: string
+          ativo: boolean
+          created_at: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+          webhook_token: string | null
+        }
+        Insert: {
+          ambiente?: string
+          api_key?: string
+          api_url?: string
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          webhook_token?: string | null
+        }
+        Update: {
+          ambiente?: string
+          api_key?: string
+          api_url?: string
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          webhook_token?: string | null
+        }
+        Relationships: []
+      }
       termos_politica: {
         Row: {
           conteudo: string
@@ -1301,11 +1337,16 @@ export type Database = {
           data_venda: string
           empresa_id: string
           id: string
+          invoice_error_message: string | null
+          invoice_pdf_url: string | null
+          invoice_status: string | null
+          invoice_xml_url: string | null
           lancamento_id: string | null
           observacoes: string | null
           origem: string
           plataforma: string
           produto: string | null
+          spedy_order_id: string | null
           status: string
           taxa: number
           valor_bruto: number
@@ -1323,11 +1364,16 @@ export type Database = {
           data_venda?: string
           empresa_id: string
           id?: string
+          invoice_error_message?: string | null
+          invoice_pdf_url?: string | null
+          invoice_status?: string | null
+          invoice_xml_url?: string | null
           lancamento_id?: string | null
           observacoes?: string | null
           origem?: string
           plataforma: string
           produto?: string | null
+          spedy_order_id?: string | null
           status?: string
           taxa?: number
           valor_bruto?: number
@@ -1345,11 +1391,16 @@ export type Database = {
           data_venda?: string
           empresa_id?: string
           id?: string
+          invoice_error_message?: string | null
+          invoice_pdf_url?: string | null
+          invoice_status?: string | null
+          invoice_xml_url?: string | null
           lancamento_id?: string | null
           observacoes?: string | null
           origem?: string
           plataforma?: string
           produto?: string | null
+          spedy_order_id?: string | null
           status?: string
           taxa?: number
           valor_bruto?: number
