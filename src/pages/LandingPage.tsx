@@ -59,6 +59,23 @@ const LandingPage = () => {
             </div>
             <span className="text-xl font-extrabold tracking-tight text-foreground">Contabiliza AI</span>
           </div>
+          <div className="hidden md:flex items-center gap-1">
+            {[
+              { label: "Funções", id: "funcoes" },
+              { label: "Dashboards", id: "dashboards" },
+              { label: "Para quem é", id: "para-quem" },
+              { label: "Integrações", id: "integracoes" },
+              { label: "Planos", id: "planos" },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent/50"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => navigate("/login")}>
               Entrar
@@ -377,7 +394,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 3: COMO FUNCIONA — TRILHA VISUAL ===== */}
-      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+      <section id="dashboards" className="scroll-mt-20 container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
         <ScrollReveal direction="up">
           <div className="text-center mb-16 lg:mb-20">
             <Badge className="rounded-full px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[11px] mb-4">
@@ -598,7 +615,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 4: FUNCIONALIDADES ===== */}
-      <section className="border-y border-border/40">
+      <section id="funcoes" className="scroll-mt-20 border-y border-border/40">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
           <div className="max-w-6xl mx-auto">
             <ScrollReveal direction="up">
@@ -783,6 +800,7 @@ const LandingPage = () => {
             </ScrollReveal>
 
             {/* Feature 5 — Integrações */}
+            <div id="integracoes">
             <ScrollReveal direction="left" delay={100}>
               <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
                 <div className="space-y-4">
@@ -800,12 +818,13 @@ const LandingPage = () => {
                 </div>
               </div>
             </ScrollReveal>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ===== SEÇÃO 5: PARA QUEM É ===== */}
-      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+      <section id="para-quem" className="scroll-mt-20 container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
         <ScrollReveal direction="up">
           <div className="text-center mb-12 lg:mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
@@ -916,7 +935,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 7: PLANOS E PREÇOS ===== */}
-      <section className="border-t border-border/40">
+      <section id="planos" className="scroll-mt-20 border-t border-border/40">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
           <ScrollReveal direction="up">
             <div className="text-center mb-4">
