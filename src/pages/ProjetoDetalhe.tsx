@@ -2,7 +2,9 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FolderKanban } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, FolderKanban } from "lucide-react";
+import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjetoResumo } from "@/components/projetos/ProjetoResumo";
 import { ProjetoLancamentos } from "@/components/projetos/ProjetoLancamentos";
@@ -11,6 +13,7 @@ import type { Projeto } from "@/hooks/useProjetos";
 const ProjetoDetalhe = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { visible, toggle } = useValuesVisibility();
   const [projeto, setProjeto] = useState<Projeto | null>(null);
   const [lancamentos, setLancamentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,8 +77,18 @@ const ProjetoDetalhe = () => {
           <h1 className="text-xl font-bold truncate">{projeto.nome}</h1>
           <span className={`px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusClass}`}>
             {statusLabel}
-          </span>
+        </span>
         </div>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground shrink-0">
+                {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>{visible ? "Ocultar valores" : "Exibir valores"}</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {projeto.descricao && (
