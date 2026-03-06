@@ -65,6 +65,24 @@ const SpedyConfigCard = () => {
     setConfig(prev => ({ ...prev, ambiente: value, api_url: url }));
   };
 
+  const registerWebhookOnSpedy = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("spedy-register-webhook");
+      if (error) {
+        console.error("Erro ao registrar webhook na Spedy:", error);
+        toast.error("Configuração salva, mas falha ao registrar webhook na Spedy.");
+        return;
+      }
+      if (data?.success) {
+        toast.success(data.message || "Webhook registrado na Spedy.");
+      } else {
+        toast.warning(data?.error || "Não foi possível registrar o webhook na Spedy.");
+      }
+    } catch (err: any) {
+      console.error("Erro ao registrar webhook:", err);
+    }
+  };
+
   const handleSave = async () => {
     if (!config.api_key.trim()) {
       toast.error("Informe a API Key da Spedy.");
@@ -98,6 +116,11 @@ const SpedyConfigCard = () => {
           setExists(true);
         }
         toast.success("Configuração da Spedy salva.");
+      }
+
+      // Auto-register webhook on Spedy after saving
+      if (config.ativo) {
+        await registerWebhookOnSpedy();
       }
     } catch (error: any) {
       toast.error(error.message || "Erro ao salvar configuração.");
