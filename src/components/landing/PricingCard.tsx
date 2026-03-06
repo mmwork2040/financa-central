@@ -83,12 +83,12 @@ const PricingCard = ({
       {!isEnterprise && currentPrice != null && (
         <div className="mb-5 relative z-10">
           <span className="text-3xl font-extrabold text-foreground">
-            R$ {currentPrice}
+            R$ {currentPrice?.toFixed(2).replace('.', ',')}
           </span>
           <span className="text-sm text-muted-foreground ml-1">/ mês</span>
           {altPrice != null && (
             <p className="text-xs text-muted-foreground mt-1">
-              ou R$ {altPrice},00 no plano {altLabel}
+              ou R$ {altPrice?.toFixed(2).replace('.', ',')} no plano {altLabel}
             </p>
           )}
         </div>
