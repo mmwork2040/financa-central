@@ -33,6 +33,7 @@ export const LancamentosFormDialog = () => {
     formasPagamento,
     contasBancarias,
     projetos,
+    cartoesCredito,
     selectedId,
     refreshCategorias,
     refreshFornecedores,
