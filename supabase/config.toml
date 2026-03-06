@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.delete-auth-user]
 verify_jwt = false
+
+[functions.spedy-register-webhook]
+verify_jwt = false
