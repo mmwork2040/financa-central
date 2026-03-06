@@ -470,6 +470,32 @@ const VendasDigitais = () => {
                   <div><span className="text-muted-foreground">Observações:</span> <p className="mt-1">{detailVenda.observacoes}</p></div>
                 </>
               )}
+              {/* Invoice section */}
+              {detailVenda.invoice_status && detailVenda.invoice_status !== "PENDING_EMISSION" && (
+                <>
+                  <hr />
+                  <p className="font-medium">Nota Fiscal</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><span className="text-muted-foreground">Status NF:</span> {invoiceStatusBadge(detailVenda)}</div>
+                    <div><span className="text-muted-foreground">ID Spedy:</span> <strong className="font-mono text-xs">{detailVenda.spedy_order_id || "-"}</strong></div>
+                  </div>
+                  {detailVenda.invoice_pdf_url && (
+                    <a href={detailVenda.invoice_pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary underline">
+                      <Download className="h-3 w-3" /> Baixar DANFE (PDF)
+                    </a>
+                  )}
+                  {detailVenda.invoice_xml_url && (
+                    <a href={detailVenda.invoice_xml_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary underline ml-3">
+                      <Download className="h-3 w-3" /> Baixar XML
+                    </a>
+                  )}
+                  {detailVenda.invoice_error_message && (
+                    <div className="rounded border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive">
+                      {detailVenda.invoice_error_message}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </DialogContent>
