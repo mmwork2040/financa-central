@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { TipoSelect } from "./form/TipoSelect";
 import { DescricaoInput } from "./form/DescricaoInput";
 import { ValorInput } from "./form/ValorInput";
