@@ -899,7 +899,7 @@ const LandingPage = () => {
                 title="Plano Start"
                 description="Para quem está dando os primeiros passos no digital e quer estruturar a base do jeito certo, sem misturar as contas."
                 monthlyPrice={79}
-                annualPrice={49}
+                annualPrice={790}
                 billingPeriod={billingPeriod}
                 features={[
                   "Até 100 lançamentos/mês",
@@ -915,8 +915,8 @@ const LandingPage = () => {
                 emoji="🚀"
                 title="Plano Growth"
                 description="Para negócios em aceleração e infoprodutores que precisam de automação financeira para focar em escalar suas campanhas."
-                monthlyPrice={147}
-                annualPrice={97}
+                monthlyPrice={129}
+                annualPrice={1290}
                 billingPeriod={billingPeriod}
                 highlighted
                 badge="Mais Popular"
@@ -934,8 +934,8 @@ const LandingPage = () => {
                 emoji="💎"
                 title="Plano Pro"
                 description="Para operações robustas e marcas já consolidadas no mercado que exigem alta capacidade de processamento."
-                monthlyPrice={349}
-                annualPrice={297}
+                monthlyPrice={229}
+                annualPrice={2290}
                 billingPeriod={billingPeriod}
                 features={[
                   "Lançamentos Ilimitados",
