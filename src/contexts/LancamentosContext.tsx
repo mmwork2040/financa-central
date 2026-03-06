@@ -183,6 +183,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [formasPagamento, setFormasPagamento] = useState<FormaPagamento[]>([]);
   const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
   const [projetos, setProjetos] = useState<ProjetoSimple[]>([]);
+  const [cartoesCredito, setCartoesCredito] = useState<CartaoCreditoSimple[]>([]);
   const { empresaId, user, userProfile, planControles, isSuperAdmin } = useAuth();
   const { monthStart, monthEnd } = useMonthFilter();
 
