@@ -27,6 +27,7 @@ export type Lancamento = {
   conta_bancaria_id: string | null;
   forma_pagamento_id: string | null;
   projeto_id?: string | null;
+  cartao_credito_id?: string | null;
   recorrente: boolean;
   recorrencia_fim?: string | null;
   recorrencia_tipo?: string | null;
