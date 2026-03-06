@@ -209,17 +209,19 @@ export const LancamentosFormDialog = () => {
             onRefresh={refreshCategorias}
           />
           
-          <ClienteFornecedorSelect 
-            tipo={selectedTipo}
-            clienteId={formData.cliente_id}
-            fornecedorId={formData.fornecedor_id}
-            onClienteChange={(value) => handleSelectChange('cliente_id', value)}
-            onFornecedorChange={(value) => handleSelectChange('fornecedor_id', value)}
-            clientes={clientes}
-            fornecedores={fornecedores}
-            onRefreshClientes={refreshClientes}
-            onRefreshFornecedores={refreshFornecedores}
-          />
+          {!isPessoal && (
+            <ClienteFornecedorSelect 
+              tipo={selectedTipo}
+              clienteId={formData.cliente_id}
+              fornecedorId={formData.fornecedor_id}
+              onClienteChange={(value) => handleSelectChange('cliente_id', value)}
+              onFornecedorChange={(value) => handleSelectChange('fornecedor_id', value)}
+              clientes={clientes}
+              fornecedores={fornecedores}
+              onRefreshClientes={refreshClientes}
+              onRefreshFornecedores={refreshFornecedores}
+            />
+          )}
           
           <GenericSelect 
             label="Forma de Pagamento"
