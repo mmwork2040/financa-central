@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Building2, Ticket, Loader2, ArrowRight, LogOut, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import FiscalOnboardingDialog from "@/components/onboarding/FiscalOnboardingDialog";
 
 interface OnboardingScreenProps {
   userName: string;
