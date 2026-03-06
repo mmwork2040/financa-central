@@ -934,8 +934,8 @@ const LandingPage = () => {
                 emoji="💎"
                 title="Plano Pro"
                 description="Para operações robustas e marcas já consolidadas no mercado que exigem alta capacidade de processamento."
-                monthlyPrice={349}
-                annualPrice={297}
+                monthlyPrice={229}
+                annualPrice={2290}
                 billingPeriod={billingPeriod}
                 features={[
                   "Lançamentos Ilimitados",
