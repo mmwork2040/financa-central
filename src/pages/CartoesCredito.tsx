@@ -40,13 +40,10 @@ const CartoesCredito = () => {
     <div className="space-y-6">
       <PageHeader
         title="Cartões de Crédito"
+        description="Gerencie seus cartões de crédito e controle suas faturas"
         icon={CreditCard}
-        actions={
-          <Button onClick={openNew}>
-            <Plus size={16} className="mr-2" />
-            Novo Cartão
-          </Button>
-        }
+        buttonLabel="Novo Cartão"
+        onButtonClick={openNew}
       />
 
       {loading ? (

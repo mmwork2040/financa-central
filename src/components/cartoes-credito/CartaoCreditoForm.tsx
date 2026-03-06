@@ -81,8 +81,10 @@ export const CartaoCreditoFormDialog: React.FC<Props> = ({
           <div className="space-y-2">
             <Label>Limite do Cartão</Label>
             <CurrencyInput
+              id="limite"
+              name="limite"
               value={formData.limite}
-              onValueChange={(v) => setFormData((p) => ({ ...p, limite: v }))}
+              onValueChange={(v) => setFormData((p) => ({ ...p, limite: parseFloat(v || "0") || 0 }))}
             />
           </div>
 
