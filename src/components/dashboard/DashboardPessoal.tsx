@@ -9,6 +9,7 @@ import { useValuesVisibility, maskValue } from "@/contexts/ValuesVisibilityConte
 import { DashboardChart } from "@/components/dashboard/DashboardChart";
 import { DashboardShortcuts } from "@/components/dashboard/DashboardShortcuts";
 import { LancamentosFormDialog } from "@/components/lancamentos/LancamentosFormDialog";
+import PatrimonioChart from "@/components/dashboard/PatrimonioChart";
 import { cn } from "@/lib/utils";
 
 const DashboardPessoal = () => {
@@ -115,8 +116,11 @@ const DashboardPessoal = () => {
         </Card>
       </div>
 
-      {/* Chart */}
+      {/* Chart Receitas vs Despesas */}
       <DashboardChart data={monthlyChartData} saldoAtual={summary.saldoAtual} />
+
+      {/* Evolução Patrimonial */}
+      <PatrimonioChart />
 
       {/* Últimas Movimentações */}
       <Card>
