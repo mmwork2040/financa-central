@@ -1,57 +1,38 @@
 
 
-## Scroll Animations for Landing Page Sections
+## Plano: Reformular seção de Planos e Preços na Landing Page
 
-### Overview
-Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
+### O que será feito
 
-### Approach
-Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
+Substituir os 3 cards atuais (Mensal/Anual/Trimestral com features genéricas) por 4 planos novos (Start, Growth, Pro, Enterprise) com toggle Mensal/Anual, textos e preços específicos, e um card especial Enterprise.
 
-### Implementation Details
+### Alterações
 
-**1. Create `src/hooks/useScrollReveal.ts`**
-- A custom hook that returns a `ref` callback
-- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
-- Adds a CSS class (e.g., `revealed`) when the element is visible
-- Fires once per element (unobserves after reveal)
+**1. Reescrever `src/components/landing/PricingCard.tsx`**
 
-**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
-- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
-- Accepts optional `delay` (stagger support) and `className`
-- Starts with opacity-0 and a small transform offset
-- On intersection, transitions to opacity-1 and transform-none
-- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
+- Props expandidas: `features: string[]`, `buttonLabel`, `buttonAction`, `monthlyPrice`, `annualPrice`, `isEnterprise`, `emoji`
+- Receber prop `billingPeriod: "mensal" | "anual"` para alternar preço exibido
+- Mostrar preço do período selecionado em destaque + texto secundário "ou R$ X no plano [outro]"
+- Badge "30 dias grátis" nos planos Start/Growth/Pro
+- Card Enterprise com layout diferente: só descrição + botão WhatsApp (sem preço numérico)
 
-**3. Update `src/pages/LandingPage.tsx`**
-Wrap each section's content with `<ScrollReveal>`:
+**2. Editar `src/pages/LandingPage.tsx` (seção 6)**
 
-| Section | Animation |
-|---------|-----------|
-| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
-| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
-| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
-| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
-| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
-| Social Proof | Scale for stat cards |
-| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
-| Footer | Simple fade-up |
+- Adicionar state `billingPeriod` com toggle Mensal/Anual (usando ToggleGroup ou botões estilizados)
+- Novo heading e subtítulo conforme especificado pelo usuário
+- Grid de 4 cards com os dados exatos:
+  - **Start** (R$49 anual / R$79 mensal) — features: 100 lançamentos, 50 NFs, Gestão Dupla, Integração nativa
+  - **Growth** (R$97 anual / R$147 mensal) — features: 500 lançamentos, 250 NFs, Gestão Dupla, Integração nativa — highlighted + badge "Mais Popular"
+  - **Pro** (R$297 anual / R$349 mensal) — features: Ilimitados, 1500 NFs, Gestão Dupla, Integração nativa
+  - **Enterprise** — card especial com texto descritivo e botão WhatsApp
+- Grid: `md:grid-cols-2 lg:grid-cols-4` para acomodar 4 cards
 
-**4. Add base CSS to `src/index.css`**
-```css
-.scroll-reveal {
-  opacity: 0;
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-.scroll-reveal.revealed {
-  opacity: 1;
-  transform: none !important;
-}
-```
+### Dados dos planos (hardcoded na landing)
 
-### Key Decisions
-- No new dependencies -- uses native `IntersectionObserver`
-- CSS transitions (not JS-driven animations) for performance
-- Each animation fires only once (no re-hide on scroll up) for a polished feel
-- Stagger delays on card grids (50-100ms increments) for a cascading effect
+| Plano | Anual | Mensal | Lançamentos | NFs | CTA |
+|-------|-------|--------|-------------|-----|-----|
+| Start | R$ 49 | R$ 79 | 100 | 50 | Começar meu teste grátis |
+| Growth | R$ 97 | R$ 147 | 500 | 250 | Escalar com o Growth |
+| Pro | R$ 297 | R$ 349 | Ilimitados | 1.500 | Dominar com o Pro |
+| Enterprise | — | — | — | — | Falar com um Especialista (WhatsApp) |
 
