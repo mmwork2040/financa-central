@@ -663,7 +663,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SEÇÃO 4: FUNCIONALIDADES ===== */}
-      <section className="border-y border-border/40">
+      <section id="integracoes" className="border-y border-border/40 scroll-mt-20">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
           <div className="max-w-6xl mx-auto">
             <ScrollReveal direction="up">
