@@ -134,7 +134,31 @@ const VendasDigitais = () => {
     }
   };
 
+  const validateInvoiceFields = (venda: any): string[] => {
+    const missing: string[] = [];
+    if (!venda.cliente?.trim()) missing.push("Nome do cliente");
+    if (!venda.cliente_documento?.trim() || venda.cliente_documento.replace(/\D/g, "").length < 11) missing.push("CPF/CNPJ válido");
+    if (!venda.produto?.trim()) missing.push("Produto");
+    return missing;
+  };
+
+  const getInvoiceReadiness = (venda: any) => {
+    const missing = validateInvoiceFields(venda);
+    return { ready: missing.length === 0, missing };
+  };
+
   const handleEmitInvoice = async (vendaId: string) => {
+    const venda = vendas.find(v => v.id === vendaId);
+    if (!venda) return;
+
+    const { ready, missing } = getInvoiceReadiness(venda);
+    if (!ready) {
+      toast.error(`Para emitir a nota fiscal, preencha: ${missing.join(", ")}`, {
+        duration: 5000,
+      });
+      return;
+    }
+
     setEmittingId(vendaId);
     try {
       const { data: { session } } = await supabase.auth.getSession();
