@@ -48,6 +48,21 @@ import ScrollReveal from "@/components/common/ScrollReveal";
 const LandingPage = () => {
   const navigate = useNavigate();
   const [billingPeriod, setBillingPeriod] = useState<"mensal" | "anual">("anual");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const scrollTo = useCallback((id: string) => {
+    setMobileMenuOpen(false);
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const navLinks = [
+    { label: "Funcionalidades", id: "funcionalidades" },
+    { label: "Dashboards", id: "dashboards" },
+    { label: "Para quem é", id: "para-quem" },
+    { label: "Integrações", id: "integracoes" },
+    { label: "Planos", id: "planos" },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
