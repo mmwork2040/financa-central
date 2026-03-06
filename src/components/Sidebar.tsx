@@ -84,6 +84,24 @@ export const Sidebar = () => {
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
   const [createEmpresaOpen, setCreateEmpresaOpen] = useState(false);
+  const [creatingPessoal, setCreatingPessoal] = useState(false);
+
+  const hasPessoalEmpresa = empresas.some(e => e.pessoal === true);
+
+  const handleCreatePessoal = async () => {
+    setCreatingPessoal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-personal-empresa");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Conta pessoal criada com sucesso!");
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao criar conta pessoal");
+    } finally {
+      setCreatingPessoal(false);
+    }
+  };
 
   // Auto-open submenus when on their routes
   useEffect(() => {
