@@ -96,9 +96,9 @@ const LandingPage = () => {
                   Nº1 EM GESTÃO FINANCEIRA COM IA
                 </Badge>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
-                  O controle financeiro do seu negócio digital{" "}
+                  O controle financeiro do seu negócio digital a uma{" "}
                   <span className="text-primary relative">
-                    direto no seu Whatsapp
+                    mensagem de distância
                     <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
                       <path
                         d="M2 8C50 2 100 2 150 6C200 10 250 4 298 8"
