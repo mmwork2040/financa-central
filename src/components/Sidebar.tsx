@@ -179,9 +179,12 @@ export const Sidebar = () => {
     { name: "Categorias", icon: Tags, path: "/categorias" },
     { name: "Contas Bancárias", icon: Building2, path: "/bank-accounts" },
     { name: "Formas de Pagamento", icon: CreditCard, path: "/payment-methods" },
+    { name: "Cartões de Crédito", icon: CreditCard, path: "/cartoes-credito", pessoalOnly: true },
     { name: "Usuários", icon: Users, path: "/users", businessOnly: true },
   ];
-  const cadastrosItems = isPessoal ? allCadastrosItems.filter(i => !i.businessOnly) : allCadastrosItems;
+  const cadastrosItems = isPessoal 
+    ? allCadastrosItems.filter(i => !(i as any).businessOnly)
+    : allCadastrosItems.filter(i => !(i as any).pessoalOnly);
 
   const bottomItems = [
     { name: "Relatórios", icon: PieChart, path: "/reports" },
