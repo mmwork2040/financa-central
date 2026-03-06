@@ -74,6 +74,56 @@ export type Database = {
         }
         Relationships: []
       }
+      cartoes_credito: {
+        Row: {
+          ativo: boolean
+          bandeira: string | null
+          created_at: string
+          dia_fechamento: number
+          dia_vencimento: number
+          empresa_id: string
+          id: string
+          limite: number | null
+          nome: string
+          ultimos_digitos: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          bandeira?: string | null
+          created_at?: string
+          dia_fechamento: number
+          dia_vencimento: number
+          empresa_id: string
+          id?: string
+          limite?: number | null
+          nome: string
+          ultimos_digitos?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          bandeira?: string | null
+          created_at?: string
+          dia_fechamento?: number
+          dia_vencimento?: number
+          empresa_id?: string
+          id?: string
+          limite?: number | null
+          nome?: string
+          ultimos_digitos?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cartoes_credito_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categorias: {
         Row: {
           created_at: string
@@ -628,6 +678,7 @@ export type Database = {
       }
       lancamentos: {
         Row: {
+          cartao_credito_id: string | null
           categoria_id: string | null
           cliente_id: string | null
           conta_bancaria_id: string | null
@@ -653,6 +704,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          cartao_credito_id?: string | null
           categoria_id?: string | null
           cliente_id?: string | null
           conta_bancaria_id?: string | null
@@ -678,6 +730,7 @@ export type Database = {
           valor?: number
         }
         Update: {
+          cartao_credito_id?: string | null
           categoria_id?: string | null
           cliente_id?: string | null
           conta_bancaria_id?: string | null
@@ -703,6 +756,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "lancamentos_cartao_credito_id_fkey"
+            columns: ["cartao_credito_id"]
+            isOneToOne: false
+            referencedRelation: "cartoes_credito"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lancamentos_categoria_id_fkey"
             columns: ["categoria_id"]
