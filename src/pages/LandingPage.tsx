@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -969,6 +970,67 @@ const LandingPage = () => {
               </div>
             </div>
           </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ===== SEÇÃO 8: FAQ ===== */}
+      <section className="border-t border-border/40">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-20 md:py-24">
+          <ScrollReveal direction="up">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+                ❓ Perguntas{" "}
+                <span className="text-primary relative inline-block">
+                  Frequentes
+                  <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none">
+                    <path d="M2 5C40 1 80 1 100 4C120 7 160 3 198 5" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" opacity="0.3" />
+                  </svg>
+                </span>
+              </h2>
+            </div>
+          </ScrollReveal>
+
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="space-y-3">
+              {[
+                {
+                  q: 'O que o sistema considera como "lançamento" (transação)?',
+                  a: 'Cada movimentação financeira registrada no sistema é um lançamento. Isso inclui as vendas que entram pelas plataformas (Hotmart, Kiwify, etc.), os pagamentos de anúncios no Meta Ads, o pagamento de um fornecedor e as suas despesas pessoais (já que você controla CNPJ e CPF no mesmo lugar). Se o seu volume aumentar no meio do mês, você pode fazer o upgrade de plano a qualquer momento com apenas um clique.',
+                },
+                {
+                  q: 'Como funciona essa gestão de CNPJ e CPF juntos? Vai misturar tudo?',
+                  a: 'Pelo contrário, vai separar do jeito certo! O lema "Não existe CNPJ forte com CPF fraco" significa que você terá as duas visões consolidadas na mesma conta, mas organizadas de forma independente. Você saberá exatamente o que é dinheiro da empresa e o que é o seu pró-labore ou despesa pessoal, acabando com a confusão na hora de fechar o mês.',
+                },
+                {
+                  q: 'Gasto muito com Meta Ads no cartão de crédito. O Contabiliza AI me ajuda com isso?',
+                  a: 'Com certeza. O sistema faz a conciliação inteligente das faturas dos seus cartões de crédito PJ cruzando com os seus gastos em anúncios. Inclusive, ao organizar essas faturas de alto volume de tráfego aliado à sua visão de pessoa física (CPF), fica muito mais fácil ter previsibilidade para gerenciar os pontos e as milhas aéreas geradas pelos gastos da empresa, transformando esse custo em benefício real.',
+                },
+                {
+                  q: 'O Contabiliza AI substitui o meu contador?',
+                  a: 'Não. Nós somos o melhor amigo do seu contador. O Contabiliza AI organiza a bagunça diária, emite as notas fiscais no automático e categoriza suas despesas com Inteligência Artificial. No final do mês, seu contador recebe tudo mastigado, em formato de relatório ou exportação, evitando multas e dores de cabeça com a Receita Federal.',
+                },
+                {
+                  q: 'E se eu ultrapassar o limite de notas fiscais do meu plano? Minhas vendas vão parar?',
+                  a: 'De forma alguma! Suas notas continuarão sendo emitidas normalmente. Quando você atingir 100% do limite do seu plano, o sistema enviará um aviso amigável sugerindo o upgrade para a próxima categoria, garantindo que sua operação (e seus lançamentos) nunca travem por questões de sistema.',
+                },
+                {
+                  q: 'É seguro conectar minhas contas e plataformas?',
+                  a: 'Totalmente. O Contabiliza AI utiliza integrações oficiais (APIs) e leitura de dados bancários com criptografia de ponta. A nossa Inteligência Artificial apenas lê e categoriza os dados para facilitar a sua vida, sem permissão para realizar transferências ou movimentações não autorizadas.',
+                },
+              ].map((item, i) => (
+                <ScrollReveal key={i} direction="up" delay={i * 60}>
+                  <AccordionItem value={`faq-${i}`} className="glass-card rounded-2xl border border-border/60 px-5 overflow-hidden">
+                    <AccordionTrigger className="text-sm font-semibold text-foreground text-left py-4 hover:no-underline gap-3">
+                      {item.q}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-4">
+                      {item.a}
+                    </AccordionContent>
+                  </AccordionItem>
+                </ScrollReveal>
+              ))}
+            </Accordion>
+          </div>
         </div>
       </section>
 
