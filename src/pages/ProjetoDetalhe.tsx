@@ -78,7 +78,16 @@ const ProjetoDetalhe = () => {
           <span className={`px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusClass}`}>
             {statusLabel}
           </span>
-        </div>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground shrink-0">
+                {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>{visible ? "Ocultar valores" : "Exibir valores"}</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {projeto.descricao && (
