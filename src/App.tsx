@@ -33,6 +33,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import Install from "./pages/Install";
 import Profile from "./pages/Profile";
 import Projetos from "./pages/Projetos";
+import CartoesCredito from "./pages/CartoesCredito";
 import ProjetoDetalhe from "./pages/ProjetoDetalhe";
 import N8nTemplates from "./pages/N8nTemplates";
 import DemoPage from "./pages/DemoPage";
