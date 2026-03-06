@@ -4,8 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { CartoesCreditoTable } from "@/components/cartoes-credito/CartoesCreditoTable";
 import { CartaoCreditoFormDialog } from "@/components/cartoes-credito/CartaoCreditoForm";
 import PageHeader from "@/components/common/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Plus, CreditCard } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
