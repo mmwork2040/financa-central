@@ -1,59 +1,57 @@
 
 
-## Plano: Cartões de Crédito para Conta Pessoal
+## Scroll Animations for Landing Page Sections
 
-### Conceito
+### Overview
+Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
 
-Criar uma tabela `cartoes_credito` vinculada à empresa pessoal. Cada cartão tem **dia de fechamento** e **dia de vencimento da fatura**. Ao criar um lançamento de despesa e associá-lo a um cartão, o sistema calcula automaticamente em qual fatura a despesa cai: se a data da despesa for **após o dia de fechamento**, ela pertence à fatura do **mês seguinte** (ajustando `data_vencimento` para o dia de vencimento do próximo mês).
+### Approach
+Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
 
-### Alterações no Banco de Dados
+### Implementation Details
 
-**Nova tabela `cartoes_credito`:**
+**1. Create `src/hooks/useScrollReveal.ts`**
+- A custom hook that returns a `ref` callback
+- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
+- Adds a CSS class (e.g., `revealed`) when the element is visible
+- Fires once per element (unobserves after reveal)
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid PK | |
-| empresa_id | uuid | Vinculado à empresa pessoal |
-| nome | text | Ex: "Nubank", "Itaú Platinum" |
-| bandeira | text | Visa, Mastercard, etc. (opcional) |
-| ultimos_digitos | text | Últimos 4 dígitos (opcional) |
-| limite | numeric | Limite do cartão (opcional) |
-| dia_fechamento | integer | Dia do mês (1-31) em que fecha a fatura |
-| dia_vencimento | integer | Dia do mês (1-31) em que vence a fatura |
-| ativo | boolean | Default true |
-| created_at / updated_at | timestamptz | |
+**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
+- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
+- Accepts optional `delay` (stagger support) and `className`
+- Starts with opacity-0 and a small transform offset
+- On intersection, transitions to opacity-1 and transform-none
+- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
 
-**RLS:** Mesma lógica das demais tabelas — `empresa_id = get_user_empresa_id(auth.uid())` com `has_screen_permission` para CUD.
+**3. Update `src/pages/LandingPage.tsx`**
+Wrap each section's content with `<ScrollReveal>`:
 
-**Coluna nova na tabela `lancamentos`:**
-- `cartao_credito_id uuid nullable` — referência ao cartão usado na despesa.
+| Section | Animation |
+|---------|-----------|
+| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
+| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
+| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
+| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
+| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
+| Social Proof | Scale for stat cards |
+| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
+| Footer | Simple fade-up |
 
-### Lógica de Fatura (frontend)
+**4. Add base CSS to `src/index.css`**
+```css
+.scroll-reveal {
+  opacity: 0;
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: none !important;
+}
+```
 
-Quando o usuário selecionar um cartão de crédito no formulário de lançamento:
-1. Pegar a `data_vencimento` do lançamento (data da compra)
-2. Comparar o **dia** dessa data com o `dia_fechamento` do cartão
-3. Se `dia da compra > dia_fechamento`: a fatura é do mês seguinte → setar `data_vencimento` do lançamento para `dia_vencimento` do próximo mês
-4. Se `dia da compra <= dia_fechamento`: fatura do mês atual → setar `data_vencimento` para `dia_vencimento` do mesmo mês
-
-### Arquivos a Criar / Modificar
-
-| Arquivo | Ação |
-|---------|------|
-| **Migration SQL** | Criar tabela `cartoes_credito` + adicionar coluna `cartao_credito_id` em `lancamentos` |
-| `src/hooks/useCartoesCredito.ts` | **Novo** — CRUD de cartões de crédito |
-| `src/pages/CartoesCredito.tsx` | **Novo** — Página de gestão de cartões |
-| `src/components/cartoes-credito/CartaoCreditoForm.tsx` | **Novo** — Modal de cadastro/edição |
-| `src/components/cartoes-credito/CartoesCreditoTable.tsx` | **Novo** — Tabela de listagem |
-| `src/components/Sidebar.tsx` | Adicionar item "Cartões de Crédito" visível apenas em `isPessoal` |
-| `src/App.tsx` | Adicionar rota `/cartoes-credito` |
-| `src/components/lancamentos/LancamentosFormDialog.tsx` | Adicionar select de cartão de crédito (quando `isPessoal`), com lógica automática de ajuste de vencimento |
-| `src/contexts/LancamentosContext.tsx` | Carregar cartões de crédito, incluir `cartao_credito_id` no formData e no save |
-
-### Fluxo do Usuário
-
-1. Usuário cadastra cartão com nome, dia de fechamento (ex: 10) e dia de vencimento (ex: 20)
-2. Ao criar um lançamento de despesa, seleciona o cartão
-3. Se a compra foi dia 15 (após fechamento dia 10) → vencimento automaticamente ajustado para dia 20 do mês seguinte
-4. Se a compra foi dia 5 (antes do fechamento dia 10) → vencimento fica dia 20 do mesmo mês
+### Key Decisions
+- No new dependencies -- uses native `IntersectionObserver`
+- CSS transitions (not JS-driven animations) for performance
+- Each animation fires only once (no re-hide on scroll up) for a polished feel
+- Stagger delays on card grids (50-100ms increments) for a cascading effect
 

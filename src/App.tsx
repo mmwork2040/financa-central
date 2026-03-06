@@ -33,6 +33,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import Install from "./pages/Install";
 import Profile from "./pages/Profile";
 import Projetos from "./pages/Projetos";
+import CartoesCredito from "./pages/CartoesCredito";
 import ProjetoDetalhe from "./pages/ProjetoDetalhe";
 import N8nTemplates from "./pages/N8nTemplates";
 import DemoPage from "./pages/DemoPage";
@@ -85,6 +86,7 @@ const App = () => {
                 <Route path="/bank-accounts" element={<ProtectedRoute path="/bank-accounts"><AppLayout><ContasBancarias /></AppLayout></ProtectedRoute>} />
                 <Route path="/payment-methods" element={<ProtectedRoute path="/payment-methods"><AppLayout><FormasPagamento /></AppLayout></ProtectedRoute>} />
                 <Route path="/transactions" element={<ProtectedRoute path="/transactions"><AppLayout><Lancamentos /></AppLayout></ProtectedRoute>} />
+                <Route path="/cartoes-credito" element={<AppLayout><CartoesCredito /></AppLayout>} />
                 <Route path="/reports" element={<ProtectedRoute path="/reports"><AppLayout><Relatorios /></AppLayout></ProtectedRoute>} />
                 <Route path="/projetos" element={<ProtectedRoute path="/projetos"><AppLayout><Projetos /></AppLayout></ProtectedRoute>} />
                 <Route path="/projetos/:id" element={<ProtectedRoute path="/projetos"><AppLayout><ProjetoDetalhe /></AppLayout></ProtectedRoute>} />

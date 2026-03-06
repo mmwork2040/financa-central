@@ -27,6 +27,7 @@ export type Lancamento = {
   conta_bancaria_id: string | null;
   forma_pagamento_id: string | null;
   projeto_id?: string | null;
+  cartao_credito_id?: string | null;
   recorrente: boolean;
   recorrencia_fim?: string | null;
   recorrencia_tipo?: string | null;
@@ -80,6 +81,15 @@ export type ContaBancaria = {
   principal?: boolean;
 };
 
+export type CartaoCreditoSimple = {
+  id: string;
+  nome: string;
+  dia_fechamento: number;
+  dia_vencimento: number;
+  bandeira?: string | null;
+  ultimos_digitos?: string | null;
+};
+
 type FiltrosType = {
   tipo?: "receita" | "despesa" | "investimento" | null;
   status?: string | null;
@@ -121,6 +131,7 @@ interface LancamentosContextType {
   formasPagamento: FormaPagamento[];
   contasBancarias: ContaBancaria[];
   projetos: ProjetoSimple[];
+  cartoesCredito: CartaoCreditoSimple[];
   handleDateChange: (field: string, date: Date | null) => void;
   openDeleteModal: boolean;
   setOpenDeleteModal: (open: boolean) => void;
@@ -139,6 +150,7 @@ interface LancamentosContextType {
   refreshFormasPagamento: () => void;
   refreshContasBancarias: () => void;
   refreshProjetos: () => void;
+  refreshCartoesCredito: () => void;
   refreshLancamentos: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -171,6 +183,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [formasPagamento, setFormasPagamento] = useState<FormaPagamento[]>([]);
   const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
   const [projetos, setProjetos] = useState<ProjetoSimple[]>([]);
+  const [cartoesCredito, setCartoesCredito] = useState<CartaoCreditoSimple[]>([]);
   const { empresaId, user, userProfile, planControles, isSuperAdmin } = useAuth();
   const { monthStart, monthEnd } = useMonthFilter();
 
@@ -204,6 +217,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     conta_bancaria_id: null,
     forma_pagamento_id: null,
     projeto_id: null,
+    cartao_credito_id: null,
     recorrente: false,
     parcela_atual: null,
     total_parcelas: null,
@@ -368,6 +382,20 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, []);
 
+  const fetchCartoesCredito = useCallback(async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from("cartoes_credito")
+        .select("id, nome, dia_fechamento, dia_vencimento, bandeira, ultimos_digitos")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      setCartoesCredito(data || []);
+    } catch (error: any) {
+      console.error("Erro ao carregar cartões de crédito:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchLancamentos();
     fetchCategorias();
@@ -376,6 +404,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     fetchFormasPagamento();
     fetchContasBancarias();
     fetchProjetos();
+    fetchCartoesCredito();
   }, [
     fetchLancamentos,
     fetchCategorias,
@@ -384,6 +413,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     fetchFormasPagamento,
     fetchContasBancarias,
     fetchProjetos,
+    fetchCartoesCredito,
   ]);
 
   // Realtime: auto-remove deleted lancamentos from UI
@@ -419,7 +449,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   };
 
   const handleSelectChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value === "no-category" || value === "no-client" || value === "no-supplier" || value === "no-payment-method" || value === "no-bank-account" || value === "no-project" ? null : value });
+    setFormData({ ...formData, [field]: value === "no-category" || value === "no-client" || value === "no-supplier" || value === "no-payment-method" || value === "no-bank-account" || value === "no-project" || value === "no-credit-card" ? null : value });
   };
 
   const handleFilterInputChange = (
@@ -505,6 +535,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         conta_bancaria_id: contaId,
         forma_pagamento_id: null,
         projeto_id: null,
+        cartao_credito_id: null,
         recorrente: false,
         parcela_atual: null,
         total_parcelas: null,
@@ -528,6 +559,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       conta_bancaria_id: lancamento.conta_bancaria_id,
       forma_pagamento_id: lancamento.forma_pagamento_id,
       projeto_id: lancamento.projeto_id || null,
+      cartao_credito_id: (lancamento as any).cartao_credito_id || null,
       recorrente: lancamento.recorrente,
       recorrencia_grupo_id: lancamento.recorrencia_grupo_id || null,
       parcela_atual: lancamento.parcela_atual,
@@ -711,6 +743,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         conta_bancaria_id: null,
         forma_pagamento_id: null,
         projeto_id: null,
+        cartao_credito_id: null,
         recorrente: false,
         parcela_atual: null,
         total_parcelas: null,
@@ -930,6 +963,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         formasPagamento,
         contasBancarias,
         projetos,
+        cartoesCredito,
         handleDateChange,
         openDeleteModal,
         setOpenDeleteModal,
@@ -948,6 +982,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         refreshFormasPagamento: fetchFormasPagamento,
         refreshContasBancarias: fetchContasBancarias,
         refreshProjetos: fetchProjetos,
+        refreshCartoesCredito: fetchCartoesCredito,
         refreshLancamentos: fetchLancamentos,
         searchQuery,
         setSearchQuery,

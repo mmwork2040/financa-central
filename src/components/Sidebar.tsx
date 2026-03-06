@@ -105,7 +105,7 @@ export const Sidebar = () => {
 
   // Auto-open submenus when on their routes
   useEffect(() => {
-    const cadastrosPaths = ["/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods", "/users"];
+    const cadastrosPaths = ["/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods", "/users", "/cartoes-credito"];
     const configPaths = ["/settings", "/settings/integracoes", "/settings/webhooks", "/settings/logs", "/settings/n8n-templates", "/settings/assinaturas"];
     if (cadastrosPaths.some(p => location.pathname.startsWith(p))) setCadastrosOpen(true);
     if (configPaths.some(p => location.pathname.startsWith(p))) setConfigOpen(true);
@@ -179,9 +179,12 @@ export const Sidebar = () => {
     { name: "Categorias", icon: Tags, path: "/categorias" },
     { name: "Contas Bancárias", icon: Building2, path: "/bank-accounts" },
     { name: "Formas de Pagamento", icon: CreditCard, path: "/payment-methods" },
+    { name: "Cartões de Crédito", icon: CreditCard, path: "/cartoes-credito", pessoalOnly: true },
     { name: "Usuários", icon: Users, path: "/users", businessOnly: true },
   ];
-  const cadastrosItems = isPessoal ? allCadastrosItems.filter(i => !i.businessOnly) : allCadastrosItems;
+  const cadastrosItems = isPessoal 
+    ? allCadastrosItems.filter(i => !(i as any).businessOnly)
+    : allCadastrosItems.filter(i => !(i as any).pessoalOnly);
 
   const bottomItems = [
     { name: "Relatórios", icon: PieChart, path: "/reports" },
