@@ -319,6 +319,12 @@ export const Sidebar = () => {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
+                {!hasPessoalEmpresa && (
+                  <DropdownMenuItem onClick={handleCreatePessoal} disabled={creatingPessoal}>
+                    <Users size={14} className="mr-2" />
+                    {creatingPessoal ? "Criando..." : "Criar conta pessoal"}
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => setCreateEmpresaOpen(true)}>
                   <Building2 size={14} className="mr-2" />
                   Criar nova empresa
