@@ -59,6 +59,23 @@ const LandingPage = () => {
             </div>
             <span className="text-xl font-extrabold tracking-tight text-foreground">Contabiliza AI</span>
           </div>
+          <div className="hidden md:flex items-center gap-1">
+            {[
+              { label: "Funções", id: "funcoes" },
+              { label: "Dashboards", id: "dashboards" },
+              { label: "Para quem é", id: "para-quem" },
+              { label: "Integrações", id: "integracoes" },
+              { label: "Planos", id: "planos" },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent/50"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => navigate("/login")}>
               Entrar
