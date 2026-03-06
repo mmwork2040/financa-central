@@ -255,6 +255,52 @@ export const LancamentosFormDialog = () => {
             placeholder="Selecione o projeto (opcional)"
             customQuickAdd={refreshProjetos ? <QuickAddProjetoModal onSuccess={refreshProjetos} /> : undefined}
           />
+
+          {isPessoal && selectedTipo === "despesa" && cartoesCredito.length > 0 && (
+            <GenericSelect 
+              label="Cartão de Crédito"
+              value={(formData as any).cartao_credito_id} 
+              onChange={(value) => {
+                handleSelectChange('cartao_credito_id', value);
+                // Auto-adjust vencimento based on card billing cycle
+                if (value && value !== "no-credit-card") {
+                  const cartao = cartoesCredito.find(c => c.id === value);
+                  if (cartao && formData.data_vencimento) {
+                    const dataCompra = new Date(formData.data_vencimento + "T12:00:00");
+                    const diaCompra = dataCompra.getDate();
+                    let faturaMonth = dataCompra.getMonth();
+                    let faturaYear = dataCompra.getFullYear();
+                    
+                    if (diaCompra > cartao.dia_fechamento) {
+                      // Compra após fechamento → fatura do próximo mês
+                      faturaMonth += 1;
+                      if (faturaMonth > 11) {
+                        faturaMonth = 0;
+                        faturaYear += 1;
+                      }
+                    }
+                    
+                    // Ajustar dia de vencimento (clamp ao último dia do mês)
+                    const lastDay = new Date(faturaYear, faturaMonth + 1, 0).getDate();
+                    const diaVenc = Math.min(cartao.dia_vencimento, lastDay);
+                    const novaData = `${faturaYear}-${String(faturaMonth + 1).padStart(2, '0')}-${String(diaVenc).padStart(2, '0')}`;
+                    
+                    const syntheticEvent = {
+                      target: { name: 'data_vencimento', value: novaData }
+                    } as React.ChangeEvent<HTMLInputElement>;
+                    handleInputChange(syntheticEvent);
+                  }
+                }
+              }}
+              options={cartoesCredito.map(c => ({ 
+                id: c.id, 
+                nome: `${c.nome}${c.ultimos_digitos ? ` •••• ${c.ultimos_digitos}` : ''}` 
+              }))}
+              noneOptionValue="no-credit-card"
+              nameField="nome"
+              placeholder="Selecione o cartão (opcional)"
+            />
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpenModal(false)}>
