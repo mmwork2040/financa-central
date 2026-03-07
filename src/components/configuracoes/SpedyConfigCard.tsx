@@ -302,7 +302,13 @@ const SpedyConfigCard = () => {
           </ul>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          {exists && config.ativo && (
+            <Button variant="outline" onClick={handleTestConnection} disabled={testing}>
+              {testing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Zap className="h-4 w-4 mr-1" />}
+              {testing ? "Testando..." : "Testar Conexão"}
+            </Button>
+          )}
           <Button onClick={handleSave} disabled={saving}>
             {saving ? "Salvando..." : exists ? "Atualizar" : "Salvar Configuração"}
           </Button>
