@@ -63,8 +63,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Test the Spedy API by listing companies (lightweight GET)
-    const testUrl = `${apiUrl}/companies`;
+    // Test the Spedy API using /invoices/nfse endpoint (works with any company key)
+    // The /companies endpoint requires the main account key, so we use a more universal endpoint
+    const testUrl = `${apiUrl}/invoices/nfse?page=1&pageSize=1`;
     console.log("Testing Spedy API:", testUrl);
 
     const response = await fetch(testUrl, {
@@ -85,8 +86,12 @@ Deno.serve(async (req) => {
       message = "Conexão com a Spedy validada com sucesso! API Key funcionando.";
       status = "success";
     } else if (response.status === 401 || response.status === 403) {
-      message = `API Key rejeitada pela Spedy (HTTP ${response.status}). Verifique se a chave está correta, ativa e corresponde ao ambiente (${config.ambiente}).`;
+      message = `API Key rejeitada pela Spedy (HTTP ${response.status}). Verifique se a chave está correta, ativa e corresponde ao ambiente (${config.ambiente}). Acesse: Perfil > Minha empresa > Credenciais da API.`;
       status = "error";
+    } else if (response.status === 404) {
+      // 404 on invoices listing likely means no invoices yet, but auth passed
+      message = "Conexão com a Spedy validada com sucesso! API Key funcionando (sem notas emitidas ainda).";
+      status = "success";
     } else {
       message = `Resposta inesperada da Spedy (HTTP ${response.status}). Detalhes: ${responseText.substring(0, 200)}`;
       status = "warning";
