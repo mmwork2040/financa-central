@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
 
     // Test the Spedy API using /customers endpoint (works with any company key)
     const testUrl = `${apiUrl}/customers?page=1&pageSize=1`;
-    console.log("Testing Spedy API:", testUrl, "Ambiente:", config.ambiente);
+    console.log("Testing Spedy API:", testUrl, "Ambiente:", ambiente);
 
     const response = await fetch(testUrl, {
       method: "GET",
