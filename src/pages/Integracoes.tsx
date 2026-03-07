@@ -1166,6 +1166,8 @@ const Integracoes = () => {
         </Tabs>
       )}
 
+      {isSuperAdmin && <SpedyConfigCard />}
+
       {/* Wizard Dialog */}
       <Dialog open={!!connectDialog} onOpenChange={(o) => !o && closeWizard()}>
         <DialogContent className="sm:max-w-lg">
