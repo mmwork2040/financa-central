@@ -80,34 +80,33 @@ serve(async (req) => {
     }
 
     const valorBruto = Number(venda.valor_bruto);
-    const dataVenda = venda.data_venda ? new Date(venda.data_venda).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
+    const dataVenda = venda.data_venda ? new Date(venda.data_venda).toISOString() : new Date().toISOString();
 
-    // Map venda to Spedy payload (matching Spedy API required fields)
-    const payload = {
+    // Map venda to Spedy API payload (docs.spedy.com.br)
+    const payload: Record<string, unknown> = {
+      transactionId: venda.id,
       date: dataVenda,
       amount: valorBruto,
+      status: "approved",
       customer: {
         name: venda.cliente,
-        document: documento,
+        federalTaxNumber: documento,
         email: venda.cliente_email || undefined,
         phone: venda.cliente_telefone || undefined,
-        address: venda.cliente_endereco ? { street: venda.cliente_endereco } : undefined,
       },
       items: [
         {
-          product: {
-            name: venda.produto,
-            description: venda.produto,
-          },
-          price: valorBruto,
-          amount: 1,
+          description: venda.produto || "Produto",
           quantity: 1,
+          price: valorBruto,
+          amount: valorBruto,
+          product: {
+            name: venda.produto || "Produto",
+            code: venda.id.substring(0, 8),
+            price: valorBruto,
+          },
         },
       ],
-      metadata: {
-        venda_id: venda.id,
-        empresa_id: venda.empresa_id,
-      },
     };
 
     // Mark as PROCESSING before calling API
