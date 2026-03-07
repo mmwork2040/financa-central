@@ -154,7 +154,11 @@ const VendaFormDialog: React.FC<VendaFormDialogProps> = ({
       setClienteTelefone(c.telefone || "");
       setClienteEmail(c.email || "");
       setClienteDocumento(c.cpf_cnpj || "");
-      setClienteEndereco(c.endereco || "");
+      // Build address from detailed fields or fallback to endereco
+      const enderecoComposto = [c.rua, c.numero, c.complemento, c.bairro, c.cidade, c.estado, c.cep]
+        .filter(Boolean)
+        .join(", ");
+      setClienteEndereco(enderecoComposto || c.endereco || "");
     }
   };
 
