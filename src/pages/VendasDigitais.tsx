@@ -590,6 +590,58 @@ const VendasDigitais = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Confirm Emit Invoice Dialog */}
+      <AlertDialog open={!!confirmEmitVenda} onOpenChange={(open) => { if (!open) { setConfirmEmitVenda(null); setSpedyConfig(null); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" /> Confirmar Emissão de Nota Fiscal
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>Deseja emitir a nota fiscal para a venda abaixo?</p>
+                {confirmEmitVenda && (
+                  <div className="rounded-lg border bg-muted/30 p-3 space-y-1 text-sm">
+                    <p><strong>Produto:</strong> {confirmEmitVenda.produto || "—"}</p>
+                    <p><strong>Cliente:</strong> {confirmEmitVenda.cliente || "—"}</p>
+                    <p><strong>Documento:</strong> {confirmEmitVenda.cliente_documento || "—"}</p>
+                    <p><strong>Valor Bruto:</strong> {formatCurrency(confirmEmitVenda.valor_bruto)}</p>
+                    <p><strong>Valor Líquido:</strong> {formatCurrency(confirmEmitVenda.valor_liquido)}</p>
+                  </div>
+                )}
+                {isSuperAdmin && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1 text-sm">
+                    <p className="font-semibold flex items-center gap-1 text-primary">
+                      <Settings className="h-3.5 w-3.5" /> Configurações Spedy
+                    </p>
+                    {loadingSpedyConfig ? (
+                      <p className="text-muted-foreground flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Carregando...
+                      </p>
+                    ) : spedyConfig ? (
+                      <>
+                        <p><strong>Ambiente:</strong> {spedyConfig.ambiente}</p>
+                        <p><strong>API URL:</strong> <span className="font-mono text-xs break-all">{spedyConfig.api_url}</span></p>
+                        <p><strong>API Key:</strong> <span className="font-mono text-xs">{spedyConfig.api_key?.slice(0, 8)}...{spedyConfig.api_key?.slice(-4)}</span></p>
+                        <p><strong>Webhook Token:</strong> <span className="font-mono text-xs">{spedyConfig.webhook_token?.slice(0, 8)}...</span></p>
+                      </>
+                    ) : (
+                      <p className="text-destructive font-medium">⚠️ Nenhuma configuração Spedy ativa encontrada</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmAndEmitInvoice} disabled={isSuperAdmin && !spedyConfig}>
+              Emitir Nota Fiscal
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
