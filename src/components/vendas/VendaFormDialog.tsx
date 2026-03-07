@@ -379,6 +379,9 @@ const VendaFormDialog: React.FC<VendaFormDialogProps> = ({
                 </Select>
               </div>
               <QuickAddClienteModal onSuccess={fetchClientes} />
+              {clienteId && clienteId !== "new" && clienteId !== "none" && (
+                <QuickEditClienteModal clienteId={clienteId} onSuccess={fetchClientes} />
+              )}
             </div>
           </div>
 
