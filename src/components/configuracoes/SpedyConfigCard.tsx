@@ -160,7 +160,13 @@ const SpedyConfigCard = () => {
     }
     setTesting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("test-spedy");
+      const { data, error } = await supabase.functions.invoke("test-spedy", {
+        body: {
+          api_url: config.api_url.trim(),
+          api_key: config.api_key.trim(),
+          ambiente: config.ambiente,
+        },
+      });
       if (error) {
         toast.error("Erro ao testar conexão com a Spedy.");
         return;
