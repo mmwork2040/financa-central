@@ -286,7 +286,7 @@ const ConfiguracoesEmpresa = () => {
         </Card>
       )}
 
-      {isAdmin && <SpedyConfigCard />}
+      
     </div>
   );
 };
