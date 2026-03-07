@@ -35,6 +35,13 @@ interface Cliente {
   email?: string;
   cpf_cnpj?: string;
   endereco?: string;
+  rua?: string;
+  numero?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  complemento?: string;
 }
 
 interface VendaFormDialogProps {
@@ -124,7 +131,7 @@ const VendaFormDialog: React.FC<VendaFormDialogProps> = ({
   const fetchClientes = async () => {
     const { data } = await supabase
       .from("clientes")
-      .select("id, nome, telefone, email, cpf_cnpj, endereco")
+      .select("id, nome, telefone, email, cpf_cnpj, endereco, rua, numero, bairro, cidade, estado, cep, complemento")
       .order("nome");
     setClientes((data as Cliente[]) || []);
   };
@@ -147,7 +154,11 @@ const VendaFormDialog: React.FC<VendaFormDialogProps> = ({
       setClienteTelefone(c.telefone || "");
       setClienteEmail(c.email || "");
       setClienteDocumento(c.cpf_cnpj || "");
-      setClienteEndereco(c.endereco || "");
+      // Build address from detailed fields or fallback to endereco
+      const enderecoComposto = [c.rua, c.numero, c.complemento, c.bairro, c.cidade, c.estado, c.cep]
+        .filter(Boolean)
+        .join(", ");
+      setClienteEndereco(enderecoComposto || c.endereco || "");
     }
   };
 
