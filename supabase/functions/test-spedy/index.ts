@@ -63,8 +63,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Test the Spedy API by calling a lightweight endpoint
-    const testUrl = `${apiUrl}/company`;
+    // Test the Spedy API by listing companies (lightweight GET)
+    const testUrl = `${apiUrl}/companies`;
     console.log("Testing Spedy API:", testUrl);
 
     const response = await fetch(testUrl, {
