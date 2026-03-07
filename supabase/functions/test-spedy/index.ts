@@ -105,10 +105,10 @@ Deno.serve(async (req) => {
     let status: "success" | "error" | "warning";
 
     if (response.ok) {
-      message = `Conexão com a Spedy (${config.ambiente}) validada com sucesso! API Key funcionando.`;
+      message = `Conexão com a Spedy (${ambiente}) validada com sucesso! API Key funcionando.`;
       status = "success";
     } else if (response.status === 401 || response.status === 403) {
-      message = `API Key rejeitada pela Spedy (HTTP ${response.status}). Verifique se a chave está correta, ativa e corresponde ao ambiente (${config.ambiente}). Acesse: Perfil > Minha empresa > Credenciais da API.`;
+      message = `API Key rejeitada pela Spedy (HTTP ${response.status}). Verifique se a chave está correta, ativa e corresponde ao ambiente (${ambiente}). Acesse: Perfil > Minha empresa > Credenciais da API.`;
       status = "error";
     } else {
       message = `Resposta inesperada da Spedy (HTTP ${response.status}). Detalhes: ${responseText.substring(0, 200)}`;
