@@ -445,7 +445,7 @@ const VendasDigitais = () => {
                                   size="icon"
                                   className={cn("h-6 w-6", ready ? "text-primary" : "text-amber-500")}
                                   disabled={emittingId === venda.id}
-                                  onClick={() => handleEmitInvoice(venda.id)}
+                                  onClick={() => handleRequestEmitInvoice(venda.id)}
                                 >
                                   {emittingId === venda.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
                                 </Button>
