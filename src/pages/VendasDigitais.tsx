@@ -59,6 +59,9 @@ const VendasDigitais = () => {
   const [deleteVenda, setDeleteVenda] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
   const [emittingId, setEmittingId] = useState<string | null>(null);
+  const [confirmEmitVenda, setConfirmEmitVenda] = useState<any>(null);
+  const [spedyConfig, setSpedyConfig] = useState<any>(null);
+  const [loadingSpedyConfig, setLoadingSpedyConfig] = useState(false);
 
   const plataformas = useMemo(() => {
     const set = new Set(vendas.map(v => v.plataforma).filter(Boolean));
