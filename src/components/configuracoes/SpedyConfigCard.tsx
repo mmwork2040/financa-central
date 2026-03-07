@@ -15,6 +15,7 @@ const SpedyConfigCard = () => {
   const [saving, setSaving] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [config, setConfig] = useState({
     id: "",
     api_url: "https://sandbox-api.spedy.com.br/v1",
