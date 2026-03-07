@@ -35,6 +35,13 @@ interface Cliente {
   email?: string;
   cpf_cnpj?: string;
   endereco?: string;
+  rua?: string;
+  numero?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  complemento?: string;
 }
 
 interface VendaFormDialogProps {
