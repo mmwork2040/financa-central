@@ -434,7 +434,7 @@ const VendasDigitais = () => {
                     {invoiceStatusBadge(venda)}
                     <div className="flex gap-1 mt-1">
                       {/* Emit invoice button */}
-                      {canAlterar && venda.status === "aprovada" && (!venda.invoice_status || venda.invoice_status === "PENDING_EMISSION" || venda.invoice_status === "REJECTED") && (() => {
+                      {(canAlterar || isSuperAdmin) && venda.status === "aprovada" && (!venda.invoice_status || venda.invoice_status === "PENDING_EMISSION" || venda.invoice_status === "REJECTED") && (() => {
                         const { ready, missing } = getInvoiceReadiness(venda);
                         return (
                           <TooltipProvider>

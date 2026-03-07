@@ -286,7 +286,7 @@ const ConfiguracoesEmpresa = () => {
         </Card>
       )}
 
-      {isSuperAdmin && <SpedyConfigCard />}
+      {(isSuperAdmin || (!isPessoal && isAdmin)) && <SpedyConfigCard />}
     </div>
   );
 };
