@@ -93,7 +93,11 @@ serve(async (req) => {
       .eq("id", venda_id);
 
     // Call Spedy API
-    const spedyResponse = await fetch(`${spedyConfig.api_url}/orders`, {
+    const spedyUrl = `${spedyConfig.api_url}/orders`;
+    console.log("Spedy request URL:", spedyUrl);
+    console.log("Spedy payload:", JSON.stringify(payload, null, 2));
+
+    const spedyResponse = await fetch(spedyUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -102,21 +106,32 @@ serve(async (req) => {
       body: JSON.stringify(payload),
     });
 
-    const spedyData = await spedyResponse.json();
+    const spedyText = await spedyResponse.text();
+    console.log("Spedy response status:", spedyResponse.status);
+    console.log("Spedy response body:", spedyText);
+
+    let spedyData: any;
+    try {
+      spedyData = JSON.parse(spedyText);
+    } catch {
+      spedyData = { message: spedyText };
+    }
 
     if (!spedyResponse.ok) {
+      const errorDetail = spedyData.message || spedyData.error || spedyText;
       // Rejected by Spedy
       await supabase
         .from("vendas_digitais")
         .update({
           invoice_status: "REJECTED",
-          invoice_error_message: spedyData.message || spedyData.error || JSON.stringify(spedyData),
+          invoice_error_message: errorDetail,
         })
         .eq("id", venda_id);
 
       return new Response(JSON.stringify({
         error: "Erro na emissão",
-        details: spedyData.message || spedyData.error,
+        details: errorDetail,
+        spedy_status: spedyResponse.status,
       }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
