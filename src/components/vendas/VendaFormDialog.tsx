@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Plus, UserPlus } from "lucide-react";
 import { QuickAddClienteModal } from "@/components/lancamentos/form/QuickAddClienteModal";
+import { QuickEditClienteModal } from "@/components/vendas/QuickEditClienteModal";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
