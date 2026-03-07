@@ -154,8 +154,8 @@ const SpedyConfigCard = () => {
   };
 
   const handleTestConnection = async () => {
-    if (!exists || !config.ativo) {
-      toast.error("Salve e ative a configuração antes de testar.");
+    if (!config.api_key.trim() || !config.api_url.trim()) {
+      toast.error("Informe a URL da API e a API Key antes de testar.");
       return;
     }
     setTesting(true);
