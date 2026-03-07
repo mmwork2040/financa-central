@@ -8,13 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Eye, EyeOff, Copy, Check, Webhook, FileText, RefreshCw } from "lucide-react";
+import { Loader2, Eye, EyeOff, Copy, Check, Webhook, FileText, RefreshCw, Zap } from "lucide-react";
 
 const SpedyConfigCard = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [config, setConfig] = useState({
     id: "",
     api_url: "https://sandbox-api.spedy.com.br/v1",
@@ -152,6 +153,32 @@ const SpedyConfigCard = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleTestConnection = async () => {
+    if (!exists || !config.ativo) {
+      toast.error("Salve e ative a configuração antes de testar.");
+      return;
+    }
+    setTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("test-spedy");
+      if (error) {
+        toast.error("Erro ao testar conexão com a Spedy.");
+        return;
+      }
+      if (data?.status === "success") {
+        toast.success(data.message);
+      } else if (data?.status === "warning") {
+        toast.warning(data.message);
+      } else {
+        toast.error(data?.message || "Falha no teste de conexão.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro inesperado ao testar.");
+    } finally {
+      setTesting(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -275,7 +302,13 @@ const SpedyConfigCard = () => {
           </ul>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          {exists && config.ativo && (
+            <Button variant="outline" onClick={handleTestConnection} disabled={testing}>
+              {testing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Zap className="h-4 w-4 mr-1" />}
+              {testing ? "Testando..." : "Testar Conexão"}
+            </Button>
+          )}
           <Button onClick={handleSave} disabled={saving}>
             {saving ? "Salvando..." : exists ? "Atualizar" : "Salvar Configuração"}
           </Button>
