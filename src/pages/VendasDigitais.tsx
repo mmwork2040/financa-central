@@ -142,6 +142,8 @@ const VendasDigitais = () => {
     if (!venda.cliente?.trim()) missing.push("Nome do cliente");
     if (!venda.cliente_documento?.trim() || venda.cliente_documento.replace(/\D/g, "").length < 11) missing.push("CPF/CNPJ válido");
     if (!venda.produto?.trim()) missing.push("Produto");
+    if (!venda.valor_bruto || Number(venda.valor_bruto) <= 0) missing.push("Valor bruto maior que zero");
+    if (!venda.data_venda) missing.push("Data da venda");
     return missing;
   };
 

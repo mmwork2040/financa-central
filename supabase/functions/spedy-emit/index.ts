@@ -64,19 +64,41 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Integração Spedy não configurada ou inativa" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Map venda to Spedy payload
+    // Validate required fields before calling API
+    const missingFields: string[] = [];
+    if (!venda.cliente?.trim()) missingFields.push("Nome do cliente");
+    const documento = (venda.cliente_documento || "").replace(/\D/g, "");
+    if (documento.length < 11) missingFields.push("CPF/CNPJ válido do cliente");
+    if (!venda.produto?.trim()) missingFields.push("Nome do produto");
+    if (!venda.valor_bruto || Number(venda.valor_bruto) <= 0) missingFields.push("Valor bruto > 0");
+
+    if (missingFields.length > 0) {
+      return new Response(JSON.stringify({
+        error: "Dados obrigatórios ausentes para emissão",
+        details: `Campos faltando: ${missingFields.join(", ")}`,
+      }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const valorBruto = Number(venda.valor_bruto);
+    const dataVenda = venda.data_venda ? new Date(venda.data_venda).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
+
+    // Map venda to Spedy payload (matching Spedy API required fields)
     const payload = {
+      date: dataVenda,
+      amount: valorBruto,
       customer: {
-        name: venda.cliente || "Consumidor Final",
-        document: (venda.cliente_documento || "").replace(/\D/g, ""),
+        name: venda.cliente,
+        document: documento,
         email: venda.cliente_email || undefined,
         phone: venda.cliente_telefone || undefined,
         address: venda.cliente_endereco ? { street: venda.cliente_endereco } : undefined,
       },
       items: [
         {
-          description: venda.produto || "Produto Digital",
-          unit_price: Number(venda.valor_bruto) || 0,
+          product: venda.produto,
+          description: venda.produto,
+          price: valorBruto,
+          amount: 1,
           quantity: 1,
         },
       ],
