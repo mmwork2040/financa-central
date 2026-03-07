@@ -95,8 +95,10 @@ serve(async (req) => {
       },
       items: [
         {
-          product: venda.produto,
-          description: venda.produto,
+          product: {
+            name: venda.produto,
+            description: venda.produto,
+          },
           price: valorBruto,
           amount: 1,
           quantity: 1,
