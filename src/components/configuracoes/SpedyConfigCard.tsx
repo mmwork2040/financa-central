@@ -154,13 +154,19 @@ const SpedyConfigCard = () => {
   };
 
   const handleTestConnection = async () => {
-    if (!exists || !config.ativo) {
-      toast.error("Salve e ative a configuração antes de testar.");
+    if (!config.api_key.trim() || !config.api_url.trim()) {
+      toast.error("Informe a URL da API e a API Key antes de testar.");
       return;
     }
     setTesting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("test-spedy");
+      const { data, error } = await supabase.functions.invoke("test-spedy", {
+        body: {
+          api_url: config.api_url.trim(),
+          api_key: config.api_key.trim(),
+          ambiente: config.ambiente,
+        },
+      });
       if (error) {
         toast.error("Erro ao testar conexão com a Spedy.");
         return;
@@ -303,7 +309,7 @@ const SpedyConfigCard = () => {
         </div>
 
         <div className="flex justify-end gap-2">
-          {exists && config.ativo && (
+          {config.api_key.trim() && (
             <Button variant="outline" onClick={handleTestConnection} disabled={testing}>
               {testing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Zap className="h-4 w-4 mr-1" />}
               {testing ? "Testando..." : "Testar Conexão"}
