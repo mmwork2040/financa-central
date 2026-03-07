@@ -153,6 +153,32 @@ const SpedyConfigCard = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleTestConnection = async () => {
+    if (!exists || !config.ativo) {
+      toast.error("Salve e ative a configuração antes de testar.");
+      return;
+    }
+    setTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("test-spedy");
+      if (error) {
+        toast.error("Erro ao testar conexão com a Spedy.");
+        return;
+      }
+      if (data?.status === "success") {
+        toast.success(data.message);
+      } else if (data?.status === "warning") {
+        toast.warning(data.message);
+      } else {
+        toast.error(data?.message || "Falha no teste de conexão.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro inesperado ao testar.");
+    } finally {
+      setTesting(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
