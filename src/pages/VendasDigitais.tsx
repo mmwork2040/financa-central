@@ -150,17 +150,45 @@ const VendasDigitais = () => {
     return { ready: missing.length === 0, missing };
   };
 
-  const handleEmitInvoice = async (vendaId: string) => {
+  const handleRequestEmitInvoice = async (vendaId: string) => {
     const venda = vendas.find(v => v.id === vendaId);
     if (!venda) return;
 
     const { ready, missing } = getInvoiceReadiness(venda);
     if (!ready) {
-      toast.error(`Para emitir a nota fiscal, preencha: ${missing.join(", ")}`, {
-        duration: 5000,
-      });
+      toast.error(`Para emitir a nota fiscal, preencha: ${missing.join(", ")}`, { duration: 5000 });
       return;
     }
+
+    // For super admins, show confirmation with Spedy config
+    if (isSuperAdmin) {
+      setLoadingSpedyConfig(true);
+      setConfirmEmitVenda(venda);
+      try {
+        const { data } = await supabase
+          .from("spedy_config")
+          .select("*")
+          .eq("ativo", true)
+          .limit(1)
+          .single();
+        setSpedyConfig(data);
+      } catch {
+        setSpedyConfig(null);
+      } finally {
+        setLoadingSpedyConfig(false);
+      }
+    } else {
+      // Non-super-admin: direct confirmation
+      setConfirmEmitVenda(venda);
+      setSpedyConfig(null);
+    }
+  };
+
+  const confirmAndEmitInvoice = async () => {
+    if (!confirmEmitVenda) return;
+    const vendaId = confirmEmitVenda.id;
+    setConfirmEmitVenda(null);
+    setSpedyConfig(null);
 
     setEmittingId(vendaId);
     try {
@@ -174,7 +202,7 @@ const VendasDigitais = () => {
         body: JSON.stringify({ venda_id: vendaId }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || result.details || "Erro ao emitir nota");
+      if (!res.ok) throw new Error(result.details || result.error || "Erro ao emitir nota");
       toast.success("Nota enviada para processamento!");
       await fetchVendas();
     } catch (error: any) {
