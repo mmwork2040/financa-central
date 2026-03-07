@@ -131,7 +131,7 @@ const VendaFormDialog: React.FC<VendaFormDialogProps> = ({
   const fetchClientes = async () => {
     const { data } = await supabase
       .from("clientes")
-      .select("id, nome, telefone, email, cpf_cnpj, endereco")
+      .select("id, nome, telefone, email, cpf_cnpj, endereco, rua, numero, bairro, cidade, estado, cep, complemento")
       .order("nome");
     setClientes((data as Cliente[]) || []);
   };
