@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ShoppingCart, Search, RefreshCw, X, Plug, CheckCircle2, AlertTriangle, Plus, Eye, Edit, Trash2, FileText, Download, Loader2 } from "lucide-react";
+import { ShoppingCart, Search, RefreshCw, X, Plug, CheckCircle2, AlertTriangle, Plus, Eye, Edit, Trash2, FileText, Download, Loader2, Settings } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const PLATAFORMAS_VENDAS = ["hotmart", "eduzz", "monetizze", "kiwify"];
 
 const VendasDigitais = () => {
-  const { empresaId, canPerformAction } = useAuth();
+  const { empresaId, canPerformAction, isSuperAdmin } = useAuth();
   const canIncluir = canPerformAction("vendas_digitais", "pode_incluir");
   const canAlterar = canPerformAction("vendas_digitais", "pode_alterar");
   const canExcluir = canPerformAction("vendas_digitais", "pode_excluir");
@@ -59,6 +59,9 @@ const VendasDigitais = () => {
   const [deleteVenda, setDeleteVenda] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
   const [emittingId, setEmittingId] = useState<string | null>(null);
+  const [confirmEmitVenda, setConfirmEmitVenda] = useState<any>(null);
+  const [spedyConfig, setSpedyConfig] = useState<any>(null);
+  const [loadingSpedyConfig, setLoadingSpedyConfig] = useState(false);
 
   const plataformas = useMemo(() => {
     const set = new Set(vendas.map(v => v.plataforma).filter(Boolean));
@@ -147,17 +150,45 @@ const VendasDigitais = () => {
     return { ready: missing.length === 0, missing };
   };
 
-  const handleEmitInvoice = async (vendaId: string) => {
+  const handleRequestEmitInvoice = async (vendaId: string) => {
     const venda = vendas.find(v => v.id === vendaId);
     if (!venda) return;
 
     const { ready, missing } = getInvoiceReadiness(venda);
     if (!ready) {
-      toast.error(`Para emitir a nota fiscal, preencha: ${missing.join(", ")}`, {
-        duration: 5000,
-      });
+      toast.error(`Para emitir a nota fiscal, preencha: ${missing.join(", ")}`, { duration: 5000 });
       return;
     }
+
+    // For super admins, show confirmation with Spedy config
+    if (isSuperAdmin) {
+      setLoadingSpedyConfig(true);
+      setConfirmEmitVenda(venda);
+      try {
+        const { data } = await supabase
+          .from("spedy_config")
+          .select("*")
+          .eq("ativo", true)
+          .limit(1)
+          .single();
+        setSpedyConfig(data);
+      } catch {
+        setSpedyConfig(null);
+      } finally {
+        setLoadingSpedyConfig(false);
+      }
+    } else {
+      // Non-super-admin: direct confirmation
+      setConfirmEmitVenda(venda);
+      setSpedyConfig(null);
+    }
+  };
+
+  const confirmAndEmitInvoice = async () => {
+    if (!confirmEmitVenda) return;
+    const vendaId = confirmEmitVenda.id;
+    setConfirmEmitVenda(null);
+    setSpedyConfig(null);
 
     setEmittingId(vendaId);
     try {
@@ -171,7 +202,7 @@ const VendasDigitais = () => {
         body: JSON.stringify({ venda_id: vendaId }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || result.details || "Erro ao emitir nota");
+      if (!res.ok) throw new Error(result.details || result.error || "Erro ao emitir nota");
       toast.success("Nota enviada para processamento!");
       await fetchVendas();
     } catch (error: any) {
@@ -414,7 +445,7 @@ const VendasDigitais = () => {
                                   size="icon"
                                   className={cn("h-6 w-6", ready ? "text-primary" : "text-amber-500")}
                                   disabled={emittingId === venda.id}
-                                  onClick={() => handleEmitInvoice(venda.id)}
+                                  onClick={() => handleRequestEmitInvoice(venda.id)}
                                 >
                                   {emittingId === venda.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
                                 </Button>
@@ -555,6 +586,58 @@ const VendasDigitais = () => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteVenda} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {deleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm Emit Invoice Dialog */}
+      <AlertDialog open={!!confirmEmitVenda} onOpenChange={(open) => { if (!open) { setConfirmEmitVenda(null); setSpedyConfig(null); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" /> Confirmar Emissão de Nota Fiscal
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>Deseja emitir a nota fiscal para a venda abaixo?</p>
+                {confirmEmitVenda && (
+                  <div className="rounded-lg border bg-muted/30 p-3 space-y-1 text-sm">
+                    <p><strong>Produto:</strong> {confirmEmitVenda.produto || "—"}</p>
+                    <p><strong>Cliente:</strong> {confirmEmitVenda.cliente || "—"}</p>
+                    <p><strong>Documento:</strong> {confirmEmitVenda.cliente_documento || "—"}</p>
+                    <p><strong>Valor Bruto:</strong> {formatCurrency(confirmEmitVenda.valor_bruto)}</p>
+                    <p><strong>Valor Líquido:</strong> {formatCurrency(confirmEmitVenda.valor_liquido)}</p>
+                  </div>
+                )}
+                {isSuperAdmin && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1 text-sm">
+                    <p className="font-semibold flex items-center gap-1 text-primary">
+                      <Settings className="h-3.5 w-3.5" /> Configurações Spedy
+                    </p>
+                    {loadingSpedyConfig ? (
+                      <p className="text-muted-foreground flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Carregando...
+                      </p>
+                    ) : spedyConfig ? (
+                      <>
+                        <p><strong>Ambiente:</strong> {spedyConfig.ambiente}</p>
+                        <p><strong>API URL:</strong> <span className="font-mono text-xs break-all">{spedyConfig.api_url}</span></p>
+                        <p><strong>API Key:</strong> <span className="font-mono text-xs">{spedyConfig.api_key?.slice(0, 8)}...{spedyConfig.api_key?.slice(-4)}</span></p>
+                        <p><strong>Webhook Token:</strong> <span className="font-mono text-xs">{spedyConfig.webhook_token?.slice(0, 8)}...</span></p>
+                      </>
+                    ) : (
+                      <p className="text-destructive font-medium">⚠️ Nenhuma configuração Spedy ativa encontrada</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmAndEmitInvoice} disabled={isSuperAdmin && !spedyConfig}>
+              Emitir Nota Fiscal
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
