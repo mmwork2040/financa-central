@@ -394,6 +394,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                     </span>
                   </TableCell>
                   <TableCell>{lancamento.categoria?.nome || '-'}</TableCell>
+                  <TableCell>{(lancamento as any).forma_pagamento?.descricao || '-'}</TableCell>
                   <TableCell className={`font-medium ${lancamento.tipo === "receita" ? "text-green-600" : lancamento.tipo === "investimento" ? "text-accent-foreground" : "text-destructive"}`}>
                     {displayCurrency(lancamento.valor)}
                   </TableCell>
