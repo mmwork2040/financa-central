@@ -41,6 +41,7 @@ export type Lancamento = {
   fornecedor?: { id: string; nome: string };
   cliente?: { id: string; nome: string };
   categoria?: { id: string; nome: string; tipo: string };
+  forma_pagamento?: { id: string; descricao: string } | null;
   projeto?: { id: string; nome: string } | null;
   origem?: string;
 };

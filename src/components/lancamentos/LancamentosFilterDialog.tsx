@@ -199,6 +199,26 @@ export const LancamentosFilterDialog = () => {
                   </div>
                   
                   <div className="space-y-2">
+                    <Label htmlFor="forma-pagamento-filtro">Forma de Pagamento</Label>
+                    <Select 
+                      value={filtros.forma_pagamento_id || "all"} 
+                      onValueChange={(v) => handleFilterSelectChange('forma_pagamento_id', v === "all" ? null : v)}
+                    >
+                      <SelectTrigger id="forma-pagamento-filtro">
+                        <SelectValue placeholder="Todas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        {formasPagamento.map((fp) => (
+                          <SelectItem key={fp.id} value={fp.id}>
+                            {fp.descricao}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="projeto-filtro">Projeto</Label>
                     <Select 
                       value={filtros.projeto_id || "all"} 
