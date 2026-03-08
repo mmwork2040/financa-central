@@ -16,7 +16,8 @@ import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
 import { MyExitRequests } from "@/components/solicitacoes/MyExitRequests";
 import { DashboardChart } from "@/components/dashboard/DashboardChart";
 import { useNavigate } from "react-router-dom";
-import { DashboardDonutChart } from "@/components/dashboard/DashboardDonutChart";
+import { DashboardCategoryPieChart } from "@/components/dashboard/DashboardCategoryPieChart";
+import { DashboardTrendLineChart } from "@/components/dashboard/DashboardTrendLineChart";
 import { CaixaPrevistoDialog } from "@/components/dashboard/CaixaPrevistoDialog";
 import { DashboardDetailDialog, DashboardDialogType } from "@/components/dashboard/DashboardDetailDialog";
 import { cn } from "@/lib/utils";
@@ -206,12 +207,11 @@ const DashboardContent = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <DashboardChart data={monthlyChartData} saldoAtual={summary.saldoAtual} />
-        <DashboardDonutChart
-          receitas={summary.totalReceitas}
-          despesas={summary.totalDespesas}
-          saldo={summary.saldoAtual}
-        />
+        <DashboardCategoryPieChart lancamentosMes={lancamentosMes} />
       </div>
+
+      {/* Trend Line Chart */}
+      <DashboardTrendLineChart />
 
       {/* Contas a Pagar + Receitas Pendentes - side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

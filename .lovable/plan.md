@@ -1,67 +1,57 @@
 
 
-## Visão Geral
+## Scroll Animations for Landing Page Sections
 
-Substituir o gráfico de donut atual (que mostra apenas Receitas vs Despesas) por um painel de gráficos mais completo com:
+### Overview
+Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
 
-1. **Gráfico de Pizza por Categorias** — com filtros (receita/despesa/todos) e toggle entre % e valores
-2. **Gráfico de Linhas com projeção futura** — trimestral, semestral ou anual
+### Approach
+Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
 
-## Mudanças
+### Implementation Details
 
-### 1. `src/components/dashboard/DashboardCategoryPieChart.tsx` (novo)
+**1. Create `src/hooks/useScrollReveal.ts`**
+- A custom hook that returns a `ref` callback
+- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
+- Adds a CSS class (e.g., `revealed`) when the element is visible
+- Fires once per element (unobserves after reveal)
 
-Componente que:
-- Recebe os lançamentos do mês (`lancamentosMes`) já disponíveis no hook
-- Agrupa por `categoria.nome`, somando valores
-- Filtro por tipo: "Receitas" | "Despesas" | "Todos" (Select ou tabs)
-- Toggle: exibir **%** ou **R$** nos labels do gráfico
-- Paleta de ~10 cores pré-definidas
-- Respeita `useValuesVisibility` (mascara valores quando oculto)
-- Legenda interativa abaixo do gráfico com nome da categoria + valor/percentual
+**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
+- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
+- Accepts optional `delay` (stagger support) and `className`
+- Starts with opacity-0 and a small transform offset
+- On intersection, transitions to opacity-1 and transform-none
+- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
 
-### 2. `src/components/dashboard/DashboardTrendLineChart.tsx` (novo)
+**3. Update `src/pages/LandingPage.tsx`**
+Wrap each section's content with `<ScrollReveal>`:
 
-Componente que:
-- Recebe os lançamentos (busca dados futuros conforme período selecionado)
-- Select de período: **Trimestral** (3 meses) | **Semestral** (6 meses) | **Anual** (12 meses)
-- Mostra meses passados (dados reais pagos) + meses futuros (pendentes como projeção, linha tracejada)
-- Linhas: Receitas (verde), Despesas (vermelho), Saldo (azul)
-- Usa dados do hook + query adicional para meses fora do mês selecionado
-- Respeita `useValuesVisibility`
+| Section | Animation |
+|---------|-----------|
+| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
+| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
+| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
+| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
+| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
+| Social Proof | Scale for stat cards |
+| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
+| Footer | Simple fade-up |
 
-### 3. `src/hooks/useDashboardData.tsx` (editar)
-
-- Alterar a query de `lancamentos` (linhas 99-105) para incluir `categoria:categoria_id(nome)` nos `todosLancamentos` (query das linhas 125-129) — atualmente só traz na query de recentes
-- Retornar `todosLancamentos` (renomear para `lancamentosMes` que já existe mas sem categoria) com categoria inclusa
-- Adicionar função/query para buscar lançamentos de meses futuros para o gráfico de linhas (query parametrizada por período)
-
-### 4. `src/pages/Dashboard.tsx` (editar)
-
-- Substituir o grid de charts (linhas 207-214) para incluir os dois novos componentes
-- Layout: 
-  - Linha 1: `DashboardChart` (barras, lg:col-span-2) + `DashboardCategoryPieChart` (lg:col-span-1) — mesmo layout atual mas com o novo pie
-  - Linha 2: `DashboardTrendLineChart` (full width)
-
-### Detalhes Técnicos
-
-**Query para gráfico de linhas (períodos futuros):**
-```sql
--- Buscar lançamentos agrupados por mês nos próximos N meses
-SELECT tipo, valor, data_vencimento, status 
-FROM lancamentos
-WHERE data_vencimento BETWEEN <monthStart> AND <futureEnd>
+**4. Add base CSS to `src/index.css`**
+```css
+.scroll-reveal {
+  opacity: 0;
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: none !important;
+}
 ```
 
-Agrupamento client-side por `YYYY-MM`, separando dados reais (pago/recebido) de projetados (pendente).
-
-**Cores do pie chart:**
-```typescript
-const CATEGORY_COLORS = [
-  "#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6",
-  "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16"
-];
-```
-
-Nenhuma alteração de banco de dados necessária.
+### Key Decisions
+- No new dependencies -- uses native `IntersectionObserver`
+- CSS transitions (not JS-driven animations) for performance
+- Each animation fires only once (no re-hide on scroll up) for a polished feel
+- Stagger delays on card grids (50-100ms increments) for a cascading effect
 

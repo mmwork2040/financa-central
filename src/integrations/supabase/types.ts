@@ -884,6 +884,67 @@ export type Database = {
           },
         ]
       }
+      movimentacoes_conta: {
+        Row: {
+          conta_bancaria_id: string
+          created_at: string
+          descricao: string
+          empresa_id: string | null
+          id: string
+          lancamento_id: string | null
+          saldo_anterior: number
+          saldo_posterior: number
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          conta_bancaria_id: string
+          created_at?: string
+          descricao: string
+          empresa_id?: string | null
+          id?: string
+          lancamento_id?: string | null
+          saldo_anterior?: number
+          saldo_posterior?: number
+          tipo?: string
+          valor?: number
+        }
+        Update: {
+          conta_bancaria_id?: string
+          created_at?: string
+          descricao?: string
+          empresa_id?: string | null
+          id?: string
+          lancamento_id?: string | null
+          saldo_anterior?: number
+          saldo_posterior?: number
+          tipo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_conta_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_conta_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_conta_lancamento_id_fkey"
+            columns: ["lancamento_id"]
+            isOneToOne: false
+            referencedRelation: "lancamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       n8n_chat_histories: {
         Row: {
           created_at: string | null
