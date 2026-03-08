@@ -46,7 +46,15 @@ export const LancamentosSummary = () => {
   const countPrevDespesas = lancamentos.filter(l => l.tipo === "despesa" && l.status === "pendente").length;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5">
+      <SummaryCard
+        title="Saldo em Caixa"
+        value={formatCurrency(saldoCaixa)}
+        description="Todas as contas"
+        icon={Landmark}
+        iconColor={saldoCaixa >= 0 ? "text-primary" : "text-destructive"}
+        isCurrency
+      />
       <SummaryCard
         title="Receitas Executadas"
         value={formatCurrency(receitasExecutadas)}
