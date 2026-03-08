@@ -205,6 +205,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     fornecedor_id: null,
     cliente_id: null,
     projeto_id: null,
+    forma_pagamento_id: null,
   });
 
   const [formData, setFormData] = useState<LancamentoFormData>({
