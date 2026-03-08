@@ -1,40 +1,57 @@
 
 
-## Problem
+## Scroll Animations for Landing Page Sections
 
-Expenses were paid on "OSV LTDA" but the bank balance (`saldo_atual`) was never debited. This happened because older transactions or bulk operations didn't include balance adjustment logic. The user needs a way to **recalculate** the bank account balance from scratch based on actual transaction data.
+### Overview
+Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
 
-## Solution: "Recalcular Saldo" (Recalculate Balance) Feature
+### Approach
+Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
 
-Add a reconciliation button on the **Contas Bancárias** page that recalculates `saldo_atual` for any bank account based on its `saldo_inicial` plus all paid/received transactions minus all paid expenses/investments.
+### Implementation Details
 
-### Changes
+**1. Create `src/hooks/useScrollReveal.ts`**
+- A custom hook that returns a `ref` callback
+- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
+- Adds a CSS class (e.g., `revealed`) when the element is visible
+- Fires once per element (unobserves after reveal)
 
-**1. `src/components/contas-bancarias/RecalcularSaldoDialog.tsx`** (new file)
-- Dialog that lists all bank accounts with their current `saldo_atual` vs. the **calculated balance** (`saldo_inicial` + sum of paid receitas - sum of paid despesas/investimentos linked to that account)
-- Shows the difference (divergência) for each account
-- "Recalcular" button per account (or "Recalcular Todos") that updates `saldo_atual` to the correct calculated value
-- Confirmation step before applying
+**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
+- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
+- Accepts optional `delay` (stagger support) and `className`
+- Starts with opacity-0 and a small transform offset
+- On intersection, transitions to opacity-1 and transform-none
+- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
 
-**2. `src/pages/ContasBancarias.tsx`**
-- Add a "Recalcular Saldo" button (with `Calculator` icon) next to the existing Extrato/Transferir buttons
-- Opens the new `RecalcularSaldoDialog`
+**3. Update `src/pages/LandingPage.tsx`**
+Wrap each section's content with `<ScrollReveal>`:
 
-### Technical Details
+| Section | Animation |
+|---------|-----------|
+| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
+| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
+| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
+| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
+| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
+| Social Proof | Scale for stat cards |
+| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
+| Footer | Simple fade-up |
 
-The recalculation query per account:
-```sql
--- For each conta_bancaria_id:
--- new_saldo = saldo_inicial 
---   + SUM(valor) WHERE tipo='receita' AND status IN ('pago','recebido')
---   - SUM(valor) WHERE tipo IN ('despesa','investimento') AND status='pago'
+**4. Add base CSS to `src/index.css`**
+```css
+.scroll-reveal {
+  opacity: 0;
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: none !important;
+}
 ```
 
-This is done client-side with two queries:
-1. Fetch all `contas_bancarias` (already available)
-2. Fetch aggregated lancamentos grouped by `conta_bancaria_id` and `tipo` where status is paid/received
-
-The dialog shows a table: Account | Current Balance | Calculated Balance | Difference — with action buttons to fix divergent accounts.
-
-No database schema changes needed.
+### Key Decisions
+- No new dependencies -- uses native `IntersectionObserver`
+- CSS transitions (not JS-driven animations) for performance
+- Each animation fires only once (no re-hide on scroll up) for a polished feel
+- Stagger delays on card grids (50-100ms increments) for a cascading effect
 

@@ -1,13 +1,14 @@
 
 import React, { useState } from "react";
 import { useContasBancarias } from "@/hooks/useContasBancarias";
-import { Landmark, ArrowRightLeft, FileText } from "lucide-react";
+import { Landmark, ArrowRightLeft, FileText, Calculator } from "lucide-react";
 import ContasBancariasTable from "@/components/contas-bancarias/ContasBancariasTable";
 import ContaBancariaForm from "@/components/contas-bancarias/ContaBancariaForm";
 import ContaBancariaDeleteDialog from "@/components/contas-bancarias/ContaBancariaDeleteDialog";
 import ContasBancariasSearch from "@/components/contas-bancarias/ContasBancariasSearch";
 import TransferenciaDialog from "@/components/contas-bancarias/TransferenciaDialog";
 import ExtratoDialog from "@/components/contas-bancarias/ExtratoDialog";
+import RecalcularSaldoDialog from "@/components/contas-bancarias/RecalcularSaldoDialog";
 import PageHeader from "@/components/common/PageHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { ValuesVisibilityProvider } from "@/contexts/ValuesVisibilityContext";
@@ -23,6 +24,7 @@ const ContasBancariasContent = () => {
   const { visible, toggle } = useValuesVisibility();
   const [openTransferencia, setOpenTransferencia] = useState(false);
   const [openExtrato, setOpenExtrato] = useState(false);
+  const [openRecalcular, setOpenRecalcular] = useState(false);
 
   const {
     contasBancarias, loading, formData, openModal, openDeleteModal, selectedId, searchQuery,
@@ -59,6 +61,12 @@ const ContasBancariasContent = () => {
             <FileText className="h-3.5 w-3.5" />
             Extrato
           </Button>
+          {canAlterar && (
+            <Button variant="outline" size="sm" onClick={() => setOpenRecalcular(true)} className="gap-1.5 text-xs">
+              <Calculator className="h-3.5 w-3.5" />
+              Recalcular
+            </Button>
+          )}
           {canAlterar && contasBancarias.length >= 2 && (
             <Button variant="outline" size="sm" onClick={() => setOpenTransferencia(true)} className="gap-1.5 text-xs">
               <ArrowRightLeft className="h-3.5 w-3.5" />
@@ -127,6 +135,19 @@ const ContasBancariasContent = () => {
         onClose={() => setOpenExtrato(false)}
         contas={contasParaDialog}
         empresaId={empresaId}
+      />
+
+      <RecalcularSaldoDialog
+        open={openRecalcular}
+        onClose={() => setOpenRecalcular(false)}
+        contas={contasBancarias.map(c => ({
+          id: c.id,
+          nome: c.nome,
+          banco: c.banco,
+          saldo_inicial: c.saldo_inicial || 0,
+          saldo_atual: c.saldo_atual || 0,
+        }))}
+        onSuccess={() => window.location.reload()}
       />
     </div>
   );
