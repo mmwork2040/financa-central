@@ -58,16 +58,38 @@ const TransferenciaDialog: React.FC<TransferenciaDialogProps> = ({
 
     setLoading(true);
     try {
+      const { logMovimentacao } = await import("@/utils/logMovimentacao");
       const contaOrigem = contas.find(c => c.id === origemId)!;
       const contaDestino = contas.find(c => c.id === destinoId)!;
       const desc = descricao || "Transferência entre contas";
 
       // Update balances
-      const novoSaldoOrigem = Number(contaOrigem.saldo_atual) - valor;
-      const novoSaldoDestino = Number(contaDestino.saldo_atual) + valor;
+      const saldoAnteriorOrigem = Number(contaOrigem.saldo_atual);
+      const saldoAnteriorDestino = Number(contaDestino.saldo_atual);
+      const novoSaldoOrigem = saldoAnteriorOrigem - valor;
+      const novoSaldoDestino = saldoAnteriorDestino + valor;
 
       await (supabase.from("contas_bancarias").update({ saldo_atual: novoSaldoOrigem } as any) as any).eq("id", origemId);
       await (supabase.from("contas_bancarias").update({ saldo_atual: novoSaldoDestino } as any) as any).eq("id", destinoId);
+
+      await logMovimentacao({
+        conta_bancaria_id: origemId,
+        empresa_id: empresaId,
+        tipo: "transferencia_saida",
+        descricao: `${desc} → ${contaDestino.nome}`,
+        valor: -valor,
+        saldo_anterior: saldoAnteriorOrigem,
+        saldo_posterior: novoSaldoOrigem,
+      });
+      await logMovimentacao({
+        conta_bancaria_id: destinoId,
+        empresa_id: empresaId,
+        tipo: "transferencia_entrada",
+        descricao: `${desc} ← ${contaOrigem.nome}`,
+        valor: valor,
+        saldo_anterior: saldoAnteriorDestino,
+        saldo_posterior: novoSaldoDestino,
+      });
 
       const dataHoje = new Date().toISOString().split("T")[0];
 
