@@ -112,4 +112,10 @@ const ProjetoDetalheContent = () => {
   );
 };
 
+const ProjetoDetalhe = () => (
+  <ValuesVisibilityProvider>
+    <ProjetoDetalheContent />
+  </ValuesVisibilityProvider>
+);
+
 export default ProjetoDetalhe;

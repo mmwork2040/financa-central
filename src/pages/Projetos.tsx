@@ -129,4 +129,10 @@ const Projetos = () => {
   );
 };
 
+const Projetos = () => (
+  <ValuesVisibilityProvider>
+    <ProjetosContent />
+  </ValuesVisibilityProvider>
+);
+
 export default Projetos;
