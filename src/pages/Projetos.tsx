@@ -6,7 +6,10 @@ import { ProjetoForm } from "@/components/projetos/ProjetoForm";
 import { ProjetoDeleteDialog } from "@/components/projetos/ProjetoDeleteDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
-import { Search, FolderKanban } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, FolderKanban, Eye, EyeOff } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 import ExportDropdown from "@/components/common/ExportDropdown";
 import { exportToCSV, generatePDFView } from "@/utils/exportUtils";
 import { formatCurrency } from "@/utils/format";
@@ -25,6 +28,7 @@ const Projetos = () => {
   } = useProjetos();
   const { canPerformAction } = useAuth();
   const canIncluir = canPerformAction("projetos", "pode_incluir");
+  const { visible, toggle } = useValuesVisibility();
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredProjetos = useMemo(() => {
@@ -51,14 +55,26 @@ const Projetos = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Projetos"
-        description="Gerencie seus projetos e acompanhe receitas e despesas por projeto"
-        buttonLabel={canIncluir ? "Novo Projeto" : undefined}
-        onButtonClick={canIncluir ? () => openModal() : undefined}
-        showButton={canIncluir}
-        icon={FolderKanban}
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="Projetos"
+          description="Gerencie seus projetos e acompanhe receitas e despesas por projeto"
+          buttonLabel={canIncluir ? "Novo Projeto" : undefined}
+          onButtonClick={canIncluir ? () => openModal() : undefined}
+          showButton={canIncluir}
+          icon={FolderKanban}
+        />
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground shrink-0">
+                {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>{visible ? "Ocultar valores" : "Exibir valores"}</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-4 items-center">
         <div className="w-full sm:w-3/4 relative">
