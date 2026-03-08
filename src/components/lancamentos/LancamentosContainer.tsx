@@ -22,7 +22,8 @@ export const LancamentosContainer = () => {
         l.fornecedor?.nome?.toLowerCase().includes(q) ||
         l.cliente?.nome?.toLowerCase().includes(q) ||
         l.categoria?.nome?.toLowerCase().includes(q) ||
-        l.projeto?.nome?.toLowerCase().includes(q)
+        l.projeto?.nome?.toLowerCase().includes(q) ||
+        (l as any).forma_pagamento?.descricao?.toLowerCase().includes(q)
       );
     });
   }, [lancamentos, searchQuery]);
