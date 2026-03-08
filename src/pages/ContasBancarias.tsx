@@ -24,6 +24,7 @@ const ContasBancariasContent = () => {
   const { visible, toggle } = useValuesVisibility();
   const [openTransferencia, setOpenTransferencia] = useState(false);
   const [openExtrato, setOpenExtrato] = useState(false);
+  const [openRecalcular, setOpenRecalcular] = useState(false);
 
   const {
     contasBancarias, loading, formData, openModal, openDeleteModal, selectedId, searchQuery,
