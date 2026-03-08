@@ -23,6 +23,7 @@ export const LancamentosFilterDialog = () => {
     fornecedores,
     clientes,
     projetos,
+    formasPagamento,
   } = useLancamentosContext();
 
   return (
