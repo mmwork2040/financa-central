@@ -212,7 +212,8 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                         <p className="text-xs text-muted-foreground">
                           Registro: {new Date(l.created_at).toLocaleDateString()} {new Date(l.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           {' · '}Venc: {new Date(l.data_vencimento).toLocaleDateString()}
-                          {l.categoria?.nome ? ` · ${l.categoria.nome}` : ''}
+                        {l.categoria?.nome ? ` · ${l.categoria.nome}` : ''}
+                        {(l as any).forma_pagamento?.descricao ? ` · ${(l as any).forma_pagamento.descricao}` : ''}
                         </p>
                         {(l.fornecedor || l.cliente) && (
                           <p className="text-xs text-muted-foreground">
@@ -345,6 +346,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
               </TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Categoria</TableHead>
+              <TableHead>Forma Pgto</TableHead>
               <TableHead>
                 <div className="flex items-center cursor-pointer" onClick={() => handleSort('valor')}>
                   Valor <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -393,6 +395,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                     </span>
                   </TableCell>
                   <TableCell>{lancamento.categoria?.nome || '-'}</TableCell>
+                  <TableCell>{(lancamento as any).forma_pagamento?.descricao || '-'}</TableCell>
                   <TableCell className={`font-medium ${lancamento.tipo === "receita" ? "text-green-600" : lancamento.tipo === "investimento" ? "text-accent-foreground" : "text-destructive"}`}>
                     {displayCurrency(lancamento.valor)}
                   </TableCell>

@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 
+// Component uses formasPagamento from context
+
 export const LancamentosFilterDialog = () => {
   const {
     filtros,
@@ -21,6 +23,7 @@ export const LancamentosFilterDialog = () => {
     fornecedores,
     clientes,
     projetos,
+    formasPagamento,
   } = useLancamentosContext();
 
   return (
@@ -195,6 +198,26 @@ export const LancamentosFilterDialog = () => {
                     </div>
                   </div>
                   
+                  <div className="space-y-2">
+                    <Label htmlFor="forma-pagamento-filtro">Forma de Pagamento</Label>
+                    <Select 
+                      value={filtros.forma_pagamento_id || "all"} 
+                      onValueChange={(v) => handleFilterSelectChange('forma_pagamento_id', v === "all" ? null : v)}
+                    >
+                      <SelectTrigger id="forma-pagamento-filtro">
+                        <SelectValue placeholder="Todas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        {formasPagamento.map((fp) => (
+                          <SelectItem key={fp.id} value={fp.id}>
+                            {fp.descricao}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="projeto-filtro">Projeto</Label>
                     <Select 

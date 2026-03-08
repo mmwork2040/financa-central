@@ -41,6 +41,7 @@ export type Lancamento = {
   fornecedor?: { id: string; nome: string };
   cliente?: { id: string; nome: string };
   categoria?: { id: string; nome: string; tipo: string };
+  forma_pagamento?: { id: string; descricao: string } | null;
   projeto?: { id: string; nome: string } | null;
   origem?: string;
 };
@@ -102,6 +103,7 @@ type FiltrosType = {
   fornecedor_id?: string | null;
   cliente_id?: string | null;
   projeto_id?: string | null;
+  forma_pagamento_id?: string | null;
 };
 
 type LancamentoFormData = Omit<Lancamento, 'id' | 'created_at' | 'fornecedor' | 'cliente' | 'categoria' | 'origem'>;
@@ -204,6 +206,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     fornecedor_id: null,
     cliente_id: null,
     projeto_id: null,
+    forma_pagamento_id: null,
   });
 
   const [formData, setFormData] = useState<LancamentoFormData>({
@@ -236,7 +239,8 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         categoria:categorias(*),
         fornecedor:fornecedores(*),
         cliente:clientes(*),
-        projeto:projetos(id, nome)
+        projeto:projetos(id, nome),
+        forma_pagamento:formas_pagamento(id, descricao)
       `).order(sortField, { ascending: sortDirection === 'asc' });
 
       // Always filter by selected month
@@ -271,6 +275,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
       if (filtros.projeto_id) {
         query = query.eq("projeto_id", filtros.projeto_id);
+      }
+      if (filtros.forma_pagamento_id) {
+        query = query.eq("forma_pagamento_id", filtros.forma_pagamento_id);
       }
 
       const { data, error: queryError } = await query;
