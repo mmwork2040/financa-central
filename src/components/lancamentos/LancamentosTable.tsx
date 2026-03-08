@@ -345,6 +345,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
               </TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Categoria</TableHead>
+              <TableHead>Forma Pgto</TableHead>
               <TableHead>
                 <div className="flex items-center cursor-pointer" onClick={() => handleSort('valor')}>
                   Valor <ArrowUpDown className="ml-2 h-3 w-3" />
