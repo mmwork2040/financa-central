@@ -58,6 +58,10 @@ const ContasBancariasContent = () => {
           onExportPDF={handleExportPDF}
         />
         <div className="flex items-center gap-1 self-end sm:self-auto">
+          <Button variant="outline" size="sm" onClick={() => setOpenHistorico(true)} className="gap-1.5 text-xs">
+            <History className="h-3.5 w-3.5" />
+            Histórico
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setOpenExtrato(true)} className="gap-1.5 text-xs">
             <FileText className="h-3.5 w-3.5" />
             Extrato
