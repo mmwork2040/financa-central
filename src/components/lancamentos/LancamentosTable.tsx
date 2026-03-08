@@ -87,8 +87,30 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
     setBulkLoading(true);
     try {
       for (const l of selectedLancamentos) {
+        if (l.status !== "pendente") continue;
+
+        // Adjust bank account balance if linked
+        if (l.conta_bancaria_id) {
+          const delta = l.tipo === "receita" ? l.valor : -l.valor;
+          const { data: conta } = await supabase
+            .from("contas_bancarias")
+            .select("saldo_atual")
+            .eq("id", l.conta_bancaria_id)
+            .single();
+
+          if (conta) {
+            await supabase
+              .from("contas_bancarias")
+              .update({ saldo_atual: (conta.saldo_atual || 0) + delta })
+              .eq("id", l.conta_bancaria_id);
+          }
+        }
+
         const newStatus = l.tipo === "receita" ? "recebido" : "pago";
-        await supabase.from("lancamentos").update({ status: newStatus }).eq("id", l.id!);
+        await supabase
+          .from("lancamentos")
+          .update({ status: newStatus, data_pagamento: new Date().toISOString().split("T")[0] })
+          .eq("id", l.id!);
       }
       toast.success(`${selectedLancamentos.length} lançamento(s) atualizado(s) com sucesso.`);
       setSelectedIds(new Set());
