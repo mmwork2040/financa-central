@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useContasBancarias } from "@/hooks/useContasBancarias";
-import { Landmark, ArrowRightLeft, FileText, Calculator } from "lucide-react";
+import { Landmark, ArrowRightLeft, FileText, Calculator, History } from "lucide-react";
 import ContasBancariasTable from "@/components/contas-bancarias/ContasBancariasTable";
 import ContaBancariaForm from "@/components/contas-bancarias/ContaBancariaForm";
 import ContaBancariaDeleteDialog from "@/components/contas-bancarias/ContaBancariaDeleteDialog";

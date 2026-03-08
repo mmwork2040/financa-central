@@ -143,6 +143,7 @@ const RecalcularSaldoDialog: React.FC<Props> = ({ open, onClose, contas, onSucce
 
     setSavingAll(true);
     try {
+      const { logMovimentacao } = await import("@/utils/logMovimentacao");
       for (const conta of divergentes) {
         const result = results[conta.id];
         const { error } = await (supabase
@@ -150,6 +151,16 @@ const RecalcularSaldoDialog: React.FC<Props> = ({ open, onClose, contas, onSucce
           .update({ saldo_atual: result.saldo_calculado } as any) as any)
           .eq("id", conta.id);
         if (error) throw error;
+
+        await logMovimentacao({
+          conta_bancaria_id: conta.id,
+          empresa_id: (conta as any).empresa_id || null,
+          tipo: "recalculo",
+          descricao: `Recálculo em massa (divergência: ${result.diferenca.toFixed(2)})`,
+          valor: result.diferenca,
+          saldo_anterior: conta.saldo_atual,
+          saldo_posterior: result.saldo_calculado,
+        });
       }
 
       toast.success(`${divergentes.length} conta(s) atualizada(s) com sucesso`);
