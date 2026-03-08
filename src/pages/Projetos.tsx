@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, FolderKanban, Eye, EyeOff } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
+import { useValuesVisibility, ValuesVisibilityProvider } from "@/contexts/ValuesVisibilityContext";
 import ExportDropdown from "@/components/common/ExportDropdown";
 import { exportToCSV, generatePDFView } from "@/utils/exportUtils";
 import { formatCurrency } from "@/utils/format";
@@ -20,7 +20,7 @@ const statusLabel = (s: string) => {
   return "Cancelado";
 };
 
-const Projetos = () => {
+const ProjetosContent = () => {
   const {
     projetos, loading, currentProjeto, isModalOpen, isDeleteDialogOpen, isSaving,
     openModal, confirmDelete, handleInputChange, handleSelectChange,
@@ -128,5 +128,11 @@ const Projetos = () => {
     </div>
   );
 };
+
+const Projetos = () => (
+  <ValuesVisibilityProvider>
+    <ProjetosContent />
+  </ValuesVisibilityProvider>
+);
 
 export default Projetos;

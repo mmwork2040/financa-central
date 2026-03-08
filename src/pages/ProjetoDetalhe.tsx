@@ -8,9 +8,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjetoResumo } from "@/components/projetos/ProjetoResumo";
 import { ProjetoLancamentos } from "@/components/projetos/ProjetoLancamentos";
+import { ValuesVisibilityProvider } from "@/contexts/ValuesVisibilityContext";
 import type { Projeto } from "@/hooks/useProjetos";
 
-const ProjetoDetalhe = () => {
+const ProjetoDetalheContent = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { visible, toggle } = useValuesVisibility();
@@ -110,5 +111,11 @@ const ProjetoDetalhe = () => {
     </div>
   );
 };
+
+const ProjetoDetalhe = () => (
+  <ValuesVisibilityProvider>
+    <ProjetoDetalheContent />
+  </ValuesVisibilityProvider>
+);
 
 export default ProjetoDetalhe;
