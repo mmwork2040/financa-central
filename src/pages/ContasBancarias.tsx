@@ -1,13 +1,14 @@
 
 import React, { useState } from "react";
 import { useContasBancarias } from "@/hooks/useContasBancarias";
-import { Landmark, ArrowRightLeft, FileText } from "lucide-react";
+import { Landmark, ArrowRightLeft, FileText, Calculator } from "lucide-react";
 import ContasBancariasTable from "@/components/contas-bancarias/ContasBancariasTable";
 import ContaBancariaForm from "@/components/contas-bancarias/ContaBancariaForm";
 import ContaBancariaDeleteDialog from "@/components/contas-bancarias/ContaBancariaDeleteDialog";
 import ContasBancariasSearch from "@/components/contas-bancarias/ContasBancariasSearch";
 import TransferenciaDialog from "@/components/contas-bancarias/TransferenciaDialog";
 import ExtratoDialog from "@/components/contas-bancarias/ExtratoDialog";
+import RecalcularSaldoDialog from "@/components/contas-bancarias/RecalcularSaldoDialog";
 import PageHeader from "@/components/common/PageHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { ValuesVisibilityProvider } from "@/contexts/ValuesVisibilityContext";
