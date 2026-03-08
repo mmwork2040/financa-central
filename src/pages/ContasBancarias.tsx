@@ -136,6 +136,19 @@ const ContasBancariasContent = () => {
         contas={contasParaDialog}
         empresaId={empresaId}
       />
+
+      <RecalcularSaldoDialog
+        open={openRecalcular}
+        onClose={() => setOpenRecalcular(false)}
+        contas={contasBancarias.map(c => ({
+          id: c.id,
+          nome: c.nome,
+          banco: c.banco,
+          saldo_inicial: c.saldo_inicial || 0,
+          saldo_atual: c.saldo_atual || 0,
+        }))}
+        onSuccess={() => window.location.reload()}
+      />
     </div>
   );
 };
