@@ -238,7 +238,8 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         categoria:categorias(*),
         fornecedor:fornecedores(*),
         cliente:clientes(*),
-        projeto:projetos(id, nome)
+        projeto:projetos(id, nome),
+        forma_pagamento:formas_pagamento(id, descricao)
       `).order(sortField, { ascending: sortDirection === 'asc' });
 
       // Always filter by selected month
