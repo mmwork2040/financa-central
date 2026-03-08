@@ -99,10 +99,24 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
             .single();
 
           if (conta) {
+            const saldoAnterior = Number(conta.saldo_atual || 0);
+            const saldoPosterior = saldoAnterior + delta;
             await supabase
               .from("contas_bancarias")
-              .update({ saldo_atual: (conta.saldo_atual || 0) + delta })
+              .update({ saldo_atual: saldoPosterior })
               .eq("id", l.conta_bancaria_id);
+            
+            const { logMovimentacao } = await import("@/utils/logMovimentacao");
+            await logMovimentacao({
+              conta_bancaria_id: l.conta_bancaria_id,
+              empresa_id: l.empresa_id || null,
+              tipo: l.tipo === "receita" ? "receita" : "despesa",
+              descricao: `Baixa em massa: ${l.descricao}`,
+              valor: delta,
+              saldo_anterior: saldoAnterior,
+              saldo_posterior: saldoPosterior,
+              lancamento_id: l.id || null,
+            });
           }
         }
 
