@@ -1,4 +1,5 @@
 // LancamentosContext — manages lancamentos state and CRUD
+import { logMovimentacao } from "@/utils/logMovimentacao";
 import React, {
   createContext,
   useState,
