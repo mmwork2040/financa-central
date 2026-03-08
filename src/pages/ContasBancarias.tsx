@@ -9,6 +9,7 @@ import ContasBancariasSearch from "@/components/contas-bancarias/ContasBancarias
 import TransferenciaDialog from "@/components/contas-bancarias/TransferenciaDialog";
 import ExtratoDialog from "@/components/contas-bancarias/ExtratoDialog";
 import RecalcularSaldoDialog from "@/components/contas-bancarias/RecalcularSaldoDialog";
+import HistoricoMovimentacoesDialog from "@/components/contas-bancarias/HistoricoMovimentacoesDialog";
 import PageHeader from "@/components/common/PageHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { ValuesVisibilityProvider } from "@/contexts/ValuesVisibilityContext";
