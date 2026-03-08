@@ -94,18 +94,30 @@ const RecalcularSaldoDialog: React.FC<Props> = ({ open, onClose, contas, onSucce
 
   const recalcularConta = async (contaId: string) => {
     const result = results[contaId];
-    if (!result) return;
+    const conta = contas.find(c => c.id === contaId);
+    if (!result || !conta) return;
 
     setSaving(contaId);
     try {
+      const { logMovimentacao } = await import("@/utils/logMovimentacao");
       const { error } = await (supabase
         .from("contas_bancarias")
         .update({ saldo_atual: result.saldo_calculado } as any) as any)
         .eq("id", contaId);
 
       if (error) throw error;
+
+      await logMovimentacao({
+        conta_bancaria_id: contaId,
+        empresa_id: (conta as any).empresa_id || null,
+        tipo: "recalculo",
+        descricao: `Recálculo de saldo (divergência: ${result.diferenca.toFixed(2)})`,
+        valor: result.diferenca,
+        saldo_anterior: conta.saldo_atual,
+        saldo_posterior: result.saldo_calculado,
+      });
+
       toast.success("Saldo atualizado com sucesso");
-      // Update local result to show 0 difference
       setResults(prev => ({
         ...prev,
         [contaId]: { ...prev[contaId], diferenca: 0 },
