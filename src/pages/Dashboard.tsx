@@ -207,12 +207,11 @@ const DashboardContent = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <DashboardChart data={monthlyChartData} saldoAtual={summary.saldoAtual} />
-        <DashboardDonutChart
-          receitas={summary.totalReceitas}
-          despesas={summary.totalDespesas}
-          saldo={summary.saldoAtual}
-        />
+        <DashboardCategoryPieChart lancamentosMes={lancamentosMes} />
       </div>
+
+      {/* Trend Line Chart */}
+      <DashboardTrendLineChart />
 
       {/* Contas a Pagar + Receitas Pendentes - side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

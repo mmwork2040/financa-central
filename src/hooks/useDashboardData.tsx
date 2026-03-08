@@ -124,7 +124,7 @@ export const useDashboardData = () => {
       // Fetch transactions for the selected month
       const { data: todosLancamentos, error: todosError } = await supabase
         .from('lancamentos')
-        .select('*')
+        .select('*, categoria:categoria_id(nome)')
         .gte('data_vencimento', monthStart)
         .lte('data_vencimento', monthEnd);
         
