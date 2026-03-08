@@ -709,8 +709,20 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
               .eq("id", formData.conta_bancaria_id)
               .single();
             if (contaAtual) {
-              await (supabase.from("contas_bancarias").update({ saldo_atual: Number(contaAtual.saldo_atual) + delta } as any) as any)
+              const saldoAnterior = Number(contaAtual.saldo_atual);
+              const saldoPosterior = saldoAnterior + delta;
+              await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
                 .eq("id", formData.conta_bancaria_id);
+              await logMovimentacao({
+                conta_bancaria_id: formData.conta_bancaria_id,
+                empresa_id: empresaId || null,
+                tipo: formData.tipo === "receita" ? "receita" : "despesa",
+                descricao: formData.descricao,
+                valor: delta,
+                saldo_anterior: saldoAnterior,
+                saldo_posterior: saldoPosterior,
+                lancamento_id: data[0].id,
+              });
             }
           }
 
