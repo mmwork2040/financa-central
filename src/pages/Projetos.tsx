@@ -28,6 +28,7 @@ const Projetos = () => {
   } = useProjetos();
   const { canPerformAction } = useAuth();
   const canIncluir = canPerformAction("projetos", "pode_incluir");
+  const { visible, toggle } = useValuesVisibility();
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredProjetos = useMemo(() => {
