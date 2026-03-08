@@ -102,6 +102,7 @@ type FiltrosType = {
   fornecedor_id?: string | null;
   cliente_id?: string | null;
   projeto_id?: string | null;
+  forma_pagamento_id?: string | null;
 };
 
 type LancamentoFormData = Omit<Lancamento, 'id' | 'created_at' | 'fornecedor' | 'cliente' | 'categoria' | 'origem'>;
