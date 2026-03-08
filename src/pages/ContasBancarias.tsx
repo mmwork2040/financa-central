@@ -61,6 +61,12 @@ const ContasBancariasContent = () => {
             <FileText className="h-3.5 w-3.5" />
             Extrato
           </Button>
+          {canAlterar && (
+            <Button variant="outline" size="sm" onClick={() => setOpenRecalcular(true)} className="gap-1.5 text-xs">
+              <Calculator className="h-3.5 w-3.5" />
+              Recalcular
+            </Button>
+          )}
           {canAlterar && contasBancarias.length >= 2 && (
             <Button variant="outline" size="sm" onClick={() => setOpenTransferencia(true)} className="gap-1.5 text-xs">
               <ArrowRightLeft className="h-3.5 w-3.5" />
