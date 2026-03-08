@@ -275,6 +275,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (filtros.projeto_id) {
         query = query.eq("projeto_id", filtros.projeto_id);
       }
+      if (filtros.forma_pagamento_id) {
+        query = query.eq("forma_pagamento_id", filtros.forma_pagamento_id);
+      }
 
       const { data, error: queryError } = await query;
 
