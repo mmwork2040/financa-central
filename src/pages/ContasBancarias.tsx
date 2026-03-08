@@ -154,6 +154,13 @@ const ContasBancariasContent = () => {
         }))}
         onSuccess={() => window.location.reload()}
       />
+
+      <HistoricoMovimentacoesDialog
+        open={openHistorico}
+        onClose={() => setOpenHistorico(false)}
+        contas={contasParaDialog}
+        empresaId={empresaId}
+      />
     </div>
   );
 };
