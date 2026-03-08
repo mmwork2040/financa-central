@@ -1,15 +1,29 @@
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import { formatCurrency } from "@/utils/format";
 import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 import SummaryCard from "@/components/dashboard/SummaryCard";
-import { ArrowUpRight, ArrowDownRight, CheckCircle2, Clock } from "lucide-react";
+import { CheckCircle2, Clock, Landmark } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const LancamentosSummary = () => {
   const { lancamentos } = useLancamentosContext();
   const { visible } = useValuesVisibility();
+  const [saldoCaixa, setSaldoCaixa] = useState(0);
 
+  const fetchSaldo = async () => {
+    const { data } = await supabase.from('contas_bancarias').select('saldo_atual');
+    setSaldoCaixa(data?.reduce((acc, c) => acc + (c.saldo_atual || 0), 0) || 0);
+  };
+
+  useEffect(() => {
+    fetchSaldo();
+    const channel = supabase
+      .channel('lancamentos-saldo-caixa')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contas_bancarias' }, () => fetchSaldo())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
   const receitasExecutadas = lancamentos
     .filter(l => l.tipo === "receita" && (l.status === "pago" || l.status === "recebido"))
     .reduce((sum, item) => sum + item.valor, 0);
