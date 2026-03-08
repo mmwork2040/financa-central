@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 
+// Component uses formasPagamento from context
+
 export const LancamentosFilterDialog = () => {
   const {
     filtros,
