@@ -70,12 +70,12 @@ const HistoricoMovimentacoesDialog: React.FC<Props> = ({ open, onClose, contas, 
     if (!contaId) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("movimentacoes_conta")
+      const { data, error } = await (supabase
+        .from("movimentacoes_conta" as any) as any)
         .select("*")
         .eq("conta_bancaria_id", contaId)
         .order("created_at", { ascending: false })
-        .limit(100) as any;
+        .limit(100);
 
       if (error) throw error;
       setMovimentacoes(data || []);

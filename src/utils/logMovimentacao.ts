@@ -13,7 +13,7 @@ interface LogMovimentacaoParams {
 
 export async function logMovimentacao(params: LogMovimentacaoParams) {
   try {
-    await supabase.from("movimentacoes_conta").insert([{
+    await (supabase.from("movimentacoes_conta" as any) as any).insert([{
       conta_bancaria_id: params.conta_bancaria_id,
       empresa_id: params.empresa_id,
       tipo: params.tipo,
