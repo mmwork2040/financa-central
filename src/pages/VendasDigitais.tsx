@@ -581,7 +581,9 @@ const VendasDigitais = () => {
                   <p className="font-medium">Nota Fiscal</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div><span className="text-muted-foreground">Status NF:</span> {invoiceStatusBadge(detailVenda)}</div>
-                    <div><span className="text-muted-foreground">ID Spedy:</span> <strong className="font-mono text-xs">{detailVenda.spedy_order_id || "-"}</strong></div>
+                    {isSuperAdmin && detailVenda.spedy_order_id && (
+                      <div><span className="text-muted-foreground">ID Pedido:</span> <strong className="font-mono text-xs">{detailVenda.spedy_order_id}</strong></div>
+                    )}
                   </div>
                   {detailVenda.invoice_pdf_url && (
                     <a href={detailVenda.invoice_pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary underline">
@@ -650,21 +652,16 @@ const VendasDigitais = () => {
                 {isSuperAdmin && (
                   <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1 text-sm">
                     <p className="font-semibold flex items-center gap-1 text-primary">
-                      <Settings className="h-3.5 w-3.5" /> Configurações Spedy
+                      <Settings className="h-3.5 w-3.5" /> Status da Integração Fiscal
                     </p>
                     {loadingSpedyConfig ? (
                       <p className="text-muted-foreground flex items-center gap-1">
-                        <Loader2 className="h-3 w-3 animate-spin" /> Carregando...
+                        <Loader2 className="h-3 w-3 animate-spin" /> Verificando...
                       </p>
                     ) : spedyConfig ? (
-                      <>
-                        <p><strong>Ambiente:</strong> {spedyConfig.ambiente}</p>
-                        <p><strong>API URL:</strong> <span className="font-mono text-xs break-all">{spedyConfig.api_url}</span></p>
-                        <p><strong>API Key:</strong> <span className="font-mono text-xs">{spedyConfig.api_key?.slice(0, 8)}...{spedyConfig.api_key?.slice(-4)}</span></p>
-                        <p><strong>Webhook Token:</strong> <span className="font-mono text-xs">{spedyConfig.webhook_token?.slice(0, 8)}...</span></p>
-                      </>
+                      <p className="text-green-700 font-medium">✅ Integração fiscal ativa ({spedyConfig.ambiente === "producao" ? "Produção" : "Sandbox"})</p>
                     ) : (
-                      <p className="text-destructive font-medium">⚠️ Nenhuma configuração Spedy ativa encontrada</p>
+                      <p className="text-destructive font-medium">⚠️ Nenhuma integração fiscal ativa encontrada</p>
                     )}
                   </div>
                 )}
