@@ -79,6 +79,8 @@ const PlanosAssinaturaConfig = () => {
 
   const openEdit = (plano: Plano) => {
     setEditingPlano(plano);
+    const itensObj = (plano as any).itens;
+    const controles = itensObj?.controles || {};
     setForm({
       nome: plano.nome,
       descricao: plano.descricao || "",
@@ -90,6 +92,7 @@ const PlanosAssinaturaConfig = () => {
       link_acesso: plano.link_acesso || "",
       ordem: plano.ordem,
       max_empresas: String(plano.max_empresas ?? 1),
+      max_notas_fiscais: String(controles.max_notas_fiscais ?? 0),
     });
     setDialogOpen(true);
   };
