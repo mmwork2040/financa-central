@@ -477,12 +477,6 @@ const Assinaturas = () => {
                           </span>
                           <span className="text-xs text-muted-foreground ml-1">/ {(mod as any).itens_raw?.periodo_label || mod.periodo}</span>
                         </div>
-                        {mod.link_acesso && (
-                          <a href={mod.link_acesso} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline mb-2 flex items-center gap-1 truncate">
-                            <ExternalLink className="h-3 w-3 shrink-0" />
-                            <span className="truncate">Link de pagamento</span>
-                          </a>
-                        )}
                         {allItems.length > 0 && (
                           <ul className="space-y-1 mb-3 max-h-24 overflow-y-auto">
                             {allItems.slice(0, 4).map((item, i) => (
@@ -500,6 +494,13 @@ const Assinaturas = () => {
                           <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => openEditModalidade(mod)}>
                             <Pencil className="h-3 w-3" /> Editar
                           </Button>
+                          {mod.link_acesso && (
+                            <Button variant="outline" size="sm" className="gap-1 text-xs" asChild>
+                              <a href={mod.link_acesso} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-3 w-3" /> Link
+                              </a>
+                            </Button>
+                          )}
                           <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteModalidade(mod.id)}>
                             <Trash2 className="h-3 w-3" />
                           </Button>
