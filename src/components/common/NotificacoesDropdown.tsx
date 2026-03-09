@@ -115,6 +115,10 @@ const NotificacoesDropdown = () => {
                   )}
                   onClick={() => {
                     if (!n.lida) marcarComoLida(n.id);
+                    // Navigate to suporte page for chat notifications
+                    if (n.tipo === "suporte_chat") {
+                      navigate("/suporte");
+                    }
                   }}
                 >
                   <div
