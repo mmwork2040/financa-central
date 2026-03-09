@@ -35,6 +35,7 @@ import {
   Code2,
   Send,
   UserCircle,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
