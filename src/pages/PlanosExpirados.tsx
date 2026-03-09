@@ -93,7 +93,7 @@ const PlanosExpirados = () => {
       if (error) throw error;
       setPlanos((data || []).map((p: any) => {
         const parsed = parseItensFromDb(p.itens);
-        return { ...p, itens: parsed.itens, controles: parsed.controles };
+        return { ...p, itens: parsed.itens, controles: parsed.controles, periodo_label: parsed.periodo_label };
       }));
     } catch {
       // fallback
