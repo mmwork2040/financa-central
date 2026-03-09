@@ -9,9 +9,27 @@ import { Label } from "@/components/ui/label";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Switch } from "@/components/ui/switch";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+const BANCOS_INTEGRACOES = [
+  { id: "banco_inter", name: "Banco Inter" },
+  { id: "banco_do_brasil", name: "Banco do Brasil" },
+  { id: "bradesco", name: "Bradesco" },
+  { id: "santander", name: "Santander" },
+  { id: "itau", name: "Itaú" },
+  { id: "nubank", name: "Nubank" },
+  { id: "caixa", name: "Caixa Econômica" },
+  { id: "sicoob", name: "Sicoob" },
+  { id: "sicredi", name: "Sicredi" },
+  { id: "c6bank", name: "C6 Bank" },
+  { id: "pagbank", name: "PagBank" },
+  { id: "mercado_pago", name: "Mercado Pago" },
+];
 
 export interface ContaBancariaFormData {
   nome: string;
