@@ -53,6 +53,7 @@ const VendasDigitais = () => {
   const [filtroStatus, setFiltroStatus] = useState<string>("all");
   const [dataInicio, setDataInicio] = useState<Date | undefined>();
   const [dataFim, setDataFim] = useState<Date | undefined>();
+  const [manualDateFilter, setManualDateFilter] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingVenda, setEditingVenda] = useState<any>(null);
@@ -63,6 +64,38 @@ const VendasDigitais = () => {
   const [confirmEmitVenda, setConfirmEmitVenda] = useState<any>(null);
   const [spedyConfig, setSpedyConfig] = useState<any>(null);
   const [loadingSpedyConfig, setLoadingSpedyConfig] = useState(false);
+
+  const { selectedMonth } = useMonthFilter();
+  const prevMonthRef = useRef(selectedMonth);
+
+  // Sync month carousel with date filters (only when not manually filtered)
+  useEffect(() => {
+    if (prevMonthRef.current.getTime() !== selectedMonth.getTime()) {
+      prevMonthRef.current = selectedMonth;
+      if (!manualDateFilter) {
+        setDataInicio(startOfMonth(selectedMonth));
+        setDataFim(endOfMonth(selectedMonth));
+      }
+    }
+  }, [selectedMonth, manualDateFilter]);
+
+  // Initialize with current month on mount
+  useEffect(() => {
+    if (!manualDateFilter) {
+      setDataInicio(startOfMonth(selectedMonth));
+      setDataFim(endOfMonth(selectedMonth));
+    }
+  }, []);
+
+  const handleSetDataInicio = (date: Date | undefined) => {
+    setDataInicio(date);
+    setManualDateFilter(true);
+  };
+
+  const handleSetDataFim = (date: Date | undefined) => {
+    setDataFim(date);
+    setManualDateFilter(true);
+  };
 
   const plataformas = useMemo(() => {
     const set = new Set(vendas.map(v => v.plataforma).filter(Boolean));
