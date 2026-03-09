@@ -316,11 +316,10 @@ const Assinaturas = () => {
         itens: serializeItensToDb(form.itens, form.controles, form.periodo_label),
       };
 
-      // Se destaque está ativo, remover destaque das outras modalidades do mesmo grupo
-      const grupoAtual = payload.grupo;
-      if (payload.destaque && grupoAtual) {
+      // Se destaque está ativo, remover destaque de todas as outras modalidades do mesmo período
+      if (payload.destaque && payload.periodo) {
         const idsParaRemover = planos
-          .filter(p => p.grupo === grupoAtual && (!editingPlano || p.id !== editingPlano.id) && p.destaque)
+          .filter(p => p.periodo === payload.periodo && (!editingPlano || p.id !== editingPlano.id) && p.destaque)
           .map(p => p.id);
         if (idsParaRemover.length > 0) {
           await (supabase as any)
