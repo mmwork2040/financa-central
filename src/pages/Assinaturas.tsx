@@ -318,7 +318,6 @@ const Assinaturas = () => {
         descricao: form.descricao || null,
         preco: form.preco,
         periodo: form.periodo,
-        destaque: form.destaque,
         badge: form.badge || null,
         ativo: form.ativo,
         link_acesso: form.link_acesso || null,
