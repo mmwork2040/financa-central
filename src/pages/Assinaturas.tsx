@@ -446,7 +446,7 @@ const Assinaturas = () => {
                     return (
                       <div
                         key={mod.id}
-                        className={`relative rounded-xl border p-4 transition-all ${!mod.ativo ? "opacity-50" : ""}`}
+                        className={`relative rounded-xl border p-4 transition-all ${mod.destaque ? "border-primary shadow-md" : ""} ${!mod.ativo ? "opacity-50" : ""}`}
                       >
                         <div className="flex items-center justify-between mb-2">
                           <Badge variant="outline" className="text-xs font-semibold">
@@ -660,9 +660,15 @@ const Assinaturas = () => {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <Switch checked={form.ativo} onCheckedChange={(v) => setForm(prev => ({ ...prev, ativo: v }))} />
-              <Label>Ativo (visível para usuários)</Label>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch checked={form.destaque} onCheckedChange={(v) => setForm(prev => ({ ...prev, destaque: v }))} />
+                <Label>Destaque</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={form.ativo} onCheckedChange={(v) => setForm(prev => ({ ...prev, ativo: v }))} />
+                <Label>Ativo</Label>
+              </div>
             </div>
           </div>
           <DialogFooter>
