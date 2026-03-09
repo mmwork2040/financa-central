@@ -30,6 +30,7 @@ interface Plano {
 
 const defaultControles: PlanoControles = {
   max_lancamentos: 0,
+  max_notas_fiscais: 0,
   chat_ia: false,
   dashboard_completo: false,
   relatorios_personalizados: false,
