@@ -817,6 +817,17 @@ const Integracoes = () => {
       comprador: { nome: "Cliente Teste" },
       produto: { nome: "Produto de Teste" },
     },
+    hubla: {
+      event: "purchase_approved",
+      data: {
+        status: "approved",
+        price: 99.0,
+        fee: 9.9,
+        customer: { name: "Cliente Teste", email: "teste@exemplo.com" },
+        product: { name: "Produto de Teste" },
+        created_at: new Date().toISOString(),
+      },
+    },
   };
 
   const handleTestWebhook = async (plataforma: string) => {
