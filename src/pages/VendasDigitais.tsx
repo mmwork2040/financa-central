@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { ShoppingCart, Search, RefreshCw, X, Plug, CheckCircle2, AlertTriangle, Plus, Eye, Edit, Trash2, FileText, Download, Loader2, Settings } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,9 @@ import { CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMonthFilter } from "@/contexts/MonthFilterContext";
 import { useNavigate } from "react-router-dom";
 import ExportDropdown from "@/components/common/ExportDropdown";
 import { exportVendas } from "@/components/vendas/VendasExport";
@@ -52,6 +53,7 @@ const VendasDigitais = () => {
   const [filtroStatus, setFiltroStatus] = useState<string>("all");
   const [dataInicio, setDataInicio] = useState<Date | undefined>();
   const [dataFim, setDataFim] = useState<Date | undefined>();
+  const [manualDateFilter, setManualDateFilter] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingVenda, setEditingVenda] = useState<any>(null);
@@ -63,6 +65,38 @@ const VendasDigitais = () => {
   const [spedyConfig, setSpedyConfig] = useState<any>(null);
   const [loadingSpedyConfig, setLoadingSpedyConfig] = useState(false);
 
+  const { selectedMonth } = useMonthFilter();
+  const prevMonthRef = useRef(selectedMonth);
+
+  // Sync month carousel with date filters (only when not manually filtered)
+  useEffect(() => {
+    if (prevMonthRef.current.getTime() !== selectedMonth.getTime()) {
+      prevMonthRef.current = selectedMonth;
+      if (!manualDateFilter) {
+        setDataInicio(startOfMonth(selectedMonth));
+        setDataFim(endOfMonth(selectedMonth));
+      }
+    }
+  }, [selectedMonth, manualDateFilter]);
+
+  // Initialize with current month on mount
+  useEffect(() => {
+    if (!manualDateFilter) {
+      setDataInicio(startOfMonth(selectedMonth));
+      setDataFim(endOfMonth(selectedMonth));
+    }
+  }, []);
+
+  const handleSetDataInicio = (date: Date | undefined) => {
+    setDataInicio(date);
+    setManualDateFilter(true);
+  };
+
+  const handleSetDataFim = (date: Date | undefined) => {
+    setDataFim(date);
+    setManualDateFilter(true);
+  };
+
   const plataformas = useMemo(() => {
     const set = new Set(vendas.map(v => v.plataforma).filter(Boolean));
     return Array.from(set).sort();
@@ -73,8 +107,9 @@ const VendasDigitais = () => {
   const clearFilters = () => {
     setFiltroPlataforma("all");
     setFiltroStatus("all");
-    setDataInicio(undefined);
-    setDataFim(undefined);
+    setManualDateFilter(false);
+    setDataInicio(startOfMonth(selectedMonth));
+    setDataFim(endOfMonth(selectedMonth));
     setSearch("");
   };
 
@@ -359,7 +394,7 @@ const VendasDigitais = () => {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar mode="single" selected={dataInicio} onSelect={setDataInicio} initialFocus className="p-3 pointer-events-auto" />
+              <Calendar mode="single" selected={dataInicio} onSelect={handleSetDataInicio} initialFocus className="p-3 pointer-events-auto" />
             </PopoverContent>
           </Popover>
 
@@ -371,7 +406,7 @@ const VendasDigitais = () => {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar mode="single" selected={dataFim} onSelect={setDataFim} initialFocus className="p-3 pointer-events-auto" />
+              <Calendar mode="single" selected={dataFim} onSelect={handleSetDataFim} initialFocus className="p-3 pointer-events-auto" />
             </PopoverContent>
           </Popover>
 
