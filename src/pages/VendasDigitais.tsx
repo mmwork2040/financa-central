@@ -40,7 +40,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const PLATAFORMAS_VENDAS = ["hotmart", "eduzz", "monetizze", "kiwify"];
 
 const VendasDigitais = () => {
-  const { empresaId, canPerformAction, isSuperAdmin } = useAuth();
+  const { empresaId, canPerformAction, isSuperAdmin, planControles } = useAuth();
   const canIncluir = canPerformAction("vendas_digitais", "pode_incluir");
   const canAlterar = canPerformAction("vendas_digitais", "pode_alterar");
   const canExcluir = canPerformAction("vendas_digitais", "pode_excluir");
