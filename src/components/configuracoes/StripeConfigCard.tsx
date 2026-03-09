@@ -6,29 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Shield, Eye, EyeOff, Webhook, Copy, CheckCheck } from "lucide-react";
+import { Shield, Eye, EyeOff, Webhook } from "lucide-react";
 
 const StripeConfigCard = () => {
   const [showApiKey, setShowApiKey] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [config, setConfig] = useState({
     api_key: "",
     webhook_secret: "",
     ativo: false,
   });
-
-  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-webhook`;
-
-  const handleCopyWebhook = async () => {
-    try {
-      await navigator.clipboard.writeText(webhookUrl);
-      setCopied(true);
-      toast.success("URL do webhook copiada!");
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Erro ao copiar");
-    }
-  };
 
   return (
     <Card>
@@ -85,23 +71,6 @@ const StripeConfigCard = () => {
           </p>
         </div>
 
-        <div className="space-y-2">
-          <Label>URL do Webhook (copie para o Stripe)</Label>
-          <div className="flex gap-2">
-            <Input
-              readOnly
-              value={webhookUrl}
-              className="text-xs font-mono bg-muted/40"
-            />
-            <Button variant="outline" size="icon" onClick={handleCopyWebhook} className="shrink-0">
-              {copied ? <CheckCheck className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Cole esta URL no painel do Stripe → Developers → Webhooks → Add endpoint
-          </p>
-        </div>
-
         <div className="flex items-center justify-between">
           <Label>Integração Ativa</Label>
           <Switch
@@ -122,6 +91,15 @@ const StripeConfigCard = () => {
             <li>• <strong>customer.subscription.deleted</strong> → Assinatura cancelada</li>
             <li>• <strong>customer.subscription.updated</strong> → Assinatura atualizada</li>
           </ul>
+        </div>
+
+        <div className="rounded-lg border border-dashed p-4 bg-muted/20 text-center">
+          <p className="text-sm text-muted-foreground">
+            A integração com o Stripe será disponibilizada em breve.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Configure as credenciais para ser notificado quando estiver disponível.
+          </p>
         </div>
       </CardContent>
     </Card>
