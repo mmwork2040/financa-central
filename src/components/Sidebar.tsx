@@ -480,6 +480,9 @@ export const Sidebar = () => {
           
           {/* Admin items */}
           {adminItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
+
+          {/* Suporte - always last */}
+          {renderMenuItem({ name: "Suporte", icon: HelpCircle, path: "/suporte" })}
         </ul>
       </nav>
       
