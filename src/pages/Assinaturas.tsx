@@ -316,18 +316,7 @@ const Assinaturas = () => {
         itens: serializeItensToDb(form.itens, form.controles, form.periodo_label),
       };
 
-      // Se destaque está ativo, remover destaque de todas as outras modalidades do mesmo período
-      if (payload.destaque && payload.periodo) {
-        const idsParaRemover = planos
-          .filter(p => p.periodo === payload.periodo && (!editingPlano || p.id !== editingPlano.id) && p.destaque)
-          .map(p => p.id);
-        if (idsParaRemover.length > 0) {
-          await (supabase as any)
-            .from("planos_assinatura")
-            .update({ destaque: false })
-            .in("id", idsParaRemover);
-        }
-      }
+      // Destaque is managed at grupo level, not modalidade level
 
       if (editingPlano) {
         const { error } = await (supabase as any)
