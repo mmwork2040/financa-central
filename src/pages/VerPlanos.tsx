@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, ArrowRight, Star, X } from "lucide-react";
+import { CheckCircle2, ArrowRight, Star, X, Loader2, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 interface PlanoControles {
@@ -25,6 +25,7 @@ interface Plano {
   link_acesso: string | null;
   itens: string[];
   controles: PlanoControles;
+  max_empresas?: number;
 }
 
 const defaultControles: PlanoControles = {
@@ -67,18 +68,31 @@ function getControleItems(controles: PlanoControles, maxEmpresas?: number): stri
 
 const VerPlanos = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isTrialActive, trialDaysRemaining, assinaturaStatus, isSuperAdmin } = useAuth();
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
-    // If trial expired or subscription cancelled/expired, redirect to expired page
     if (!isSuperAdmin && !isTrialActive && assinaturaStatus !== 'ativo') {
       navigate("/planos-expirados", { replace: true });
       return;
     }
     fetchPlanos();
   }, [isTrialActive, assinaturaStatus, isSuperAdmin]);
+
+  useEffect(() => {
+    const checkout = searchParams.get("checkout");
+    if (checkout === "success") {
+      toast.success("Assinatura realizada com sucesso! Seu plano será ativado em instantes.");
+      // Trigger subscription check
+      supabase.functions.invoke("check-subscription").catch(() => {});
+    } else if (checkout === "cancelled") {
+      toast.info("Checkout cancelado.");
+    }
+  }, [searchParams]);
 
   const fetchPlanos = async () => {
     try {
@@ -99,17 +113,66 @@ const VerPlanos = () => {
     }
   };
 
-  const handleSelectPlan = (plano: Plano) => {
-    if (plano.link_acesso) {
+  const handleSelectPlan = async (plano: Plano) => {
+    // If plan has a Stripe price ID in link_acesso (starts with price_), use it directly
+    if (plano.link_acesso?.startsWith("price_")) {
+      setCheckoutLoading(plano.id);
+      try {
+        const { data, error } = await supabase.functions.invoke("create-checkout", {
+          body: { priceId: plano.link_acesso, planoId: plano.id },
+        });
+        if (error) throw error;
+        if (data?.url) {
+          window.open(data.url, "_blank");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Erro ao iniciar checkout");
+      } finally {
+        setCheckoutLoading(null);
+      }
+      return;
+    }
+
+    // If it's an external link, open it
+    if (plano.link_acesso?.startsWith("http")) {
       window.open(plano.link_acesso, "_blank");
-    } else {
-      toast.info("Entre em contato para assinar este plano.");
+      return;
+    }
+
+    // Otherwise, create checkout dynamically from plan data
+    setCheckoutLoading(plano.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { planoId: plano.id },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao iniciar checkout");
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("customer-portal");
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao abrir portal de gerenciamento");
+    } finally {
+      setPortalLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative">
-      {/* Close button */}
       <Button
         variant="ghost"
         size="icon"
@@ -128,6 +191,23 @@ const VerPlanos = () => {
             ? `Você ainda tem ${trialDaysRemaining} ${trialDaysRemaining === 1 ? 'dia' : 'dias'} de teste gratuito. Escolha um plano para quando o período acabar.`
             : 'Confira os planos disponíveis e escolha o melhor para você.'}
         </p>
+
+        {assinaturaStatus === 'ativo' && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4 gap-2"
+            onClick={handleManageSubscription}
+            disabled={portalLoading}
+          >
+            {portalLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Settings className="h-4 w-4" />
+            )}
+            Gerenciar minha assinatura
+          </Button>
+        )}
       </div>
 
       {loading ? (
@@ -137,8 +217,9 @@ const VerPlanos = () => {
       ) : (
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl w-full mb-8">
           {planos.map((plano) => {
-            const controleItems = getControleItems(plano.controles, (plano as any).max_empresas);
+            const controleItems = getControleItems(plano.controles, plano.max_empresas);
             const allItems = [...controleItems, ...plano.itens];
+            const isLoading = checkoutLoading === plano.id;
             return (
               <div
                 key={plano.id}
@@ -184,9 +265,13 @@ const VerPlanos = () => {
                   className={`w-full relative z-10 rounded-full ${plano.destaque ? "shadow-lg shadow-primary/20" : ""}`}
                   variant={plano.destaque ? "default" : "outline"}
                   size="lg"
+                  disabled={isLoading}
                 >
-                  Assinar agora
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
+                  {isLoading ? "Abrindo checkout..." : "Assinar agora"}
+                  {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
                 </Button>
               </div>
             );
