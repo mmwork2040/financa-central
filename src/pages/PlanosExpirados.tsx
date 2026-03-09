@@ -198,7 +198,7 @@ const PlanosExpirados = () => {
                   <span className="text-3xl font-extrabold text-foreground">
                     R$ {plano.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
-                  <span className="text-sm text-muted-foreground ml-1">/ {plano.periodo}</span>
+                  <span className="text-sm text-muted-foreground ml-1">/ {plano.periodo_label || plano.periodo}</span>
                   {plano.periodo === "anual" && (
                     <p className="text-xs text-primary mt-1">
                       ≈ R$ {(plano.preco / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
