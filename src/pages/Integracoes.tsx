@@ -330,6 +330,22 @@ const PLATAFORMAS: Plataforma[] = [
     keyValidation: { prefix: "sk-", hint: "Deve começar com sk-" },
     categoria: "ia",
   },
+  // --- Bancos ---
+  {
+    id: "banco_inter", name: "Banco Inter", description: "Open Banking, cobranças e extratos via API",
+    icon: Landmark, color: "bg-orange-100 text-orange-600",
+    site: "https://developers.inter.co/", doc: "https://developers.inter.co/references",
+    events: ["cobranca_paga", "cobranca_vencida", "pix_recebido"],
+    steps: [
+      "Acesse o Internet Banking do Inter → Menu → Conta Digital → API",
+      "Crie um novo aplicativo e selecione os escopos desejados (Cobranças, Extratos, Pix)",
+      "Faça o download do certificado .crt e da chave .key gerados",
+      "Copie o Client ID e o Client Secret do aplicativo",
+      "Cole o Client ID como API Key e o Client Secret como Secret abaixo",
+    ],
+    needsSecret: true, usesWebhook: true, keyValidation: { hint: "Client ID do aplicativo Inter" },
+    categoria: "bancos",
+  },
 ];
 
 const Integracoes = () => {
