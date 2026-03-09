@@ -93,6 +93,7 @@ const Assinaturas = () => {
     descricao: "",
     preco: 0,
     periodo: "mensal",
+    periodo_label: "",
     destaque: false,
     badge: "",
     ativo: true,
