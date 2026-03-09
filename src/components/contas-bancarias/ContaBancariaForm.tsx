@@ -9,9 +9,27 @@ import { Label } from "@/components/ui/label";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Switch } from "@/components/ui/switch";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+const BANCOS_INTEGRACOES = [
+  { id: "banco_inter", name: "Banco Inter" },
+  { id: "banco_do_brasil", name: "Banco do Brasil" },
+  { id: "bradesco", name: "Bradesco" },
+  { id: "santander", name: "Santander" },
+  { id: "itau", name: "Itaú" },
+  { id: "nubank", name: "Nubank" },
+  { id: "caixa", name: "Caixa Econômica" },
+  { id: "sicoob", name: "Sicoob" },
+  { id: "sicredi", name: "Sicredi" },
+  { id: "c6bank", name: "C6 Bank" },
+  { id: "pagbank", name: "PagBank" },
+  { id: "mercado_pago", name: "Mercado Pago" },
+];
 
 export interface ContaBancariaFormData {
   nome: string;
@@ -75,7 +93,36 @@ const ContaBancariaForm: React.FC<ContaBancariaFormProps> = ({
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="banco" className="text-right">Banco</Label>
-              <Input id="banco" name="banco" value={formData.banco || ""} onChange={handleInputChange} className="col-span-3" placeholder="Ex: Itaú, Bradesco, Nubank" />
+              <div className="col-span-3 space-y-2">
+                <Select
+                  value={BANCOS_INTEGRACOES.some(b => b.name === formData.banco) ? formData.banco : formData.banco ? "__outro__" : ""}
+                  onValueChange={(val) => {
+                    const syntheticEvent = {
+                      target: { name: "banco", value: val === "__outro__" ? "" : val },
+                    } as unknown as React.ChangeEvent<HTMLInputElement>;
+                    handleInputChange(syntheticEvent);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um banco ou digite abaixo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BANCOS_INTEGRACOES.map((b) => (
+                      <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
+                    ))}
+                    <SelectItem value="__outro__">Outro (digitar)</SelectItem>
+                  </SelectContent>
+                </Select>
+                {(!formData.banco || !BANCOS_INTEGRACOES.some(b => b.name === formData.banco)) && (
+                  <Input
+                    id="banco"
+                    name="banco"
+                    value={formData.banco || ""}
+                    onChange={handleInputChange}
+                    placeholder="Digite o nome do banco"
+                  />
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="agencia" className="text-right">Agência</Label>
