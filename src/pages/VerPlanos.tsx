@@ -22,6 +22,7 @@ interface PlanoRow {
   descricao: string | null;
   preco: number;
   periodo: string;
+  periodo_label: string;
   destaque: boolean;
   badge: string | null;
   link_acesso: string | null;
@@ -39,17 +40,18 @@ const defaultControles: PlanoControles = {
   relatorios_personalizados: false,
 };
 
-function parseItensFromDb(raw: any): { itens: string[]; controles: PlanoControles } {
+function parseItensFromDb(raw: any): { itens: string[]; controles: PlanoControles; periodo_label: string } {
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     return {
       itens: Array.isArray(raw.items) ? raw.items : [],
       controles: { ...defaultControles, ...(raw.controles || {}) },
+      periodo_label: raw.periodo_label || "",
     };
   }
   if (Array.isArray(raw)) {
-    return { itens: raw.filter((x: any) => typeof x === 'string'), controles: { ...defaultControles } };
+    return { itens: raw.filter((x: any) => typeof x === 'string'), controles: { ...defaultControles }, periodo_label: "" };
   }
-  return { itens: [], controles: { ...defaultControles } };
+  return { itens: [], controles: { ...defaultControles }, periodo_label: "" };
 }
 
 function getControleItems(controles: PlanoControles, maxEmpresas?: number): string[] {
@@ -97,7 +99,7 @@ const VerPlanos = () => {
       if (error) throw error;
       setPlanos((data || []).map((p: any) => {
         const parsed = parseItensFromDb(p.itens);
-        return { ...p, itens: parsed.itens, controles: parsed.controles };
+        return { ...p, itens: parsed.itens, controles: parsed.controles, periodo_label: parsed.periodo_label };
       }));
     } catch {
       // fallback
@@ -208,7 +210,7 @@ const VerPlanos = () => {
                   <span className="text-3xl font-extrabold text-foreground">
                     R$ {plano.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
-                  <span className="text-sm text-muted-foreground ml-1">/ {plano.periodo}</span>
+                  <span className="text-sm text-muted-foreground ml-1">/ {plano.periodo_label || plano.periodo}</span>
                   {plano.periodo === "anual" && (
                     <p className="text-xs text-primary mt-1">
                       ≈ R$ {(plano.preco / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês

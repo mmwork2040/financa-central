@@ -55,21 +55,22 @@ const defaultControles: PlanoControles = {
   relatorios_personalizados: false,
 };
 
-function parseItensFromDb(raw: any): { itens: string[]; controles: PlanoControles } {
+function parseItensFromDb(raw: any): { itens: string[]; controles: PlanoControles; periodo_label: string } {
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     return {
       itens: Array.isArray(raw.items) ? raw.items : [],
       controles: { ...defaultControles, ...(raw.controles || {}) },
+      periodo_label: raw.periodo_label || "",
     };
   }
   if (Array.isArray(raw)) {
-    return { itens: raw.filter((x: any) => typeof x === 'string'), controles: { ...defaultControles } };
+    return { itens: raw.filter((x: any) => typeof x === 'string'), controles: { ...defaultControles }, periodo_label: "" };
   }
-  return { itens: [], controles: { ...defaultControles } };
+  return { itens: [], controles: { ...defaultControles }, periodo_label: "" };
 }
 
-function serializeItensToDb(itens: string[], controles: PlanoControles): any {
-  return { items: itens, controles };
+function serializeItensToDb(itens: string[], controles: PlanoControles, periodoLabel?: string): any {
+  return { items: itens, controles, ...(periodoLabel ? { periodo_label: periodoLabel } : {}) };
 }
 
 const periodoOptions = [
@@ -93,6 +94,7 @@ const Assinaturas = () => {
     descricao: "",
     preco: 0,
     periodo: "mensal",
+    periodo_label: "",
     destaque: false,
     badge: "",
     ativo: true,
@@ -118,7 +120,7 @@ const Assinaturas = () => {
       if (error) throw error;
       setPlanos((data || []).map((p: any) => {
         const parsed = parseItensFromDb(p.itens);
-        return { ...p, itens: parsed.itens, controles: parsed.controles };
+        return { ...p, itens: parsed.itens, controles: parsed.controles, itens_raw: p.itens };
       }));
     } catch (error: any) {
       toast.error(error.message || "Erro ao carregar planos");
@@ -244,6 +246,7 @@ const Assinaturas = () => {
       descricao: grupoData.descricao || "",
       preco: 0,
       periodo: nextPeriodo,
+      periodo_label: "",
       destaque: grupoData.destaque,
       badge: grupoData.badge || "",
       ativo: true,
@@ -265,6 +268,7 @@ const Assinaturas = () => {
       descricao: plano.descricao || "",
       preco: plano.preco,
       periodo: plano.periodo,
+      periodo_label: ((plano as any).itens_raw?.periodo_label) || "",
       destaque: plano.destaque,
       badge: plano.badge || "",
       ativo: plano.ativo,
@@ -309,7 +313,7 @@ const Assinaturas = () => {
         ordem: form.ordem,
         max_empresas: form.max_empresas ?? 1,
         grupo: form.grupo || form.nome,
-        itens: serializeItensToDb(form.itens, form.controles),
+        itens: serializeItensToDb(form.itens, form.controles, form.periodo_label),
       };
 
       if (editingPlano) {
@@ -458,7 +462,7 @@ const Assinaturas = () => {
                           <span className="text-xl font-bold">
                             R$ {mod.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
-                          <span className="text-xs text-muted-foreground ml-1">/ {mod.periodo}</span>
+                          <span className="text-xs text-muted-foreground ml-1">/ {(mod as any).itens_raw?.periodo_label || mod.periodo}</span>
                         </div>
                         {mod.link_acesso && (
                           <a href={mod.link_acesso} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline mb-2 flex items-center gap-1 truncate">
@@ -580,6 +584,11 @@ const Assinaturas = () => {
                   {periodoOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Rótulo do Período (ao lado do valor)</Label>
+              <Input value={form.periodo_label} onChange={(e) => setForm(prev => ({ ...prev, periodo_label: e.target.value }))} placeholder={`Ex: ${form.periodo} (padrão se vazio)`} />
+              <p className="text-[10px] text-muted-foreground">Texto exibido como "/ mensal", "/ anual" ao lado do preço. Se vazio, usa o período selecionado.</p>
             </div>
             <div className="space-y-2">
               <Label>Link de Acesso / Pagamento</Label>
