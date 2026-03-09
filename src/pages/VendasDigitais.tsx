@@ -118,7 +118,27 @@ const VendasDigitais = () => {
   useEffect(() => {
     fetchVendas();
     fetchConnectedPlatforms();
+    fetchAllSalesPlatforms();
   }, [empresaId]);
+
+  const fetchAllSalesPlatforms = async () => {
+    try {
+      const { data } = await (supabase as any)
+        .from('integracoes_disponiveis')
+        .select('plataforma, disponivel')
+        .eq('disponivel', true);
+      if (data && data.length > 0) {
+        // Filter to known sales platforms + any new ones
+        const salesKeywords = ['hotmart', 'eduzz', 'monetizze', 'kiwify', 'shopify', 'stripe'];
+        const fromDb = (data as any[]).map((d: any) => d.plataforma.toLowerCase()).filter((p: string) => salesKeywords.includes(p));
+        // Merge with defaults to ensure we always show core platforms
+        const merged = Array.from(new Set([...PLATAFORMAS_VENDAS_DEFAULT, ...fromDb]));
+        setAllSalesPlatforms(merged);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar plataformas disponíveis:", error);
+    }
+  };
 
   const fetchConnectedPlatforms = async () => {
     if (!empresaId) return;
@@ -127,7 +147,7 @@ const VendasDigitais = () => {
         .from('integracoes')
         .select('plataforma, ativo')
         .eq('empresa_id', empresaId)
-        .in('plataforma', PLATAFORMAS_VENDAS)
+        .in('plataforma', allSalesPlatforms)
         .eq('ativo', true);
       setConnectedPlatforms((data || []).map((i: any) => i.plataforma));
     } catch (error) {
