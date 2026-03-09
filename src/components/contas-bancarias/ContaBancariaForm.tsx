@@ -54,6 +54,67 @@ const ContaBancariaForm: React.FC<ContaBancariaFormProps> = ({
   open, onClose, onSave, formData, handleInputChange, isEditing,
   contaPrincipalExistente, showPrincipalConfirm, onClosePrincipalConfirm, onConfirmPrincipal,
 }) => {
+  const [bancoSuggestions, setBancoSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const bancoInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  const handleBancoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const typed = e.target.value;
+    handleInputChange(e);
+
+    if (!typed) {
+      setBancoSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const matches = BANCOS_INTEGRACOES
+      .map(b => b.name)
+      .filter(name => name.toLowerCase().startsWith(typed.toLowerCase()));
+
+    setBancoSuggestions(matches);
+    setShowSuggestions(matches.length > 0);
+
+    // Inline autocomplete: complete the first match and select the appended part
+    if (matches.length > 0 && bancoInputRef.current) {
+      const firstMatch = matches[0];
+      if (firstMatch.toLowerCase().startsWith(typed.toLowerCase()) && typed.length < firstMatch.length) {
+        const completed = typed + firstMatch.slice(typed.length);
+        const syntheticEvent = {
+          target: { name: "banco", value: completed },
+        } as unknown as React.ChangeEvent<HTMLInputElement>;
+        handleInputChange(syntheticEvent);
+        // Use setTimeout to set selection after React re-renders the input value
+        setTimeout(() => {
+          bancoInputRef.current?.setSelectionRange(typed.length, completed.length);
+        }, 0);
+      }
+    }
+  }, [handleInputChange]);
+
+  const selectBanco = useCallback((name: string) => {
+    const syntheticEvent = {
+      target: { name: "banco", value: name },
+    } as unknown as React.ChangeEvent<HTMLInputElement>;
+    handleInputChange(syntheticEvent);
+    setShowSuggestions(false);
+  }, [handleInputChange]);
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) &&
+        bancoInputRef.current && !bancoInputRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const handleSaldoChange = (value: string | undefined) => {
     const cents = parseInt(value || "0", 10);
     const syntheticEvent = {
