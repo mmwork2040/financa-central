@@ -261,6 +261,19 @@ const PLATAFORMAS: Plataforma[] = [
     needsSecret: false, usesWebhook: false, keyValidation: { hint: "Token no formato 123456:ABC-DEF..." },
     categoria: "comunicacao",
   },
+  {
+    id: "chatwoot", name: "Chatwoot", description: "Plataforma de atendimento ao cliente omnichannel",
+    icon: MessageCircle, color: "bg-indigo-100 text-indigo-600",
+    site: "https://app.chatwoot.com/app/login", doc: "https://www.chatwoot.com/docs/product/channels/live-chat/create-website-channel",
+    steps: [
+      "Acesse o painel do Chatwoot → Configurações → Canais → Website",
+      "Crie um novo canal Website e copie o Website Token",
+      "Cole a URL base do Chatwoot como API Key (ex: https://app.chatwoot.com)",
+      "Cole o Website Token como Secret abaixo",
+    ],
+    needsSecret: true, usesWebhook: false, keyValidation: { hint: "URL base do Chatwoot (ex: https://app.chatwoot.com)" },
+    categoria: "comunicacao",
+  },
   // --- Inteligência Artificial ---
   {
     id: "lovable_ai", name: "Lovable AI", description: "IA integrada (sem configuração de chave)",
