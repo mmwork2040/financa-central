@@ -18,7 +18,7 @@ import { Clock, Activity } from "lucide-react";
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
-  const { isAuthenticated, loading, empresaId, userProfile } = useAuth();
+  const { isAuthenticated, loading, empresaId, userProfile, isSuperAdmin, isTrialActive, trialDaysRemaining, assinaturaStatus } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -27,7 +27,6 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   const monthFilterRoutes = ["/dashboard", "/transactions", "/vendas-digitais", "/anuncios"];
   const showMonthFilter = monthFilterRoutes.includes(location.pathname);
-  useSupportNotifications();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
