@@ -37,7 +37,7 @@ import {
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const PLATAFORMAS_VENDAS = ["hotmart", "eduzz", "monetizze", "kiwify"];
+const PLATAFORMAS_VENDAS_DEFAULT = ["hotmart", "eduzz", "monetizze", "kiwify"];
 
 const VendasDigitais = () => {
   const { empresaId, canPerformAction, isSuperAdmin, planControles } = useAuth();
@@ -56,6 +56,7 @@ const VendasDigitais = () => {
   const [dataFim, setDataFim] = useState<Date | undefined>();
   const [manualDateFilter, setManualDateFilter] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
+  const [allSalesPlatforms, setAllSalesPlatforms] = useState<string[]>(PLATAFORMAS_VENDAS_DEFAULT);
   const [formOpen, setFormOpen] = useState(false);
   const [editingVenda, setEditingVenda] = useState<any>(null);
   const [detailVenda, setDetailVenda] = useState<any>(null);
@@ -117,7 +118,27 @@ const VendasDigitais = () => {
   useEffect(() => {
     fetchVendas();
     fetchConnectedPlatforms();
+    fetchAllSalesPlatforms();
   }, [empresaId]);
+
+  const fetchAllSalesPlatforms = async () => {
+    try {
+      const { data } = await (supabase as any)
+        .from('integracoes_disponiveis')
+        .select('plataforma, disponivel')
+        .eq('disponivel', true);
+      if (data && data.length > 0) {
+        // Filter to known sales platforms + any new ones
+        const salesKeywords = ['hotmart', 'eduzz', 'monetizze', 'kiwify', 'shopify', 'stripe'];
+        const fromDb = (data as any[]).map((d: any) => d.plataforma.toLowerCase()).filter((p: string) => salesKeywords.includes(p));
+        // Merge with defaults to ensure we always show core platforms
+        const merged = Array.from(new Set([...PLATAFORMAS_VENDAS_DEFAULT, ...fromDb]));
+        setAllSalesPlatforms(merged);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar plataformas disponíveis:", error);
+    }
+  };
 
   const fetchConnectedPlatforms = async () => {
     if (!empresaId) return;
@@ -126,7 +147,7 @@ const VendasDigitais = () => {
         .from('integracoes')
         .select('plataforma, ativo')
         .eq('empresa_id', empresaId)
-        .in('plataforma', PLATAFORMAS_VENDAS)
+        .in('plataforma', allSalesPlatforms)
         .eq('ativo', true);
       setConnectedPlatforms((data || []).map((i: any) => i.plataforma));
     } catch (error) {
@@ -323,7 +344,7 @@ const VendasDigitais = () => {
     disputa: "bg-orange-100 text-orange-700",
   };
 
-  const disconnectedPlatforms = PLATAFORMAS_VENDAS.filter(p => !connectedPlatforms.includes(p));
+  const disconnectedPlatforms = allSalesPlatforms.filter(p => !connectedPlatforms.includes(p));
 
   return (
     <div className="space-y-6">
@@ -355,7 +376,7 @@ const VendasDigitais = () => {
             <span className="text-sm font-medium">Plataformas de Vendas</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {PLATAFORMAS_VENDAS.map(p => {
+            {allSalesPlatforms.map(p => {
               const isConnected = connectedPlatforms.includes(p);
               return (
                 <Badge key={p} variant="outline" className={cn("text-xs gap-1 cursor-default", isConnected ? "border-green-300 bg-green-50 text-green-700" : "border-muted text-muted-foreground")}>

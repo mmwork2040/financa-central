@@ -1332,7 +1332,7 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "criar-venda",
     toolName: "criar_venda",
     label: "Criar Venda Digital",
-    description: "Cadastra uma nova venda digital manual no sistema",
+    description: "Cadastra uma nova venda digital manual no sistema, com opção de emissão de NF",
     toolDescription: `Cadastra uma nova venda digital manual.
 
 Use quando o usuário solicitar:
@@ -1341,6 +1341,16 @@ Use quando o usuário solicitar:
 - Nova venda digital
 
 ⚠️ CAMPOS OBRIGATÓRIOS: plataforma, valor_bruto
+
+EMISSÃO DE NOTA FISCAL:
+- Pergunte ao usuário se deseja emitir a nota fiscal junto com a venda.
+- Se emitir_nota_fiscal = true, os seguintes campos tornam-se OBRIGATÓRIOS:
+  • cliente (nome do cliente)
+  • cliente_documento (CPF ou CNPJ válido, mínimo 11 dígitos numéricos)
+  • produto (nome do produto)
+  • valor_bruto (maior que zero)
+  • data_venda (YYYY-MM-DD)
+- Se algum desses campos estiver ausente, NÃO envie emitir_nota_fiscal como true. Informe ao usuário quais campos faltam.
 
 Parâmetros:
 - empresa_id (obrigatório)
@@ -1358,8 +1368,10 @@ Parâmetros:
 - status (opcional — aprovada, pendente, reembolsada, cancelada. Padrão: aprovada)
 - data_venda (opcional — YYYY-MM-DD. Padrão: hoje)
 - observacoes (opcional)
+- emitir_nota_fiscal (opcional — true/false. Se true, valida campos obrigatórios para emissão)
 
 CONTROLE DE ACESSO: Requer permissão 'pode_incluir' na tela 'vendas_digitais'.
+Para emitir NF, também requer permissão 'pode_incluir' na tela 'emissao_nf'.
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Vendas",
@@ -1379,19 +1391,30 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "status", type: "string", required: false, description: "aprovada, pendente, reembolsada ou cancelada" },
       { name: "data_venda", type: "string", required: false, description: "Data da venda (YYYY-MM-DD)" },
       { name: "observacoes", type: "string", required: false, description: "Observações" },
+      { name: "emitir_nota_fiscal", type: "boolean", required: false, description: "Se true, emite NF automaticamente (requer campos obrigatórios preenchidos)" },
     ],
-    body: { action: "criar-venda", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", plataforma: "{{ $fromAI('plataforma', 'Plataforma: hotmart, kiwify, eduzz, monetizze, manual') }}", valor_bruto: "{{ $fromAI('valor_bruto', 'Valor bruto numérico') }}", taxa: "{{ $fromAI('taxa', 'Taxa/comissão. Deixe vazio se não houver') }}", valor_liquido: "{{ $fromAI('valor_liquido', 'Valor líquido. Deixe vazio para calcular automaticamente') }}", produto: "{{ $fromAI('produto', 'Nome do produto. Deixe vazio se não informado') }}", cliente: "{{ $fromAI('cliente', 'Nome do cliente. Deixe vazio se não informado') }}", cliente_email: "{{ $fromAI('cliente_email', 'Email do cliente') }}", cliente_telefone: "{{ $fromAI('cliente_telefone', 'Telefone do cliente') }}", cliente_documento: "{{ $fromAI('cliente_documento', 'CPF ou CNPJ do cliente') }}", cliente_endereco: "{{ $fromAI('cliente_endereco', 'Endereço do cliente') }}", status: "{{ $fromAI('status', 'aprovada, pendente, reembolsada ou cancelada') }}", data_venda: "{{ $fromAI('data_venda', 'Data YYYY-MM-DD. Deixe vazio para hoje') }}", observacoes: "{{ $fromAI('observacoes', 'Observações. Deixe vazio se não houver') }}" },
+    body: { action: "criar-venda", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", plataforma: "{{ $fromAI('plataforma', 'Plataforma: hotmart, kiwify, eduzz, monetizze, manual') }}", valor_bruto: "{{ $fromAI('valor_bruto', 'Valor bruto numérico') }}", taxa: "{{ $fromAI('taxa', 'Taxa/comissão. Deixe vazio se não houver') }}", valor_liquido: "{{ $fromAI('valor_liquido', 'Valor líquido. Deixe vazio para calcular automaticamente') }}", produto: "{{ $fromAI('produto', 'Nome do produto. Deixe vazio se não informado') }}", cliente: "{{ $fromAI('cliente', 'Nome do cliente. Deixe vazio se não informado') }}", cliente_email: "{{ $fromAI('cliente_email', 'Email do cliente') }}", cliente_telefone: "{{ $fromAI('cliente_telefone', 'Telefone do cliente') }}", cliente_documento: "{{ $fromAI('cliente_documento', 'CPF ou CNPJ do cliente') }}", cliente_endereco: "{{ $fromAI('cliente_endereco', 'Endereço do cliente') }}", status: "{{ $fromAI('status', 'aprovada, pendente, reembolsada ou cancelada') }}", data_venda: "{{ $fromAI('data_venda', 'Data YYYY-MM-DD. Deixe vazio para hoje') }}", observacoes: "{{ $fromAI('observacoes', 'Observações. Deixe vazio se não houver') }}", emitir_nota_fiscal: "{{ $fromAI('emitir_nota_fiscal', 'true para emitir NF junto com a venda. Requer cliente, cliente_documento, produto, valor_bruto e data_venda preenchidos') }}" },
   },
   {
     action: "editar-venda",
     toolName: "editar_venda",
     label: "Editar Venda Digital",
-    description: "Altera dados de uma venda digital existente",
+    description: "Altera dados de uma venda digital existente, com opção de emissão de NF",
     toolDescription: `Altera dados de uma venda digital existente.
 
 ⚠️ REGRAS DE SEGURANÇA:
 1. Vendas com origem automática (webhook/integração) NÃO podem ser editadas. Somente vendas com origem "manual".
 2. Envie apenas os campos que deseja alterar. Campos não enviados ou vazios serão mantidos.
+
+EMISSÃO DE NOTA FISCAL:
+- Se o usuário deseja emitir NF na edição, envie emitir_nota_fiscal = true.
+- Antes de emitir, verifique se a venda possui todos os campos obrigatórios:
+  • cliente (nome do cliente)
+  • cliente_documento (CPF ou CNPJ válido)
+  • produto (nome do produto)
+  • valor_bruto (maior que zero)
+  • data_venda
+- Se algum campo estiver faltando, inclua-o na edição OU informe ao usuário.
 
 Use quando o usuário solicitar:
 - Editar venda
@@ -1403,8 +1426,10 @@ Parâmetros:
 - user_id (obrigatório — UUID do usuário para controle de permissões)
 - id (obrigatório — UUID da venda a editar)
 - plataforma, valor_bruto, taxa, valor_liquido, produto, cliente, cliente_email, cliente_telefone, cliente_documento, cliente_endereco, status, data_venda, observacoes (opcionais)
+- emitir_nota_fiscal (opcional — true/false)
 
 CONTROLE DE ACESSO: Requer permissão 'pode_alterar' na tela 'vendas_digitais'.
+Para emitir NF, também requer permissão 'pode_incluir' na tela 'emissao_nf'.
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Vendas",
@@ -1417,10 +1442,12 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "valor_liquido", type: "number", required: false, description: "Novo valor líquido" },
       { name: "produto", type: "string", required: false, description: "Novo nome do produto" },
       { name: "cliente", type: "string", required: false, description: "Novo nome do cliente" },
+      { name: "cliente_documento", type: "string", required: false, description: "Novo CPF/CNPJ do cliente" },
       { name: "status", type: "string", required: false, description: "Novo status" },
       { name: "observacoes", type: "string", required: false, description: "Novas observações" },
+      { name: "emitir_nota_fiscal", type: "boolean", required: false, description: "Se true, emite NF após edição (requer campos obrigatórios)" },
     ],
-    body: { action: "editar-venda", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", id: "{{ $fromAI('id', 'UUID da venda a editar') }}", valor_bruto: "{{ $fromAI('valor_bruto', 'Novo valor bruto. Deixe vazio se não mudar') }}", taxa: "{{ $fromAI('taxa', 'Nova taxa. Deixe vazio se não mudar') }}", valor_liquido: "{{ $fromAI('valor_liquido', 'Novo valor líquido. Deixe vazio se não mudar') }}", produto: "{{ $fromAI('produto', 'Novo produto. Deixe vazio se não mudar') }}", cliente: "{{ $fromAI('cliente', 'Novo cliente. Deixe vazio se não mudar') }}", status: "{{ $fromAI('status', 'Novo status. Deixe vazio se não mudar') }}", observacoes: "{{ $fromAI('observacoes', 'Novas observações. Deixe vazio se não mudar') }}" },
+    body: { action: "editar-venda", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", id: "{{ $fromAI('id', 'UUID da venda a editar') }}", valor_bruto: "{{ $fromAI('valor_bruto', 'Novo valor bruto. Deixe vazio se não mudar') }}", taxa: "{{ $fromAI('taxa', 'Nova taxa. Deixe vazio se não mudar') }}", valor_liquido: "{{ $fromAI('valor_liquido', 'Novo valor líquido. Deixe vazio se não mudar') }}", produto: "{{ $fromAI('produto', 'Novo produto. Deixe vazio se não mudar') }}", cliente: "{{ $fromAI('cliente', 'Novo cliente. Deixe vazio se não mudar') }}", cliente_documento: "{{ $fromAI('cliente_documento', 'Novo CPF/CNPJ. Deixe vazio se não mudar') }}", status: "{{ $fromAI('status', 'Novo status. Deixe vazio se não mudar') }}", observacoes: "{{ $fromAI('observacoes', 'Novas observações. Deixe vazio se não mudar') }}", emitir_nota_fiscal: "{{ $fromAI('emitir_nota_fiscal', 'true para emitir NF. Requer campos obrigatórios preenchidos na venda') }}" },
   },
   {
     action: "excluir-venda",
@@ -1432,6 +1459,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 ⚠️ REGRAS DE SEGURANÇA:
 1. Vendas com origem automática (webhook/integração) NÃO podem ser excluídas.
 2. Se a venda possuir um lançamento vinculado, ele será excluído junto.
+3. Se a venda possuir nota fiscal emitida (invoice_status = ISSUED ou AUTHORIZED), a exclusão será BLOQUEADA. A nota fiscal deve ser cancelada antes.
 
 Use quando o usuário solicitar:
 - Excluir venda
