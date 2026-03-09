@@ -7,10 +7,13 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CreditCard, Plus, Pencil, Trash2, Loader2, Star, ExternalLink, CheckCircle2, X, MessageSquare, BarChart3, FileText, Layers } from "lucide-react";
 import AsaasConfigCard from "@/components/configuracoes/AsaasConfigCard";
+import StripeConfigCard from "@/components/configuracoes/StripeConfigCard";
+import IntegracaoPadraoCard from "@/components/configuracoes/IntegracaoPadraoCard";
 
 interface PlanoControles {
   max_lancamentos: number;
