@@ -84,6 +84,7 @@ const CATEGORIAS_INFO: Record<PlataformaCategoria, { label: string; icon: any }>
   anuncios: { label: "Anúncios", icon: Megaphone },
   comunicacao: { label: "Comunicação", icon: MessageCircle },
   ia: { label: "Inteligência Artificial", icon: Brain },
+  notas_fiscais: { label: "Notas Fiscais", icon: FileText },
 };
 
 const PLATAFORMAS: Plataforma[] = [
