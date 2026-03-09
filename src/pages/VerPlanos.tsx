@@ -61,6 +61,11 @@ function getControleItems(controles: PlanoControles, maxEmpresas?: number): stri
   } else if (maxEmpresas != null && maxEmpresas > 0) {
     items.push(`Até ${maxEmpresas} empresa${maxEmpresas > 1 ? 's' : ''}`);
   }
+  if (controles.max_notas_fiscais === 0) {
+    items.push("Notas fiscais ilimitadas");
+  } else if (controles.max_notas_fiscais > 0) {
+    items.push(`Até ${controles.max_notas_fiscais} notas fiscais/mês`);
+  }
   if (controles.chat_ia) items.push("Chat IA");
   if (controles.dashboard_completo) items.push("Dashboard Completo");
   if (controles.relatorios_personalizados) items.push("Relatórios Personalizados");
