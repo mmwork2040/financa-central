@@ -316,6 +316,20 @@ const Assinaturas = () => {
         itens: serializeItensToDb(form.itens, form.controles, form.periodo_label),
       };
 
+      // Se destaque está ativo, remover destaque das outras modalidades do mesmo grupo
+      const grupoAtual = payload.grupo;
+      if (payload.destaque && grupoAtual) {
+        const idsParaRemover = planos
+          .filter(p => p.grupo === grupoAtual && (!editingPlano || p.id !== editingPlano.id) && p.destaque)
+          .map(p => p.id);
+        if (idsParaRemover.length > 0) {
+          await (supabase as any)
+            .from("planos_assinatura")
+            .update({ destaque: false })
+            .in("id", idsParaRemover);
+        }
+      }
+
       if (editingPlano) {
         const { error } = await (supabase as any)
           .from("planos_assinatura")
