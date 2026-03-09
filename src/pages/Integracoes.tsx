@@ -951,6 +951,65 @@ const Integracoes = () => {
     }
   };
 
+  const handleEnviarSugestao = async () => {
+    if (!sugestaoMensagem.trim()) return;
+    setEnviandoSugestao(true);
+    try {
+      const res = await supabase.functions.invoke("manage-sugestao", {
+        body: { action: "enviar", mensagem: sugestaoMensagem.trim(), tipo: "sugestao" },
+      });
+      if (res.error) throw res.error;
+      if (res.data?.error) throw new Error(res.data.error);
+      toast.success("Sugestão enviada com sucesso! A equipe será notificada.");
+      setSugestaoMensagem("");
+      setSugestaoDialogOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao enviar sugestão");
+    } finally {
+      setEnviandoSugestao(false);
+    }
+  };
+
+  const fetchSugestoesAdmin = async () => {
+    if (!isSuperAdmin) return;
+    setLoadingSugestoes(true);
+    try {
+      const res = await supabase.functions.invoke("manage-sugestao", {
+        body: { action: "listar" },
+      });
+      if (res.error) throw res.error;
+      setSugestoesAdmin(res.data?.sugestoes || []);
+    } catch (error: any) {
+      console.error("Erro ao carregar sugestões:", error);
+    } finally {
+      setLoadingSugestoes(false);
+    }
+  };
+
+  const handleResponderSugestao = async () => {
+    if (!sugestaoSelecionada || !respostaTexto.trim()) return;
+    setEnviandoResposta(true);
+    try {
+      const res = await supabase.functions.invoke("manage-sugestao", {
+        body: { action: "responder", sugestao_id: sugestaoSelecionada.id, resposta: respostaTexto.trim() },
+      });
+      if (res.error) throw res.error;
+      if (res.data?.error) throw new Error(res.data.error);
+      toast.success("Resposta enviada com sucesso!");
+      setRespostaDialogOpen(false);
+      setRespostaTexto("");
+      setSugestaoSelecionada(null);
+      fetchSugestoesAdmin();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao responder");
+    } finally {
+      setEnviandoResposta(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isSuperAdmin && !loading) fetchSugestoesAdmin();
+  }, [isSuperAdmin, loading]);
 
 
 
