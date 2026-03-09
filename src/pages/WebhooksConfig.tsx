@@ -61,7 +61,6 @@ const gerarPayloadSugerido = (acao: string): string => {
       mensagem: "{{mensagem}}",
     }, null, 2);
   }
-  }
 
   const baseFields: Record<string, any> = {
     empresa_id: "{{empresa_id}}",
