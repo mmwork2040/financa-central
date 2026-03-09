@@ -441,6 +441,15 @@ const Integracoes = () => {
   const [disponibilidade, setDisponibilidade] = useState<Record<string, boolean>>({});
   const [togglingDisp, setTogglingDisp] = useState<string | null>(null);
   const autoTestErrorsShownRef = useRef(false);
+  const [sugestaoDialogOpen, setSugestaoDialogOpen] = useState(false);
+  const [sugestaoMensagem, setSugestaoMensagem] = useState("");
+  const [enviandoSugestao, setEnviandoSugestao] = useState(false);
+  const [sugestoesAdmin, setSugestoesAdmin] = useState<any[]>([]);
+  const [loadingSugestoes, setLoadingSugestoes] = useState(false);
+  const [respostaDialogOpen, setRespostaDialogOpen] = useState(false);
+  const [sugestaoSelecionada, setSugestaoSelecionada] = useState<any>(null);
+  const [respostaTexto, setRespostaTexto] = useState("");
+  const [enviandoResposta, setEnviandoResposta] = useState(false);
 
   const getSelectedModel = (plataformaId: string): string => {
     const integ = integracoes.find((i: any) => i.plataforma === plataformaId);
