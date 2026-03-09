@@ -198,6 +198,28 @@ const VendasDigitais = () => {
       return;
     }
 
+    // Check plan limit for invoice emissions (0 = unlimited)
+    if (!isSuperAdmin && planControles.max_notas_fiscais > 0) {
+      try {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+        const { count } = await (supabase as any)
+          .from("vendas_digitais")
+          .select("id", { count: "exact", head: true })
+          .eq("empresa_id", empresaId)
+          .in("invoice_status", ["PROCESSING", "AUTHORIZED", "ISSUED"])
+          .gte("data_venda", startOfMonth)
+          .lte("data_venda", endOfMonth);
+        if ((count || 0) >= planControles.max_notas_fiscais) {
+          toast.error(`Limite de ${planControles.max_notas_fiscais} notas fiscais/mês atingido. Faça upgrade do plano para emitir mais.`, { duration: 5000 });
+          return;
+        }
+      } catch (e) {
+        console.error("Erro ao verificar limite de NFs:", e);
+      }
+    }
+
     // For super admins, show confirmation with Spedy config
     if (isSuperAdmin) {
       setLoadingSpedyConfig(true);

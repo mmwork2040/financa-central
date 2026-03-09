@@ -317,8 +317,13 @@ const PlanosAssinaturaConfig = () => {
               </div>
               <div className="space-y-2">
                 <Label>Máx. Empresas</Label>
-                <Input type="number" min="1" value={form.max_empresas} onChange={(e) => setForm(prev => ({ ...prev, max_empresas: e.target.value }))} placeholder="1" />
+                <Input type="number" min="0" value={form.max_empresas} onChange={(e) => setForm(prev => ({ ...prev, max_empresas: e.target.value }))} placeholder="1" />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Máx. Notas Fiscais / mês</Label>
+              <Input type="number" min="0" value={form.max_notas_fiscais} onChange={(e) => setForm(prev => ({ ...prev, max_notas_fiscais: e.target.value }))} placeholder="0 = ilimitado" />
+              <p className="text-xs text-muted-foreground">0 = ilimitado</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">

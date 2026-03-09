@@ -174,6 +174,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setPlanControles({
       max_lancamentos: 10,
       max_empresas: 1,
+      max_notas_fiscais: 0,
       chat_ia: false,
       dashboard_completo: false,
       relatorios_personalizados: false,
