@@ -446,7 +446,7 @@ const Assinaturas = () => {
                     return (
                       <div
                         key={mod.id}
-                        className={`relative rounded-xl border p-4 transition-all ${!mod.ativo ? "opacity-50" : ""}`}
+                        className={`relative rounded-xl border p-4 transition-all ${mod.destaque ? "border-primary shadow-md" : ""} ${!mod.ativo ? "opacity-50" : ""}`}
                       >
                         <div className="flex items-center justify-between mb-2">
                           <Badge variant="outline" className="text-xs font-semibold">
