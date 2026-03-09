@@ -143,6 +143,20 @@ const PLATAFORMAS: Plataforma[] = [
     categoria: "vendas",
   },
   {
+    id: "hubla", name: "Hubla", description: "Plataforma de produtos digitais e assinaturas",
+    icon: ShoppingCart, color: "bg-teal-100 text-teal-600",
+    site: "https://app.hubla.com.br/settings/webhooks", doc: "https://developers.hubla.com.br/",
+    events: ["purchase_approved", "purchase_refunded", "purchase_canceled", "subscription_cancellation"],
+    steps: [
+      "Acesse o Dashboard Hubla → Configurações → Webhooks",
+      "Clique em 'Adicionar Webhook' e cole a URL abaixo",
+      "Selecione os eventos desejados (ex: Compra Aprovada, Reembolso)",
+      "Salve e pronto! As vendas serão registradas automaticamente",
+    ],
+    needsSecret: false, webhookOnly: true, usesWebhook: true, keyValidation: { hint: "" },
+    categoria: "vendas",
+  },
+  {
     id: "stripe", name: "Stripe", description: "Pagamentos internacionais",
     icon: CreditCard, color: "bg-purple-100 text-purple-600",
     site: "https://dashboard.stripe.com/apikeys", doc: "https://docs.stripe.com/api",
