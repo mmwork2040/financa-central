@@ -21,6 +21,7 @@ interface PlanoRow {
   descricao: string | null;
   preco: number;
   periodo: string;
+  periodo_label: string;
   destaque: boolean;
   badge: string | null;
   link_acesso: string | null;
