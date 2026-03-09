@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-type PlataformaCategoria = "vendas" | "pagamentos" | "anuncios" | "comunicacao" | "ia";
+type PlataformaCategoria = "vendas" | "pagamentos" | "anuncios" | "comunicacao" | "ia" | "bancos";
 
 interface Plataforma {
   id: string;
