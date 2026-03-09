@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, MessageCircle, Send, Brain, Star, StarOff, ShieldAlert } from "lucide-react";
+import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, MessageCircle, Send, Brain, Star, StarOff, ShieldAlert, FileText } from "lucide-react";
 import SpedyConfigCard from "@/components/configuracoes/SpedyConfigCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -137,6 +137,20 @@ const PLATAFORMAS: Plataforma[] = [
       "Acesse o Dashboard Kiwify → Configurações → Webhooks",
       "Clique em 'Adicionar Webhook' e cole a URL abaixo",
       "Selecione os eventos desejados (ex: Pedido Pago, Reembolso)",
+      "Salve e pronto! As vendas serão registradas automaticamente",
+    ],
+    needsSecret: false, webhookOnly: true, usesWebhook: true, keyValidation: { hint: "" },
+    categoria: "vendas",
+  },
+  {
+    id: "hubla", name: "Hubla", description: "Plataforma de produtos digitais e assinaturas",
+    icon: ShoppingCart, color: "bg-teal-100 text-teal-600",
+    site: "https://app.hubla.com.br/settings/webhooks", doc: "https://developers.hubla.com.br/",
+    events: ["purchase_approved", "purchase_refunded", "purchase_canceled", "subscription_cancellation"],
+    steps: [
+      "Acesse o Dashboard Hubla → Configurações → Webhooks",
+      "Clique em 'Adicionar Webhook' e cole a URL abaixo",
+      "Selecione os eventos desejados (ex: Compra Aprovada, Reembolso)",
       "Salve e pronto! As vendas serão registradas automaticamente",
     ],
     needsSecret: false, webhookOnly: true, usesWebhook: true, keyValidation: { hint: "" },
@@ -803,6 +817,17 @@ const Integracoes = () => {
       comprador: { nome: "Cliente Teste" },
       produto: { nome: "Produto de Teste" },
     },
+    hubla: {
+      event: "purchase_approved",
+      data: {
+        status: "approved",
+        price: 99.0,
+        fee: 9.9,
+        customer: { name: "Cliente Teste", email: "teste@exemplo.com" },
+        product: { name: "Produto de Teste" },
+        created_at: new Date().toISOString(),
+      },
+    },
   };
 
   const handleTestWebhook = async (plataforma: string) => {
@@ -1166,7 +1191,20 @@ const Integracoes = () => {
         </Tabs>
       )}
 
-      {isSuperAdmin && <SpedyConfigCard />}
+      {isSuperAdmin && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold tracking-tight">Notas Fiscais</h2>
+              <p className="text-xs text-muted-foreground">Integração para emissão automática de NF-e / NFS-e</p>
+            </div>
+          </div>
+          <SpedyConfigCard />
+        </div>
+      )}
 
       {/* Wizard Dialog */}
       <Dialog open={!!connectDialog} onOpenChange={(o) => !o && closeWizard()}>

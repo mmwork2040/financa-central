@@ -151,6 +151,63 @@ function parseKiwify(body: any): SaleData | null {
   };
 }
 
+// ─── Hubla ───
+function parseHubla(body: any): SaleData | null {
+  const statusMap: Record<string, string> = {
+    approved: "aprovada",
+    completed: "aprovada",
+    refunded: "reembolsada",
+    canceled: "cancelada",
+    chargedback: "chargeback",
+    pending: "pendente",
+    waiting_payment: "pendente",
+  };
+
+  const data = body?.data || body;
+  const event = body?.event || body?.type || "purchase_approved";
+  const customer = data?.customer || data?.buyer || {};
+  const product = data?.product || {};
+  const rawStatus = String(data?.status || "approved").toLowerCase();
+
+  // Handle subscription cancellation events
+  if (event === "subscription_cancellation") {
+    return {
+      plataforma: "hubla",
+      evento: event,
+      status: "cancelada",
+      valor_bruto: Number(data?.price || data?.amount || 0),
+      taxa: Number(data?.fee || data?.platform_fee || 0),
+      valor_liquido: Number(data?.price || data?.amount || 0) - Number(data?.fee || data?.platform_fee || 0),
+      cliente: customer?.name || customer?.email || null,
+      produto: product?.name || null,
+      data_venda: normalizeDate(data?.created_at || data?.date),
+      data_prevista_recebimento: null,
+      cliente_email: customer?.email || null,
+      cliente_telefone: customer?.phone || customer?.mobile || null,
+      cliente_documento: customer?.document || customer?.cpf || null,
+    };
+  }
+
+  const valorBruto = Number(data?.price || data?.amount || data?.value || 0);
+  const taxa = Number(data?.fee || data?.platform_fee || 0);
+
+  return {
+    plataforma: "hubla",
+    evento: event,
+    status: statusMap[rawStatus] || "pendente",
+    valor_bruto: valorBruto,
+    taxa,
+    valor_liquido: valorBruto - taxa,
+    cliente: customer?.name || customer?.email || null,
+    produto: product?.name || null,
+    data_venda: normalizeDate(data?.created_at || data?.approved_at || data?.date),
+    data_prevista_recebimento: null,
+    cliente_email: customer?.email || null,
+    cliente_telefone: customer?.phone || customer?.mobile || null,
+    cliente_documento: customer?.document || customer?.cpf || null,
+  };
+}
+
 // ─── Monetizze ───
 function parseMonetizze(body: any): SaleData | null {
   const evento = body?.evento || body?.venda || {};
@@ -271,6 +328,8 @@ Deno.serve(async (req) => {
       saleData = parseMonetizze(body);
     } else if (platform === "kiwify") {
       saleData = parseKiwify(body);
+    } else if (platform === "hubla") {
+      saleData = parseHubla(body);
     }
 
     let vendaId: string | null = null;
