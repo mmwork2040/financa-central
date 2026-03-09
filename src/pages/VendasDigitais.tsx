@@ -56,6 +56,7 @@ const VendasDigitais = () => {
   const [dataFim, setDataFim] = useState<Date | undefined>();
   const [manualDateFilter, setManualDateFilter] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
+  const [allSalesPlatforms, setAllSalesPlatforms] = useState<string[]>(PLATAFORMAS_VENDAS_DEFAULT);
   const [formOpen, setFormOpen] = useState(false);
   const [editingVenda, setEditingVenda] = useState<any>(null);
   const [detailVenda, setDetailVenda] = useState<any>(null);
