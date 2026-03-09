@@ -174,6 +174,18 @@ const Assinaturas = () => {
     }
     setSaving(true);
     try {
+      // Se destaque está ativo, remover destaque de todos os outros planos do mesmo período
+      if (grupoForm.destaque) {
+        const modalidades = planos.filter(p => (p.grupo || p.nome) !== (editingGrupo || grupoForm.nome));
+        const idsParaRemover = modalidades.filter(p => p.destaque).map(p => p.id);
+        if (idsParaRemover.length > 0) {
+          await (supabase as any)
+            .from("planos_assinatura")
+            .update({ destaque: false })
+            .in("id", idsParaRemover);
+        }
+      }
+
       if (editingGrupo) {
         // Update all modalities in this group
         const modalidades = planos.filter(p => (p.grupo || p.nome) === editingGrupo);
@@ -306,7 +318,6 @@ const Assinaturas = () => {
         descricao: form.descricao || null,
         preco: form.preco,
         periodo: form.periodo,
-        destaque: form.destaque,
         badge: form.badge || null,
         ativo: form.ativo,
         link_acesso: form.link_acesso || null,
@@ -316,18 +327,7 @@ const Assinaturas = () => {
         itens: serializeItensToDb(form.itens, form.controles, form.periodo_label),
       };
 
-      // Se destaque está ativo, remover destaque de todas as outras modalidades do mesmo período
-      if (payload.destaque && payload.periodo) {
-        const idsParaRemover = planos
-          .filter(p => p.periodo === payload.periodo && (!editingPlano || p.id !== editingPlano.id) && p.destaque)
-          .map(p => p.id);
-        if (idsParaRemover.length > 0) {
-          await (supabase as any)
-            .from("planos_assinatura")
-            .update({ destaque: false })
-            .in("id", idsParaRemover);
-        }
-      }
+      // Destaque is managed at grupo level, not modalidade level
 
       if (editingPlano) {
         const { error } = await (supabase as any)
@@ -674,10 +674,6 @@ const Assinaturas = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Switch checked={form.destaque} onCheckedChange={(v) => setForm(prev => ({ ...prev, destaque: v }))} />
-                <Label>Destaque</Label>
-              </div>
               <div className="flex items-center gap-2">
                 <Switch checked={form.ativo} onCheckedChange={(v) => setForm(prev => ({ ...prev, ativo: v }))} />
                 <Label>Ativo</Label>
