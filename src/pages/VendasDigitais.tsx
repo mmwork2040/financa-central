@@ -44,6 +44,7 @@ const VendasDigitais = () => {
   const canIncluir = canPerformAction("vendas_digitais", "pode_incluir");
   const canAlterar = canPerformAction("vendas_digitais", "pode_alterar");
   const canExcluir = canPerformAction("vendas_digitais", "pode_excluir");
+  const canEmitirNF = canPerformAction("emissao_nf", "pode_incluir");
   const navigate = useNavigate();
   const [vendas, setVendas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
