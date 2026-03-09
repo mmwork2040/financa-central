@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, MessageCircle, Send, Brain, Star, StarOff, ShieldAlert, FileText } from "lucide-react";
+import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, MessageCircle, Send, Brain, Star, StarOff, ShieldAlert, FileText, Landmark } from "lucide-react";
 import SpedyConfigCard from "@/components/configuracoes/SpedyConfigCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-type PlataformaCategoria = "vendas" | "pagamentos" | "anuncios" | "comunicacao" | "ia";
+type PlataformaCategoria = "vendas" | "pagamentos" | "anuncios" | "comunicacao" | "ia" | "bancos" | "bancos";
 
 interface Plataforma {
   id: string;
@@ -80,6 +80,7 @@ const LLM_MODELS: Record<string, { value: string; label: string }[]> = {
 const CATEGORIAS_INFO: Record<PlataformaCategoria, { label: string; icon: any }> = {
   vendas: { label: "Vendas", icon: ShoppingCart },
   pagamentos: { label: "Pagamentos", icon: CreditCard },
+  bancos: { label: "Bancos", icon: Landmark },
   anuncios: { label: "Anúncios", icon: Megaphone },
   comunicacao: { label: "Comunicação", icon: MessageCircle },
   ia: { label: "Inteligência Artificial", icon: Brain },
@@ -328,6 +329,22 @@ const PLATAFORMAS: Plataforma[] = [
     needsSecret: false, usesWebhook: false,
     keyValidation: { prefix: "sk-", hint: "Deve começar com sk-" },
     categoria: "ia",
+  },
+  // --- Bancos ---
+  {
+    id: "banco_inter", name: "Banco Inter", description: "Open Banking, cobranças e extratos via API",
+    icon: Landmark, color: "bg-orange-100 text-orange-600",
+    site: "https://developers.inter.co/", doc: "https://developers.inter.co/references",
+    events: ["cobranca_paga", "cobranca_vencida", "pix_recebido"],
+    steps: [
+      "Acesse o Internet Banking do Inter → Menu → Conta Digital → API",
+      "Crie um novo aplicativo e selecione os escopos desejados (Cobranças, Extratos, Pix)",
+      "Faça o download do certificado .crt e da chave .key gerados",
+      "Copie o Client ID e o Client Secret do aplicativo",
+      "Cole o Client ID como API Key e o Client Secret como Secret abaixo",
+    ],
+    needsSecret: true, usesWebhook: true, keyValidation: { hint: "Client ID do aplicativo Inter" },
+    categoria: "bancos",
   },
 ];
 
