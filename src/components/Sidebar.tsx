@@ -34,6 +34,7 @@ import {
   Briefcase,
   Code2,
   Send,
+  UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
