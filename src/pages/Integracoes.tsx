@@ -910,6 +910,16 @@ const Integracoes = () => {
             {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => {
               const info = CATEGORIAS_INFO[cat];
               const CatIcon = info.icon;
+              // Notas Fiscais tab: super admin only, no platform count
+              if (cat === "notas_fiscais") {
+                if (!isSuperAdmin) return null;
+                return (
+                  <TabsTrigger key={cat} value={cat} className="gap-1.5 text-xs sm:text-sm">
+                    <CatIcon className="h-3.5 w-3.5" />
+                    {info.label}
+                  </TabsTrigger>
+                );
+              }
               const filteredPlats = PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin) && isPlataformaDisponivel(p.id));
               const count = filteredPlats.length;
               if (count === 0) return null;
