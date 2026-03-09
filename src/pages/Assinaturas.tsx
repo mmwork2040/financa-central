@@ -313,7 +313,7 @@ const Assinaturas = () => {
         ordem: form.ordem,
         max_empresas: form.max_empresas ?? 1,
         grupo: form.grupo || form.nome,
-        itens: serializeItensToDb(form.itens, form.controles),
+        itens: serializeItensToDb(form.itens, form.controles, form.periodo_label),
       };
 
       if (editingPlano) {
