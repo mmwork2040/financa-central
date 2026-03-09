@@ -21,6 +21,7 @@ const acoesDisponiveis = [
   { value: "Editar Registro", label: "Editar Registro" },
   { value: "Chat", label: "Chat" },
   { value: "Acesso do Usuário", label: "Acesso do Usuário" },
+  { value: "Suporte Técnico", label: "Suporte Técnico" },
 ];
 
 const gerarPayloadSugerido = (acao: string): string => {
