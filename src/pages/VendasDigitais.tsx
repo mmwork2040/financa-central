@@ -581,7 +581,9 @@ const VendasDigitais = () => {
                   <p className="font-medium">Nota Fiscal</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div><span className="text-muted-foreground">Status NF:</span> {invoiceStatusBadge(detailVenda)}</div>
-                    <div><span className="text-muted-foreground">ID Spedy:</span> <strong className="font-mono text-xs">{detailVenda.spedy_order_id || "-"}</strong></div>
+                    {isSuperAdmin && detailVenda.spedy_order_id && (
+                      <div><span className="text-muted-foreground">ID Pedido:</span> <strong className="font-mono text-xs">{detailVenda.spedy_order_id}</strong></div>
+                    )}
                   </div>
                   {detailVenda.invoice_pdf_url && (
                     <a href={detailVenda.invoice_pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary underline">
