@@ -104,6 +104,16 @@ const PlanosAssinaturaConfig = () => {
     }
     setSaving(true);
     try {
+      // Build itens with controles
+      const existingItens = editingPlano ? ((editingPlano as any).itens || {}) : {};
+      const itensPayload = {
+        ...existingItens,
+        controles: {
+          ...(existingItens.controles || {}),
+          max_notas_fiscais: parseInt(form.max_notas_fiscais) || 0,
+        },
+      };
+
       const payload = {
         nome: form.nome,
         descricao: form.descricao || null,
@@ -115,6 +125,7 @@ const PlanosAssinaturaConfig = () => {
         link_acesso: form.link_acesso || null,
         ordem: form.ordem,
         max_empresas: parseInt(form.max_empresas) || 1,
+        itens: itensPayload,
       };
 
       if (editingPlano) {
