@@ -267,6 +267,7 @@ const Assinaturas = () => {
       descricao: plano.descricao || "",
       preco: plano.preco,
       periodo: plano.periodo,
+      periodo_label: ((plano as any).itens_raw?.periodo_label) || "",
       destaque: plano.destaque,
       badge: plano.badge || "",
       ativo: plano.ativo,
