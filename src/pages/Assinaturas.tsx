@@ -174,6 +174,18 @@ const Assinaturas = () => {
     }
     setSaving(true);
     try {
+      // Se destaque está ativo, remover destaque de todos os outros planos do mesmo período
+      if (grupoForm.destaque) {
+        const modalidades = planos.filter(p => (p.grupo || p.nome) !== (editingGrupo || grupoForm.nome));
+        const idsParaRemover = modalidades.filter(p => p.destaque).map(p => p.id);
+        if (idsParaRemover.length > 0) {
+          await (supabase as any)
+            .from("planos_assinatura")
+            .update({ destaque: false })
+            .in("id", idsParaRemover);
+        }
+      }
+
       if (editingGrupo) {
         // Update all modalities in this group
         const modalidades = planos.filter(p => (p.grupo || p.nome) === editingGrupo);
