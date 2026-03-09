@@ -245,6 +245,7 @@ const Assinaturas = () => {
       descricao: grupoData.descricao || "",
       preco: 0,
       periodo: nextPeriodo,
+      periodo_label: "",
       destaque: grupoData.destaque,
       badge: grupoData.badge || "",
       ativo: true,
