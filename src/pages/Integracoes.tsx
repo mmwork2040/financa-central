@@ -936,7 +936,13 @@ const Integracoes = () => {
             })}
           </TabsList>
 
-          {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => {
+          {isSuperAdmin && (
+            <TabsContent key="notas_fiscais" value="notas_fiscais">
+              <SpedyConfigCard />
+            </TabsContent>
+          )}
+
+          {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).filter(cat => cat !== "notas_fiscais").map(cat => {
             const filteredPlatsForTab = PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin) && isPlataformaDisponivel(p.id));
             return (
             <TabsContent key={cat} value={cat}>
