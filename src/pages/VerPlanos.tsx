@@ -62,7 +62,7 @@ function getControleItems(controles: PlanoControles, maxEmpresas?: number): stri
     items.push(`Até ${maxEmpresas} empresa${maxEmpresas > 1 ? 's' : ''}`);
   }
   if (controles.max_notas_fiscais === 0) {
-    items.push("Notas fiscais ilimitadas");
+    items.push("Emissão de notas fiscais ilimitada");
   } else if (controles.max_notas_fiscais > 0) {
     items.push(`Até ${controles.max_notas_fiscais} notas fiscais/mês`);
   }
