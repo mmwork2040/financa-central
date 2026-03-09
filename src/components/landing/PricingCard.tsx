@@ -101,7 +101,7 @@ const PricingCard = ({
 
       {!isEnterprise && (
         <Badge variant="outline" className="w-fit mb-5 text-primary border-primary/30 text-[11px] rounded-full relative z-10">
-          30 dias grátis
+          30 dias
         </Badge>
       )}
 

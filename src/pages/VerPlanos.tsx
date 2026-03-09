@@ -163,7 +163,7 @@ const VerPlanos = () => {
             {periodosDisponiveis.map(p => (
               <TabsTrigger key={p} value={p}>
                 {periodoLabels[p] || p}
-                {p === "anual" && <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">2 meses grátis</Badge>}
+                {p === "anual" && <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">Economia</Badge>}
               </TabsTrigger>
             ))}
           </TabsList>
