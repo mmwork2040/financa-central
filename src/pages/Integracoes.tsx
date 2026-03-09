@@ -901,6 +901,7 @@ const Integracoes = () => {
       ) : (
         <Tabs defaultValue={(() => {
           const visibleCats = (Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).filter(cat => {
+            if (cat === "notas_fiscais") return isSuperAdmin;
             const plats = PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin) && isPlataformaDisponivel(p.id));
             return plats.length > 0;
           });
