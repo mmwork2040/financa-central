@@ -240,7 +240,7 @@ const Assinaturas = () => {
     const existingPeriodos = grupoData.modalidades.map(m => m.periodo);
     const nextPeriodo = periodoOptions.find(o => !existingPeriodos.includes(o.value))?.value || "mensal";
     setForm({
-      nome: grupoName,
+      nome: periodoOptions.find(o => o.value === nextPeriodo)?.label || nextPeriodo,
       descricao: grupoData.descricao || "",
       preco: 0,
       periodo: nextPeriodo,
