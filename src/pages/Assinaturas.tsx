@@ -462,7 +462,7 @@ const Assinaturas = () => {
                           <span className="text-xl font-bold">
                             R$ {mod.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
-                          <span className="text-xs text-muted-foreground ml-1">/ {mod.periodo}</span>
+                          <span className="text-xs text-muted-foreground ml-1">/ {(mod as any).itens_raw?.periodo_label || mod.periodo}</span>
                         </div>
                         {mod.link_acesso && (
                           <a href={mod.link_acesso} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline mb-2 flex items-center gap-1 truncate">
