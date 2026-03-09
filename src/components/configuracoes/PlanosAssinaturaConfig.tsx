@@ -48,6 +48,7 @@ const PlanosAssinaturaConfig = () => {
     link_acesso: "",
     ordem: 0,
     max_empresas: "1",
+    max_notas_fiscais: "0",
   });
 
   useEffect(() => {
@@ -72,12 +73,14 @@ const PlanosAssinaturaConfig = () => {
 
   const openNew = () => {
     setEditingPlano(null);
-    setForm({ nome: "", descricao: "", preco: 0, periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, max_empresas: "1" });
+    setForm({ nome: "", descricao: "", preco: 0, periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, max_empresas: "1", max_notas_fiscais: "0" });
     setDialogOpen(true);
   };
 
   const openEdit = (plano: Plano) => {
     setEditingPlano(plano);
+    const itensObj = (plano as any).itens;
+    const controles = itensObj?.controles || {};
     setForm({
       nome: plano.nome,
       descricao: plano.descricao || "",
@@ -89,6 +92,7 @@ const PlanosAssinaturaConfig = () => {
       link_acesso: plano.link_acesso || "",
       ordem: plano.ordem,
       max_empresas: String(plano.max_empresas ?? 1),
+      max_notas_fiscais: String(controles.max_notas_fiscais ?? 0),
     });
     setDialogOpen(true);
   };
@@ -100,6 +104,16 @@ const PlanosAssinaturaConfig = () => {
     }
     setSaving(true);
     try {
+      // Build itens with controles
+      const existingItens = editingPlano ? ((editingPlano as any).itens || {}) : {};
+      const itensPayload = {
+        ...existingItens,
+        controles: {
+          ...(existingItens.controles || {}),
+          max_notas_fiscais: parseInt(form.max_notas_fiscais) || 0,
+        },
+      };
+
       const payload = {
         nome: form.nome,
         descricao: form.descricao || null,
@@ -111,6 +125,7 @@ const PlanosAssinaturaConfig = () => {
         link_acesso: form.link_acesso || null,
         ordem: form.ordem,
         max_empresas: parseInt(form.max_empresas) || 1,
+        itens: itensPayload,
       };
 
       if (editingPlano) {
@@ -302,8 +317,13 @@ const PlanosAssinaturaConfig = () => {
               </div>
               <div className="space-y-2">
                 <Label>Máx. Empresas</Label>
-                <Input type="number" min="1" value={form.max_empresas} onChange={(e) => setForm(prev => ({ ...prev, max_empresas: e.target.value }))} placeholder="1" />
+                <Input type="number" min="0" value={form.max_empresas} onChange={(e) => setForm(prev => ({ ...prev, max_empresas: e.target.value }))} placeholder="1" />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Máx. Notas Fiscais / mês</Label>
+              <Input type="number" min="0" value={form.max_notas_fiscais} onChange={(e) => setForm(prev => ({ ...prev, max_notas_fiscais: e.target.value }))} placeholder="0 = ilimitado" />
+              <p className="text-xs text-muted-foreground">0 = ilimitado</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 interface PlanoControles {
   max_lancamentos: number;
+  max_notas_fiscais: number;
   chat_ia: boolean;
   dashboard_completo: boolean;
   relatorios_personalizados: boolean;
@@ -29,6 +30,7 @@ interface Plano {
 
 const defaultControles: PlanoControles = {
   max_lancamentos: 0,
+  max_notas_fiscais: 0,
   chat_ia: false,
   dashboard_completo: false,
   relatorios_personalizados: false,
@@ -58,6 +60,11 @@ function getControleItems(controles: PlanoControles, maxEmpresas?: number): stri
     items.push("Empresas ilimitadas");
   } else if (maxEmpresas != null && maxEmpresas > 0) {
     items.push(`Até ${maxEmpresas} empresa${maxEmpresas > 1 ? 's' : ''}`);
+  }
+  if (controles.max_notas_fiscais === 0) {
+    items.push("Notas fiscais ilimitadas");
+  } else if (controles.max_notas_fiscais > 0) {
+    items.push(`Até ${controles.max_notas_fiscais} notas fiscais/mês`);
   }
   if (controles.chat_ia) items.push("Chat IA");
   if (controles.dashboard_completo) items.push("Dashboard Completo");
