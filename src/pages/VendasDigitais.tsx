@@ -376,7 +376,7 @@ const VendasDigitais = () => {
             <span className="text-sm font-medium">Plataformas de Vendas</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {PLATAFORMAS_VENDAS.map(p => {
+            {allSalesPlatforms.map(p => {
               const isConnected = connectedPlatforms.includes(p);
               return (
                 <Badge key={p} variant="outline" className={cn("text-xs gap-1 cursor-default", isConnected ? "border-green-300 bg-green-50 text-green-700" : "border-muted text-muted-foreground")}>
