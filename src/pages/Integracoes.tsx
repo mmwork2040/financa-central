@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, MessageCircle, Send, Brain, Star, StarOff, ShieldAlert, FileText, Landmark } from "lucide-react";
+import { Plug, Loader2, ExternalLink, BookOpen, ChevronRight, ChevronLeft, Check, CreditCard, Globe, ShoppingCart, Megaphone, DollarSign, Zap, Target, Activity, CheckCircle2, XCircle, AlertTriangle, Pencil, Copy, Webhook, Info, MessageCircle, Send, Brain, Star, StarOff, ShieldAlert, FileText, Landmark, Lightbulb, MessageSquarePlus, Reply } from "lucide-react";
 import SpedyConfigCard from "@/components/configuracoes/SpedyConfigCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -440,6 +441,15 @@ const Integracoes = () => {
   const [disponibilidade, setDisponibilidade] = useState<Record<string, boolean>>({});
   const [togglingDisp, setTogglingDisp] = useState<string | null>(null);
   const autoTestErrorsShownRef = useRef(false);
+  const [sugestaoDialogOpen, setSugestaoDialogOpen] = useState(false);
+  const [sugestaoMensagem, setSugestaoMensagem] = useState("");
+  const [enviandoSugestao, setEnviandoSugestao] = useState(false);
+  const [sugestoesAdmin, setSugestoesAdmin] = useState<any[]>([]);
+  const [loadingSugestoes, setLoadingSugestoes] = useState(false);
+  const [respostaDialogOpen, setRespostaDialogOpen] = useState(false);
+  const [sugestaoSelecionada, setSugestaoSelecionada] = useState<any>(null);
+  const [respostaTexto, setRespostaTexto] = useState("");
+  const [enviandoResposta, setEnviandoResposta] = useState(false);
 
   const getSelectedModel = (plataformaId: string): string => {
     const integ = integracoes.find((i: any) => i.plataforma === plataformaId);
@@ -941,6 +951,65 @@ const Integracoes = () => {
     }
   };
 
+  const handleEnviarSugestao = async () => {
+    if (!sugestaoMensagem.trim()) return;
+    setEnviandoSugestao(true);
+    try {
+      const res = await supabase.functions.invoke("manage-sugestao", {
+        body: { action: "enviar", mensagem: sugestaoMensagem.trim(), tipo: "sugestao" },
+      });
+      if (res.error) throw res.error;
+      if (res.data?.error) throw new Error(res.data.error);
+      toast.success("Sugestão enviada com sucesso! A equipe será notificada.");
+      setSugestaoMensagem("");
+      setSugestaoDialogOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao enviar sugestão");
+    } finally {
+      setEnviandoSugestao(false);
+    }
+  };
+
+  const fetchSugestoesAdmin = async () => {
+    if (!isSuperAdmin) return;
+    setLoadingSugestoes(true);
+    try {
+      const res = await supabase.functions.invoke("manage-sugestao", {
+        body: { action: "listar" },
+      });
+      if (res.error) throw res.error;
+      setSugestoesAdmin(res.data?.sugestoes || []);
+    } catch (error: any) {
+      console.error("Erro ao carregar sugestões:", error);
+    } finally {
+      setLoadingSugestoes(false);
+    }
+  };
+
+  const handleResponderSugestao = async () => {
+    if (!sugestaoSelecionada || !respostaTexto.trim()) return;
+    setEnviandoResposta(true);
+    try {
+      const res = await supabase.functions.invoke("manage-sugestao", {
+        body: { action: "responder", sugestao_id: sugestaoSelecionada.id, resposta: respostaTexto.trim() },
+      });
+      if (res.error) throw res.error;
+      if (res.data?.error) throw new Error(res.data.error);
+      toast.success("Resposta enviada com sucesso!");
+      setRespostaDialogOpen(false);
+      setRespostaTexto("");
+      setSugestaoSelecionada(null);
+      fetchSugestoesAdmin();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao responder");
+    } finally {
+      setEnviandoResposta(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isSuperAdmin && !loading) fetchSugestoesAdmin();
+  }, [isSuperAdmin, loading]);
 
 
 
@@ -1555,6 +1624,145 @@ const Integracoes = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Suggestion Card */}
+      <Card className="border-dashed">
+        <CardContent className="p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 shrink-0">
+              <Lightbulb className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Sentiu falta de alguma integração?</p>
+              <p className="text-xs text-muted-foreground">Envie sua sugestão para a equipe de suporte</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setSugestaoDialogOpen(true)}>
+            <MessageSquarePlus className="h-3.5 w-3.5" />
+            Sugerir
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Super Admin: Suggestions List */}
+      {isSuperAdmin && sugestoesAdmin.length > 0 && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Lightbulb className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold">Sugestões dos Usuários</h3>
+              <Badge variant="secondary" className="text-[10px]">{sugestoesAdmin.filter(s => s.status === 'pendente').length} pendentes</Badge>
+            </div>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {sugestoesAdmin.map(s => (
+                <div key={s.id} className={`rounded-lg border p-3 text-sm space-y-1 ${s.status === 'pendente' ? 'bg-muted/30' : ''}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{s.user_nome}</span>
+                      <span className="text-[10px] text-muted-foreground">{s.user_email}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {s.status === 'pendente' ? (
+                        <Badge variant="outline" className="text-[10px] border-orange-300 text-orange-600">Pendente</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] border-green-300 text-green-600">Respondida</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground">{s.mensagem}</p>
+                  {s.resposta && (
+                    <div className="mt-2 rounded-md bg-primary/5 p-2 text-xs">
+                      <span className="font-medium text-primary">Resposta:</span> {s.resposta}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[10px] text-muted-foreground">
+                      {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                    </span>
+                    {s.status === 'pendente' && (
+                      <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={() => {
+                        setSugestaoSelecionada(s);
+                        setRespostaTexto("");
+                        setRespostaDialogOpen(true);
+                      }}>
+                        <Reply className="h-3 w-3" />
+                        Responder
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Dialog: Enviar Sugestão */}
+      <Dialog open={sugestaoDialogOpen} onOpenChange={setSugestaoDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-primary" />
+              Enviar Sugestão
+            </DialogTitle>
+            <DialogDescription>
+              Descreva a integração ou funcionalidade que gostaria de ver no sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea
+              placeholder="Ex: Seria ótimo ter integração com o PagSeguro para receber pagamentos automaticamente..."
+              value={sugestaoMensagem}
+              onChange={(e) => setSugestaoMensagem(e.target.value.slice(0, 1000))}
+              rows={4}
+              className="resize-none"
+            />
+            <p className="text-[10px] text-muted-foreground text-right">{sugestaoMensagem.length}/1000</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setSugestaoDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleEnviarSugestao} disabled={!sugestaoMensagem.trim() || enviandoSugestao}>
+                {enviandoSugestao ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Send className="h-4 w-4 mr-1.5" />}
+                Enviar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Responder Sugestão (Super Admin) */}
+      <Dialog open={respostaDialogOpen} onOpenChange={setRespostaDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Reply className="h-5 w-5 text-primary" />
+              Responder Sugestão
+            </DialogTitle>
+          </DialogHeader>
+          {sugestaoSelecionada && (
+            <div className="space-y-3">
+              <div className="rounded-md bg-muted p-3 text-sm">
+                <p className="font-medium text-xs text-muted-foreground mb-1">Sugestão de {sugestaoSelecionada.user_nome}:</p>
+                <p>{sugestaoSelecionada.mensagem}</p>
+              </div>
+              <Textarea
+                placeholder="Digite sua resposta..."
+                value={respostaTexto}
+                onChange={(e) => setRespostaTexto(e.target.value.slice(0, 500))}
+                rows={3}
+                className="resize-none"
+              />
+              <p className="text-[10px] text-muted-foreground text-right">{respostaTexto.length}/500</p>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setRespostaDialogOpen(false)}>Cancelar</Button>
+                <Button onClick={handleResponderSugestao} disabled={!respostaTexto.trim() || enviandoResposta}>
+                  {enviandoResposta ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Send className="h-4 w-4 mr-1.5" />}
+                  Enviar Resposta
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
