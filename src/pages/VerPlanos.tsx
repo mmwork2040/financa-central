@@ -163,7 +163,7 @@ const VerPlanos = () => {
             {periodosDisponiveis.map(p => (
               <TabsTrigger key={p} value={p}>
                 {periodoLabels[p] || p}
-                {p === "anual" && <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">2 meses grátis</Badge>}
+                {p === "anual" && <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">Economia</Badge>}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -211,16 +211,6 @@ const VerPlanos = () => {
                     R$ {plano.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                   <span className="text-sm text-muted-foreground ml-1">/ {plano.periodo_label || plano.periodo}</span>
-                  {plano.periodo === "anual" && (
-                    <p className="text-xs text-primary mt-1">
-                      ≈ R$ {(plano.preco / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
-                    </p>
-                  )}
-                  {plano.periodo === "trimestral" && (
-                    <p className="text-xs text-primary mt-1">
-                      ≈ R$ {(plano.preco / 3).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
-                    </p>
-                  )}
                 </div>
                 <ul className="space-y-2.5 mb-6 flex-1 relative z-10">
                   {(allItems.length > 0 ? allItems : ["Acesso ao sistema"]).map((f, i) => (
