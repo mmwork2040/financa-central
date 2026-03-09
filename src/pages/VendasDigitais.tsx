@@ -463,10 +463,11 @@ const VendasDigitais = () => {
                     </div>
                   </div>
                   <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                    <p className="text-xs text-muted-foreground">Bruto: {formatCurrency(venda.valor_bruto)}</p>
+                    {venda.taxa > 0 && <p className="text-[10px] text-muted-foreground">Comissão: {formatCurrency(venda.taxa)}</p>}
                     <p className={cn("text-sm font-bold", venda.status === "reembolsada" || venda.status === "chargeback" ? "text-destructive" : "text-green-600")}>
-                      {(venda.status === "reembolsada" || venda.status === "chargeback") ? "-" : ""}{formatCurrency(venda.valor_liquido)}
+                      Líquido: {(venda.status === "reembolsada" || venda.status === "chargeback") ? "-" : ""}{formatCurrency(venda.valor_liquido)}
                     </p>
-                    {venda.taxa > 0 && <p className="text-[10px] text-muted-foreground">Taxa: {formatCurrency(venda.taxa)}</p>}
                     <Badge className={cn("text-[10px]", statusColors[venda.status] || "")}>{venda.status}</Badge>
                     {invoiceStatusBadge(venda)}
                     <div className="flex gap-1 mt-1">
