@@ -4,6 +4,7 @@ import { HelpCircle, ChevronDown, ChevronUp, Send, Loader2, MessageCircle, Bot, 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
