@@ -563,6 +563,16 @@ const Assinaturas = () => {
               <Input value={form.nome} onChange={(e) => setForm(prev => ({ ...prev, nome: e.target.value }))} placeholder="Ex: Mensal, Anual, Plano Anual..." />
               <p className="text-[10px] text-muted-foreground">Exibido como rótulo no card. Se vazio, usa o período.</p>
             </div>
+            <div className="space-y-2">
+              <Label>Período *</Label>
+              <select
+                className="flex h-10 w-full rounded-full border border-input bg-muted/40 px-4 py-2 text-sm"
+                value={form.periodo}
+                onChange={(e) => setForm(prev => ({ ...prev, periodo: e.target.value }))}
+              >
+                {periodoOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Preço (R$) *</Label>
@@ -575,20 +585,10 @@ const Assinaturas = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Período *</Label>
-                <select
-                  className="flex h-10 w-full rounded-full border border-input bg-muted/40 px-4 py-2 text-sm"
-                  value={form.periodo}
-                  onChange={(e) => setForm(prev => ({ ...prev, periodo: e.target.value }))}
-                >
-                  {periodoOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                <Label>Rótulo do Período</Label>
+                <Input value={form.periodo_label} onChange={(e) => setForm(prev => ({ ...prev, periodo_label: e.target.value }))} placeholder={`Ex: ${form.periodo}`} />
+                <p className="text-[10px] text-muted-foreground">Texto ao lado do preço. Se vazio, usa o período.</p>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Rótulo do Período (ao lado do valor)</Label>
-              <Input value={form.periodo_label} onChange={(e) => setForm(prev => ({ ...prev, periodo_label: e.target.value }))} placeholder={`Ex: ${form.periodo} (padrão se vazio)`} />
-              <p className="text-[10px] text-muted-foreground">Texto exibido como "/ mensal", "/ anual" ao lado do preço. Se vazio, usa o período selecionado.</p>
             </div>
             <div className="space-y-2">
               <Label>Link de Acesso / Pagamento</Label>
