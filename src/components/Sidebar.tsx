@@ -190,7 +190,6 @@ export const Sidebar = () => {
 
   const bottomItems = [
     { name: "Relatórios", icon: PieChart, path: "/reports" },
-    { name: "Suporte", icon: HelpCircle, path: "/suporte" },
   ];
 
   const allConfigItems = [
