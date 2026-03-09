@@ -107,8 +107,9 @@ const VendasDigitais = () => {
   const clearFilters = () => {
     setFiltroPlataforma("all");
     setFiltroStatus("all");
-    setDataInicio(undefined);
-    setDataFim(undefined);
+    setManualDateFilter(false);
+    setDataInicio(startOfMonth(selectedMonth));
+    setDataFim(endOfMonth(selectedMonth));
     setSearch("");
   };
 
