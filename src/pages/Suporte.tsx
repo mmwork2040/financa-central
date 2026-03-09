@@ -152,6 +152,18 @@ const Suporte = () => {
       setMessages(prev => [...prev, assistantMsg]);
       await saveMessage(resposta, "suporte");
 
+      // Create notification (will be visible when user is NOT on suporte page via realtime)
+      if (empresaId && user?.id) {
+        await supabase.from("notificacoes").insert({
+          user_id: user.id,
+          empresa_id: empresaId,
+          titulo: "Resposta do Suporte",
+          mensagem: resposta.length > 100 ? resposta.substring(0, 100) + "..." : resposta,
+          tipo: "suporte_chat",
+          referencia_id: conversaId,
+        });
+      }
+
       return true;
     } catch (err) {
       toast.error("Erro ao enviar mensagem ao suporte");
