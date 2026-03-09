@@ -75,6 +75,7 @@ const App = () => {
                 <Route path="/settings/n8n-templates" element={<AppLayout><N8nTemplates /></AppLayout>} />
                 <Route path="/settings/assinaturas" element={<AppLayout><Assinaturas /></AppLayout>} />
                 <Route path="/settings/termos" element={<AppLayout><TermosConfig /></AppLayout>} />
+                <Route path="/suporte" element={<AppLayout><Suporte /></AppLayout>} />
                 <Route path="/vendas-digitais" element={<AppLayout><VendasDigitais /></AppLayout>} />
                 <Route path="/anuncios" element={<ProtectedRoute path="/anuncios"><AppLayout><AnunciosDigitais /></AppLayout></ProtectedRoute>} />
                 
