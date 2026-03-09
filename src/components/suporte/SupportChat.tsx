@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 export interface ChatMessage {
   id: string;
-  remetente: string;
-  conteudo: string;
-  created_at: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
 }
 import {
   AlertDialog,
