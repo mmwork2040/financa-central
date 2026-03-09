@@ -1410,6 +1410,62 @@ export type Database = {
         }
         Relationships: []
       }
+      sugestoes_integracao: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          mensagem: string
+          respondido_em: string | null
+          respondido_por: string | null
+          resposta: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          user_email: string
+          user_id: string
+          user_nome: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          mensagem: string
+          respondido_em?: string | null
+          respondido_por?: string | null
+          resposta?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_email: string
+          user_id: string
+          user_nome: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          mensagem?: string
+          respondido_em?: string | null
+          respondido_por?: string | null
+          resposta?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_email?: string
+          user_id?: string
+          user_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sugestoes_integracao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       termos_politica: {
         Row: {
           conteudo: string

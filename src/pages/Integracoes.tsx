@@ -1058,9 +1058,9 @@ const Integracoes = () => {
                 <TabsTrigger key={cat} value={cat} className="gap-1.5 text-xs sm:text-sm">
                   <CatIcon className="h-3.5 w-3.5" />
                   {info.label}
-                  {connectedCount > 0 && (
-                    <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">{connectedCount}/{count}</Badge>
-                  )}
+                  <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                    {connectedCount > 0 ? `${connectedCount}/${count}` : count}
+                  </Badge>
                 </TabsTrigger>
               );
             })}
