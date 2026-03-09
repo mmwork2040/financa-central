@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -8,9 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -57,6 +54,67 @@ const ContaBancariaForm: React.FC<ContaBancariaFormProps> = ({
   open, onClose, onSave, formData, handleInputChange, isEditing,
   contaPrincipalExistente, showPrincipalConfirm, onClosePrincipalConfirm, onConfirmPrincipal,
 }) => {
+  const [bancoSuggestions, setBancoSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const bancoInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  const handleBancoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const typed = e.target.value;
+    handleInputChange(e);
+
+    if (!typed) {
+      setBancoSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const matches = BANCOS_INTEGRACOES
+      .map(b => b.name)
+      .filter(name => name.toLowerCase().startsWith(typed.toLowerCase()));
+
+    setBancoSuggestions(matches);
+    setShowSuggestions(matches.length > 0);
+
+    // Inline autocomplete: complete the first match and select the appended part
+    if (matches.length > 0 && bancoInputRef.current) {
+      const firstMatch = matches[0];
+      if (firstMatch.toLowerCase().startsWith(typed.toLowerCase()) && typed.length < firstMatch.length) {
+        const completed = typed + firstMatch.slice(typed.length);
+        const syntheticEvent = {
+          target: { name: "banco", value: completed },
+        } as unknown as React.ChangeEvent<HTMLInputElement>;
+        handleInputChange(syntheticEvent);
+        // Use setTimeout to set selection after React re-renders the input value
+        setTimeout(() => {
+          bancoInputRef.current?.setSelectionRange(typed.length, completed.length);
+        }, 0);
+      }
+    }
+  }, [handleInputChange]);
+
+  const selectBanco = useCallback((name: string) => {
+    const syntheticEvent = {
+      target: { name: "banco", value: name },
+    } as unknown as React.ChangeEvent<HTMLInputElement>;
+    handleInputChange(syntheticEvent);
+    setShowSuggestions(false);
+  }, [handleInputChange]);
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) &&
+        bancoInputRef.current && !bancoInputRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const handleSaldoChange = (value: string | undefined) => {
     const cents = parseInt(value || "0", 10);
     const syntheticEvent = {
@@ -93,34 +151,44 @@ const ContaBancariaForm: React.FC<ContaBancariaFormProps> = ({
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="banco" className="text-right">Banco</Label>
-              <div className="col-span-3 space-y-2">
-                <Select
-                  value={BANCOS_INTEGRACOES.some(b => b.name === formData.banco) ? formData.banco : formData.banco ? "__outro__" : ""}
-                  onValueChange={(val) => {
-                    const syntheticEvent = {
-                      target: { name: "banco", value: val === "__outro__" ? "" : val },
-                    } as unknown as React.ChangeEvent<HTMLInputElement>;
-                    handleInputChange(syntheticEvent);
+              <div className="col-span-3 relative">
+                <Input
+                  ref={bancoInputRef}
+                  id="banco"
+                  name="banco"
+                  value={formData.banco || ""}
+                  onChange={handleBancoChange}
+                  onFocus={() => {
+                    if (formData.banco) {
+                      const matches = BANCOS_INTEGRACOES
+                        .map(b => b.name)
+                        .filter(name => name.toLowerCase().startsWith((formData.banco || "").toLowerCase()));
+                      setBancoSuggestions(matches);
+                      setShowSuggestions(matches.length > 0);
+                    }
                   }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um banco ou digite abaixo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BANCOS_INTEGRACOES.map((b) => (
-                      <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
+                  placeholder="Digite o nome do banco"
+                  autoComplete="off"
+                />
+                {showSuggestions && bancoSuggestions.length > 0 && (
+                  <div
+                    ref={suggestionsRef}
+                    className="absolute z-50 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md max-h-48 overflow-y-auto"
+                  >
+                    {bancoSuggestions.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          selectBanco(name);
+                        }}
+                      >
+                        {name}
+                      </button>
                     ))}
-                    <SelectItem value="__outro__">Outro (digitar)</SelectItem>
-                  </SelectContent>
-                </Select>
-                {(!formData.banco || !BANCOS_INTEGRACOES.some(b => b.name === formData.banco)) && (
-                  <Input
-                    id="banco"
-                    name="banco"
-                    value={formData.banco || ""}
-                    onChange={handleInputChange}
-                    placeholder="Digite o nome do banco"
-                  />
+                  </div>
                 )}
               </div>
             </div>
