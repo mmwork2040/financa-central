@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-type PlataformaCategoria = "vendas" | "pagamentos" | "anuncios" | "comunicacao" | "ia" | "bancos" | "bancos";
+type PlataformaCategoria = "vendas" | "pagamentos" | "anuncios" | "comunicacao" | "ia" | "bancos" | "notas_fiscais";
 
 interface Plataforma {
   id: string;
@@ -84,6 +84,7 @@ const CATEGORIAS_INFO: Record<PlataformaCategoria, { label: string; icon: any }>
   anuncios: { label: "Anúncios", icon: Megaphone },
   comunicacao: { label: "Comunicação", icon: MessageCircle },
   ia: { label: "Inteligência Artificial", icon: Brain },
+  notas_fiscais: { label: "Notas Fiscais", icon: FileText },
 };
 
 const PLATAFORMAS: Plataforma[] = [
@@ -900,6 +901,7 @@ const Integracoes = () => {
       ) : (
         <Tabs defaultValue={(() => {
           const visibleCats = (Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).filter(cat => {
+            if (cat === "notas_fiscais") return isSuperAdmin;
             const plats = PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin) && isPlataformaDisponivel(p.id));
             return plats.length > 0;
           });
@@ -909,6 +911,16 @@ const Integracoes = () => {
             {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => {
               const info = CATEGORIAS_INFO[cat];
               const CatIcon = info.icon;
+              // Notas Fiscais tab: super admin only, no platform count
+              if (cat === "notas_fiscais") {
+                if (!isSuperAdmin) return null;
+                return (
+                  <TabsTrigger key={cat} value={cat} className="gap-1.5 text-xs sm:text-sm">
+                    <CatIcon className="h-3.5 w-3.5" />
+                    {info.label}
+                  </TabsTrigger>
+                );
+              }
               const filteredPlats = PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin) && isPlataformaDisponivel(p.id));
               const count = filteredPlats.length;
               if (count === 0) return null;
@@ -925,7 +937,13 @@ const Integracoes = () => {
             })}
           </TabsList>
 
-          {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).map(cat => {
+          {isSuperAdmin && (
+            <TabsContent key="notas_fiscais" value="notas_fiscais">
+              <SpedyConfigCard />
+            </TabsContent>
+          )}
+
+          {(Object.keys(CATEGORIAS_INFO) as PlataformaCategoria[]).filter(cat => cat !== "notas_fiscais").map(cat => {
             const filteredPlatsForTab = PLATAFORMAS.filter(p => p.categoria === cat && !(p.id === 'lovable_ai' && !isSuperAdmin) && isPlataformaDisponivel(p.id));
             return (
             <TabsContent key={cat} value={cat}>
@@ -1209,25 +1227,8 @@ const Integracoes = () => {
         </Tabs>
       )}
 
-      {isSuperAdmin && (
-        <Collapsible defaultOpen={false}>
-          <CollapsibleTrigger asChild>
-            <button className="flex items-center gap-2 w-full text-left group py-2">
-              <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
-                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-lg sm:text-xl font-bold tracking-tight">Notas Fiscais</h2>
-                <p className="text-xs text-muted-foreground">Integração para emissão automática de NF-e / NFS-e</p>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4">
-            <SpedyConfigCard />
-          </CollapsibleContent>
-        </Collapsible>
-      )}
+
+
 
       {/* Wizard Dialog */}
       <Dialog open={!!connectDialog} onOpenChange={(o) => !o && closeWizard()}>
