@@ -37,7 +37,8 @@ import {
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const PLATAFORMAS_VENDAS_DEFAULT = ["hotmart", "eduzz", "monetizze", "kiwify"];
+// All sales platforms - always shown regardless of integracoes_disponiveis
+const ALL_SALES_PLATFORMS = ["hotmart", "eduzz", "monetizze", "kiwify"];
 
 const VendasDigitais = () => {
   const { empresaId, canPerformAction, isSuperAdmin, planControles } = useAuth();
@@ -56,7 +57,7 @@ const VendasDigitais = () => {
   const [dataFim, setDataFim] = useState<Date | undefined>();
   const [manualDateFilter, setManualDateFilter] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
-  const [allSalesPlatforms, setAllSalesPlatforms] = useState<string[]>(PLATAFORMAS_VENDAS_DEFAULT);
+  const [allSalesPlatforms, setAllSalesPlatforms] = useState<string[]>(ALL_SALES_PLATFORMS);
   const [formOpen, setFormOpen] = useState(false);
   const [editingVenda, setEditingVenda] = useState<any>(null);
   const [detailVenda, setDetailVenda] = useState<any>(null);
@@ -127,14 +128,12 @@ const VendasDigitais = () => {
         .from('integracoes_disponiveis')
         .select('plataforma, disponivel')
         .eq('disponivel', true);
-      if (data && data.length > 0) {
-        // Filter to known sales platforms + any new ones
-        const salesKeywords = ['hotmart', 'eduzz', 'monetizze', 'kiwify', 'shopify', 'stripe'];
-        const fromDb = (data as any[]).map((d: any) => d.plataforma.toLowerCase()).filter((p: string) => salesKeywords.includes(p));
-        // Merge with defaults to ensure we always show core platforms
-        const merged = Array.from(new Set([...PLATAFORMAS_VENDAS_DEFAULT, ...fromDb]));
-        setAllSalesPlatforms(merged);
-      }
+      // Merge DB platforms with the fixed sales list - always show all sales platforms
+      const fromDb = (data || []).map((d: any) => d.plataforma.toLowerCase());
+      const merged = Array.from(new Set([...ALL_SALES_PLATFORMS, ...fromDb.filter((p: string) => 
+        ALL_SALES_PLATFORMS.includes(p) || !['google_ads', 'meta_ads'].includes(p)
+      )]));
+      setAllSalesPlatforms(merged);
     } catch (error) {
       console.error("Erro ao carregar plataformas disponíveis:", error);
     }
