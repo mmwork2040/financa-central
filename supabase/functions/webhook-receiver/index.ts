@@ -328,6 +328,8 @@ Deno.serve(async (req) => {
       saleData = parseMonetizze(body);
     } else if (platform === "kiwify") {
       saleData = parseKiwify(body);
+    } else if (platform === "hubla") {
+      saleData = parseHubla(body);
     }
 
     let vendaId: string | null = null;
