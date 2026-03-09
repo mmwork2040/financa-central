@@ -9,11 +9,12 @@ import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
 import { useCompanyTheme } from "@/hooks/useCompanyTheme";
 import { useIsMobile } from "@/hooks/use-mobile";
 import FloatingChatButton from "@/components/common/FloatingChatButton";
-
 import MobileBottomNav from "@/components/common/MobileBottomNav";
 import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 import { MonthFilterProvider } from "@/contexts/MonthFilterContext";
 import MonthCarousel from "@/components/common/MonthCarousel";
+import { Button } from "@/components/ui/button";
+import { Clock, Activity } from "lucide-react";
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
