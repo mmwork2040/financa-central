@@ -4,6 +4,7 @@ import { HelpCircle, ChevronDown, ChevronUp, Send, Loader2, MessageCircle, Bot, 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -21,10 +22,14 @@ export interface ChatMessage {
 
 const Suporte = () => {
   const { empresaId, user, userProfile } = useAuth();
+  const location = useLocation();
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversaId, setConversaId] = useState<string | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Track if user is on this page for notification logic
+  const isOnSuportePage = location.pathname === "/suporte";
 
   // Load or create conversa when chat opens
   const loadOrCreateConversa = useCallback(async () => {
@@ -146,6 +151,18 @@ const Suporte = () => {
       };
       setMessages(prev => [...prev, assistantMsg]);
       await saveMessage(resposta, "suporte");
+
+      // Create notification (will be visible when user is NOT on suporte page via realtime)
+      if (empresaId && user?.id) {
+        await supabase.from("notificacoes").insert({
+          user_id: user.id,
+          empresa_id: empresaId,
+          titulo: "Resposta do Suporte",
+          mensagem: resposta.length > 100 ? resposta.substring(0, 100) + "..." : resposta,
+          tipo: "suporte_chat",
+          referencia_id: conversaId,
+        });
+      }
 
       return true;
     } catch (err) {

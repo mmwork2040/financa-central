@@ -1,5 +1,6 @@
 import React from "react";
 import { Bell, CheckCheck, Trash2, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const NotificacoesDropdown = () => {
+  const navigate = useNavigate();
   const {
     notificacoes,
     unreadCount,
@@ -113,6 +115,10 @@ const NotificacoesDropdown = () => {
                   )}
                   onClick={() => {
                     if (!n.lida) marcarComoLida(n.id);
+                    // Navigate to suporte page for chat notifications
+                    if (n.tipo === "suporte_chat") {
+                      navigate("/suporte");
+                    }
                   }}
                 >
                   <div

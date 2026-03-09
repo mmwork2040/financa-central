@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export interface Notificacao {
   id: string;
@@ -51,7 +52,22 @@ export const useNotificacoes = () => {
         { event: "*", schema: "public", table: "notificacoes" },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            setNotificacoes((prev) => [payload.new as Notificacao, ...prev]);
+            const newNotif = payload.new as Notificacao;
+            setNotificacoes((prev) => [newNotif, ...prev]);
+            
+            // Show toast for support chat notifications when not on /suporte
+            if (newNotif.tipo === "suporte_chat" && window.location.pathname !== "/suporte") {
+              toast.info(newNotif.titulo, {
+                description: newNotif.mensagem,
+                action: {
+                  label: "Ver conversa",
+                  onClick: () => {
+                    window.location.href = "/suporte";
+                  },
+                },
+                duration: 8000,
+              });
+            }
           } else if (payload.eventType === "UPDATE") {
             const updated = payload.new as Notificacao;
             setNotificacoes((prev) =>
