@@ -406,7 +406,7 @@ const VendasDigitais = () => {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar mode="single" selected={dataFim} onSelect={setDataFim} initialFocus className="p-3 pointer-events-auto" />
+              <Calendar mode="single" selected={dataFim} onSelect={handleSetDataFim} initialFocus className="p-3 pointer-events-auto" />
             </PopoverContent>
           </Popover>
 
