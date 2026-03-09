@@ -936,7 +936,7 @@ const Integracoes = () => {
                   <p className="text-xs text-muted-foreground/60 mt-1">Entre em contato com o administrador para habilitar integrações.</p>
                 </div>
               ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-start">
                 {filteredPlatsForTab.map(plat => {
             const status = getStatus(plat.id);
             const Icon = plat.icon;
