@@ -22,10 +22,14 @@ export interface ChatMessage {
 
 const Suporte = () => {
   const { empresaId, user, userProfile } = useAuth();
+  const location = useLocation();
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversaId, setConversaId] = useState<string | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Track if user is on this page for notification logic
+  const isOnSuportePage = location.pathname === "/suporte";
 
   // Load or create conversa when chat opens
   const loadOrCreateConversa = useCallback(async () => {
