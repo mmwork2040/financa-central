@@ -1327,6 +1327,133 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     ],
     body: { action: "excluir-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento') }}", excluir_cadeia: "{{ $fromAI('excluir_cadeia', 'true para excluir toda a cadeia recorrente. Deixe vazio para excluir apenas esta ocorrência') }}" },
   },
+  // ─── VENDAS DIGITAIS CRUD ───
+  {
+    action: "criar-venda",
+    toolName: "criar_venda",
+    label: "Criar Venda Digital",
+    description: "Cadastra uma nova venda digital manual no sistema",
+    toolDescription: `Cadastra uma nova venda digital manual.
+
+Use quando o usuário solicitar:
+- Registrar venda
+- Adicionar venda manual
+- Nova venda digital
+
+⚠️ CAMPOS OBRIGATÓRIOS: plataforma, valor_bruto
+
+Parâmetros:
+- empresa_id (obrigatório)
+- user_id (obrigatório — UUID do usuário para controle de permissões)
+- plataforma (obrigatório — ex: hotmart, kiwify, eduzz, monetizze, manual)
+- valor_bruto (obrigatório — número puro, ex: 197.00)
+- taxa (opcional — comissão da plataforma, número puro)
+- valor_liquido (opcional — calculado automaticamente se não informado: valor_bruto - taxa)
+- produto (opcional — nome do produto)
+- cliente (opcional — nome do cliente)
+- cliente_email (opcional)
+- cliente_telefone (opcional)
+- cliente_documento (opcional — CPF ou CNPJ)
+- cliente_endereco (opcional)
+- status (opcional — aprovada, pendente, reembolsada, cancelada. Padrão: aprovada)
+- data_venda (opcional — YYYY-MM-DD. Padrão: hoje)
+- observacoes (opcional)
+
+CONTROLE DE ACESSO: Requer permissão 'pode_incluir' na tela 'vendas_digitais'.
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Vendas",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
+      { name: "plataforma", type: "string", required: true, description: "Plataforma (ex: hotmart, kiwify, manual)" },
+      { name: "valor_bruto", type: "number", required: true, description: "Valor bruto da venda (número puro)" },
+      { name: "taxa", type: "number", required: false, description: "Taxa/comissão da plataforma" },
+      { name: "valor_liquido", type: "number", required: false, description: "Valor líquido (calculado se vazio)" },
+      { name: "produto", type: "string", required: false, description: "Nome do produto" },
+      { name: "cliente", type: "string", required: false, description: "Nome do cliente" },
+      { name: "cliente_email", type: "string", required: false, description: "E-mail do cliente" },
+      { name: "cliente_telefone", type: "string", required: false, description: "Telefone do cliente" },
+      { name: "cliente_documento", type: "string", required: false, description: "CPF ou CNPJ do cliente" },
+      { name: "cliente_endereco", type: "string", required: false, description: "Endereço do cliente" },
+      { name: "status", type: "string", required: false, description: "aprovada, pendente, reembolsada ou cancelada" },
+      { name: "data_venda", type: "string", required: false, description: "Data da venda (YYYY-MM-DD)" },
+      { name: "observacoes", type: "string", required: false, description: "Observações" },
+    ],
+    body: { action: "criar-venda", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", plataforma: "{{ $fromAI('plataforma', 'Plataforma: hotmart, kiwify, eduzz, monetizze, manual') }}", valor_bruto: "{{ $fromAI('valor_bruto', 'Valor bruto numérico') }}", taxa: "{{ $fromAI('taxa', 'Taxa/comissão. Deixe vazio se não houver') }}", valor_liquido: "{{ $fromAI('valor_liquido', 'Valor líquido. Deixe vazio para calcular automaticamente') }}", produto: "{{ $fromAI('produto', 'Nome do produto. Deixe vazio se não informado') }}", cliente: "{{ $fromAI('cliente', 'Nome do cliente. Deixe vazio se não informado') }}", cliente_email: "{{ $fromAI('cliente_email', 'Email do cliente') }}", cliente_telefone: "{{ $fromAI('cliente_telefone', 'Telefone do cliente') }}", cliente_documento: "{{ $fromAI('cliente_documento', 'CPF ou CNPJ do cliente') }}", cliente_endereco: "{{ $fromAI('cliente_endereco', 'Endereço do cliente') }}", status: "{{ $fromAI('status', 'aprovada, pendente, reembolsada ou cancelada') }}", data_venda: "{{ $fromAI('data_venda', 'Data YYYY-MM-DD. Deixe vazio para hoje') }}", observacoes: "{{ $fromAI('observacoes', 'Observações. Deixe vazio se não houver') }}" },
+  },
+  {
+    action: "editar-venda",
+    toolName: "editar_venda",
+    label: "Editar Venda Digital",
+    description: "Altera dados de uma venda digital existente",
+    toolDescription: `Altera dados de uma venda digital existente.
+
+⚠️ REGRAS DE SEGURANÇA:
+1. Vendas com origem automática (webhook/integração) NÃO podem ser editadas. Somente vendas com origem "manual".
+2. Envie apenas os campos que deseja alterar. Campos não enviados ou vazios serão mantidos.
+
+Use quando o usuário solicitar:
+- Editar venda
+- Alterar dados da venda
+- Atualizar venda
+
+Parâmetros:
+- empresa_id (obrigatório)
+- user_id (obrigatório — UUID do usuário para controle de permissões)
+- id (obrigatório — UUID da venda a editar)
+- plataforma, valor_bruto, taxa, valor_liquido, produto, cliente, cliente_email, cliente_telefone, cliente_documento, cliente_endereco, status, data_venda, observacoes (opcionais)
+
+CONTROLE DE ACESSO: Requer permissão 'pode_alterar' na tela 'vendas_digitais'.
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Vendas",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
+      { name: "id", type: "string", required: true, description: "UUID da venda a editar" },
+      { name: "valor_bruto", type: "number", required: false, description: "Novo valor bruto" },
+      { name: "taxa", type: "number", required: false, description: "Nova taxa/comissão" },
+      { name: "valor_liquido", type: "number", required: false, description: "Novo valor líquido" },
+      { name: "produto", type: "string", required: false, description: "Novo nome do produto" },
+      { name: "cliente", type: "string", required: false, description: "Novo nome do cliente" },
+      { name: "status", type: "string", required: false, description: "Novo status" },
+      { name: "observacoes", type: "string", required: false, description: "Novas observações" },
+    ],
+    body: { action: "editar-venda", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", id: "{{ $fromAI('id', 'UUID da venda a editar') }}", valor_bruto: "{{ $fromAI('valor_bruto', 'Novo valor bruto. Deixe vazio se não mudar') }}", taxa: "{{ $fromAI('taxa', 'Nova taxa. Deixe vazio se não mudar') }}", valor_liquido: "{{ $fromAI('valor_liquido', 'Novo valor líquido. Deixe vazio se não mudar') }}", produto: "{{ $fromAI('produto', 'Novo produto. Deixe vazio se não mudar') }}", cliente: "{{ $fromAI('cliente', 'Novo cliente. Deixe vazio se não mudar') }}", status: "{{ $fromAI('status', 'Novo status. Deixe vazio se não mudar') }}", observacoes: "{{ $fromAI('observacoes', 'Novas observações. Deixe vazio se não mudar') }}" },
+  },
+  {
+    action: "excluir-venda",
+    toolName: "excluir_venda",
+    label: "Excluir Venda Digital",
+    description: "Remove uma venda digital do sistema (bloqueado se origem automática)",
+    toolDescription: `Remove uma venda digital do sistema.
+
+⚠️ REGRAS DE SEGURANÇA:
+1. Vendas com origem automática (webhook/integração) NÃO podem ser excluídas.
+2. Se a venda possuir um lançamento vinculado, ele será excluído junto.
+
+Use quando o usuário solicitar:
+- Excluir venda
+- Apagar venda
+- Remover venda
+
+Parâmetros:
+- empresa_id (obrigatório)
+- user_id (obrigatório — UUID do usuário para controle de permissões)
+- id (obrigatório — UUID da venda a excluir)
+
+CONTROLE DE ACESSO: Requer permissão 'pode_excluir' na tela 'vendas_digitais'.
+
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+    category: "Vendas",
+    params: [
+      { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
+      { name: "id", type: "string", required: true, description: "UUID da venda a excluir" },
+    ],
+    body: { action: "excluir-venda", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", id: "{{ $fromAI('id', 'UUID da venda a excluir') }}" },
+  },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
