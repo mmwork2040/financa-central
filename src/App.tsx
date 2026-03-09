@@ -42,6 +42,7 @@ import Assinaturas from "./pages/Assinaturas";
 import VerPlanos from "./pages/VerPlanos";
 import TermosPublico from "./pages/TermosPublico";
 import TermosConfig from "./pages/TermosConfig";
+import Suporte from "./pages/Suporte";
 
 const queryClient = new QueryClient();
 
