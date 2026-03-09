@@ -242,8 +242,10 @@ const PlanosAssinaturaConfig = () => {
                     <span className="text-2xl font-bold">R$ {plano.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                     <span className="text-xs text-muted-foreground ml-1">/ {plano.periodo}</span>
                   </div>
-                  <div className="text-xs text-muted-foreground mb-3">
-                    Período: <Badge variant="outline" className="text-[10px]">{plano.periodo}</Badge>
+                  <div className="text-xs text-muted-foreground mb-3 flex flex-wrap gap-2">
+                    <span>Período: <Badge variant="outline" className="text-[10px]">{plano.periodo}</Badge></span>
+                    <span>Empresas: <Badge variant="outline" className="text-[10px]">{plano.max_empresas}</Badge></span>
+                    <span>NFs/mês: <Badge variant="outline" className="text-[10px]">{(plano as any).itens?.controles?.max_notas_fiscais === 0 ? "Ilimitado" : ((plano as any).itens?.controles?.max_notas_fiscais ?? "Não definido")}</Badge></span>
                   </div>
                   {plano.link_acesso && (
                     <div className="text-xs text-muted-foreground mb-3 flex items-center gap-1 truncate">
