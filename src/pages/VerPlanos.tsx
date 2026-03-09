@@ -40,17 +40,18 @@ const defaultControles: PlanoControles = {
   relatorios_personalizados: false,
 };
 
-function parseItensFromDb(raw: any): { itens: string[]; controles: PlanoControles } {
+function parseItensFromDb(raw: any): { itens: string[]; controles: PlanoControles; periodo_label: string } {
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     return {
       itens: Array.isArray(raw.items) ? raw.items : [],
       controles: { ...defaultControles, ...(raw.controles || {}) },
+      periodo_label: raw.periodo_label || "",
     };
   }
   if (Array.isArray(raw)) {
-    return { itens: raw.filter((x: any) => typeof x === 'string'), controles: { ...defaultControles } };
+    return { itens: raw.filter((x: any) => typeof x === 'string'), controles: { ...defaultControles }, periodo_label: "" };
   }
-  return { itens: [], controles: { ...defaultControles } };
+  return { itens: [], controles: { ...defaultControles }, periodo_label: "" };
 }
 
 function getControleItems(controles: PlanoControles, maxEmpresas?: number): string[] {
