@@ -240,7 +240,7 @@ const Assinaturas = () => {
     const existingPeriodos = grupoData.modalidades.map(m => m.periodo);
     const nextPeriodo = periodoOptions.find(o => !existingPeriodos.includes(o.value))?.value || "mensal";
     setForm({
-      nome: grupoName,
+      nome: periodoOptions.find(o => o.value === nextPeriodo)?.label || nextPeriodo,
       descricao: grupoData.descricao || "",
       preco: 0,
       periodo: nextPeriodo,
@@ -446,7 +446,7 @@ const Assinaturas = () => {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <Badge variant="outline" className="text-xs font-semibold">
-                            {periodoLabel(mod.periodo)}
+                            {mod.nome && mod.nome !== mod.grupo ? mod.nome : periodoLabel(mod.periodo)}
                           </Badge>
                           <Switch
                             checked={mod.ativo}
@@ -554,6 +554,11 @@ const Assinaturas = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Título da Modalidade</Label>
+              <Input value={form.nome} onChange={(e) => setForm(prev => ({ ...prev, nome: e.target.value }))} placeholder="Ex: Mensal, Anual, Plano Anual..." />
+              <p className="text-[10px] text-muted-foreground">Exibido como rótulo no card. Se vazio, usa o período.</p>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Preço (R$) *</Label>

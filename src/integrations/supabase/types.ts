@@ -1118,6 +1118,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           destaque: boolean
+          grupo: string | null
           id: string
           itens: Json | null
           link_acesso: string | null
@@ -1134,6 +1135,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           destaque?: boolean
+          grupo?: string | null
           id?: string
           itens?: Json | null
           link_acesso?: string | null
@@ -1150,6 +1152,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           destaque?: boolean
+          grupo?: string | null
           id?: string
           itens?: Json | null
           link_acesso?: string | null
