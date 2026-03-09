@@ -7,9 +7,10 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CreditCard, Plus, Pencil, Trash2, Loader2, Star, ExternalLink, CheckCircle2, X, MessageSquare, BarChart3, FileText, Layers } from "lucide-react";
+import { CreditCard, Plus, Pencil, Trash2, Loader2, Star, ExternalLink, CheckCircle2, X, MessageSquare, BarChart3, FileText, Layers, Package } from "lucide-react";
 import AsaasConfigCard from "@/components/configuracoes/AsaasConfigCard";
 
 interface PlanoControles {
@@ -20,7 +21,7 @@ interface PlanoControles {
   relatorios_personalizados: boolean;
 }
 
-interface Plano {
+interface PlanoRow {
   id: string;
   nome: string;
   descricao: string | null;
@@ -31,8 +32,19 @@ interface Plano {
   ativo: boolean;
   link_acesso: string | null;
   ordem: number;
+  max_empresas: number;
+  grupo: string | null;
   itens: string[];
   controles: PlanoControles;
+}
+
+interface GrupoPlano {
+  grupo: string;
+  descricao: string | null;
+  destaque: boolean;
+  badge: string | null;
+  ordem: number;
+  modalidades: PlanoRow[];
 }
 
 const defaultControles: PlanoControles = {
@@ -44,17 +56,12 @@ const defaultControles: PlanoControles = {
 };
 
 function parseItensFromDb(raw: any): { itens: string[]; controles: PlanoControles } {
-  if (!raw || !Array.isArray(raw) && typeof raw !== 'object') {
-    return { itens: [], controles: { ...defaultControles } };
-  }
-  // New format: { items: string[], controles: PlanoControles }
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     return {
       itens: Array.isArray(raw.items) ? raw.items : [],
       controles: { ...defaultControles, ...(raw.controles || {}) },
     };
   }
-  // Legacy format: string[]
   if (Array.isArray(raw)) {
     return { itens: raw.filter((x: any) => typeof x === 'string'), controles: { ...defaultControles } };
   }
@@ -72,12 +79,15 @@ const periodoOptions = [
 ];
 
 const Assinaturas = () => {
-  const [planos, setPlanos] = useState<Plano[]>([]);
+  const [planos, setPlanos] = useState<PlanoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingPlano, setEditingPlano] = useState<Plano | null>(null);
+  const [grupoDialogOpen, setGrupoDialogOpen] = useState(false);
+  const [editingPlano, setEditingPlano] = useState<PlanoRow | null>(null);
   const [novoItem, setNovoItem] = useState("");
+  const [grupoForm, setGrupoForm] = useState({ nome: "", descricao: "", destaque: false, badge: "", ordem: 0 });
+  const [editingGrupo, setEditingGrupo] = useState<string | null>(null);
   const [form, setForm] = useState({
     nome: "",
     descricao: "",
@@ -89,6 +99,7 @@ const Assinaturas = () => {
     link_acesso: "",
     ordem: 0,
     max_empresas: 1,
+    grupo: "",
     itens: [] as string[],
     controles: { ...defaultControles },
   });
@@ -116,14 +127,138 @@ const Assinaturas = () => {
     }
   };
 
-  const openNew = () => {
+  // Group plans by grupo
+  const grupos: GrupoPlano[] = React.useMemo(() => {
+    const map = new Map<string, GrupoPlano>();
+    planos.forEach(p => {
+      const g = p.grupo || p.nome;
+      if (!map.has(g)) {
+        map.set(g, {
+          grupo: g,
+          descricao: p.descricao,
+          destaque: p.destaque,
+          badge: p.badge,
+          ordem: p.ordem,
+          modalidades: [],
+        });
+      }
+      map.get(g)!.modalidades.push(p);
+    });
+    return Array.from(map.values()).sort((a, b) => a.ordem - b.ordem);
+  }, [planos]);
+
+  const openNewGrupo = () => {
+    setEditingGrupo(null);
+    setGrupoForm({ nome: "", descricao: "", destaque: false, badge: "", ordem: grupos.length + 1 });
+    setGrupoDialogOpen(true);
+  };
+
+  const openEditGrupo = (grupo: GrupoPlano) => {
+    setEditingGrupo(grupo.grupo);
+    setGrupoForm({
+      nome: grupo.grupo,
+      descricao: grupo.descricao || "",
+      destaque: grupo.destaque,
+      badge: grupo.badge || "",
+      ordem: grupo.ordem,
+    });
+    setGrupoDialogOpen(true);
+  };
+
+  const handleSaveGrupo = async () => {
+    if (!grupoForm.nome.trim()) {
+      toast.error("Informe o nome do plano.");
+      return;
+    }
+    setSaving(true);
+    try {
+      if (editingGrupo) {
+        // Update all modalities in this group
+        const modalidades = planos.filter(p => (p.grupo || p.nome) === editingGrupo);
+        for (const m of modalidades) {
+          const { error } = await (supabase as any)
+            .from("planos_assinatura")
+            .update({
+              grupo: grupoForm.nome,
+              descricao: grupoForm.descricao || null,
+              destaque: grupoForm.destaque,
+              badge: grupoForm.badge || null,
+              ordem: grupoForm.ordem,
+            })
+            .eq("id", m.id);
+          if (error) throw error;
+        }
+        toast.success("Plano atualizado.");
+      } else {
+        // Create group with default mensal modality
+        const { error } = await (supabase as any)
+          .from("planos_assinatura")
+          .insert({
+            grupo: grupoForm.nome,
+            nome: grupoForm.nome,
+            descricao: grupoForm.descricao || null,
+            preco: 0,
+            periodo: "mensal",
+            destaque: grupoForm.destaque,
+            badge: grupoForm.badge || null,
+            ativo: true,
+            ordem: grupoForm.ordem,
+            itens: serializeItensToDb([], { ...defaultControles }),
+          });
+        if (error) throw error;
+        toast.success("Plano criado. Adicione as modalidades.");
+      }
+      setGrupoDialogOpen(false);
+      fetchPlanos();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao salvar plano");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteGrupo = async (grupoName: string) => {
+    if (!confirm(`Excluir o plano "${grupoName}" e todas as suas modalidades?`)) return;
+    try {
+      const modalidades = planos.filter(p => (p.grupo || p.nome) === grupoName);
+      for (const m of modalidades) {
+        const { error } = await (supabase as any)
+          .from("planos_assinatura")
+          .delete()
+          .eq("id", m.id);
+        if (error) throw error;
+      }
+      toast.success("Plano excluído.");
+      fetchPlanos();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao excluir");
+    }
+  };
+
+  const openNewModalidade = (grupoName: string, grupoData: GrupoPlano) => {
     setEditingPlano(null);
-    setForm({ nome: "", descricao: "", preco: 0, periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, max_empresas: 1, itens: [], controles: { ...defaultControles } });
+    const existingPeriodos = grupoData.modalidades.map(m => m.periodo);
+    const nextPeriodo = periodoOptions.find(o => !existingPeriodos.includes(o.value))?.value || "mensal";
+    setForm({
+      nome: grupoName,
+      descricao: grupoData.descricao || "",
+      preco: 0,
+      periodo: nextPeriodo,
+      destaque: grupoData.destaque,
+      badge: grupoData.badge || "",
+      ativo: true,
+      link_acesso: "",
+      ordem: grupoData.ordem,
+      max_empresas: grupoData.modalidades[0]?.max_empresas ?? 1,
+      grupo: grupoName,
+      itens: grupoData.modalidades[0]?.itens || [],
+      controles: grupoData.modalidades[0]?.controles || { ...defaultControles },
+    });
     setNovoItem("");
     setDialogOpen(true);
   };
 
-  const openEdit = (plano: Plano) => {
+  const openEditModalidade = (plano: PlanoRow) => {
     setEditingPlano(plano);
     setForm({
       nome: plano.nome,
@@ -135,7 +270,8 @@ const Assinaturas = () => {
       ativo: plano.ativo,
       link_acesso: plano.link_acesso || "",
       ordem: plano.ordem,
-      max_empresas: (plano as any).max_empresas ?? 1,
+      max_empresas: plano.max_empresas ?? 1,
+      grupo: plano.grupo || plano.nome,
       itens: plano.itens || [],
       controles: plano.controles || { ...defaultControles },
     });
@@ -154,15 +290,15 @@ const Assinaturas = () => {
     setForm(prev => ({ ...prev, itens: prev.itens.filter((_, i) => i !== index) }));
   };
 
-  const handleSave = async () => {
-    if (!form.nome.trim() || !form.preco) {
-      toast.error("Preencha nome e preço.");
+  const handleSaveModalidade = async () => {
+    if (!form.preco && form.preco !== 0) {
+      toast.error("Preencha o preço.");
       return;
     }
     setSaving(true);
     try {
       const payload = {
-        nome: form.nome,
+        nome: form.grupo || form.nome,
         descricao: form.descricao || null,
         preco: form.preco,
         periodo: form.periodo,
@@ -172,6 +308,7 @@ const Assinaturas = () => {
         link_acesso: form.link_acesso || null,
         ordem: form.ordem,
         max_empresas: form.max_empresas ?? 1,
+        grupo: form.grupo || form.nome,
         itens: serializeItensToDb(form.itens, form.controles),
       };
 
@@ -181,39 +318,39 @@ const Assinaturas = () => {
           .update(payload)
           .eq("id", editingPlano.id);
         if (error) throw error;
-        toast.success("Plano atualizado com sucesso.");
+        toast.success("Modalidade atualizada.");
       } else {
         const { error } = await (supabase as any)
           .from("planos_assinatura")
           .insert(payload);
         if (error) throw error;
-        toast.success("Plano criado com sucesso.");
+        toast.success("Modalidade criada.");
       }
       setDialogOpen(false);
       fetchPlanos();
     } catch (error: any) {
-      toast.error(error.message || "Erro ao salvar plano");
+      toast.error(error.message || "Erro ao salvar");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este plano?")) return;
+  const handleDeleteModalidade = async (id: string) => {
+    if (!confirm("Excluir esta modalidade?")) return;
     try {
       const { error } = await (supabase as any)
         .from("planos_assinatura")
         .delete()
         .eq("id", id);
       if (error) throw error;
-      toast.success("Plano excluído.");
+      toast.success("Modalidade excluída.");
       fetchPlanos();
     } catch (error: any) {
       toast.error(error.message || "Erro ao excluir");
     }
   };
 
-  const toggleAtivo = async (plano: Plano) => {
+  const toggleAtivo = async (plano: PlanoRow) => {
     try {
       const { error } = await (supabase as any)
         .from("planos_assinatura")
@@ -221,34 +358,13 @@ const Assinaturas = () => {
         .eq("id", plano.id);
       if (error) throw error;
       fetchPlanos();
-      toast.success(plano.ativo ? "Plano desativado." : "Plano ativado.");
+      toast.success(plano.ativo ? "Modalidade desativada." : "Modalidade ativada.");
     } catch (error: any) {
       toast.error(error.message || "Erro ao alterar status");
     }
   };
 
-  const getControleItems = (controles: PlanoControles, maxEmpresas?: number): string[] => {
-    const items: string[] = [];
-    if (controles.max_lancamentos === 0) {
-      items.push("Lançamentos ilimitados");
-    } else if (controles.max_lancamentos > 0) {
-      items.push(`Até ${controles.max_lancamentos} lançamentos`);
-    }
-    if (maxEmpresas === 0) {
-      items.push("Empresas ilimitadas");
-    } else if (maxEmpresas && maxEmpresas > 0) {
-      items.push(`Até ${maxEmpresas} empresa${maxEmpresas > 1 ? 's' : ''}`);
-    }
-    if (controles.max_notas_fiscais === 0) {
-      items.push("Emissão de notas fiscais ilimitada");
-    } else if (controles.max_notas_fiscais > 0) {
-      items.push(`Até ${controles.max_notas_fiscais} notas fiscais/mês`);
-    }
-    if (controles.chat_ia) items.push("Chat IA");
-    if (controles.dashboard_completo) items.push("Dashboard Completo");
-    if (controles.relatorios_personalizados) items.push("Relatórios Personalizados");
-    return items;
-  };
+  const periodoLabel = (p: string) => periodoOptions.find(o => o.value === p)?.label || p;
 
   if (loading) {
     return (
@@ -267,103 +383,182 @@ const Assinaturas = () => {
           </div>
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">Planos de Assinatura</h1>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground">Configure os planos disponíveis para os usuários</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Gerencie os planos e suas modalidades (Mensal, Trimestral, Anual)
+        </p>
       </div>
 
       <div className="flex justify-end">
-        <Button onClick={openNew} size="sm" className="gap-1.5">
+        <Button onClick={openNewGrupo} size="sm" className="gap-1.5">
           <Plus className="h-4 w-4" /> Novo Plano
         </Button>
       </div>
 
-      {planos.length === 0 ? (
+      {grupos.length === 0 ? (
         <Card>
           <CardContent className="py-12">
             <p className="text-sm text-muted-foreground text-center">Nenhum plano cadastrado.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {planos.map((plano) => {
-            const controleItems = getControleItems(plano.controles, (plano as any).max_empresas);
-            const allItems = [...controleItems, ...plano.itens];
-            return (
-              <div
-                key={plano.id}
-                className={`relative rounded-xl border p-4 transition-all ${
-                  plano.destaque ? "border-primary shadow-md" : "border-border"
-                } ${!plano.ativo ? "opacity-50" : ""}`}
-              >
-                {plano.badge && (
-                  <Badge className="absolute -top-2.5 left-3 bg-primary text-primary-foreground text-[10px] gap-1">
-                    <Star className="h-3 w-3 fill-current" />
-                    {plano.badge}
-                  </Badge>
-                )}
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h4 className="font-semibold text-sm">{plano.nome}</h4>
-                    <p className="text-xs text-muted-foreground">{plano.descricao}</p>
+        <div className="space-y-6">
+          {grupos.map((grupo) => (
+            <Card key={grupo.grupo} className={`relative overflow-hidden ${grupo.destaque ? "border-primary shadow-md" : ""}`}>
+              {grupo.badge && (
+                <Badge className="absolute top-3 right-3 bg-primary text-primary-foreground text-[10px] gap-1">
+                  <Star className="h-3 w-3 fill-current" />
+                  {grupo.badge}
+                </Badge>
+              )}
+              <div className="p-4 sm:p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-primary/10">
+                      <Package className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg">{grupo.grupo}</h3>
+                      {grupo.descricao && <p className="text-xs text-muted-foreground">{grupo.descricao}</p>}
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {grupo.modalidades.length} modalidade{grupo.modalidades.length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
                   </div>
-                  <Switch
-                    checked={plano.ativo}
-                    onCheckedChange={() => toggleAtivo(plano)}
-                    className="scale-75"
-                  />
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditGrupo(grupo)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteGrupo(grupo.grupo)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="mb-3">
-                  <span className="text-2xl font-bold">R$ {plano.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  <span className="text-xs text-muted-foreground ml-1">/ {plano.periodo}</span>
-                </div>
-                {allItems.length > 0 && (
-                  <ul className="space-y-1 mb-3">
-                    {allItems.map((item, i) => (
-                      <li key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {plano.link_acesso && (
-                  <a href={plano.link_acesso} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline mb-3 flex items-center gap-1 truncate">
-                    <ExternalLink className="h-3 w-3 shrink-0" />
-                    <span className="truncate">{plano.link_acesso}</span>
-                  </a>
-                )}
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => openEdit(plano)}>
-                    <Pencil className="h-3 w-3" /> Editar
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive gap-1" onClick={() => handleDelete(plano.id)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+
+                {/* Modalidades */}
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {grupo.modalidades.map((mod) => {
+                    const controleItems = getControleItems(mod.controles, mod.max_empresas);
+                    const allItems = [...controleItems, ...mod.itens];
+                    return (
+                      <div
+                        key={mod.id}
+                        className={`relative rounded-xl border p-4 transition-all ${!mod.ativo ? "opacity-50" : ""}`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="outline" className="text-xs font-semibold">
+                            {periodoLabel(mod.periodo)}
+                          </Badge>
+                          <Switch
+                            checked={mod.ativo}
+                            onCheckedChange={() => toggleAtivo(mod)}
+                            className="scale-75"
+                          />
+                        </div>
+                        <div className="mb-2">
+                          <span className="text-xl font-bold">
+                            R$ {mod.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-1">/ {mod.periodo}</span>
+                        </div>
+                        {mod.link_acesso && (
+                          <a href={mod.link_acesso} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline mb-2 flex items-center gap-1 truncate">
+                            <ExternalLink className="h-3 w-3 shrink-0" />
+                            <span className="truncate">Link de pagamento</span>
+                          </a>
+                        )}
+                        {allItems.length > 0 && (
+                          <ul className="space-y-1 mb-3 max-h-24 overflow-y-auto">
+                            {allItems.slice(0, 4).map((item, i) => (
+                              <li key={i} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                                <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                            {allItems.length > 4 && (
+                              <li className="text-[10px] text-muted-foreground pl-4">+{allItems.length - 4} mais</li>
+                            )}
+                          </ul>
+                        )}
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => openEditModalidade(mod)}>
+                            <Pencil className="h-3 w-3" /> Editar
+                          </Button>
+                          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteModalidade(mod.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Add modality button */}
+                  {grupo.modalidades.length < 3 && (
+                    <button
+                      onClick={() => openNewModalidade(grupo.grupo, grupo)}
+                      className="rounded-xl border-2 border-dashed border-border/60 p-4 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors min-h-[120px]"
+                    >
+                      <Plus className="h-5 w-5" />
+                      <span className="text-xs font-medium">Adicionar Modalidade</span>
+                    </button>
+                  )}
                 </div>
               </div>
-            );
-          })}
+            </Card>
+          ))}
         </div>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      {/* Dialog: Novo/Editar Grupo (Plano) */}
+      <Dialog open={grupoDialogOpen} onOpenChange={setGrupoDialogOpen}>
+        <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{editingPlano ? "Editar Plano" : "Novo Plano"}</DialogTitle>
+            <DialogTitle>{editingGrupo ? "Editar Plano" : "Novo Plano"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Nome *</Label>
-              <Input value={form.nome} onChange={(e) => setForm(prev => ({ ...prev, nome: e.target.value }))} placeholder="Ex: Plano Mensal" />
+              <Label>Nome do Plano *</Label>
+              <Input value={grupoForm.nome} onChange={(e) => setGrupoForm(prev => ({ ...prev, nome: e.target.value }))} placeholder="Ex: Básico, Intermediário, Pro" />
             </div>
             <div className="space-y-2">
               <Label>Descrição</Label>
-              <Input value={form.descricao} onChange={(e) => setForm(prev => ({ ...prev, descricao: e.target.value }))} placeholder="Descrição curta do plano" />
+              <Input value={grupoForm.descricao} onChange={(e) => setGrupoForm(prev => ({ ...prev, descricao: e.target.value }))} placeholder="Descrição curta" />
             </div>
+            <div className="space-y-2">
+              <Label>Badge (rótulo)</Label>
+              <Input value={grupoForm.badge} onChange={(e) => setGrupoForm(prev => ({ ...prev, badge: e.target.value }))} placeholder="Ex: Mais Popular" />
+            </div>
+            <div className="space-y-2">
+              <Label>Ordem</Label>
+              <Input type="number" value={grupoForm.ordem} onChange={(e) => setGrupoForm(prev => ({ ...prev, ordem: parseInt(e.target.value) || 0 }))} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch checked={grupoForm.destaque} onCheckedChange={(v) => setGrupoForm(prev => ({ ...prev, destaque: v }))} />
+              <Label>Destaque</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGrupoDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSaveGrupo} disabled={saving}>
+              {saving ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Novo/Editar Modalidade */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingPlano ? "Editar Modalidade" : "Nova Modalidade"} — {form.grupo}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Preço (R$) *</Label>
                 <CurrencyInput
-                  id="preco-plano"
+                  id="preco-mod"
                   name="preco"
                   value={form.preco}
                   onValueChange={(val) => setForm(prev => ({ ...prev, preco: val ? parseInt(val) / 100 : 0 }))}
@@ -371,7 +566,7 @@ const Assinaturas = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Período</Label>
+                <Label>Período *</Label>
                 <select
                   className="flex h-10 w-full rounded-full border border-input bg-muted/40 px-4 py-2 text-sm"
                   value={form.periodo}
@@ -385,114 +580,54 @@ const Assinaturas = () => {
               <Label>Link de Acesso / Pagamento</Label>
               <Input value={form.link_acesso} onChange={(e) => setForm(prev => ({ ...prev, link_acesso: e.target.value }))} placeholder="https://..." />
             </div>
-            <div className="space-y-2">
-              <Label>Badge (rótulo)</Label>
-              <Input value={form.badge} onChange={(e) => setForm(prev => ({ ...prev, badge: e.target.value }))} placeholder="Ex: Melhor Escolha" />
-            </div>
 
-            {/* Controles de funcionalidades */}
+            {/* Controles */}
             <div className="space-y-3 rounded-lg border p-3">
               <Label className="text-sm font-semibold flex items-center gap-2">
                 <Layers className="h-4 w-4 text-primary" />
                 Controle de Funcionalidades
               </Label>
-              <p className="text-xs text-muted-foreground">Funcionalidades ativadas serão exibidas nos planos</p>
 
               <div className="space-y-2">
                 <Label className="text-xs">Lançamentos (0 = ilimitados)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={form.controles.max_lancamentos}
-                  onChange={(e) => setForm(prev => ({
-                    ...prev,
-                    controles: { ...prev.controles, max_lancamentos: parseInt(e.target.value) || 0 }
-                  }))}
-                  placeholder="0"
+                <Input type="number" min="0" value={form.controles.max_lancamentos}
+                  onChange={(e) => setForm(prev => ({ ...prev, controles: { ...prev.controles, max_lancamentos: parseInt(e.target.value) || 0 } }))}
                 />
               </div>
-
               <div className="space-y-2">
                 <Label className="text-xs">Empresas (0 = ilimitadas)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={form.max_empresas}
-                  onChange={(e) => { const v = e.target.value; setForm(prev => ({ ...prev, max_empresas: v === '' ? 0 : parseInt(v, 10) || 0 })); }}
-                  placeholder="0"
+                <Input type="number" min="0" value={form.max_empresas}
+                  onChange={(e) => setForm(prev => ({ ...prev, max_empresas: parseInt(e.target.value) || 0 }))}
                 />
               </div>
-
               <div className="space-y-2">
                 <Label className="text-xs">Notas Fiscais / mês (0 = ilimitadas)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={form.controles.max_notas_fiscais}
-                  onChange={(e) => setForm(prev => ({
-                    ...prev,
-                    controles: { ...prev.controles, max_notas_fiscais: parseInt(e.target.value) || 0 }
-                  }))}
-                  placeholder="0"
+                <Input type="number" min="0" value={form.controles.max_notas_fiscais}
+                  onChange={(e) => setForm(prev => ({ ...prev, controles: { ...prev.controles, max_notas_fiscais: parseInt(e.target.value) || 0 } }))}
                 />
               </div>
-
               <div className="flex items-center justify-between">
-                <Label className="text-xs flex items-center gap-1.5">
-                  <MessageSquare className="h-3.5 w-3.5 text-primary" />
-                  Chat IA
-                </Label>
-                <Switch
-                  checked={form.controles.chat_ia}
-                  onCheckedChange={(v) => setForm(prev => ({
-                    ...prev,
-                    controles: { ...prev.controles, chat_ia: v }
-                  }))}
-                />
+                <Label className="text-xs flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5 text-primary" /> Chat IA</Label>
+                <Switch checked={form.controles.chat_ia} onCheckedChange={(v) => setForm(prev => ({ ...prev, controles: { ...prev.controles, chat_ia: v } }))} />
               </div>
-
               <div className="flex items-center justify-between">
-                <Label className="text-xs flex items-center gap-1.5">
-                  <BarChart3 className="h-3.5 w-3.5 text-primary" />
-                  Dashboard Completo
-                </Label>
-                <Switch
-                  checked={form.controles.dashboard_completo}
-                  onCheckedChange={(v) => setForm(prev => ({
-                    ...prev,
-                    controles: { ...prev.controles, dashboard_completo: v }
-                  }))}
-                />
+                <Label className="text-xs flex items-center gap-1.5"><BarChart3 className="h-3.5 w-3.5 text-primary" /> Dashboard Completo</Label>
+                <Switch checked={form.controles.dashboard_completo} onCheckedChange={(v) => setForm(prev => ({ ...prev, controles: { ...prev.controles, dashboard_completo: v } }))} />
               </div>
-
               <div className="flex items-center justify-between">
-                <Label className="text-xs flex items-center gap-1.5">
-                  <FileText className="h-3.5 w-3.5 text-primary" />
-                  Relatórios Personalizados
-                </Label>
-                <Switch
-                  checked={form.controles.relatorios_personalizados}
-                  onCheckedChange={(v) => setForm(prev => ({
-                    ...prev,
-                    controles: { ...prev.controles, relatorios_personalizados: v }
-                  }))}
-                />
+                <Label className="text-xs flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-primary" /> Relatórios Personalizados</Label>
+                <Switch checked={form.controles.relatorios_personalizados} onCheckedChange={(v) => setForm(prev => ({ ...prev, controles: { ...prev.controles, relatorios_personalizados: v } }))} />
               </div>
             </div>
 
-            {/* Itens inclusos */}
+            {/* Itens adicionais */}
             <div className="space-y-2">
-              <Label>Itens adicionais inclusos no plano</Label>
+              <Label>Itens adicionais</Label>
               <div className="flex gap-2">
-                <Input
-                  value={novoItem}
-                  onChange={(e) => setNovoItem(e.target.value)}
-                  placeholder="Ex: Suporte prioritário"
+                <Input value={novoItem} onChange={(e) => setNovoItem(e.target.value)} placeholder="Ex: Suporte prioritário"
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addItem(); } }}
                 />
-                <Button type="button" variant="outline" size="sm" onClick={addItem} className="shrink-0">
-                  <Plus className="h-4 w-4" />
-                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addItem} className="shrink-0"><Plus className="h-4 w-4" /></Button>
               </div>
               {form.itens.length > 0 && (
                 <ul className="space-y-1 mt-2">
@@ -511,16 +646,6 @@ const Assinaturas = () => {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label>Ordem</Label>
-              <Input type="number" value={form.ordem} onChange={(e) => setForm(prev => ({ ...prev, ordem: parseInt(e.target.value) || 0 }))} />
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Switch checked={form.destaque} onCheckedChange={(v) => setForm(prev => ({ ...prev, destaque: v }))} />
-                <Label>Destaque</Label>
-              </div>
-            </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.ativo} onCheckedChange={(v) => setForm(prev => ({ ...prev, ativo: v }))} />
               <Label>Ativo (visível para usuários)</Label>
@@ -528,17 +653,32 @@ const Assinaturas = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onClick={handleSaveModalidade} disabled={saving}>
               {saving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Asaas Integration Config */}
+      {/* Asaas Config */}
       <AsaasConfigCard />
     </div>
   );
 };
+
+function getControleItems(controles: any, maxEmpresas?: number): string[] {
+  const items: string[] = [];
+  if (!controles) return items;
+  if (controles.max_lancamentos === 0) items.push("Lançamentos ilimitados");
+  else if (controles.max_lancamentos > 0) items.push(`Até ${controles.max_lancamentos} lançamentos`);
+  if (maxEmpresas === 0) items.push("Empresas ilimitadas");
+  else if (maxEmpresas != null && maxEmpresas > 0) items.push(`Até ${maxEmpresas} empresa${maxEmpresas > 1 ? 's' : ''}`);
+  if (controles.max_notas_fiscais === 0) items.push("NFs ilimitadas");
+  else if (controles.max_notas_fiscais > 0) items.push(`Até ${controles.max_notas_fiscais} NFs/mês`);
+  if (controles.chat_ia) items.push("Chat IA");
+  if (controles.dashboard_completo) items.push("Dashboard Completo");
+  if (controles.relatorios_personalizados) items.push("Relatórios Personalizados");
+  return items;
+}
 
 export default Assinaturas;
