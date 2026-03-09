@@ -416,7 +416,20 @@ const Assinaturas = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <Label className="text-xs">Notas Fiscais / mês (0 = ilimitadas)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={form.controles.max_notas_fiscais}
+                  onChange={(e) => setForm(prev => ({
+                    ...prev,
+                    controles: { ...prev.controles, max_notas_fiscais: parseInt(e.target.value) || 0 }
+                  }))}
+                  placeholder="0"
+                />
+              </div>
+
                 <Label className="text-xs flex items-center gap-1.5">
                   <MessageSquare className="h-3.5 w-3.5 text-primary" />
                   Chat IA
