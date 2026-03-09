@@ -48,6 +48,7 @@ const PlanosAssinaturaConfig = () => {
     link_acesso: "",
     ordem: 0,
     max_empresas: "1",
+    max_notas_fiscais: "0",
   });
 
   useEffect(() => {
