@@ -14,6 +14,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const NotificacoesDropdown = () => {
+  const navigate = useNavigate();
   const {
     notificacoes,
     unreadCount,
