@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { SALES_PLATFORM_IDS } from "@/config/salesPlatforms";
 import { ShoppingCart, Search, RefreshCw, X, Plug, CheckCircle2, AlertTriangle, Plus, Eye, Edit, Trash2, FileText, Download, Loader2, Settings } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,8 +38,7 @@ import {
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-// All sales platforms - always shown regardless of integracoes_disponiveis
-const ALL_SALES_PLATFORMS = ["hotmart", "eduzz", "monetizze", "kiwify", "hubla"];
+
 
 const VendasDigitais = () => {
   const { empresaId, canPerformAction, isSuperAdmin, planControles } = useAuth();
@@ -57,7 +57,7 @@ const VendasDigitais = () => {
   const [dataFim, setDataFim] = useState<Date | undefined>();
   const [manualDateFilter, setManualDateFilter] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
-  const [allSalesPlatforms, setAllSalesPlatforms] = useState<string[]>(ALL_SALES_PLATFORMS);
+  const [allSalesPlatforms, setAllSalesPlatforms] = useState<string[]>([...SALES_PLATFORM_IDS]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingVenda, setEditingVenda] = useState<any>(null);
   const [detailVenda, setDetailVenda] = useState<any>(null);
@@ -128,11 +128,11 @@ const VendasDigitais = () => {
         .from('integracoes_disponiveis')
         .select('plataforma, disponivel')
         .eq('disponivel', true);
-      // Merge DB platforms with the fixed sales list - always show all sales platforms
       const fromDb = (data || []).map((d: any) => d.plataforma.toLowerCase());
-      const merged = Array.from(new Set([...ALL_SALES_PLATFORMS, ...fromDb.filter((p: string) => 
-        ALL_SALES_PLATFORMS.includes(p) || !['google_ads', 'meta_ads'].includes(p)
-      )]));
+      // Always show all known sales platforms + any new ones from DB that aren't ads platforms
+      const nonSalesPlatforms = ['google_ads', 'meta_ads'];
+      const extras = fromDb.filter((p: string) => !nonSalesPlatforms.includes(p) && !SALES_PLATFORM_IDS.includes(p as any));
+      const merged = Array.from(new Set([...SALES_PLATFORM_IDS, ...extras]));
       setAllSalesPlatforms(merged);
     } catch (error) {
       console.error("Erro ao carregar plataformas disponíveis:", error);
