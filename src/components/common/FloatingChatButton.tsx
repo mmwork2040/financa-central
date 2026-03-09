@@ -1,11 +1,16 @@
 
 import React, { useEffect, useRef } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 declare global {
   interface Window {
     chatwootSettings?: Record<string, unknown>;
     chatwootSDK?: { run: (opts: Record<string, unknown>) => void };
-    $chatwoot?: { toggle: (state?: string) => void; isOpen?: boolean };
+    $chatwoot?: {
+      toggle: (state?: string) => void;
+      isOpen?: boolean;
+      setUser: (id: string, opts: Record<string, unknown>) => void;
+    };
   }
 }
 
@@ -13,6 +18,7 @@ const CHATWOOT_BASE_URL = "https://chatwoot.automatizaosv.com.br";
 const CHATWOOT_TOKEN = "gpRRrveTVfWc9CdDFi9iVd7f";
 
 const FloatingChatButton: React.FC = () => {
+  const { user, userProfile } = useAuth();
   const scriptLoaded = useRef(false);
 
   useEffect(() => {
@@ -36,6 +42,17 @@ const FloatingChatButton: React.FC = () => {
         websiteToken: CHATWOOT_TOKEN,
         baseUrl: CHATWOOT_BASE_URL,
       });
+
+      // Set user identity once widget is ready
+      window.addEventListener("chatwoot:ready", () => {
+        if (user && userProfile?.nome) {
+          window.$chatwoot?.setUser(user.id, {
+            name: userProfile.nome,
+            email: userProfile.email || "",
+            phone_number: userProfile.evolution_webhook_url || "",
+          });
+        }
+      });
     };
     document.head.appendChild(script);
 
@@ -51,6 +68,17 @@ const FloatingChatButton: React.FC = () => {
       delete window.$chatwoot;
     };
   }, []);
+
+  // Update user info when profile loads after widget init
+  useEffect(() => {
+    if (scriptLoaded.current && user && userProfile?.nome && window.$chatwoot) {
+      window.$chatwoot.setUser(user.id, {
+        name: userProfile.nome,
+        email: userProfile.email || "",
+        phone_number: userProfile.evolution_webhook_url || "",
+      });
+    }
+  }, [user, userProfile]);
 
   return null;
 };
