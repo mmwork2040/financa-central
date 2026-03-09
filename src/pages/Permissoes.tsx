@@ -57,6 +57,7 @@ const screens: Screen[] = [
   { name: "Projetos", value: "projetos", description: "Gerenciamento de projetos" },
   { name: "Integrações", value: "integracoes", description: "Configuração de integrações externas" },
   { name: "Vendas", value: "vendas_digitais", description: "Gestão de vendas manuais e automáticas", viewOnly: true },
+  { name: "Emissão de NF", value: "emissao_nf", description: "Permissão para emitir notas fiscais", viewOnly: true },
   { name: "Anúncios Digitais", value: "anuncios", description: "Dados gerados automaticamente — apenas visualização", viewOnly: true },
 ];
 

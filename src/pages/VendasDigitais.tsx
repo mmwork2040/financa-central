@@ -44,6 +44,7 @@ const VendasDigitais = () => {
   const canIncluir = canPerformAction("vendas_digitais", "pode_incluir");
   const canAlterar = canPerformAction("vendas_digitais", "pode_alterar");
   const canExcluir = canPerformAction("vendas_digitais", "pode_excluir");
+  const canEmitirNF = canPerformAction("emissao_nf", "pode_incluir");
   const navigate = useNavigate();
   const [vendas, setVendas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -472,7 +473,7 @@ const VendasDigitais = () => {
                     {invoiceStatusBadge(venda)}
                     <div className="flex gap-1 mt-1">
                       {/* Emit invoice button */}
-                      {(canAlterar || isSuperAdmin) && venda.status === "aprovada" && (!venda.invoice_status || venda.invoice_status === "PENDING_EMISSION" || venda.invoice_status === "REJECTED") && (() => {
+                      {(canEmitirNF || isSuperAdmin) && venda.status === "aprovada" && (!venda.invoice_status || venda.invoice_status === "PENDING_EMISSION" || venda.invoice_status === "REJECTED") && (() => {
                         const { ready, missing } = getInvoiceReadiness(venda);
                         return (
                           <TooltipProvider>
