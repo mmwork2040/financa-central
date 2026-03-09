@@ -554,6 +554,11 @@ const Assinaturas = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Título da Modalidade</Label>
+              <Input value={form.nome} onChange={(e) => setForm(prev => ({ ...prev, nome: e.target.value }))} placeholder="Ex: Mensal, Anual, Plano Anual..." />
+              <p className="text-[10px] text-muted-foreground">Exibido como rótulo no card. Se vazio, usa o período.</p>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Preço (R$) *</Label>
