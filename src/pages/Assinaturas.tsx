@@ -586,6 +586,11 @@ const Assinaturas = () => {
               </div>
             </div>
             <div className="space-y-2">
+              <Label>Rótulo do Período (ao lado do valor)</Label>
+              <Input value={form.periodo_label} onChange={(e) => setForm(prev => ({ ...prev, periodo_label: e.target.value }))} placeholder={`Ex: ${form.periodo} (padrão se vazio)`} />
+              <p className="text-[10px] text-muted-foreground">Texto exibido como "/ mensal", "/ anual" ao lado do preço. Se vazio, usa o período selecionado.</p>
+            </div>
+            <div className="space-y-2">
               <Label>Link de Acesso / Pagamento</Label>
               <Input value={form.link_acesso} onChange={(e) => setForm(prev => ({ ...prev, link_acesso: e.target.value }))} placeholder="https://..." />
             </div>
