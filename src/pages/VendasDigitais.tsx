@@ -37,7 +37,7 @@ import {
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const PLATAFORMAS_VENDAS = ["hotmart", "eduzz", "monetizze", "kiwify"];
+const PLATAFORMAS_VENDAS_DEFAULT = ["hotmart", "eduzz", "monetizze", "kiwify"];
 
 const VendasDigitais = () => {
   const { empresaId, canPerformAction, isSuperAdmin, planControles } = useAuth();
