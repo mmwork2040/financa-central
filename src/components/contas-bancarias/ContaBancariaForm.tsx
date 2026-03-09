@@ -151,34 +151,44 @@ const ContaBancariaForm: React.FC<ContaBancariaFormProps> = ({
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="banco" className="text-right">Banco</Label>
-              <div className="col-span-3 space-y-2">
-                <Select
-                  value={BANCOS_INTEGRACOES.some(b => b.name === formData.banco) ? formData.banco : formData.banco ? "__outro__" : ""}
-                  onValueChange={(val) => {
-                    const syntheticEvent = {
-                      target: { name: "banco", value: val === "__outro__" ? "" : val },
-                    } as unknown as React.ChangeEvent<HTMLInputElement>;
-                    handleInputChange(syntheticEvent);
+              <div className="col-span-3 relative">
+                <Input
+                  ref={bancoInputRef}
+                  id="banco"
+                  name="banco"
+                  value={formData.banco || ""}
+                  onChange={handleBancoChange}
+                  onFocus={() => {
+                    if (formData.banco) {
+                      const matches = BANCOS_INTEGRACOES
+                        .map(b => b.name)
+                        .filter(name => name.toLowerCase().startsWith((formData.banco || "").toLowerCase()));
+                      setBancoSuggestions(matches);
+                      setShowSuggestions(matches.length > 0);
+                    }
                   }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um banco ou digite abaixo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BANCOS_INTEGRACOES.map((b) => (
-                      <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
+                  placeholder="Digite o nome do banco"
+                  autoComplete="off"
+                />
+                {showSuggestions && bancoSuggestions.length > 0 && (
+                  <div
+                    ref={suggestionsRef}
+                    className="absolute z-50 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md max-h-48 overflow-y-auto"
+                  >
+                    {bancoSuggestions.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          selectBanco(name);
+                        }}
+                      >
+                        {name}
+                      </button>
                     ))}
-                    <SelectItem value="__outro__">Outro (digitar)</SelectItem>
-                  </SelectContent>
-                </Select>
-                {(!formData.banco || !BANCOS_INTEGRACOES.some(b => b.name === formData.banco)) && (
-                  <Input
-                    id="banco"
-                    name="banco"
-                    value={formData.banco || ""}
-                    onChange={handleInputChange}
-                    placeholder="Digite o nome do banco"
-                  />
+                  </div>
                 )}
               </div>
             </div>
