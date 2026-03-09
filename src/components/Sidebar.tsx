@@ -191,7 +191,7 @@ export const Sidebar = () => {
   ];
 
   const allConfigItems = [
-    { name: isPessoal ? "Pessoal" : "Empresa", icon: Settings, path: "/settings" },
+    { name: isPessoal ? "Pessoal" : "Empresa", icon: isPessoal ? Settings : Building2, path: "/settings" },
     { name: "Integrações", icon: Plug, path: "/settings/integracoes", businessOnly: true },
     ...(isSuperAdmin ? [{ name: "Assinaturas", icon: CreditCard, path: "/settings/assinaturas" }] : []),
     ...(isSuperAdmin ? [{ name: "Termos e Políticas", icon: ScrollText, path: "/settings/termos" }] : []),
