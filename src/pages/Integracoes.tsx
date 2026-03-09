@@ -980,12 +980,12 @@ const Integracoes = () => {
                           <Badge variant="outline" className="border-yellow-300 text-yellow-700 text-[10px] px-1.5">Instável</Badge>
                         )}
                         {status === 'connected' && testResults[plat.id]?.status === 'success' && (
-                          <Badge variant="outline" className="border-green-300 text-green-700 text-[10px] px-1.5">Conectado</Badge>
+                          <Badge className="bg-green-500 text-white border-green-500 text-[10px] px-1.5">Conectado</Badge>
                         )}
                         {status === 'connected' && !autoTestingPlatforms.has(plat.id) && !testResults[plat.id] && (
-                          <Badge variant="outline" className="border-muted text-muted-foreground text-[10px] px-1.5">Conectado</Badge>
+                          <Badge className="bg-green-500 text-white border-green-500 text-[10px] px-1.5">Conectado</Badge>
                         )}
-                        {status === 'disconnected' && <Badge variant="outline" className="border-red-300 text-red-600 text-[10px] px-1.5">Desconectado</Badge>}
+                        {status === 'disconnected' && <Badge className="bg-red-500 text-white border-red-500 text-[10px] px-1.5">Desconectado</Badge>}
                         {plat.categoria === 'ia' && llmPadrao === plat.id && (
                           <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5">⭐ Padrão</Badge>
                         )}
