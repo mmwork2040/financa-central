@@ -344,7 +344,7 @@ const VendasDigitais = () => {
     disputa: "bg-orange-100 text-orange-700",
   };
 
-  const disconnectedPlatforms = PLATAFORMAS_VENDAS.filter(p => !connectedPlatforms.includes(p));
+  const disconnectedPlatforms = allSalesPlatforms.filter(p => !connectedPlatforms.includes(p));
 
   return (
     <div className="space-y-6">
