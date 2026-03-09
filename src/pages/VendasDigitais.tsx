@@ -128,14 +128,12 @@ const VendasDigitais = () => {
         .from('integracoes_disponiveis')
         .select('plataforma, disponivel')
         .eq('disponivel', true);
-      if (data && data.length > 0) {
-        // Filter to known sales platforms + any new ones
-        const salesKeywords = ['hotmart', 'eduzz', 'monetizze', 'kiwify', 'shopify', 'stripe'];
-        const fromDb = (data as any[]).map((d: any) => d.plataforma.toLowerCase()).filter((p: string) => salesKeywords.includes(p));
-        // Merge with defaults to ensure we always show core platforms
-        const merged = Array.from(new Set([...PLATAFORMAS_VENDAS_DEFAULT, ...fromDb]));
-        setAllSalesPlatforms(merged);
-      }
+      // Merge DB platforms with the fixed sales list - always show all sales platforms
+      const fromDb = (data || []).map((d: any) => d.plataforma.toLowerCase());
+      const merged = Array.from(new Set([...ALL_SALES_PLATFORMS, ...fromDb.filter((p: string) => 
+        ALL_SALES_PLATFORMS.includes(p) || !['google_ads', 'meta_ads'].includes(p)
+      )]));
+      setAllSalesPlatforms(merged);
     } catch (error) {
       console.error("Erro ao carregar plataformas disponíveis:", error);
     }
