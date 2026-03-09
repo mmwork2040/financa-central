@@ -517,8 +517,21 @@ const Assinaturas = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Asaas Integration Config */}
-      <AsaasConfigCard />
+      {/* Integrações de Pagamento */}
+      <IntegracaoPadraoCard />
+
+      <Tabs defaultValue="asaas" className="w-full">
+        <TabsList className="w-full justify-start">
+          <TabsTrigger value="asaas">Asaas</TabsTrigger>
+          <TabsTrigger value="stripe">Stripe</TabsTrigger>
+        </TabsList>
+        <TabsContent value="asaas">
+          <AsaasConfigCard />
+        </TabsContent>
+        <TabsContent value="stripe">
+          <StripeConfigCard />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
