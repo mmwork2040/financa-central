@@ -446,7 +446,7 @@ const Assinaturas = () => {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <Badge variant="outline" className="text-xs font-semibold">
-                            {periodoLabel(mod.periodo)}
+                            {mod.nome && mod.nome !== mod.grupo ? mod.nome : periodoLabel(mod.periodo)}
                           </Badge>
                           <Switch
                             checked={mod.ativo}
