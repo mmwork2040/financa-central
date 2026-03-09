@@ -120,7 +120,7 @@ const Assinaturas = () => {
       if (error) throw error;
       setPlanos((data || []).map((p: any) => {
         const parsed = parseItensFromDb(p.itens);
-        return { ...p, itens: parsed.itens, controles: parsed.controles };
+        return { ...p, itens: parsed.itens, controles: parsed.controles, itens_raw: p.itens };
       }));
     } catch (error: any) {
       toast.error(error.message || "Erro ao carregar planos");
