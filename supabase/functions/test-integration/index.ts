@@ -129,8 +129,15 @@ const TEST_ENDPOINTS: Record<string, { url: string; method: string; headers: (ke
       "Authorization": `Bearer ${key}`,
     }),
   },
+  banco_inter: {
+    url: "https://cdpj.partners.bancointer.com.br/oauth/v2/token",
+    method: "POST",
+    headers: (key, secret) => ({
+      "Content-Type": "application/x-www-form-urlencoded",
+    }),
+    buildBody: (key, secret) => `client_id=${key}&client_secret=${secret || ""}&grant_type=client_credentials&scope=extrato.read`,
+  },
 };
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
