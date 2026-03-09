@@ -1624,6 +1624,145 @@ const Integracoes = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Suggestion Card */}
+      <Card className="border-dashed">
+        <CardContent className="p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 shrink-0">
+              <Lightbulb className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Sentiu falta de alguma integração?</p>
+              <p className="text-xs text-muted-foreground">Envie sua sugestão para a equipe de suporte</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setSugestaoDialogOpen(true)}>
+            <MessageSquarePlus className="h-3.5 w-3.5" />
+            Sugerir
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Super Admin: Suggestions List */}
+      {isSuperAdmin && sugestoesAdmin.length > 0 && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Lightbulb className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold">Sugestões dos Usuários</h3>
+              <Badge variant="secondary" className="text-[10px]">{sugestoesAdmin.filter(s => s.status === 'pendente').length} pendentes</Badge>
+            </div>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {sugestoesAdmin.map(s => (
+                <div key={s.id} className={`rounded-lg border p-3 text-sm space-y-1 ${s.status === 'pendente' ? 'bg-muted/30' : ''}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{s.user_nome}</span>
+                      <span className="text-[10px] text-muted-foreground">{s.user_email}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {s.status === 'pendente' ? (
+                        <Badge variant="outline" className="text-[10px] border-orange-300 text-orange-600">Pendente</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] border-green-300 text-green-600">Respondida</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground">{s.mensagem}</p>
+                  {s.resposta && (
+                    <div className="mt-2 rounded-md bg-primary/5 p-2 text-xs">
+                      <span className="font-medium text-primary">Resposta:</span> {s.resposta}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[10px] text-muted-foreground">
+                      {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                    </span>
+                    {s.status === 'pendente' && (
+                      <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={() => {
+                        setSugestaoSelecionada(s);
+                        setRespostaTexto("");
+                        setRespostaDialogOpen(true);
+                      }}>
+                        <Reply className="h-3 w-3" />
+                        Responder
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Dialog: Enviar Sugestão */}
+      <Dialog open={sugestaoDialogOpen} onOpenChange={setSugestaoDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-primary" />
+              Enviar Sugestão
+            </DialogTitle>
+            <DialogDescription>
+              Descreva a integração ou funcionalidade que gostaria de ver no sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea
+              placeholder="Ex: Seria ótimo ter integração com o PagSeguro para receber pagamentos automaticamente..."
+              value={sugestaoMensagem}
+              onChange={(e) => setSugestaoMensagem(e.target.value.slice(0, 1000))}
+              rows={4}
+              className="resize-none"
+            />
+            <p className="text-[10px] text-muted-foreground text-right">{sugestaoMensagem.length}/1000</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setSugestaoDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleEnviarSugestao} disabled={!sugestaoMensagem.trim() || enviandoSugestao}>
+                {enviandoSugestao ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Send className="h-4 w-4 mr-1.5" />}
+                Enviar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Responder Sugestão (Super Admin) */}
+      <Dialog open={respostaDialogOpen} onOpenChange={setRespostaDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Reply className="h-5 w-5 text-primary" />
+              Responder Sugestão
+            </DialogTitle>
+          </DialogHeader>
+          {sugestaoSelecionada && (
+            <div className="space-y-3">
+              <div className="rounded-md bg-muted p-3 text-sm">
+                <p className="font-medium text-xs text-muted-foreground mb-1">Sugestão de {sugestaoSelecionada.user_nome}:</p>
+                <p>{sugestaoSelecionada.mensagem}</p>
+              </div>
+              <Textarea
+                placeholder="Digite sua resposta..."
+                value={respostaTexto}
+                onChange={(e) => setRespostaTexto(e.target.value.slice(0, 500))}
+                rows={3}
+                className="resize-none"
+              />
+              <p className="text-[10px] text-muted-foreground text-right">{respostaTexto.length}/500</p>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setRespostaDialogOpen(false)}>Cancelar</Button>
+                <Button onClick={handleResponderSugestao} disabled={!respostaTexto.trim() || enviandoResposta}>
+                  {enviandoResposta ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Send className="h-4 w-4 mr-1.5" />}
+                  Enviar Resposta
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
