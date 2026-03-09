@@ -128,11 +128,11 @@ const VendasDigitais = () => {
         .from('integracoes_disponiveis')
         .select('plataforma, disponivel')
         .eq('disponivel', true);
-      // Merge DB platforms with the fixed sales list - always show all sales platforms
       const fromDb = (data || []).map((d: any) => d.plataforma.toLowerCase());
-      const merged = Array.from(new Set([...ALL_SALES_PLATFORMS, ...fromDb.filter((p: string) => 
-        ALL_SALES_PLATFORMS.includes(p) || !['google_ads', 'meta_ads'].includes(p)
-      )]));
+      // Always show all known sales platforms + any new ones from DB that aren't ads platforms
+      const nonSalesPlatforms = ['google_ads', 'meta_ads'];
+      const extras = fromDb.filter((p: string) => !nonSalesPlatforms.includes(p) && !SALES_PLATFORM_IDS.includes(p as any));
+      const merged = Array.from(new Set([...SALES_PLATFORM_IDS, ...extras]));
       setAllSalesPlatforms(merged);
     } catch (error) {
       console.error("Erro ao carregar plataformas disponíveis:", error);
