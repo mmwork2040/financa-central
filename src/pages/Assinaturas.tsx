@@ -14,6 +14,7 @@ import AsaasConfigCard from "@/components/configuracoes/AsaasConfigCard";
 
 interface PlanoControles {
   max_lancamentos: number;
+  max_notas_fiscais: number;
   chat_ia: boolean;
   dashboard_completo: boolean;
   relatorios_personalizados: boolean;
@@ -36,6 +37,7 @@ interface Plano {
 
 const defaultControles: PlanoControles = {
   max_lancamentos: 0,
+  max_notas_fiscais: 0,
   chat_ia: false,
   dashboard_completo: false,
   relatorios_personalizados: false,
@@ -237,6 +239,11 @@ const Assinaturas = () => {
     } else if (maxEmpresas && maxEmpresas > 0) {
       items.push(`Até ${maxEmpresas} empresa${maxEmpresas > 1 ? 's' : ''}`);
     }
+    if (controles.max_notas_fiscais === 0) {
+      items.push("Emissão de notas fiscais ilimitada");
+    } else if (controles.max_notas_fiscais > 0) {
+      items.push(`Até ${controles.max_notas_fiscais} notas fiscais/mês`);
+    }
     if (controles.chat_ia) items.push("Chat IA");
     if (controles.dashboard_completo) items.push("Dashboard Completo");
     if (controles.relatorios_personalizados) items.push("Relatórios Personalizados");
@@ -412,6 +419,20 @@ const Assinaturas = () => {
                   min="0"
                   value={form.max_empresas}
                   onChange={(e) => { const v = e.target.value; setForm(prev => ({ ...prev, max_empresas: v === '' ? 0 : parseInt(v, 10) || 0 })); }}
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Notas Fiscais / mês (0 = ilimitadas)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={form.controles.max_notas_fiscais}
+                  onChange={(e) => setForm(prev => ({
+                    ...prev,
+                    controles: { ...prev.controles, max_notas_fiscais: parseInt(e.target.value) || 0 }
+                  }))}
                   placeholder="0"
                 />
               </div>
