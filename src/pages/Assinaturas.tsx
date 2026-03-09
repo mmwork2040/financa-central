@@ -14,6 +14,7 @@ import AsaasConfigCard from "@/components/configuracoes/AsaasConfigCard";
 
 interface PlanoControles {
   max_lancamentos: number;
+  max_notas_fiscais: number;
   chat_ia: boolean;
   dashboard_completo: boolean;
   relatorios_personalizados: boolean;
