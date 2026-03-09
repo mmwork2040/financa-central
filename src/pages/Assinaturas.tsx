@@ -430,6 +430,7 @@ const Assinaturas = () => {
                 />
               </div>
 
+              <div className="flex items-center justify-between">
                 <Label className="text-xs flex items-center gap-1.5">
                   <MessageSquare className="h-3.5 w-3.5 text-primary" />
                   Chat IA
