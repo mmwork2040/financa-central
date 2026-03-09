@@ -35,6 +35,7 @@ import {
   Code2,
   Send,
   UserCircle,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
@@ -189,6 +190,7 @@ export const Sidebar = () => {
 
   const bottomItems = [
     { name: "Relatórios", icon: PieChart, path: "/reports" },
+    { name: "Suporte", icon: HelpCircle, path: "/suporte" },
   ];
 
   const allConfigItems = [

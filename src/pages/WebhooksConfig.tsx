@@ -21,6 +21,7 @@ const acoesDisponiveis = [
   { value: "Editar Registro", label: "Editar Registro" },
   { value: "Chat", label: "Chat" },
   { value: "Acesso do Usuário", label: "Acesso do Usuário" },
+  { value: "Suporte Técnico", label: "Suporte Técnico" },
 ];
 
 const gerarPayloadSugerido = (acao: string): string => {
@@ -47,6 +48,17 @@ const gerarPayloadSugerido = (acao: string): string => {
       id_telegram: "{{user_telegram_id}}",
       telefone: "{{user_telefone}}",
       email: "{{user_email}}",
+    }, null, 2);
+  }
+
+  if (acao === "Suporte Técnico") {
+    return JSON.stringify({
+      empresa_id: "{{empresa_id}}",
+      empresa_nome: "{{empresa_nome}}",
+      acao: "suporte_chat",
+      timestamp: "{{timestamp}}",
+      usuario: { id: "{{user_id}}", nome: "{{user_nome}}", email: "{{user_email}}", telefone: "{{user_telefone}}" },
+      mensagem: "{{mensagem}}",
     }, null, 2);
   }
 
