@@ -52,6 +52,63 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Nota já em processamento ou emitida" }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Check plan limit for invoice emissions (server-side enforcement)
+    const { data: isSA } = await supabase.rpc("is_super_admin", { _user_id: user.id });
+    if (!isSA) {
+      const { data: perfil } = await supabase
+        .from("perfis")
+        .select("assinatura_plano_id, assinatura_status, trial_started_at, created_at")
+        .eq("id", user.id)
+        .single();
+
+      let maxNF = 0; // 0 = unlimited
+      if (perfil) {
+        const status = perfil.assinatura_status || "trial";
+        const trialStarted = perfil.trial_started_at || perfil.created_at;
+
+        if (status === "trial" && trialStarted) {
+          const trialEnd = new Date(trialStarted);
+          trialEnd.setDate(trialEnd.getDate() + 30);
+          if (new Date() > trialEnd) {
+            // Trial expired
+            maxNF = 0; // will be blocked by subscription check elsewhere
+          }
+          // During active trial, unlimited (maxNF stays 0)
+        } else if (status === "ativo" && perfil.assinatura_plano_id) {
+          const { data: plano } = await supabase
+            .from("planos_assinatura")
+            .select("itens")
+            .eq("id", perfil.assinatura_plano_id)
+            .single();
+          if (plano?.itens && typeof plano.itens === "object" && !Array.isArray(plano.itens)) {
+            maxNF = (plano.itens as any).controles?.max_notas_fiscais ?? 0;
+          }
+        } else {
+          // No active plan, restrict
+          maxNF = 0;
+        }
+
+        if (maxNF > 0) {
+          const now = new Date();
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+          const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+          const { count } = await supabase
+            .from("vendas_digitais")
+            .select("id", { count: "exact", head: true })
+            .eq("empresa_id", venda.empresa_id)
+            .in("invoice_status", ["PROCESSING", "AUTHORIZED", "ISSUED"])
+            .gte("data_venda", startOfMonth)
+            .lte("data_venda", endOfMonth);
+
+          if ((count || 0) >= maxNF) {
+            return new Response(JSON.stringify({
+              error: `Limite de ${maxNF} notas fiscais/mês atingido. Faça upgrade do plano.`,
+            }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+        }
+      }
+    }
+
     // Get Spedy config
     const { data: spedyConfig } = await supabase
       .from("spedy_config")
