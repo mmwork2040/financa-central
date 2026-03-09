@@ -1226,25 +1226,8 @@ const Integracoes = () => {
         </Tabs>
       )}
 
-      {isSuperAdmin && (
-        <Collapsible defaultOpen={false}>
-          <CollapsibleTrigger asChild>
-            <button className="flex items-center gap-2 w-full text-left group py-2">
-              <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
-                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-lg sm:text-xl font-bold tracking-tight">Notas Fiscais</h2>
-                <p className="text-xs text-muted-foreground">Integração para emissão automática de NF-e / NFS-e</p>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4">
-            <SpedyConfigCard />
-          </CollapsibleContent>
-        </Collapsible>
-      )}
+
+
 
       {/* Wizard Dialog */}
       <Dialog open={!!connectDialog} onOpenChange={(o) => !o && closeWizard()}>
