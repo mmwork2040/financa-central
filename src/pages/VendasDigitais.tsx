@@ -233,6 +233,16 @@ const VendasDigitais = () => {
     const venda = vendas.find(v => v.id === vendaId);
     if (!venda) return;
 
+    // Pre-check: fiscal config must be complete
+    if (fiscalReady && !fiscalReady.configurado) {
+      toast.error("Configure os dados fiscais da empresa antes de emitir notas. Vá em Configurações da Empresa → Configuração Fiscal.", { duration: 6000 });
+      return;
+    }
+    if (fiscalReady && !fiscalReady.certificado) {
+      toast.error("Envie o certificado digital (A1 .pfx) nas Configurações da Empresa antes de emitir notas.", { duration: 6000 });
+      return;
+    }
+
     const { ready, missing } = getInvoiceReadiness(venda);
     if (!ready) {
       toast.error(`Para emitir a nota fiscal, preencha: ${missing.join(", ")}`, { duration: 5000 });
