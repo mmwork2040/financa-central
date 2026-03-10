@@ -91,6 +91,26 @@ const VendasDigitais = () => {
     }
   }, []);
 
+  // Fetch fiscal readiness on mount
+  useEffect(() => {
+    if (!empresaId) return;
+    (async () => {
+      try {
+        const { data } = await (supabase as any)
+          .from("empresas")
+          .select("fiscal_configurado, certificado_digital_url, spedy_company_id")
+          .eq("id", empresaId)
+          .single();
+        if (data) {
+          setFiscalReady({
+            configurado: !!data.fiscal_configurado,
+            certificado: !!data.certificado_digital_url,
+          });
+        }
+      } catch { /* ignore */ }
+    })();
+  }, [empresaId]);
+
   const handleSetDataInicio = (date: Date | undefined) => {
     setDataInicio(date);
     setManualDateFilter(true);
