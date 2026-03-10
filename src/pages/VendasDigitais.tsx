@@ -395,6 +395,19 @@ const VendasDigitais = () => {
           <p className="text-xs sm:text-sm text-muted-foreground">Registre vendas manuais e receba vendas das plataformas conectadas</p>
         </div>
         <div className="flex items-center gap-2">
+          {chatVendasUrl && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" onClick={() => window.open(chatVendasUrl, "_blank")}>
+                    <MessageCircle className="h-4 w-4 mr-1" />
+                    <span className="hidden sm:inline">Vender via Chat</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Registrar venda via chat externo</p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           <ExportDropdown onExport={(fmt) => exportVendas(filtered, fmt)} />
           {canIncluir && (
             <Button onClick={() => { setEditingVenda(null); setFormOpen(true); }} size="sm">
