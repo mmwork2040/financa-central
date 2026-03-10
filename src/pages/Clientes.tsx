@@ -163,7 +163,7 @@ const Clientes = () => {
 
     generateStyledPDF({
       title: "Relatório de Clientes",
-      empresa: empresaPdf,
+      empresa: undefined,
       summaryCards: [
         { label: "Total de Clientes", value: String(filteredClientes.length) },
         { label: "Ativos", value: String(ativos), color: "#16a34a" },

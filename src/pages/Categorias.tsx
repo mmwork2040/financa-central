@@ -8,6 +8,7 @@ import CategoriasTable from "@/components/categorias/CategoriasTable";
 import CategoriaForm from "@/components/categorias/CategoriaForm";
 import CategoriaDeleteDialog from "@/components/categorias/CategoriaDeleteDialog";
 import { toast } from "sonner";
+import { generateStyledPDF } from "@/utils/pdfTemplate";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Categorias = () => {

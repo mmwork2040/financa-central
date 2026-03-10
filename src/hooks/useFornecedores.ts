@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Fornecedor, initialFornecedor } from "@/types/fornecedor.types";
 import { fetchFornecedores, saveFornecedor, deleteFornecedor } from "@/services/fornecedorService";
 import { toast } from "sonner";
+import { generateStyledPDF } from "@/utils/pdfTemplate";
 import { useFormatInput } from "@/hooks/use-format-input";
 import { useAuth } from "@/contexts/AuthContext";
 
