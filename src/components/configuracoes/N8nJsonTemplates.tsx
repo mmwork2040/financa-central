@@ -517,9 +517,17 @@ DEPENDÊNCIAS (envie _nome OU _id para cada):
 - Se despesa: fornecedor_nome OU fornecedor_id
 O sistema busca por nome ou cria automaticamente se não existir.
 
+DADOS ADICIONAIS DE CADASTRO (opcionais):
+- cliente_cpf_cnpj: CPF/CNPJ do cliente (usado ao criar novo)
+- fornecedor_cpf_cnpj: CPF/CNPJ do fornecedor (usado ao criar novo)
+- conta_bancaria_banco: nome do banco (se diferente do nome da conta)
+- conta_bancaria_agencia: número da agência
+- conta_bancaria_conta: número da conta
+
 RECORRÊNCIA (lançamento mensal fixo sem data fim):
 - recorrente: "true"
 - recorrencia_tipo: mensal (padrão), semanal, quinzenal, trimestral, anual
+- recorrencia_inicio: YYYY-MM-DD (data início, aceita retroativas. Vazio = usa data_vencimento)
 - recorrencia_fim: YYYY-MM-DD ou "" para indefinido
 
 PARCELAMENTO (dividir valor em N parcelas):
