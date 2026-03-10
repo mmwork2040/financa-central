@@ -1335,7 +1335,7 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "id", type: "string", required: true, description: "UUID do lançamento" },
-      { name: "excluir_cadeia", type: "boolean", required: false, description: "true para excluir toda a cadeia recorrente pendente" },
+      { name: "excluir_cadeia", type: "string", required: false, description: "true para excluir toda a cadeia recorrente pendente" },
     ],
     body: { action: "excluir-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento') }}", excluir_cadeia: "{{ $fromAI('excluir_cadeia', 'true para excluir toda a cadeia recorrente. Deixe vazio para excluir apenas esta ocorrência') }}" },
   },

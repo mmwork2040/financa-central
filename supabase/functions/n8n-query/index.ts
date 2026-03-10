@@ -1822,11 +1822,42 @@ Deno.serve(async (req) => {
 
         const updateData: any = {};
         const fields = ["descricao", "tipo", "status", "data_vencimento", "data_pagamento", "categoria_id", "cliente_id", "fornecedor_id", "conta_bancaria_id", "forma_pagamento_id", "projeto_id"];
+        
+        // Check if lancamento belongs to a recurring chain
+        const isRecorrente = !!(lancExist as any).recorrencia_grupo_id;
+        const blockedInRecorrente = ["descricao", "tipo"];
+        
         for (const f of fields) {
           const v = sanitize(body[f]);
-          if (v !== undefined) updateData[f] = f === "descricao" ? normalizeText(v, "descricao") : v;
+          if (v !== undefined) {
+            // Block certain fields if part of recurring chain
+            if (isRecorrente && blockedInRecorrente.includes(f)) continue;
+            updateData[f] = f === "descricao" ? normalizeText(v, "descricao") : v;
+          }
         }
         if (body.valor !== undefined && sanitize(body.valor) !== undefined) updateData.valor = Number(body.valor);
+        
+        // Handle recurrence fields
+        const recorrenteFlag = sanitize(body.recorrente);
+        if (recorrenteFlag === "true" || recorrenteFlag === true) {
+          if (!isRecorrente) {
+            updateData.recorrente = true;
+            const recTipo = sanitize(body.recorrencia_tipo);
+            if (recTipo && ["semanal", "quinzenal", "mensal", "trimestral", "anual"].includes(recTipo)) {
+              updateData.recorrencia_tipo = recTipo;
+            } else {
+              updateData.recorrencia_tipo = "mensal";
+            }
+            const recInicio = sanitize(body.recorrencia_inicio);
+            if (recInicio) updateData.data_vencimento = recInicio;
+          }
+        }
+        
+        const recFim = sanitize(body.recorrencia_fim);
+        if (recFim !== undefined) {
+          updateData.recorrencia_fim = recFim || null;
+        }
+        
         if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
         const { data: updLanc, error: updLancErr } = await supabase.from("lancamentos").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
