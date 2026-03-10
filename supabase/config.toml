@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.spedy-webhook]
 verify_jwt = false
+
+[functions.process-document-import]
+verify_jwt = false
