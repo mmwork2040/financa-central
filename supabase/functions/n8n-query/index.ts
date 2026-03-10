@@ -359,6 +359,7 @@ Deno.serve(async (req) => {
       "criar-forma-pagamento": { tela: "formas_pagamento", tipo: "pode_incluir" },
       "criar-projeto": { tela: "projetos", tipo: "pode_incluir" },
       "transferir-entre-contas": { tela: "contas_bancarias", tipo: "pode_alterar" },
+      "criar-venda": { tela: "vendas_digitais", tipo: "pode_incluir" },
       // Edição (pode_alterar)
       "editar-cliente": { tela: "clientes", tipo: "pode_alterar" },
       "editar-fornecedor": { tela: "fornecedores", tipo: "pode_alterar" },
@@ -367,6 +368,7 @@ Deno.serve(async (req) => {
       "editar-forma-pagamento": { tela: "formas_pagamento", tipo: "pode_alterar" },
       "editar-projeto": { tela: "projetos", tipo: "pode_alterar" },
       "editar-lancamento": { tela: "lancamentos", tipo: "pode_alterar" },
+      "editar-venda": { tela: "vendas_digitais", tipo: "pode_alterar" },
       "atualizar-telegram-cliente": { tela: "clientes", tipo: "pode_alterar" },
       // Exclusão (pode_excluir)
       "excluir-cliente": { tela: "clientes", tipo: "pode_excluir" },
@@ -376,6 +378,7 @@ Deno.serve(async (req) => {
       "excluir-forma-pagamento": { tela: "formas_pagamento", tipo: "pode_excluir" },
       "excluir-projeto": { tela: "projetos", tipo: "pode_excluir" },
       "excluir-lancamento": { tela: "lancamentos", tipo: "pode_excluir" },
+      "excluir-venda": { tela: "vendas_digitais", tipo: "pode_excluir" },
     };
 
     // Check permissions — user_id is MANDATORY for actions that require permissions
