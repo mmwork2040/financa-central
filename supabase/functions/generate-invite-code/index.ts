@@ -67,8 +67,8 @@ serve(async (req) => {
       });
     }
 
-    // Super admin can target any empresa; regular admin only their own
-    const finalEmpresaId = isSuperAdmin && targetEmpresaId ? targetEmpresaId : callerRole.empresa_id;
+    // Always use caller's empresa
+    const finalEmpresaId = callerRole.empresa_id;
 
     // Generate a random 8-char code
     const code = crypto.randomUUID().replace(/-/g, "").substring(0, 8).toUpperCase();
