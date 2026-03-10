@@ -12,6 +12,7 @@ import { useClientes, initialCliente, type Cliente } from "@/hooks/useClientes";
 import { useSolicitacoesSuporte } from "@/hooks/useSolicitacoesSuporte";
 import { formatCPFOrCNPJ, formatPhone } from "@/utils/format";
 import { toast } from "sonner";
+import { generateStyledPDF } from "@/utils/pdfTemplate";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
