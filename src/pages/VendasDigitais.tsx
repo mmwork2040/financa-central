@@ -557,11 +557,11 @@ const VendasDigitais = () => {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button
+                                  <Button
                                   variant="ghost"
                                   size="icon"
-                                  className={cn("h-6 w-6", ready ? "text-primary" : "text-amber-500")}
-                                  disabled={emittingId === venda.id}
+                                  className={cn("h-6 w-6", ready ? "text-primary" : "text-amber-500 opacity-60")}
+                                  disabled={emittingId === venda.id || !ready}
                                   onClick={() => handleRequestEmitInvoice(venda.id)}
                                 >
                                   {emittingId === venda.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
