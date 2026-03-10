@@ -466,6 +466,13 @@ const ImportarDocumentos = () => {
           {/* File list */}
           {files.length > 0 && (
             <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-muted-foreground">{files.length} arquivo(s)</span>
+                <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive hover:text-destructive" onClick={() => { setFiles([]); if (fileInputRef.current) fileInputRef.current.value = ""; }}>
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Limpar tudo
+                </Button>
+              </div>
               {files.map((file, idx) => (
                 <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
                   {getFileIcon(file.fileName)}
