@@ -517,9 +517,17 @@ DEPENDÊNCIAS (envie _nome OU _id para cada):
 - Se despesa: fornecedor_nome OU fornecedor_id
 O sistema busca por nome ou cria automaticamente se não existir.
 
+DADOS ADICIONAIS DE CADASTRO (opcionais):
+- cliente_cpf_cnpj: CPF/CNPJ do cliente (usado ao criar novo)
+- fornecedor_cpf_cnpj: CPF/CNPJ do fornecedor (usado ao criar novo)
+- conta_bancaria_banco: nome do banco (se diferente do nome da conta)
+- conta_bancaria_agencia: número da agência
+- conta_bancaria_conta: número da conta
+
 RECORRÊNCIA (lançamento mensal fixo sem data fim):
 - recorrente: "true"
 - recorrencia_tipo: mensal (padrão), semanal, quinzenal, trimestral, anual
+- recorrencia_inicio: YYYY-MM-DD (data início, aceita retroativas. Vazio = usa data_vencimento)
 - recorrencia_fim: YYYY-MM-DD ou "" para indefinido
 
 PARCELAMENTO (dividir valor em N parcelas):
@@ -555,8 +563,14 @@ REGRAS:
       { name: "fornecedor_id", type: "string", required: false, description: "UUID do fornecedor" },
       { name: "recorrente", type: "string", required: false, description: "Envie 'true' para recorrente, '' para único" },
       { name: "recorrencia_tipo", type: "string", required: false, description: "mensal, semanal, quinzenal, trimestral ou anual" },
+      { name: "recorrencia_inicio", type: "string", required: false, description: "Data início recorrência YYYY-MM-DD. Vazio = usa data_vencimento" },
       { name: "recorrencia_fim", type: "string", required: false, description: "Data fim recorrência YYYY-MM-DD. Vazio = indefinido" },
       { name: "total_parcelas", type: "string", required: false, description: "Número de parcelas (ex: '12'). Mutuamente exclusivo com recorrente" },
+      { name: "cliente_cpf_cnpj", type: "string", required: false, description: "CPF ou CNPJ do cliente (usado ao criar novo)" },
+      { name: "fornecedor_cpf_cnpj", type: "string", required: false, description: "CPF ou CNPJ do fornecedor (usado ao criar novo)" },
+      { name: "conta_bancaria_banco", type: "string", required: false, description: "Nome do banco (se diferente do nome da conta)" },
+      { name: "conta_bancaria_agencia", type: "string", required: false, description: "Número da agência bancária" },
+      { name: "conta_bancaria_conta", type: "string", required: false, description: "Número da conta bancária" },
       { name: "data_pagamento", type: "string", required: false, description: "Data de pagamento YYYY-MM-DD" },
       { name: "projeto_id", type: "string", required: false, description: "UUID do projeto" },
     ],
@@ -581,8 +595,14 @@ REGRAS:
       fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID fornecedor. Vazio se usar nome') }}",
       recorrente: "{{ $fromAI('recorrente', 'true para recorrente ou vazio') }}",
       recorrencia_tipo: "{{ $fromAI('recorrencia_tipo', 'mensal, semanal, quinzenal, trimestral, anual. Vazio se não recorrente') }}",
+      recorrencia_inicio: "{{ $fromAI('recorrencia_inicio', 'Data início recorrência YYYY-MM-DD. Vazio = usa data_vencimento') }}",
       recorrencia_fim: "{{ $fromAI('recorrencia_fim', 'Data fim YYYY-MM-DD. Vazio = indefinido') }}",
       total_parcelas: "{{ $fromAI('total_parcelas', 'Número de parcelas. Vazio se não parcelado') }}",
+      cliente_cpf_cnpj: "{{ $fromAI('cliente_cpf_cnpj', 'CPF/CNPJ do cliente. Vazio se não informado') }}",
+      fornecedor_cpf_cnpj: "{{ $fromAI('fornecedor_cpf_cnpj', 'CPF/CNPJ do fornecedor. Vazio se não informado') }}",
+      conta_bancaria_banco: "{{ $fromAI('conta_bancaria_banco', 'Nome do banco. Vazio se não informado') }}",
+      conta_bancaria_agencia: "{{ $fromAI('conta_bancaria_agencia', 'Agência bancária. Vazio se não informado') }}",
+      conta_bancaria_conta: "{{ $fromAI('conta_bancaria_conta', 'Número da conta. Vazio se não informado') }}",
       data_pagamento: "{{ $fromAI('data_pagamento', 'Data pgto YYYY-MM-DD. Vazio se pendente') }}",
       projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Vazio se não informado') }}",
     },
