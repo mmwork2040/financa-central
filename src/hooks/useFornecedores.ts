@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Fornecedor, initialFornecedor } from "@/types/fornecedor.types";
 import { fetchFornecedores, saveFornecedor, deleteFornecedor } from "@/services/fornecedorService";
 import { toast } from "sonner";
+import { generateStyledPDF } from "@/utils/pdfTemplate";
 import { useFormatInput } from "@/hooks/use-format-input";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -137,78 +138,39 @@ export const useFornecedores = () => {
   };
 
   const handleExportPDF = () => {
-    try {
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) throw new Error("Não foi possível abrir uma nova janela para o PDF.");
-      
-      const style = `
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          h1 { color: #333; text-align: center; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f2f2f2; }
-          .ativo { color: green; }
-          .inativo { color: red; }
-          .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
-        </style>
-      `;
-      
-      let tableRows = "";
-      filteredFornecedores.forEach(fornecedor => {
-        const status = fornecedor.ativo ? 
-          '<span class="ativo">Ativo</span>' : 
-          '<span class="inativo">Inativo</span>';
-        tableRows += `
-          <tr>
-            <td>${fornecedor.nome || ""}</td>
-            <td>${fornecedor.cpf_cnpj || ""}</td>
-            <td>${fornecedor.email || ""}</td>
-            <td>${fornecedor.telefone || ""}</td>
-            <td>${fornecedor.endereco || ""}</td>
-            <td>${status}</td>
-          </tr>
-        `;
-      });
-      
-      const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Relatório de Fornecedores</title>
-          ${style}
-        </head>
-        <body>
-          <h1>Relatório de Fornecedores</h1>
-          <p>Data de geração: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>CPF/CNPJ</th>
-                <th>Email</th>
-                <th>Telefone</th>
-                <th>Endereço</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-          <div class="footer">
-            <p>Sistema Financeiro - Relatório gerado automaticamente</p>
-          </div>
-        </body>
-        </html>
-      `;
-      
-      printWindow.document.open();
-      printWindow.document.write(html);
-      printWindow.document.close();
-      setTimeout(() => { printWindow.print(); }, 500);
-      toast.success("Visualização PDF gerada com sucesso");
-    } catch (error: any) {
-      toast.error(`Erro ao gerar PDF: ${error.message}`);
-    }
+    const ativos = filteredFornecedores.filter(f => f.ativo).length;
+    const inativos = filteredFornecedores.length - ativos;
+
+    generateStyledPDF({
+      title: "Relatório de Fornecedores",
+      summaryCards: [
+        { label: "Total de Fornecedores", value: String(filteredFornecedores.length) },
+        { label: "Ativos", value: String(ativos), color: "#16a34a" },
+        { label: "Inativos", value: String(inativos), color: "#dc2626" },
+      ],
+      columns: [
+        { key: "nome", header: "Nome" },
+        { key: "cpf_cnpj", header: "CPF/CNPJ" },
+        { key: "email", header: "Email" },
+        { key: "telefone", header: "Telefone" },
+        { key: "endereco", header: "Endereço" },
+        { key: "status", header: "Status" },
+      ],
+      rows: filteredFornecedores.map(f => ({
+        nome: f.nome || "-",
+        cpf_cnpj: f.cpf_cnpj || "-",
+        email: f.email || "-",
+        telefone: f.telefone || "-",
+        endereco: f.endereco || "-",
+        status: f.ativo ? "Ativo" : "Inativo",
+      })),
+      badgeColumns: {
+        status: {
+          ativo: { bg: "#dcfce7", color: "#166534" },
+          inativo: { bg: "#fee2e2", color: "#991b1b" },
+        },
+      },
+    });
   };
 
   return {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { generateStyledPDF } from "@/utils/pdfTemplate";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface FormaPagamento {
@@ -118,67 +119,22 @@ export const useFormasPagamento = () => {
   };
 
   const exportToPDF = () => {
-    try {
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) throw new Error("Não foi possível abrir uma nova janela para o PDF.");
-      
-      const style = `
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          h1 { color: #333; text-align: center; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f2f2f2; }
-          .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
-        </style>
-      `;
-      
-      let tableRows = "";
-      filteredFormasPagamento.forEach(forma => {
-        tableRows += `
-          <tr>
-            <td>${forma.descricao}</td>
-            <td>${new Date(forma.created_at).toLocaleDateString()}</td>
-            <td>${new Date(forma.updated_at).toLocaleDateString()}</td>
-          </tr>
-        `;
-      });
-      
-      const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Relatório de Formas de Pagamento</title>
-          ${style}
-        </head>
-        <body>
-          <h1>Relatório de Formas de Pagamento</h1>
-          <p>Data de geração: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Descrição</th>
-                <th>Data de Criação</th>
-                <th>Última Atualização</th>
-              </tr>
-            </thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-          <div class="footer">
-            <p>Sistema Financeiro - Relatório gerado automaticamente</p>
-          </div>
-        </body>
-        </html>
-      `;
-      
-      printWindow.document.open();
-      printWindow.document.write(html);
-      printWindow.document.close();
-      setTimeout(() => { printWindow.print(); }, 500);
-      toast.success("Visualização PDF gerada com sucesso");
-    } catch (error: any) {
-      toast.error(`Erro ao gerar PDF: ${error.message}`);
-    }
+    generateStyledPDF({
+      title: "Relatório de Formas de Pagamento",
+      summaryCards: [
+        { label: "Total", value: String(filteredFormasPagamento.length) },
+      ],
+      columns: [
+        { key: "descricao", header: "Descrição" },
+        { key: "created_at", header: "Data de Criação" },
+        { key: "updated_at", header: "Última Atualização" },
+      ],
+      rows: filteredFormasPagamento.map(f => ({
+        descricao: f.descricao,
+        created_at: new Date(f.created_at).toLocaleDateString(),
+        updated_at: new Date(f.updated_at).toLocaleDateString(),
+      })),
+    });
   };
 
   const exportData = (format: 'csv' | 'pdf') => {

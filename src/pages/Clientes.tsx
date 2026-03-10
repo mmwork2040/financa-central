@@ -12,6 +12,7 @@ import { useClientes, initialCliente, type Cliente } from "@/hooks/useClientes";
 import { useSolicitacoesSuporte } from "@/hooks/useSolicitacoesSuporte";
 import { formatCPFOrCNPJ, formatPhone } from "@/utils/format";
 import { toast } from "sonner";
+import { generateStyledPDF } from "@/utils/pdfTemplate";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -157,87 +158,40 @@ const Clientes = () => {
   };
 
   const exportToPDF = () => {
-    try {
-      const printWindow = window.open('', '_blank');
-      
-      if (!printWindow) {
-        throw new Error("Não foi possível abrir uma nova janela para o PDF.");
-      }
-      
-      const style = `
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          h1 { color: #333; text-align: center; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f2f2f2; }
-          .ativo { color: green; }
-          .inativo { color: red; }
-          .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
-        </style>
-      `;
-      
-      let tableRows = "";
-      
-      filteredClientes.forEach(cliente => {
-        tableRows += `
-          <tr>
-            <td>${cliente.nome}</td>
-            <td>${cliente.cpf_cnpj ? formatCPFOrCNPJ(cliente.cpf_cnpj) : '-'}</td>
-            <td>${cliente.email || '-'}</td>
-            <td>${cliente.telefone ? formatPhone(cliente.telefone) : '-'}</td>
-            <td>${cliente.endereco || '-'}</td>
-            <td class="${cliente.ativo ? 'ativo' : 'inativo'}">${cliente.ativo ? 'Ativo' : 'Inativo'}</td>
-          </tr>
-        `;
-      });
-      
-      const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Relatório de Clientes</title>
-          ${style}
-        </head>
-        <body>
-          <h1>Relatório de Clientes</h1>
-          <p>Data de geração: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>CPF/CNPJ</th>
-                <th>E-mail</th>
-                <th>Telefone</th>
-                <th>Endereço</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
-          </table>
-          
-          <div class="footer">
-            <p>Sistema Financeiro - Relatório gerado automaticamente</p>
-          </div>
-        </body>
-        </html>
-      `;
-      
-      printWindow.document.open();
-      printWindow.document.write(html);
-      printWindow.document.close();
-      
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
-      
-      toast.success("Visualização PDF gerada com sucesso");
-    } catch (error: any) {
-      toast.error(`Erro ao gerar PDF: ${error.message}`);
-    }
+    const ativos = filteredClientes.filter(c => c.ativo).length;
+    const inativos = filteredClientes.length - ativos;
+
+    generateStyledPDF({
+      title: "Relatório de Clientes",
+      empresa: undefined,
+      summaryCards: [
+        { label: "Total de Clientes", value: String(filteredClientes.length) },
+        { label: "Ativos", value: String(ativos), color: "#16a34a" },
+        { label: "Inativos", value: String(inativos), color: "#dc2626" },
+      ],
+      columns: [
+        { key: "nome", header: "Nome" },
+        { key: "cpf_cnpj", header: "CPF/CNPJ" },
+        { key: "email", header: "E-mail" },
+        { key: "telefone", header: "Telefone" },
+        { key: "endereco", header: "Endereço" },
+        { key: "status", header: "Status" },
+      ],
+      rows: filteredClientes.map(c => ({
+        nome: c.nome,
+        cpf_cnpj: c.cpf_cnpj ? formatCPFOrCNPJ(c.cpf_cnpj) : "-",
+        email: c.email || "-",
+        telefone: c.telefone ? formatPhone(c.telefone) : "-",
+        endereco: c.endereco || "-",
+        status: c.ativo ? "Ativo" : "Inativo",
+      })),
+      badgeColumns: {
+        status: {
+          ativo: { bg: "#dcfce7", color: "#166534" },
+          inativo: { bg: "#fee2e2", color: "#991b1b" },
+        },
+      },
+    });
   };
 
   return (

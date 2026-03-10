@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { generateStyledPDF } from "@/utils/pdfTemplate";
 import { useAuth } from "@/contexts/AuthContext";
 import { ContaBancaria } from "@/components/contas-bancarias/ContasBancariasTable";
 import { formatCurrency } from "@/utils/format";
@@ -202,62 +203,33 @@ export const useContasBancarias = () => {
   };
 
   const handleExportPDF = () => {
-    try {
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) throw new Error("Não foi possível abrir uma nova janela para o PDF.");
-      const style = `
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          h1 { color: #333; text-align: center; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f2f2f2; }
-          .positive { color: green; }
-          .negative { color: red; }
-          .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
-          .text-right { text-align: right; }
-          .badge { background: #3b82f6; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
-        </style>
-      `;
-      let tableRows = "";
-      filteredContas.forEach(conta => {
-        const saldoAtualClass = (conta.saldo_atual || 0) >= 0 ? 'positive' : 'negative';
-        const principalBadge = conta.principal ? ' <span class="badge">Principal</span>' : '';
-        tableRows += `
-          <tr>
-            <td>${conta.nome}${principalBadge}</td>
-            <td>${conta.banco || '-'}</td>
-            <td>${conta.agencia || '-'}</td>
-            <td>${conta.conta || '-'}</td>
-            <td class="text-right">${formatCurrency(conta.saldo_inicial || 0)}</td>
-            <td class="text-right ${saldoAtualClass}">${formatCurrency(conta.saldo_atual || 0)}</td>
-          </tr>
-        `;
-      });
-      const totalSaldoInicial = filteredContas.reduce((sum, conta) => sum + (conta.saldo_inicial || 0), 0);
-      const totalSaldoAtual = filteredContas.reduce((sum, conta) => sum + (conta.saldo_atual || 0), 0);
-      const saldoAtualClass = totalSaldoAtual >= 0 ? 'positive' : 'negative';
-      const html = `
-        <!DOCTYPE html><html><head><title>Relatório de Contas Bancárias</title>${style}</head>
-        <body>
-          <h1>Relatório de Contas Bancárias</h1>
-          <p>Data de geração: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-          <table>
-            <thead><tr><th>Nome</th><th>Banco</th><th>Agência</th><th>Conta</th><th class="text-right">Saldo Inicial</th><th class="text-right">Saldo Atual</th></tr></thead>
-            <tbody>${tableRows}</tbody>
-            <tfoot><tr><td colspan="4"><strong>Total</strong></td><td class="text-right"><strong>${formatCurrency(totalSaldoInicial)}</strong></td><td class="text-right ${saldoAtualClass}"><strong>${formatCurrency(totalSaldoAtual)}</strong></td></tr></tfoot>
-          </table>
-          <div class="footer"><p>Sistema Financeiro - Relatório gerado automaticamente</p></div>
-        </body></html>
-      `;
-      printWindow.document.open();
-      printWindow.document.write(html);
-      printWindow.document.close();
-      setTimeout(() => { printWindow.print(); }, 500);
-      toast.success("Visualização PDF gerada com sucesso");
-    } catch (error: any) {
-      toast.error(`Erro ao gerar PDF: ${error.message}`);
-    }
+    const totalSaldoInicial = filteredContas.reduce((sum, c) => sum + (c.saldo_inicial || 0), 0);
+    const totalSaldoAtual = filteredContas.reduce((sum, c) => sum + (c.saldo_atual || 0), 0);
+
+    generateStyledPDF({
+      title: "Relatório de Contas Bancárias",
+      summaryCards: [
+        { label: "Total de Contas", value: String(filteredContas.length) },
+        { label: "Saldo Inicial Total", value: formatCurrency(totalSaldoInicial) },
+        { label: "Saldo Atual Total", value: formatCurrency(totalSaldoAtual), color: totalSaldoAtual >= 0 ? "#16a34a" : "#dc2626" },
+      ],
+      columns: [
+        { key: "nome", header: "Nome" },
+        { key: "banco", header: "Banco" },
+        { key: "agencia", header: "Agência" },
+        { key: "conta", header: "Conta" },
+        { key: "saldo_inicial", header: "Saldo Inicial", align: "right" },
+        { key: "saldo_atual", header: "Saldo Atual", align: "right" },
+      ],
+      rows: filteredContas.map(c => ({
+        nome: c.nome + (c.principal ? " ★" : ""),
+        banco: c.banco || "-",
+        agencia: c.agencia || "-",
+        conta: c.conta || "-",
+        saldo_inicial: formatCurrency(c.saldo_inicial || 0),
+        saldo_atual: formatCurrency(c.saldo_atual || 0),
+      })),
+    });
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
