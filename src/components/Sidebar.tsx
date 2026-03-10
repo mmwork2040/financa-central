@@ -253,10 +253,12 @@ export const Sidebar = () => {
           className={cn(
             "sidebar-link relative",
             indent && showExpanded && "pl-8",
+            !showExpanded && "justify-center px-0",
             isActive(item.path) && "active"
           )}
+          title={!showExpanded ? item.name : undefined}
         >
-          <item.icon size={18} />
+          <item.icon size={18} className="shrink-0" />
           {showExpanded && <span className="text-sm">{item.name}</span>}
           {item.path === "/users" && pendingCount > 0 && (
             <span className="absolute top-1 right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1">
@@ -271,31 +273,44 @@ export const Sidebar = () => {
   const sidebarContent = (
     <>
       {/* Header */}
-      <div className="flex h-14 items-center justify-between px-4">
-        <div className="flex items-center gap-2 min-w-0">
-          {companyLogo ? (
-            <img src={companyLogo} alt="Logo" className="h-7 w-7 rounded object-contain shrink-0" />
-          ) : null}
-          {showExpanded && (
-            <h1 className="text-base font-extrabold tracking-tight text-sidebar-foreground truncate">Contabiliza AI</h1>
-          )}
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <NotificacoesDropdown />
-          {isMobile ? (
-            <button onClick={() => setMobileOpen(false)} className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all">
-              <X size={18} />
-            </button>
-          ) : (
+      <div className={cn("flex h-14 items-center px-4", showExpanded ? "justify-between" : "justify-center flex-col gap-1 h-auto py-2")}>
+        {showExpanded ? (
+          <>
+            <div className="flex items-center gap-2 min-w-0">
+              {companyLogo ? (
+                <img src={companyLogo} alt="Logo" className="h-7 w-7 rounded object-contain shrink-0" />
+              ) : null}
+              <h1 className="text-base font-extrabold tracking-tight text-sidebar-foreground truncate">Contabiliza AI</h1>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <NotificacoesDropdown />
+              {isMobile ? (
+                <button onClick={() => setMobileOpen(false)} className="rounded-full p-1 text-sidebar-foreground hover:bg-sidebar-accent transition-all">
+                  <X size={18} />
+                </button>
+              ) : (
+                <button
+                  onClick={toggle}
+                  className="rounded-full p-1.5 text-sidebar-foreground bg-sidebar-accent/50 hover:bg-sidebar-accent transition-all"
+                  aria-label="Recolher menu"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <NotificacoesDropdown />
             <button
               onClick={toggle}
               className="rounded-full p-1.5 text-sidebar-foreground bg-sidebar-accent/50 hover:bg-sidebar-accent transition-all"
-              aria-label={isExpanded ? "Recolher menu" : "Expandir menu"}
+              aria-label="Expandir menu"
             >
-              {isExpanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+              <ChevronRight size={18} />
             </button>
-          )}
-        </div>
+          </>
+        )}
       </div>
       
       {/* Company switcher */}
@@ -440,9 +455,10 @@ export const Sidebar = () => {
             <li>
               <button
                 onClick={() => window.open(TELEGRAM_URL, "_blank")}
-                className="sidebar-link w-full"
+                className={cn("sidebar-link w-full", !showExpanded && "justify-center px-0")}
+                title={!showExpanded ? "Lançamentos via Chat" : undefined}
               >
-                <Send size={18} />
+                <Send size={18} className="shrink-0" />
                 {showExpanded && <span className="text-sm">Lançamentos via Chat</span>}
               </button>
             </li>
@@ -507,9 +523,10 @@ export const Sidebar = () => {
       <div className="px-2 py-3 border-t border-sidebar-border">
         <button 
           onClick={handleLogout}
-          className={cn("sidebar-link w-full", !showExpanded && "justify-center")}
+          className={cn("sidebar-link w-full", !showExpanded && "justify-center px-0")}
+          title={!showExpanded ? "Sair" : undefined}
         >
-          <LogOut size={18} />
+          <LogOut size={18} className="shrink-0" />
           {showExpanded && <span className="text-sm">Sair</span>}
         </button>
       </div>
