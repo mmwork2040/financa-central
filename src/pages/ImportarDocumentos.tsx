@@ -403,8 +403,8 @@ const ImportarDocumentos = () => {
         </Card>
       )}
 
-      {/* LLM Selection when multiple are active */}
-      {hasMultipleLLMs && (
+      {/* LLM Selection - show when at least 1 LLM is active */}
+      {!loadingLLMs && activeLLMs.length >= 1 && (
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -412,22 +412,35 @@ const ImportarDocumentos = () => {
                 <Brain className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium mb-1 text-sm">Selecione a IA para análise</h3>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Você possui mais de uma integração de IA configurada. Escolha qual deseja utilizar.
-                </p>
-                <Select value={selectedLLM} onValueChange={setSelectedLLM}>
-                  <SelectTrigger className="w-full max-w-xs">
-                    <SelectValue placeholder="Selecionar IA..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeLLMs.map(llm => (
-                      <SelectItem key={llm.id} value={llm.plataforma}>
-                        {LLM_LABELS[llm.plataforma] || llm.plataforma}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <h3 className="font-medium mb-1 text-sm">Inteligência Artificial para análise</h3>
+                {activeLLMs.length === 1 ? (
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground">
+                      Modelo ativo:
+                    </p>
+                    <Badge variant="secondary" className="text-xs">
+                      {LLM_LABELS[activeLLMs[0].plataforma] || activeLLMs[0].plataforma}
+                    </Badge>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Você possui mais de uma integração de IA configurada. Escolha qual deseja utilizar.
+                    </p>
+                    <Select value={selectedLLM} onValueChange={setSelectedLLM}>
+                      <SelectTrigger className="w-full max-w-xs">
+                        <SelectValue placeholder="Selecionar IA..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeLLMs.map(llm => (
+                          <SelectItem key={llm.id} value={llm.plataforma}>
+                            {LLM_LABELS[llm.plataforma] || llm.plataforma}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
               </div>
             </div>
           </CardContent>
