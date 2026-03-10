@@ -13,7 +13,7 @@ import InviteCodesCard from "@/components/convites/InviteCodesCard";
 import ConfiguracaoFiscal from "@/components/configuracoes/ConfiguracaoFiscal";
 
 import CepAddressFields, { AddressData } from "@/components/common/CepAddressFields";
-import { phoneInputMask } from "@/utils/format";
+import { phoneInputMask, documentInputMask } from "@/utils/format";
 
 const ConfiguracoesEmpresa = () => {
   const { empresaId, userRole, isSuperAdmin } = useAuth();
@@ -43,8 +43,11 @@ const ConfiguracoesEmpresa = () => {
       if (data) {
         setIsPessoal((data as any).pessoal === true);
         setEmpresa({
-          nome: data.nome || "", cnpj: data.cnpj || "", email: data.email || "",
-          telefone: data.telefone ? phoneInputMask(data.telefone.replace(/\D/g, "")) : "", endereco: data.endereco || "",
+          nome: data.nome || "",
+          cnpj: data.cnpj ? documentInputMask(data.cnpj.replace(/\D/g, "")) : "",
+          email: data.email || "",
+          telefone: data.telefone ? phoneInputMask(data.telefone.replace(/\D/g, "")) : "",
+          endereco: data.endereco || "",
           logo_url: data.logo_url || "",
         });
         setAddress({
@@ -200,7 +203,10 @@ const ConfiguracoesEmpresa = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="cnpj">CNPJ</Label>
-              <Input id="cnpj" value={empresa.cnpj} onChange={(e) => handleChange("cnpj", e.target.value)} placeholder="00.000.000/0000-00" disabled={!isAdmin} />
+              <Input id="cnpj" value={empresa.cnpj} onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, "").slice(0, 14);
+                handleChange("cnpj", documentInputMask(raw));
+              }} placeholder="00.000.000/0000-00" disabled={!isAdmin} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
