@@ -70,7 +70,7 @@ import NotificacoesDropdown from "@/components/common/NotificacoesDropdown";
 export const Sidebar = () => {
   const { isExpanded, toggle } = useSidebar();
   const location = useLocation();
-  const { userProfile, logout, isSuperAdmin, isPessoal, empresaId, empresas, switchEmpresa, canAccessRoute } = useAuth();
+  const { userProfile, logout, isSuperAdmin, isPessoal, empresaId, empresas, switchEmpresa, canAccessRoute, planControles } = useAuth();
   const navigate = useNavigate();
   
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
