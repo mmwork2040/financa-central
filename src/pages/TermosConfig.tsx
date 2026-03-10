@@ -103,16 +103,18 @@ const TermosConfig = () => {
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold">Conteúdo (Markdown)</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1.5 text-xs"
-                  onClick={() => setPreviewTab(previewTab === "termos" ? null : "termos")}
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  {previewTab === "termos" ? "Editar" : "Pré-visualizar"}
-                </Button>
+                <Label className="text-sm font-semibold">{isReadOnly ? "Conteúdo" : "Conteúdo (Markdown)"}</Label>
+                {!isReadOnly && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    onClick={() => setPreviewTab(previewTab === "termos" ? null : "termos")}
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    {previewTab === "termos" ? "Editar" : "Pré-visualizar"}
+                  </Button>
+                )}
               </div>
               {isReadOnly || previewTab === "termos" ? (
                 <div className="border rounded-lg p-4 min-h-[400px] bg-muted/20">
