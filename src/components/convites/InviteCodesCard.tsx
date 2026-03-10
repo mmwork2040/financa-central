@@ -70,7 +70,6 @@ const InviteCodesCard = () => {
   const [maxUses, setMaxUses] = useState("5");
   const [expiresInDays, setExpiresInDays] = useState("7");
   const [allEmpresas, setAllEmpresas] = useState<Empresa[]>([]);
-  const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>("");
   const [deleteTarget, setDeleteTarget] = useState<InviteCode | null>(null);
   const [deletingCode, setDeletingCode] = useState(false);
   const [showPermissions, setShowPermissions] = useState(false);
