@@ -455,9 +455,10 @@ export const Sidebar = () => {
             <li>
               <button
                 onClick={() => window.open(TELEGRAM_URL, "_blank")}
-                className="sidebar-link w-full"
+                className={cn("sidebar-link w-full", !showExpanded && "justify-center px-0")}
+                title={!showExpanded ? "Lançamentos via Chat" : undefined}
               >
-                <Send size={18} />
+                <Send size={18} className="shrink-0" />
                 {showExpanded && <span className="text-sm">Lançamentos via Chat</span>}
               </button>
             </li>
