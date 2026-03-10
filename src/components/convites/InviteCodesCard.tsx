@@ -120,7 +120,6 @@ const InviteCodesCard = () => {
     try {
       const role = isAdminRole ? "admin" : "usuario";
       const body: any = { role, maxUses: parseInt(maxUses), expiresInDays: parseInt(expiresInDays) };
-      if (isSuperAdmin && selectedEmpresaId) body.empresaId = selectedEmpresaId;
       if (!isAdminRole) {
         const activePerms = screenPermissions.filter(p => p.pode_incluir || p.pode_alterar || p.pode_excluir);
         body.permissoes = activePerms.map(p => ({ tela: p.tela, pode_incluir: p.pode_incluir, pode_alterar: p.pode_alterar, pode_excluir: p.pode_excluir }));
