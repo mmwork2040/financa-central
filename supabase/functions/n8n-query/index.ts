@@ -1047,17 +1047,27 @@ Deno.serve(async (req) => {
           // Se múltiplas contas e nenhuma principal, conta_bancaria_id permanece null
         }
 
-        // Validação condicional: receita exige cliente, despesa exige fornecedor
+        // Verificar se a empresa é pessoal (dispensa cliente/fornecedor)
+        const { data: empresaInfo } = await supabase
+          .from("empresas")
+          .select("pessoal")
+          .eq("id", empresa_id)
+          .single();
+        const isPessoal = empresaInfo?.pessoal === true;
+
+        // Validação condicional: receita exige cliente, despesa exige fornecedor (exceto pessoal)
         const camposObrigatorios: { campo: string; valor: string | null; label: string }[] = [
           { campo: "categoria_id", valor: categoria_id, label: "Categoria (envie categoria_id ou categoria_nome)" },
           { campo: "forma_pagamento_id", valor: forma_pagamento_id, label: "Forma de Pagamento (envie forma_pagamento_id ou forma_pagamento_nome)" },
           { campo: "conta_bancaria_id", valor: conta_bancaria_id, label: "Conta Bancária (envie conta_bancaria_id ou conta_bancaria_nome)" },
         ];
 
-        if (tipo === "receita") {
-          camposObrigatorios.push({ campo: "cliente_id", valor: cliente_id, label: "Cliente (envie cliente_id ou cliente_nome)" });
-        } else {
-          camposObrigatorios.push({ campo: "fornecedor_id", valor: fornecedor_id, label: "Fornecedor (envie fornecedor_id ou fornecedor_nome)" });
+        if (!isPessoal) {
+          if (tipo === "receita") {
+            camposObrigatorios.push({ campo: "cliente_id", valor: cliente_id, label: "Cliente (envie cliente_id ou cliente_nome)" });
+          } else {
+            camposObrigatorios.push({ campo: "fornecedor_id", valor: fornecedor_id, label: "Fornecedor (envie fornecedor_id ou fornecedor_nome)" });
+          }
         }
 
         const faltando = camposObrigatorios.filter(c => !c.valor).map(c => c.label);
