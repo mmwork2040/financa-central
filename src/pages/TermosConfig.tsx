@@ -65,9 +65,7 @@ const TermosConfig = () => {
     });
   };
 
-  if (!isSuperAdmin) {
-    return <FeatureBlocked title="Termos e Políticas" description="Apenas super administradores podem editar os termos de uso e política de privacidade." />;
-  }
+  const isReadOnly = !isSuperAdmin;
 
   if (loading) {
     return (
