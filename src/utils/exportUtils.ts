@@ -61,7 +61,6 @@ export const generatePDFView = <T extends Record<string, any>>(
   title: string,
   subtitle?: string
 ): void => {
-  const { generateStyledPDF } = require("@/utils/pdfTemplate");
   const keys = Object.keys(headers) as (keyof T)[];
   generateStyledPDF({
     title,
@@ -70,10 +69,8 @@ export const generatePDFView = <T extends Record<string, any>>(
     rows: data.map((item) => {
       const row: Record<string, string> = {};
       keys.forEach((k) => {
-        let val = item[k];
-        if (val === null || val === undefined) val = "-";
-        else if (val instanceof Date) val = val.toLocaleDateString();
-        row[String(k)] = String(val);
+        const val = item[k];
+        row[String(k)] = val === null || val === undefined ? "-" : String(val);
       });
       return row;
     }),
