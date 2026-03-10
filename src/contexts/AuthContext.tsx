@@ -99,6 +99,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: async () => {},
   switchEmpresa: async () => {},
+  switchingEmpresa: false,
   refreshProfile: async () => {},
 });
 
