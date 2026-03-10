@@ -313,7 +313,9 @@ export const Sidebar = () => {
                   <DropdownMenuItem
                     key={emp.empresa_id}
                     onClick={() => {
-                      if (emp.empresa_id !== empresaId) switchEmpresa(emp.empresa_id);
+                      if (emp.empresa_id !== empresaId) {
+                        setConfirmSwitchEmpresa({ id: emp.empresa_id, nome: emp.empresa_nome });
+                      }
                     }}
                     className="flex items-center justify-between"
                   >
