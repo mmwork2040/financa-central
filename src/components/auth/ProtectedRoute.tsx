@@ -16,7 +16,6 @@ const PESSOAL_BLOCKED_ROUTES: string[] = [
   "/projetos",
   "/users",
   "/permissions",
-  "/settings/integracoes",
   "/settings/webhooks",
 ];
 
