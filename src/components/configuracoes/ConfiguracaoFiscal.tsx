@@ -185,7 +185,7 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
         }
       }
 
-      setFiscal(prev => ({ ...prev, fiscal_configurado: true }));
+      setFiscal(prev => ({ ...prev, fiscal_configurado: !!prev.certificado_digital_url }));
       toast.success("Configuração fiscal salva com sucesso!");
       onComplete?.();
     } catch (error: any) {
