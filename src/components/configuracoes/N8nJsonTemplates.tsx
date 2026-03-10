@@ -1841,10 +1841,14 @@ const N8nJsonTemplates = () => {
         if (categoryTemplates.length === 0) return null;
         const isCategoryOpen = !collapsedCategories.has(category);
 
-        const renderTemplateCard = (template: ActionTemplate) => {
+      // Strip accents from $fromAI() descriptions to prevent n8n schema validation errors
+      const stripAccents = (str: string): string =>
+        str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      const renderTemplateCard = (template: ActionTemplate) => {
           const isExpanded = expandedActions.has(template.action);
           const isCustom = customTemplates.some(c => c.action === template.action);
-          const bodyStr = JSON.stringify(template.body, null, 2);
+          const bodyStr = stripAccents(JSON.stringify(template.body, null, 2));
           return (
             <Card key={template.action} className="overflow-hidden">
               <div
