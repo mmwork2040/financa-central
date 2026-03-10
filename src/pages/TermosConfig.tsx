@@ -84,7 +84,11 @@ const TermosConfig = () => {
           </div>
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">Termos e Políticas</h1>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground">Edite os Termos de Uso e Política de Privacidade exibidos aos usuários</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          {isSuperAdmin
+            ? "Edite os Termos de Uso e Política de Privacidade exibidos aos usuários"
+            : "Consulte os Termos de Uso e Política de Privacidade do sistema"}
+        </p>
       </div>
 
       <Tabs defaultValue="termos" className="w-full">
