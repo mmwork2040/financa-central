@@ -91,6 +91,19 @@ export const LancamentosHeader = () => {
           </Tooltip>
         </TooltipProvider>
         <ExportDropdown onExport={handleExport} />
+        {chatLancamentosUrl && (
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={() => window.open(chatLancamentosUrl, "_blank")}>
+                  <MessageCircle className="mr-1.5 h-4 w-4" />
+                  <span className="hidden sm:inline">Lançar via Chat</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent><p>Lançar via chat externo</p></TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         <div className="relative flex-1 min-w-[140px] max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
