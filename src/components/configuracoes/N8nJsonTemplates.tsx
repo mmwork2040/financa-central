@@ -1889,7 +1889,7 @@ const N8nJsonTemplates = () => {
                           variant="ghost"
                           size="sm"
                           className="h-7 gap-1 text-xs"
-                          onClick={() => handleCopy(template.toolDescription, `desc-${template.action}`)}
+                          onClick={() => handleCopy(stripAccents(template.toolDescription), `desc-${template.action}`)}
                         >
                           {copiedId === `desc-${template.action}` ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                           Copiar
