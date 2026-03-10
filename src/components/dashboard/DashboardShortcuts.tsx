@@ -14,10 +14,10 @@ interface Shortcut {
 
 const shortcuts: Shortcut[] = [
   { label: "Novo Lançamento", icon: Plus, action: "openModal" },
+  { label: "Importar", icon: FileUp, route: "/importar-documentos" },
   { label: "Clientes", icon: Users, route: "/clientes", businessOnly: true },
   { label: "Fornecedores", icon: Truck, route: "/fornecedores", businessOnly: true },
   { label: "Relatórios", icon: BarChart3, route: "/relatorios" },
-  { label: "Contas Bancárias", icon: Landmark, route: "/bank-accounts" },
   { label: "Vendas", icon: ShoppingCart, route: "/vendas-digitais", businessOnly: true },
 ];
 
