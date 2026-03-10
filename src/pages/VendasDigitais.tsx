@@ -69,6 +69,14 @@ const VendasDigitais = () => {
   const [fiscalReady, setFiscalReady] = useState<{ configurado: boolean; certificado: boolean } | null>(null);
   const [missingFieldsVenda, setMissingFieldsVenda] = useState<{ venda: any; missing: string[] } | null>(null);
   const { chatVendasUrl } = useChatUrls();
+  const [empresaExport, setEmpresaExport] = useState<EmpresaVendaExportInfo | undefined>();
+
+  useEffect(() => {
+    if (!empresaId) return;
+    supabase.from("empresas").select("nome, cnpj, email, telefone, endereco").eq("id", empresaId).single().then(({ data }) => {
+      if (data) setEmpresaExport(data);
+    });
+  }, [empresaId]);
 
   const { selectedMonth } = useMonthFilter();
   const prevMonthRef = useRef(selectedMonth);
