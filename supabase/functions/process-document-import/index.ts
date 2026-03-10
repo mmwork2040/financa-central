@@ -154,14 +154,20 @@ serve(async (req) => {
     }
 
     if (!activeLLM) {
-      return new Response(JSON.stringify({ error: "Nenhuma LLM externa configurada. Configure uma integração de IA (OpenAI, Gemini, Anthropic ou DeepSeek) na página de Integrações." }), {
+      return new Response(JSON.stringify({ error: "Nenhuma IA configurada. Configure uma integração de Inteligência Artificial na página de Integrações." }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { content, fileName } = await req.json();
+    const { content, fileName, preferredLLM } = await req.json();
     if (!content) {
       return new Response(JSON.stringify({ error: "Conteúdo do documento não fornecido" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // If user specified a preferred LLM, try to use it
+    if (preferredLLM && llmConfig) {
+      const preferred = llmConfig.find((l: any) => l.plataforma === preferredLLM);
+      if (preferred) activeLLM = preferred;
     }
 
     const platform = activeLLM.plataforma;

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,10 +6,9 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff } from "lucide-react";
+import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +22,14 @@ const ACCEPTED_TYPES = [
   "application/xml", "text/xml",
 ];
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+const LLM_LABELS: Record<string, string> = {
+  openai: "OpenAI",
+  google_gemini: "Google Gemini",
+  anthropic: "Anthropic",
+  deepseek: "DeepSeek",
+};
 
 type ExtractedItem = {
   descricao: string;
@@ -44,8 +50,11 @@ type FileResult = {
   status: "pending" | "processing" | "done" | "error";
   items: ExtractedItem[];
   error?: string;
-  provider?: string;
-  model?: string;
+};
+
+type ActiveLLM = {
+  id: string;
+  plataforma: string;
 };
 
 const ImportarDocumentos = () => {
@@ -55,6 +64,31 @@ const ImportarDocumentos = () => {
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [valuesVisible, setValuesVisible] = useState(true);
+  const [activeLLMs, setActiveLLMs] = useState<ActiveLLM[]>([]);
+  const [selectedLLM, setSelectedLLM] = useState<string>("");
+  const [loadingLLMs, setLoadingLLMs] = useState(true);
+
+  // Load active LLMs (excluding lovable_ai)
+  useEffect(() => {
+    if (!empresaId) return;
+    const fetchLLMs = async () => {
+      setLoadingLLMs(true);
+      const { data } = await supabase
+        .from("integracoes")
+        .select("id, plataforma")
+        .eq("empresa_id", empresaId)
+        .eq("ativo", true)
+        .in("plataforma", ["openai", "google_gemini", "anthropic", "deepseek"]);
+
+      const llms = (data || []) as ActiveLLM[];
+      setActiveLLMs(llms);
+      if (llms.length === 1) {
+        setSelectedLLM(llms[0].plataforma);
+      }
+      setLoadingLLMs(false);
+    };
+    fetchLLMs();
+  }, [empresaId]);
 
   const formatCurrency = (val: number) => {
     if (!valuesVisible) return "R$ •••••";
@@ -71,7 +105,6 @@ const ImportarDocumentos = () => {
   const readFileContent = async (file: File): Promise<string> => {
     const ext = file.name.split(".").pop()?.toLowerCase();
 
-    // For images, convert to base64 data description
     if (file.type.startsWith("image/")) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -84,20 +117,15 @@ const ImportarDocumentos = () => {
       });
     }
 
-    // For text/CSV
     if (file.type === "text/csv" || file.type === "text/plain" || ext === "csv" || ext === "txt") {
       return file.text();
     }
 
-    // For PDF - read as text (basic extraction)
     if (file.type === "application/pdf") {
-      // Send raw text representation
       const text = await file.text();
-      // PDF binary will be mostly unreadable, but we send what we can
       return `[Documento PDF: ${file.name}]\n\nConteúdo extraído (pode conter caracteres especiais de PDF):\n${text.substring(0, 10000)}`;
     }
 
-    // For Excel files
     if (ext === "xls" || ext === "xlsx") {
       return `[Planilha Excel: ${file.name}]\n\nNota: Arquivo Excel detectado. Extraia os dados tabulares visíveis.`;
     }
@@ -137,8 +165,22 @@ const ImportarDocumentos = () => {
     handleFilesSelected(e.dataTransfer.files);
   }, []);
 
+  const retryFile = (idx: number) => {
+    setFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "pending", items: [], error: undefined } : f));
+  };
+
   const processFiles = async () => {
     if (!empresaId) return;
+
+    if (activeLLMs.length === 0) {
+      toast.error("Configure uma integração de IA nas Integrações antes de continuar.");
+      return;
+    }
+
+    if (activeLLMs.length > 1 && !selectedLLM) {
+      toast.error("Selecione qual IA deseja usar para a análise.");
+      return;
+    }
 
     const input = fileInputRef.current;
     if (!input?.files?.length && files.every(f => f.status !== "pending")) {
@@ -155,7 +197,6 @@ const ImportarDocumentos = () => {
       setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: "processing" } : f));
 
       try {
-        // Find matching file from input
         let fileObj: File | undefined;
         if (inputFiles) {
           for (let j = 0; j < inputFiles.length; j++) {
@@ -172,8 +213,13 @@ const ImportarDocumentos = () => {
 
         const content = await readFileContent(fileObj);
 
+        const body: any = { content, fileName: files[i].fileName };
+        if (selectedLLM) {
+          body.preferredLLM = selectedLLM;
+        }
+
         const { data, error } = await supabase.functions.invoke("process-document-import", {
-          body: { content, fileName: files[i].fileName },
+          body,
         });
 
         if (error) throw error;
@@ -182,11 +228,11 @@ const ImportarDocumentos = () => {
         const items = (data?.data?.itens || []).map((item: any) => ({ ...item, selected: true }));
 
         setFiles(prev => prev.map((f, idx) =>
-          idx === i ? { ...f, status: "done", items, provider: data?.provider, model: data?.model } : f
+          idx === i ? { ...f, status: "done", items } : f
         ));
 
         if (items.length === 0) {
-          toast.info(`${files[i].fileName}: nenhum dado financeiro encontrado`);
+          toast.info(`${files[i].fileName}: nenhum dado relevante encontrado`);
         } else {
           toast.success(`${files[i].fileName}: ${items.length} item(ns) encontrado(s)`);
         }
@@ -290,7 +336,6 @@ const ImportarDocumentos = () => {
     if (successCount > 0) toast.success(`${successCount} item(ns) importado(s) com sucesso!`);
     if (errorCount > 0) toast.error(`${errorCount} item(ns) falharam ao importar`);
 
-    // Clear saved items
     if (successCount > 0) {
       setFiles(prev => prev.map(f => ({
         ...f,
@@ -301,6 +346,11 @@ const ImportarDocumentos = () => {
 
   const totalSelected = selectedItems.length;
   const totalValue = selectedItems.reduce((s, i) => s + (i.valor || 0), 0);
+  const hasNoLLM = !loadingLLMs && activeLLMs.length === 0;
+  const hasMultipleLLMs = activeLLMs.length > 1;
+  const hasPendingFiles = files.some(f => f.status === "pending");
+  const hasEmptyResults = files.some(f => f.status === "done" && f.items.length === 0);
+  const hasErrors = files.some(f => f.status === "error");
 
   return (
     <div className="space-y-6">
@@ -329,6 +379,57 @@ const ImportarDocumentos = () => {
         </TooltipProvider>
       </div>
 
+      {/* No LLM configured warning */}
+      {hasNoLLM && (
+        <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-400 shrink-0">
+                <Settings className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-medium mb-1">Configuração necessária</h3>
+                <p className="text-sm text-muted-foreground">
+                  Para utilizar a importação inteligente, é necessário configurar uma integração de Inteligência Artificial na página de{" "}
+                  <a href="/settings/integracoes" className="text-primary underline hover:text-primary/80">Integrações</a>.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* LLM Selection when multiple are active */}
+      {hasMultipleLLMs && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-primary/10 shrink-0">
+                <Brain className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium mb-1 text-sm">Selecione a IA para análise</h3>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Você possui mais de uma integração de IA configurada. Escolha qual deseja utilizar.
+                </p>
+                <Select value={selectedLLM} onValueChange={setSelectedLLM}>
+                  <SelectTrigger className="w-full max-w-xs">
+                    <SelectValue placeholder="Selecionar IA..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeLLMs.map(llm => (
+                      <SelectItem key={llm.id} value={llm.plataforma}>
+                        {LLM_LABELS[llm.plataforma] || llm.plataforma}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Upload Area */}
       <Card>
         <CardContent className="pt-6">
@@ -336,11 +437,12 @@ const ImportarDocumentos = () => {
             className={cn(
               "border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer",
               "hover:border-primary/50 hover:bg-primary/5",
-              "border-muted-foreground/25"
+              "border-muted-foreground/25",
+              hasNoLLM && "opacity-50 pointer-events-none"
             )}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => !hasNoLLM && fileInputRef.current?.click()}
             onDragOver={(e) => e.preventDefault()}
-            onDrop={handleDrop}
+            onDrop={hasNoLLM ? undefined : handleDrop}
           >
             <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
             <p className="text-sm font-medium mb-1">Arraste arquivos aqui ou clique para selecionar</p>
@@ -366,10 +468,16 @@ const ImportarDocumentos = () => {
                   <span className="text-sm flex-1 truncate">{file.fileName}</span>
                   {file.status === "pending" && <Badge variant="outline" className="text-xs">Pendente</Badge>}
                   {file.status === "processing" && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
-                  {file.status === "done" && (
+                  {file.status === "done" && file.items.length > 0 && (
                     <Badge className="bg-green-100 text-green-700 text-xs">
                       <CheckCircle2 className="h-3 w-3 mr-1" />
                       {file.items.length} item(ns)
+                    </Badge>
+                  )}
+                  {file.status === "done" && file.items.length === 0 && (
+                    <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      Sem dados
                     </Badge>
                   )}
                   {file.status === "error" && (
@@ -384,6 +492,19 @@ const ImportarDocumentos = () => {
                       </Tooltip>
                     </TooltipProvider>
                   )}
+                  {/* Retry button for errors or empty results */}
+                  {(file.status === "error" || (file.status === "done" && file.items.length === 0)) && (
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => retryFile(idx)}>
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Tentar novamente</p></TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeFile(idx)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -391,7 +512,10 @@ const ImportarDocumentos = () => {
               ))}
 
               <div className="flex gap-2 pt-2">
-                <Button onClick={processFiles} disabled={processing || files.every(f => f.status !== "pending")}>
+                <Button
+                  onClick={processFiles}
+                  disabled={processing || !hasPendingFiles || (hasMultipleLLMs && !selectedLLM)}
+                >
                   {processing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Brain className="h-4 w-4 mr-2" />}
                   {processing ? "Analisando..." : "Analisar com IA"}
                 </Button>
@@ -421,11 +545,6 @@ const ImportarDocumentos = () => {
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                       {getFileIcon(file.fileName)}
                       <span>{file.fileName}</span>
-                      {file.provider && (
-                        <Badge variant="outline" className="text-xs ml-auto">
-                          {file.provider} • {file.model}
-                        </Badge>
-                      )}
                     </div>
 
                     <div className="overflow-x-auto">
@@ -457,6 +576,12 @@ const ImportarDocumentos = () => {
                                 )}
                                 {item.categoria_sugerida && (
                                   <Badge variant="outline" className="text-[10px] mt-0.5">{item.categoria_sugerida}</Badge>
+                                )}
+                                {item.forma_pagamento && (
+                                  <Badge variant="outline" className="text-[10px] mt-0.5 ml-1">{item.forma_pagamento}</Badge>
+                                )}
+                                {item.observacoes && (
+                                  <div className="text-[10px] text-muted-foreground mt-0.5 italic">{item.observacoes}</div>
                                 )}
                               </td>
                               <td className="p-2 font-mono font-medium whitespace-nowrap">{formatCurrency(item.valor)}</td>
@@ -513,28 +638,6 @@ const ImportarDocumentos = () => {
                 </Button>
               </div>
             )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Info card when no files */}
-      {files.length === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-amber-100 text-amber-600 shrink-0">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-medium mb-1">Pré-requisito: LLM Configurada</h3>
-                <p className="text-sm text-muted-foreground">
-                  Para utilizar a importação inteligente, é necessário configurar uma integração de Inteligência Artificial
-                  (OpenAI, Google Gemini, Anthropic ou DeepSeek) na página de{" "}
-                  <a href="/settings/integracoes" className="text-primary underline">Integrações</a>.
-                  A Lovable AI não é utilizada para esta funcionalidade.
-                </p>
-              </div>
-            </div>
           </CardContent>
         </Card>
       )}
