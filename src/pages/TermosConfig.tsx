@@ -114,7 +114,7 @@ const TermosConfig = () => {
                   {previewTab === "termos" ? "Editar" : "Pré-visualizar"}
                 </Button>
               </div>
-              {previewTab === "termos" ? (
+              {isReadOnly || previewTab === "termos" ? (
                 <div className="border rounded-lg p-4 min-h-[400px] bg-muted/20">
                   {renderMarkdown(termos)}
                 </div>
@@ -127,12 +127,14 @@ const TermosConfig = () => {
                   placeholder="# Termos de Uso&#10;&#10;Escreva aqui os termos de uso..."
                 />
               )}
-              <div className="flex justify-end">
-                <Button onClick={() => handleSave("termos_uso", termos)} disabled={saving} className="gap-1.5">
-                  <Save className="h-4 w-4" />
-                  {saving ? "Salvando..." : "Salvar Termos"}
-                </Button>
-              </div>
+              {!isReadOnly && (
+                <div className="flex justify-end">
+                  <Button onClick={() => handleSave("termos_uso", termos)} disabled={saving} className="gap-1.5">
+                    <Save className="h-4 w-4" />
+                    {saving ? "Salvando..." : "Salvar Termos"}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
