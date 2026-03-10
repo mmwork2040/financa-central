@@ -203,7 +203,10 @@ const ConfiguracoesEmpresa = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="cnpj">CNPJ</Label>
-              <Input id="cnpj" value={empresa.cnpj} onChange={(e) => handleChange("cnpj", e.target.value)} placeholder="00.000.000/0000-00" disabled={!isAdmin} />
+              <Input id="cnpj" value={empresa.cnpj} onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, "").slice(0, 14);
+                handleChange("cnpj", documentInputMask(raw));
+              }} placeholder="00.000.000/0000-00" disabled={!isAdmin} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
