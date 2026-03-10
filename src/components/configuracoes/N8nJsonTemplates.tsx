@@ -1584,7 +1584,7 @@ const N8nJsonTemplates = () => {
       if (!alreadyHasUserIdInBody) {
         const entries = Object.entries(t.body);
         const empresaIdx = entries.findIndex(([k]) => k === "empresa_id");
-        entries.splice(empresaIdx + 1, 0, ["user_id", "{{ $fromAI('user_id', 'UUID do usuário para controle de permissões') }}"]);
+        entries.splice(empresaIdx + 1, 0, ["user_id", "{{ $fromAI('user_id', 'UUID do usuario para controle de permissoes') }}"]);
         newBody = Object.fromEntries(entries);
       }
 
