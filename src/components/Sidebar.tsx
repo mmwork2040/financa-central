@@ -604,7 +604,7 @@ export const Sidebar = () => {
 
       {/* Confirmation dialog for switching empresa */}
       <AlertDialog open={!!confirmSwitchEmpresa} onOpenChange={(open) => { if (!open) setConfirmSwitchEmpresa(null); }}>
-        <AlertDialogContent className="max-w-[calc(100vw-2rem)]">
+        <AlertDialogContent className="sm:max-w-md max-w-[calc(100vw-2rem)]">
           <AlertDialogHeader>
             <AlertDialogTitle>Trocar de empresa</AlertDialogTitle>
             <AlertDialogDescription>
