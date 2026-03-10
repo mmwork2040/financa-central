@@ -416,7 +416,7 @@ const VendasDigitais = () => {
               </Tooltip>
             </TooltipProvider>
           )}
-          <ExportDropdown onExport={(fmt) => exportVendas(filtered, fmt)} />
+          <ExportDropdown onExport={(fmt) => exportVendas(filtered, fmt, empresaExport)} />
           {canIncluir && (
             <Button onClick={() => { setEditingVenda(null); setFormOpen(true); }} size="sm">
               <Plus className="h-4 w-4 mr-1" /> Nova Venda
