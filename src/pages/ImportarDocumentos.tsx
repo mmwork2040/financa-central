@@ -50,6 +50,8 @@ type FileResult = {
   status: "pending" | "processing" | "done" | "error";
   items: ExtractedItem[];
   error?: string;
+  modelUsed?: string;
+  resumo?: string;
 };
 
 type ActiveLLM = {
