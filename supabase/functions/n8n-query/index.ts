@@ -1814,7 +1814,7 @@ Deno.serve(async (req) => {
         if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         
         // Check if lancamento is paid/received - block edit
-        const { data: lancExist } = await supabase.from("lancamentos").select("id, status, origem").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
+        const { data: lancExist } = await supabase.from("lancamentos").select("id, status, origem, recorrencia_grupo_id, recorrente").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
         if (!lancExist) return new Response(JSON.stringify({ error: "Lançamento não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         if (["pago", "recebido"].includes(lancExist.status)) {
           return new Response(JSON.stringify({ error: "Bloqueado", message: "Este lançamento já foi pago/recebido e não pode ser alterado." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
