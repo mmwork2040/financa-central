@@ -30,7 +30,19 @@ const FloatingChatButton: React.FC = () => {
       locale: "pt_BR",
       type: "standard",
       launcherTitle: "Falar com o Suporte",
+      darkMode: "auto",
     };
+
+    // Inject Chatwoot color overrides into the widget iframe
+    const injectStyles = () => {
+      const style = document.createElement("style");
+      style.textContent = `
+        .woot-widget-bubble { background: hsl(25 95% 53%) !important; }
+        .woot-widget-bubble:hover { background: hsl(25 95% 45%) !important; }
+      `;
+      document.head.appendChild(style);
+    };
+    injectStyles();
 
     const script = document.createElement("script");
     script.src = `${CHATWOOT_BASE_URL}/packs/js/sdk.js`;
