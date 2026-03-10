@@ -132,6 +132,8 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
     if (!address.cep?.trim() || !address.rua?.trim() || !address.cidade?.trim() || !address.estado?.trim()) {
       missing.push("Endereço completo (CEP, Rua, Cidade, Estado)");
     }
+    if (!fiscal.certificado_digital_url) missing.push("Certificado Digital A1 (.pfx)");
+    if (fiscal.certificado_digital_url && !certPassword?.trim()) missing.push("Senha do Certificado Digital");
     return missing;
   };
 
@@ -153,7 +155,7 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
           inscricao_municipal: fiscal.inscricao_municipal || null,
           regime_tributario: fiscal.regime_tributario || null,
           certificado_digital_url: fiscal.certificado_digital_url || null,
-          fiscal_configurado: true,
+          fiscal_configurado: !!(fiscal.certificado_digital_url),
           cep: address.cep || null,
           rua: address.rua || null,
           numero: address.numero || null,
@@ -183,7 +185,7 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
         }
       }
 
-      setFiscal(prev => ({ ...prev, fiscal_configurado: true }));
+      setFiscal(prev => ({ ...prev, fiscal_configurado: !!prev.certificado_digital_url }));
       toast.success("Configuração fiscal salva com sucesso!");
       onComplete?.();
     } catch (error: any) {
@@ -214,9 +216,13 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
               Dados necessários para emissão de notas fiscais (NF-e / NFS-e)
             </p>
           </div>
-          {fiscal.fiscal_configurado && (
+          {fiscal.fiscal_configurado && fiscal.certificado_digital_url ? (
             <Badge variant="outline" className="text-green-600 border-green-600">
               <CheckCircle2 className="h-3 w-3 mr-1" /> Configurado
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-amber-600 border-amber-600">
+              <AlertTriangle className="h-3 w-3 mr-1" /> Pendente
             </Badge>
           )}
         </div>
