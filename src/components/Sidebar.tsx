@@ -87,6 +87,7 @@ export const Sidebar = () => {
   const [configOpen, setConfigOpen] = useState(false);
   const [createEmpresaOpen, setCreateEmpresaOpen] = useState(false);
   const [creatingPessoal, setCreatingPessoal] = useState(false);
+  const [confirmSwitchEmpresa, setConfirmSwitchEmpresa] = useState<{ id: string; nome: string } | null>(null);
 
   const hasPessoalEmpresa = empresas.some(e => e.pessoal === true);
 
