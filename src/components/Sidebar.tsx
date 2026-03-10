@@ -175,7 +175,6 @@ export const Sidebar = () => {
   const showExpanded = isExpanded || isMobile;
   
   // Simplified menu structure
-  const TELEGRAM_URL = "https://t.me/meu_agente_financeiro_bot";
 
   const allMainItems = [
     { name: "Dashboard", icon: Home, path: "/dashboard" },
