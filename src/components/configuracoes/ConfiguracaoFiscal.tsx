@@ -155,7 +155,7 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
           inscricao_municipal: fiscal.inscricao_municipal || null,
           regime_tributario: fiscal.regime_tributario || null,
           certificado_digital_url: fiscal.certificado_digital_url || null,
-          fiscal_configurado: true,
+          fiscal_configurado: !!(fiscal.certificado_digital_url),
           cep: address.cep || null,
           rua: address.rua || null,
           numero: address.numero || null,
