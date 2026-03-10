@@ -23,6 +23,7 @@ const ConfiguracoesEmpresa = () => {
   const [isPessoal, setIsPessoal] = useState(false);
   const [empresa, setEmpresa] = useState({
     nome: "", cnpj: "", email: "", telefone: "", endereco: "", logo_url: "",
+    chat_lancamentos_url: "", chat_vendas_url: "",
   });
   const [address, setAddress] = useState<AddressData>({
     cep: "", rua: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
