@@ -2,13 +2,14 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Filter, Plus, Receipt, RefreshCw, Search } from "lucide-react";
+import { Eye, EyeOff, Filter, MessageCircle, Plus, Receipt, RefreshCw, Search } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import ExportDropdown from "@/components/common/ExportDropdown";
 import { useAuth } from "@/contexts/AuthContext";
 import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 import { cn } from "@/lib/utils";
+import { useChatUrls } from "@/hooks/useChatUrls";
 
 export const LancamentosHeader = () => {
   const { canPerformAction } = useAuth();
