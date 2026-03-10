@@ -287,6 +287,38 @@ const ConfiguracoesEmpresa = () => {
         </div>
       )}
 
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              Links de Chat
+            </CardTitle>
+            <CardDescription>Defina os links externos que serão abertos ao clicar no botão de chat nas páginas de lançamentos e vendas. Se vazio, o botão não será exibido.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="chat_lancamentos_url">Link do Chat - Lançamentos</Label>
+              <Input
+                id="chat_lancamentos_url"
+                value={empresa.chat_lancamentos_url}
+                onChange={(e) => handleChange("chat_lancamentos_url", e.target.value)}
+                placeholder="https://t.me/seu_bot ou https://wa.me/..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="chat_vendas_url">Link do Chat - Vendas</Label>
+              <Input
+                id="chat_vendas_url"
+                value={empresa.chat_vendas_url}
+                onChange={(e) => handleChange("chat_vendas_url", e.target.value)}
+                placeholder="https://t.me/seu_bot ou https://wa.me/..."
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {!isPessoal && <InviteCodesCard />}
 
       {!isPessoal && isAdmin && (

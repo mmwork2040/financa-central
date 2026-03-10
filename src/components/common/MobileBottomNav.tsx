@@ -17,7 +17,6 @@ type NavItem = {
 const navItems: NavItem[] = [
   { name: "Início", icon: Home, path: "/dashboard" },
   { name: "Lançamentos", icon: Receipt, path: "/transactions" },
-  { name: "Chat", icon: Send, externalUrl: TELEGRAM_URL },
   { name: "Anúncios", icon: Megaphone, path: "/anuncios" },
   { name: "Relatórios", icon: PieChart, path: "/reports" },
 ];

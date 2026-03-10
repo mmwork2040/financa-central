@@ -450,19 +450,7 @@ export const Sidebar = () => {
           {/* Main items */}
           {mainItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
 
-          {/* Lançamentos via Chat (Telegram) - only if plan allows */}
-          {planControles.chat_ia && (
-            <li>
-              <button
-                onClick={() => window.open(TELEGRAM_URL, "_blank")}
-                className={cn("sidebar-link w-full", !showExpanded && "justify-center px-0")}
-                title={!showExpanded ? "Lançamentos via Chat" : undefined}
-              >
-                <Send size={18} className="shrink-0" />
-                {showExpanded && <span className="text-sm">Lançamentos via Chat</span>}
-              </button>
-            </li>
-          )}
+          {/* Chat item removed - buttons now in Lançamentos and Vendas pages */}
           
           {/* Cadastros collapsible */}
           {showExpanded ? (
