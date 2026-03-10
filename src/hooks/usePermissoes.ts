@@ -22,7 +22,6 @@ const routeToScreenMap: Record<string, string> = {
   "/reports": "relatorios",
   "/projetos": "projetos",
   "/vendas-digitais": "vendas_digitais",
-  "/settings/integracoes": "integracoes",
   "/settings/webhooks": "webhooks",
   "/anuncios": "anuncios",
 };
