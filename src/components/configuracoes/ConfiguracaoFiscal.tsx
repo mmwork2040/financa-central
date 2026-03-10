@@ -69,7 +69,7 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
           inscricao_municipal: data.inscricao_municipal || "",
           regime_tributario: data.regime_tributario || "simplesNacional",
           certificado_digital_url: data.certificado_digital_url || "",
-          fiscal_configurado: data.fiscal_configurado || false,
+          fiscal_configurado: !!(data.fiscal_configurado && data.certificado_digital_url),
         });
         setAddress({
           cep: data.cep || "",
