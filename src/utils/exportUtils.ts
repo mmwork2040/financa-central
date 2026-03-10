@@ -1,5 +1,6 @@
 
 import { toast } from "sonner";
+import { generateStyledPDF } from "@/utils/pdfTemplate";
 
 /**
  * Generic function to export data to CSV format
