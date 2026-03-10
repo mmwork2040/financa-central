@@ -15,14 +15,17 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     // ─── AUTHENTICATION ───
-    // Require service role key or apikey header for all requests
+    // Accept service role key OR custom N8N_API_KEY
+    const n8nApiKey = Deno.env.get("N8N_API_KEY") || "";
     const authHeader = req.headers.get("Authorization");
     const apikeyHeader = req.headers.get("apikey") || req.headers.get("api-key");
     const token = authHeader?.replace("Bearer ", "") || apikeyHeader || "";
 
-    if (token !== serviceRoleKey) {
-      console.log(`🚫 [n8n-handler] Acesso negado. Token recebido (primeiros 20 chars): "${token.substring(0, 20)}..." | Expected (primeiros 20 chars): "${serviceRoleKey.substring(0, 20)}..." | Header api-key presente: ${!!req.headers.get("api-key")} | Header apikey presente: ${!!req.headers.get("apikey")} | Header Authorization presente: ${!!authHeader}`);
-      return new Response(JSON.stringify({ error: "Não autorizado. Envie a service_role_key no header Authorization ou apikey." }), {
+    const isAuthorized = token === serviceRoleKey || (n8nApiKey && token === n8nApiKey);
+
+    if (!isAuthorized) {
+      console.log("🚫 [n8n-handler] Acesso negado: credencial inválida");
+      return new Response(JSON.stringify({ error: "Não autorizado. Envie a api-key correta no header Authorization ou api-key." }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
