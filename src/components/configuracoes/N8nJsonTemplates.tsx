@@ -1534,7 +1534,12 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
       { name: "id", type: "string", required: true, description: "UUID da venda a excluir" },
     ],
-    body: { action: "excluir-venda", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", id: "{{ $fromAI('id', 'UUID da venda a excluir') }}" },
+    body: {
+      action: "excluir-venda",
+      empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}",
+      user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}",
+      id: "{{ $fromAI('id', 'UUID da venda a excluir') }}",
+    },
   },
 ];
 
