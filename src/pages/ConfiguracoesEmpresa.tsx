@@ -50,6 +50,8 @@ const ConfiguracoesEmpresa = () => {
           telefone: data.telefone ? phoneInputMask(data.telefone.replace(/\D/g, "")) : "",
           endereco: data.endereco || "",
           logo_url: data.logo_url || "",
+          chat_lancamentos_url: (data as any).chat_lancamentos_url || "",
+          chat_vendas_url: (data as any).chat_vendas_url || "",
         });
         setAddress({
           cep: (data as any).cep || "",
