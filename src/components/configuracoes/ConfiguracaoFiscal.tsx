@@ -216,9 +216,13 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
               Dados necessários para emissão de notas fiscais (NF-e / NFS-e)
             </p>
           </div>
-          {fiscal.fiscal_configurado && (
+          {fiscal.fiscal_configurado && fiscal.certificado_digital_url ? (
             <Badge variant="outline" className="text-green-600 border-green-600">
               <CheckCircle2 className="h-3 w-3 mr-1" /> Configurado
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-amber-600 border-amber-600">
+              <AlertTriangle className="h-3 w-3 mr-1" /> Pendente
             </Badge>
           )}
         </div>
