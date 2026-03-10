@@ -20,7 +20,7 @@ serve(async (req) => {
       });
     }
 
-    const { role, maxUses, expiresInDays, empresaId: targetEmpresaId, permissoes } = await req.json();
+    const { role, maxUses, expiresInDays, permissoes } = await req.json();
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
