@@ -179,6 +179,7 @@ export const Sidebar = () => {
     { name: "Dashboard", icon: Home, path: "/dashboard" },
     { name: "Lançamentos", icon: Files, path: "/transactions" },
     { name: "Vendas", icon: ShoppingCart, path: "/vendas-digitais", businessOnly: true },
+    { name: "Importar", icon: Files, path: "/importar-documentos" },
     { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true },
     { name: "Projetos", icon: Briefcase, path: "/projetos", businessOnly: true },
   ];
