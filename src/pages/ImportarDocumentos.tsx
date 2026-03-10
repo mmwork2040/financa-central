@@ -480,10 +480,15 @@ const ImportarDocumentos = () => {
                   {file.status === "pending" && <Badge variant="outline" className="text-xs">Pendente</Badge>}
                   {file.status === "processing" && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
                   {file.status === "done" && file.items.length > 0 && (
-                    <Badge className="bg-green-100 text-green-700 text-xs">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      {file.items.length} item(ns)
-                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      <Badge className="bg-green-100 text-green-700 text-xs dark:bg-green-900/30 dark:text-green-400">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        {file.items.length} item(ns)
+                      </Badge>
+                      {file.modelUsed && (
+                        <Badge variant="outline" className="text-[10px]">{file.modelUsed}</Badge>
+                      )}
+                    </div>
                   )}
                   {file.status === "done" && file.items.length === 0 && (
                     <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
