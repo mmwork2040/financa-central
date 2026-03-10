@@ -416,17 +416,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      const { error } = await supabase
-        .from("perfis")
-        .update({ empresa_id: targetEmpresaId })
-        .eq("id", user!.id);
+      // Use edge function with service role to bypass RLS
+      const { data: result, error: fnError } = await supabase.functions.invoke("switch-empresa", {
+        body: { empresaId: targetEmpresaId },
+      });
 
-      if (error) throw error;
+      if (fnError) throw fnError;
+      if (result?.error) throw new Error(result.error);
 
+      // Update local state
       setEmpresaId(targetEmpresaId);
-      setUserRole(isSuperAdmin ? 'super_admin' : (targetEmpresa?.role || userRole));
+      setUserRole(isSuperAdmin ? 'super_admin' : (result?.role || targetEmpresa?.role || userRole));
       setUserProfile((prev: any) => prev ? { ...prev, empresa_id: targetEmpresaId } : prev);
 
+      // Clear all cached queries and refetch
+      queryClient.clear();
       await queryClient.invalidateQueries();
 
       toast.success("Empresa alterada com sucesso.");
