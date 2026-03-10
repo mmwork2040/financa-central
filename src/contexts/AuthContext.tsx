@@ -403,9 +403,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const queryClient = useQueryClient();
+  const [switchingEmpresa, setSwitchingEmpresa] = useState(false);
 
   const switchEmpresa = async (targetEmpresaId: string) => {
     try {
+      setSwitchingEmpresa(true);
       const targetEmpresa = empresas.find(e => e.empresa_id === targetEmpresaId);
       if (!targetEmpresa && !isSuperAdmin) {
         toast.error("Você não pertence a esta empresa");
@@ -423,12 +425,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserRole(isSuperAdmin ? 'super_admin' : (targetEmpresa?.role || userRole));
       setUserProfile((prev: any) => prev ? { ...prev, empresa_id: targetEmpresaId } : prev);
 
-      queryClient.invalidateQueries();
+      await queryClient.invalidateQueries();
 
       toast.success("Empresa alterada com sucesso.");
       navigate("/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Erro ao trocar empresa");
+    } finally {
+      setSwitchingEmpresa(false);
     }
   };
 
