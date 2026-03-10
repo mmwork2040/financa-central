@@ -67,6 +67,7 @@ const VendasDigitais = () => {
   const [confirmEmitVenda, setConfirmEmitVenda] = useState<any>(null);
   const [spedyConfig, setSpedyConfig] = useState<any>(null);
   const [loadingSpedyConfig, setLoadingSpedyConfig] = useState(false);
+  const [fiscalReady, setFiscalReady] = useState<{ configurado: boolean; certificado: boolean } | null>(null);
 
   const { selectedMonth } = useMonthFilter();
   const prevMonthRef = useRef(selectedMonth);
@@ -89,6 +90,26 @@ const VendasDigitais = () => {
       setDataFim(endOfMonth(selectedMonth));
     }
   }, []);
+
+  // Fetch fiscal readiness on mount
+  useEffect(() => {
+    if (!empresaId) return;
+    (async () => {
+      try {
+        const { data } = await (supabase as any)
+          .from("empresas")
+          .select("fiscal_configurado, certificado_digital_url, spedy_company_id")
+          .eq("id", empresaId)
+          .single();
+        if (data) {
+          setFiscalReady({
+            configurado: !!data.fiscal_configurado,
+            certificado: !!data.certificado_digital_url,
+          });
+        }
+      } catch { /* ignore */ }
+    })();
+  }, [empresaId]);
 
   const handleSetDataInicio = (date: Date | undefined) => {
     setDataInicio(date);
@@ -211,6 +232,16 @@ const VendasDigitais = () => {
   const handleRequestEmitInvoice = async (vendaId: string) => {
     const venda = vendas.find(v => v.id === vendaId);
     if (!venda) return;
+
+    // Pre-check: fiscal config must be complete
+    if (fiscalReady && !fiscalReady.configurado) {
+      toast.error("Configure os dados fiscais da empresa antes de emitir notas. Vá em Configurações da Empresa → Configuração Fiscal.", { duration: 6000 });
+      return;
+    }
+    if (fiscalReady && !fiscalReady.certificado) {
+      toast.error("Envie o certificado digital (A1 .pfx) nas Configurações da Empresa antes de emitir notas.", { duration: 6000 });
+      return;
+    }
 
     const { ready, missing } = getInvoiceReadiness(venda);
     if (!ready) {
