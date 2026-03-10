@@ -253,10 +253,12 @@ export const Sidebar = () => {
           className={cn(
             "sidebar-link relative",
             indent && showExpanded && "pl-8",
+            !showExpanded && "justify-center px-0",
             isActive(item.path) && "active"
           )}
+          title={!showExpanded ? item.name : undefined}
         >
-          <item.icon size={18} />
+          <item.icon size={18} className="shrink-0" />
           {showExpanded && <span className="text-sm">{item.name}</span>}
           {item.path === "/users" && pendingCount > 0 && (
             <span className="absolute top-1 right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1">
