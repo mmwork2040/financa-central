@@ -10,13 +10,7 @@ interface ChatwootWidgetProps {
   loading: boolean;
 }
 
-declare global {
-  interface Window {
-    chatwootSettings?: Record<string, unknown>;
-    chatwootSDK?: { run: (opts: Record<string, unknown>) => void };
-    $chatwoot?: { toggle: (state?: string) => void; isOpen?: boolean };
-  }
-}
+// Window types already declared in FloatingChatButton.tsx
 
 const ChatwootWidget: React.FC<ChatwootWidgetProps> = ({ config, loading }) => {
   const navigate = useNavigate();
