@@ -2321,6 +2321,7 @@ Deno.serve(async (req) => {
               }
             }
           }
+          } // close fiscal else
         }
 
         result = {
