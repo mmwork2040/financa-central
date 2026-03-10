@@ -420,16 +420,18 @@ export const Sidebar = () => {
           {/* Main items */}
           {mainItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
 
-          {/* Lançamentos via Chat (Telegram) */}
-          <li>
-            <button
-              onClick={() => window.open(TELEGRAM_URL, "_blank")}
-              className="sidebar-link w-full"
-            >
-              <Send size={18} />
-              {showExpanded && <span className="text-sm">Lançamentos via Chat</span>}
-            </button>
-          </li>
+          {/* Lançamentos via Chat (Telegram) - only if plan allows */}
+          {planControles.chat_ia && (
+            <li>
+              <button
+                onClick={() => window.open(TELEGRAM_URL, "_blank")}
+                className="sidebar-link w-full"
+              >
+                <Send size={18} />
+                {showExpanded && <span className="text-sm">Lançamentos via Chat</span>}
+              </button>
+            </li>
+          )}
           
           {/* Cadastros collapsible */}
           {showExpanded ? (
