@@ -68,6 +68,7 @@ const VendasDigitais = () => {
   const [spedyConfig, setSpedyConfig] = useState<any>(null);
   const [loadingSpedyConfig, setLoadingSpedyConfig] = useState(false);
   const [fiscalReady, setFiscalReady] = useState<{ configurado: boolean; certificado: boolean } | null>(null);
+  const [missingFieldsVenda, setMissingFieldsVenda] = useState<{ venda: any; missing: string[] } | null>(null);
 
   const { selectedMonth } = useMonthFilter();
   const prevMonthRef = useRef(selectedMonth);
@@ -561,8 +562,14 @@ const VendasDigitais = () => {
                                   variant="ghost"
                                   size="icon"
                                   className={cn("h-6 w-6", ready ? "text-primary" : "text-amber-500 opacity-60")}
-                                  disabled={emittingId === venda.id || !ready}
-                                  onClick={() => handleRequestEmitInvoice(venda.id)}
+                                  disabled={emittingId === venda.id}
+                                  onClick={() => {
+                                    if (!ready) {
+                                      setMissingFieldsVenda({ venda, missing });
+                                    } else {
+                                      handleRequestEmitInvoice(venda.id);
+                                    }
+                                  }}
                                 >
                                   {emittingId === venda.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
                                 </Button>
@@ -571,10 +578,7 @@ const VendasDigitais = () => {
                                 {ready ? (
                                   <p className="text-xs">Emitir Nota Fiscal</p>
                                 ) : (
-                                  <div className="text-xs space-y-0.5">
-                                    <p className="font-semibold">Campos obrigatórios faltando:</p>
-                                    {missing.map(m => <p key={m}>• {m}</p>)}
-                                  </div>
+                                  <p className="text-xs">Clique para ver pendências</p>
                                 )}
                               </TooltipContent>
                             </Tooltip>
@@ -756,6 +760,63 @@ const VendasDigitais = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Missing Fields Modal */}
+      <Dialog open={!!missingFieldsVenda} onOpenChange={(o) => !o && setMissingFieldsVenda(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="h-5 w-5" /> Emissão Indisponível
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Para emitir a nota fiscal desta venda, os seguintes itens precisam ser preenchidos ou configurados:
+            </p>
+            <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+              {missingFieldsVenda?.missing.map((item, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm">
+                  <X className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+            {missingFieldsVenda && (!fiscalReady?.configurado || !fiscalReady?.certificado) && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <p className="text-xs text-muted-foreground">
+                  Para configurar os dados fiscais e enviar o certificado digital, acesse{" "}
+                  <button onClick={() => { setMissingFieldsVenda(null); navigate("/settings"); }} className="text-primary underline font-medium">
+                    Configurações da Empresa → Configuração Fiscal
+                  </button>.
+                </p>
+              </div>
+            )}
+            {missingFieldsVenda && validateInvoiceFields(missingFieldsVenda.venda).length > 0 && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <p className="text-xs text-muted-foreground">
+                  Para preencher os dados da venda, clique em{" "}
+                  <button
+                    onClick={() => {
+                      const v = missingFieldsVenda.venda;
+                      setMissingFieldsVenda(null);
+                      if (canAlterar && v.origem === "manual") {
+                        setEditingVenda(v);
+                        setFormOpen(true);
+                      }
+                    }}
+                    className="text-primary underline font-medium"
+                  >
+                    Editar Venda
+                  </button>.
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setMissingFieldsVenda(null)}>Fechar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
