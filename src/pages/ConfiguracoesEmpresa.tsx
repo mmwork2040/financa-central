@@ -96,6 +96,8 @@ const ConfiguracoesEmpresa = () => {
         cep: address.cep || null, rua: address.rua || null, numero: address.numero || null,
         complemento: address.complemento || null, bairro: address.bairro || null,
         cidade: address.cidade || null, estado: address.estado || null,
+        chat_lancamentos_url: empresa.chat_lancamentos_url?.trim() || null,
+        chat_vendas_url: empresa.chat_vendas_url?.trim() || null,
       }).eq("id", empresaId);
       if (error) throw error;
       toast.success("Dados da empresa atualizados com sucesso.");
