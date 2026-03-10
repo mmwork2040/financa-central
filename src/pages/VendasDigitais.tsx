@@ -67,6 +67,7 @@ const VendasDigitais = () => {
   const [confirmEmitVenda, setConfirmEmitVenda] = useState<any>(null);
   const [spedyConfig, setSpedyConfig] = useState<any>(null);
   const [loadingSpedyConfig, setLoadingSpedyConfig] = useState(false);
+  const [fiscalReady, setFiscalReady] = useState<{ configurado: boolean; certificado: boolean } | null>(null);
 
   const { selectedMonth } = useMonthFilter();
   const prevMonthRef = useRef(selectedMonth);
