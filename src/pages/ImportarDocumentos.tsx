@@ -228,9 +228,11 @@ const ImportarDocumentos = () => {
         if (data?.error) throw new Error(data.error);
 
         const items = (data?.data?.itens || []).map((item: any) => ({ ...item, selected: true }));
+        const modelLabel = data?.model || "desconhecido";
+        const resumo = data?.resumo || data?.data?.resumo || null;
 
         setFiles(prev => prev.map((f, idx) =>
-          idx === i ? { ...f, status: "done", items } : f
+          idx === i ? { ...f, status: "done", items, modelUsed: modelLabel, resumo } : f
         ));
 
         if (items.length === 0) {
