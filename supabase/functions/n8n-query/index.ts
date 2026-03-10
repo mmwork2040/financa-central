@@ -2259,6 +2259,23 @@ Deno.serve(async (req) => {
         let nfResult: any = null;
         const emitirNf = body.emitir_nota_fiscal === true || body.emitir_nota_fiscal === "true";
         if (emitirNf) {
+          // Validar pré-requisitos fiscais da empresa
+          const { data: empresaFiscal } = await supabase
+            .from("empresas")
+            .select("fiscal_configurado, certificado_digital_url")
+            .eq("id", empresa_id)
+            .single();
+
+          const fiscalMissing: string[] = [];
+          if (!empresaFiscal?.fiscal_configurado) fiscalMissing.push("Configuração fiscal da empresa não concluída");
+          if (!empresaFiscal?.certificado_digital_url) fiscalMissing.push("Certificado digital (A1 .pfx) não enviado");
+
+          if (fiscalMissing.length > 0) {
+            nfResult = {
+              emissao: "bloqueada",
+              motivo: `Pré-requisitos fiscais não atendidos: ${fiscalMissing.join("; ")}. Acesse o sistema em Configurações da Empresa → Configuração Fiscal para atualizar os dados.`,
+            };
+          } else {
           // Validar campos obrigatórios para NF
           const nfCamposFaltando: string[] = [];
           if (!cliente_venda) nfCamposFaltando.push("cliente");
