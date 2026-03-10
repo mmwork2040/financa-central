@@ -17,7 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMonthFilter } from "@/contexts/MonthFilterContext";
 import { useNavigate } from "react-router-dom";
 import ExportDropdown from "@/components/common/ExportDropdown";
-import { exportVendas } from "@/components/vendas/VendasExport";
+import { exportVendas, EmpresaVendaExportInfo } from "@/components/vendas/VendasExport";
 import VendaFormDialog from "@/components/vendas/VendaFormDialog";
 import {
   Dialog,
@@ -69,6 +69,14 @@ const VendasDigitais = () => {
   const [fiscalReady, setFiscalReady] = useState<{ configurado: boolean; certificado: boolean } | null>(null);
   const [missingFieldsVenda, setMissingFieldsVenda] = useState<{ venda: any; missing: string[] } | null>(null);
   const { chatVendasUrl } = useChatUrls();
+  const [empresaExport, setEmpresaExport] = useState<EmpresaVendaExportInfo | undefined>();
+
+  useEffect(() => {
+    if (!empresaId) return;
+    supabase.from("empresas").select("nome, cnpj, email, telefone, endereco").eq("id", empresaId).single().then(({ data }) => {
+      if (data) setEmpresaExport(data);
+    });
+  }, [empresaId]);
 
   const { selectedMonth } = useMonthFilter();
   const prevMonthRef = useRef(selectedMonth);
@@ -408,7 +416,7 @@ const VendasDigitais = () => {
               </Tooltip>
             </TooltipProvider>
           )}
-          <ExportDropdown onExport={(fmt) => exportVendas(filtered, fmt)} />
+          <ExportDropdown onExport={(fmt) => exportVendas(filtered, fmt, empresaExport)} />
           {canIncluir && (
             <Button onClick={() => { setEditingVenda(null); setFormOpen(true); }} size="sm">
               <Plus className="h-4 w-4 mr-1" /> Nova Venda
