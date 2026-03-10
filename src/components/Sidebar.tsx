@@ -33,7 +33,6 @@ import {
   ScrollText,
   Briefcase,
   Code2,
-  Code2,
   UserCircle,
   HelpCircle,
 } from "lucide-react";
