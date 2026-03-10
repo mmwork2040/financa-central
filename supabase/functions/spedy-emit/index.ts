@@ -109,6 +109,20 @@ serve(async (req) => {
       }
     }
 
+    // Validate empresa fiscal config
+    const { data: empresaData } = await supabase
+      .from("empresas")
+      .select("fiscal_configurado, certificado_digital_url, spedy_company_id")
+      .eq("id", venda.empresa_id)
+      .single();
+
+    if (!empresaData?.fiscal_configurado) {
+      return new Response(JSON.stringify({ error: "Configuração fiscal da empresa não foi concluída. Acesse Configurações da Empresa → Configuração Fiscal." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (!empresaData?.certificado_digital_url) {
+      return new Response(JSON.stringify({ error: "Certificado digital não enviado. Envie o certificado A1 (.pfx) nas Configurações da Empresa antes de emitir notas." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // Get Spedy config
     const { data: spedyConfig } = await supabase
       .from("spedy_config")
