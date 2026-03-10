@@ -561,7 +561,13 @@ const ImportarDocumentos = () => {
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                       {getFileIcon(file.fileName)}
                       <span>{file.fileName}</span>
+                      {file.modelUsed && (
+                        <Badge variant="outline" className="text-[10px] ml-auto">{file.modelUsed}</Badge>
+                      )}
                     </div>
+                    {file.resumo && (
+                      <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 italic">{file.resumo}</p>
+                    )}
 
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
