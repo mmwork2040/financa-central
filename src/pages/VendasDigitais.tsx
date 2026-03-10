@@ -225,7 +225,12 @@ const VendasDigitais = () => {
   };
 
   const getInvoiceReadiness = (venda: any) => {
-    const missing = validateInvoiceFields(venda);
+    const missing: string[] = [];
+    // Fiscal prerequisites (empresa)
+    if (!fiscalReady?.configurado) missing.push("Configuração fiscal da empresa");
+    if (!fiscalReady?.certificado) missing.push("Certificado digital (A1 .pfx)");
+    // Venda fields
+    missing.push(...validateInvoiceFields(venda));
     return { ready: missing.length === 0, missing };
   };
 
