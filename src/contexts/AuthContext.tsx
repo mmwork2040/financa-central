@@ -457,6 +457,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         login,
         logout,
         switchEmpresa,
+        switchingEmpresa,
         refreshProfile,
         planControles: isSuperAdmin ? defaultPlanoControles : planControles,
         isTrialActive: isSuperAdmin ? true : isTrialActive,
