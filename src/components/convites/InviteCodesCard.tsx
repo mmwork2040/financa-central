@@ -70,7 +70,6 @@ const InviteCodesCard = () => {
   const [maxUses, setMaxUses] = useState("5");
   const [expiresInDays, setExpiresInDays] = useState("7");
   const [allEmpresas, setAllEmpresas] = useState<Empresa[]>([]);
-  const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>("");
   const [deleteTarget, setDeleteTarget] = useState<InviteCode | null>(null);
   const [deletingCode, setDeletingCode] = useState(false);
   const [showPermissions, setShowPermissions] = useState(false);
@@ -84,13 +83,8 @@ const InviteCodesCard = () => {
   useEffect(() => {
     if (isAdmin) {
       fetchCodes();
-      if (isSuperAdmin) fetchAllEmpresas();
     }
-  }, [empresaId, isAdmin, isSuperAdmin]);
-
-  useEffect(() => {
-    if (empresaId) setSelectedEmpresaId(empresaId);
-  }, [empresaId]);
+  }, [empresaId, isAdmin]);
 
   const fetchAllEmpresas = async () => {
     try {
@@ -126,7 +120,6 @@ const InviteCodesCard = () => {
     try {
       const role = isAdminRole ? "admin" : "usuario";
       const body: any = { role, maxUses: parseInt(maxUses), expiresInDays: parseInt(expiresInDays) };
-      if (isSuperAdmin && selectedEmpresaId) body.empresaId = selectedEmpresaId;
       if (!isAdminRole) {
         const activePerms = screenPermissions.filter(p => p.pode_incluir || p.pode_alterar || p.pode_excluir);
         body.permissoes = activePerms.map(p => ({ tela: p.tela, pode_incluir: p.pode_incluir, pode_alterar: p.pode_alterar, pode_excluir: p.pode_excluir }));
@@ -197,17 +190,6 @@ const InviteCodesCard = () => {
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div className="flex flex-wrap items-end gap-3">
-            {isSuperAdmin && (
-              <div className="space-y-1">
-                <Label className="text-xs">Empresa</Label>
-                <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
-                  <SelectTrigger className="w-48"><SelectValue placeholder="Selecione a empresa" /></SelectTrigger>
-                  <SelectContent>
-                    {allEmpresas.map(e => (<SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <div className="flex items-center gap-2">
               <Label className="text-xs">Administrador</Label>
               <Switch checked={isAdminRole} onCheckedChange={setIsAdminRole} />
