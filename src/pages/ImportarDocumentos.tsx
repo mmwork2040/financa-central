@@ -50,6 +50,8 @@ type FileResult = {
   status: "pending" | "processing" | "done" | "error";
   items: ExtractedItem[];
   error?: string;
+  modelUsed?: string;
+  resumo?: string;
 };
 
 type ActiveLLM = {
@@ -226,9 +228,11 @@ const ImportarDocumentos = () => {
         if (data?.error) throw new Error(data.error);
 
         const items = (data?.data?.itens || []).map((item: any) => ({ ...item, selected: true }));
+        const modelLabel = data?.model || "desconhecido";
+        const resumo = data?.resumo || data?.data?.resumo || null;
 
         setFiles(prev => prev.map((f, idx) =>
-          idx === i ? { ...f, status: "done", items } : f
+          idx === i ? { ...f, status: "done", items, modelUsed: modelLabel, resumo } : f
         ));
 
         if (items.length === 0) {
@@ -462,6 +466,13 @@ const ImportarDocumentos = () => {
           {/* File list */}
           {files.length > 0 && (
             <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-muted-foreground">{files.length} arquivo(s)</span>
+                <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive hover:text-destructive" onClick={() => { setFiles([]); if (fileInputRef.current) fileInputRef.current.value = ""; }}>
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Limpar tudo
+                </Button>
+              </div>
               {files.map((file, idx) => (
                 <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
                   {getFileIcon(file.fileName)}
@@ -469,10 +480,15 @@ const ImportarDocumentos = () => {
                   {file.status === "pending" && <Badge variant="outline" className="text-xs">Pendente</Badge>}
                   {file.status === "processing" && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
                   {file.status === "done" && file.items.length > 0 && (
-                    <Badge className="bg-green-100 text-green-700 text-xs">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      {file.items.length} item(ns)
-                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      <Badge className="bg-green-100 text-green-700 text-xs dark:bg-green-900/30 dark:text-green-400">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        {file.items.length} item(ns)
+                      </Badge>
+                      {file.modelUsed && (
+                        <Badge variant="outline" className="text-[10px]">{file.modelUsed}</Badge>
+                      )}
+                    </div>
                   )}
                   {file.status === "done" && file.items.length === 0 && (
                     <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
@@ -545,7 +561,13 @@ const ImportarDocumentos = () => {
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                       {getFileIcon(file.fileName)}
                       <span>{file.fileName}</span>
+                      {file.modelUsed && (
+                        <Badge variant="outline" className="text-[10px] ml-auto">{file.modelUsed}</Badge>
+                      )}
                     </div>
+                    {file.resumo && (
+                      <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 italic">{file.resumo}</p>
+                    )}
 
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">

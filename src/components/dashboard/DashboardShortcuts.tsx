@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Users, Truck, BarChart3, Landmark, ShoppingCart, Tags } from "lucide-react";
+import { Plus, Users, Truck, BarChart3, Landmark, ShoppingCart, Tags, FileUp } from "lucide-react";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -14,17 +14,17 @@ interface Shortcut {
 
 const shortcuts: Shortcut[] = [
   { label: "Novo Lançamento", icon: Plus, action: "openModal" },
+  { label: "Importar", icon: FileUp, route: "/importar-documentos" },
   { label: "Clientes", icon: Users, route: "/clientes", businessOnly: true },
   { label: "Fornecedores", icon: Truck, route: "/fornecedores", businessOnly: true },
   { label: "Relatórios", icon: BarChart3, route: "/relatorios" },
-  { label: "Contas Bancárias", icon: Landmark, route: "/bank-accounts" },
   { label: "Vendas", icon: ShoppingCart, route: "/vendas-digitais", businessOnly: true },
 ];
 
 const pessoalShortcuts: Shortcut[] = [
   { label: "Novo Lançamento", icon: Plus, action: "openModal" },
+  { label: "Importar", icon: FileUp, route: "/importar-documentos" },
   { label: "Contas Bancárias", icon: Landmark, route: "/bank-accounts" },
-  { label: "Categorias", icon: Tags, route: "/categorias" },
   { label: "Relatórios", icon: BarChart3, route: "/relatorios" },
 ];
 

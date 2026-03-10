@@ -6,31 +6,62 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// LLM provider endpoints
-const LLM_ENDPOINTS: Record<string, string> = {
-  openai: "https://api.openai.com/v1/chat/completions",
-  google_gemini: "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-  anthropic: "https://api.anthropic.com/v1/messages",
-  deepseek: "https://api.deepseek.com/v1/chat/completions",
-};
-
-const SYSTEM_PROMPT = `Você é um assistente financeiro especializado em extrair dados de documentos fiscais e financeiros.
+const SYSTEM_PROMPT = `Você é um assistente financeiro RIGOROSO especializado em extrair dados de documentos fiscais e financeiros.
 Analise o conteúdo fornecido e extraia TODOS os itens/transações encontrados.
 
-Para cada item encontrado, retorne um objeto JSON com os seguintes campos:
-- descricao (string): descrição do item/serviço/produto
-- valor (number): valor numérico (positivo)
-- data (string|null): data no formato YYYY-MM-DD se encontrada
-- tipo_sugerido (string): "receita", "despesa" ou "investimento" - baseado no contexto
-- destino_sugerido (string): "lancamento" ou "venda" - se parece uma venda de produto digital use "venda"
-- categoria_sugerida (string|null): categoria inferida (ex: "Alimentação", "Transporte", "Software", etc.)
-- fornecedor_cliente (string|null): nome do fornecedor ou cliente se identificado
-- forma_pagamento (string|null): forma de pagamento se identificada (ex: "PIX", "Cartão de Crédito", "Boleto")
-- observacoes (string|null): qualquer informação adicional relevante
-- confianca (number): nível de confiança da extração de 0 a 100
+CRITÉRIOS RIGOROSOS DE EXTRAÇÃO — siga EXATAMENTE estas regras:
 
-Retorne SEMPRE um JSON válido no formato: { "itens": [...] }
-Se o documento não contiver dados financeiros, retorne: { "itens": [], "mensagem": "Nenhum dado financeiro encontrado" }`;
+══════════════════════════════════════════
+PARA LANÇAMENTOS FINANCEIROS (destino_sugerido = "lancamento"):
+══════════════════════════════════════════
+Campos OBRIGATÓRIOS que devem ser extraídos:
+- descricao (string): descrição clara do item/serviço. NUNCA genérica.
+- valor (number): valor numérico POSITIVO puro (ex: 1900.00). NUNCA use formato brasileiro "R$ 1.900,00".
+- tipo_sugerido: "receita" ou "despesa" — analise o contexto do documento para decidir.
+- data (string|null): data no formato YYYY-MM-DD. Se não encontrada, null.
+
+Campos OPCIONAIS que DEVEM ser extraídos se presentes no documento:
+- categoria_sugerida (string|null): categoria inferida (ex: "Alimentação", "Transporte", "Software", "Marketing", "Salários")
+- fornecedor_cliente (string|null): nome do fornecedor (se despesa) ou cliente (se receita)
+- forma_pagamento (string|null): PIX, Cartão de Crédito, Boleto, Dinheiro, Transferência, etc.
+- observacoes (string|null): informações adicionais relevantes (número de nota, CNPJ, etc.)
+
+══════════════════════════════════════════
+PARA VENDAS DIGITAIS (destino_sugerido = "venda"):
+══════════════════════════════════════════
+Use este destino quando o documento indicar venda de produto digital, plataforma de vendas, comissões, etc.
+
+Campos esperados:
+- descricao: nome do produto vendido
+- valor (number): valor bruto da venda (número puro)
+- data (string|null): data da venda YYYY-MM-DD
+- fornecedor_cliente (string|null): nome do cliente comprador
+- forma_pagamento (string|null): forma de pagamento detectada
+- observacoes (string|null): plataforma (hotmart, kiwify, eduzz, etc.), taxa, email do cliente, documento CPF/CNPJ
+
+══════════════════════════════════════════
+REGRAS DE QUALIDADE (OBRIGATÓRIAS):
+══════════════════════════════════════════
+1. NÃO invente dados. Se não encontrar, retorne null.
+2. valor SEMPRE número puro (500, 1900.00). NUNCA "R$ 1.900,00".
+3. Cada item deve ter confiança de 0 a 100:
+   - 90-100: dados explícitos no documento
+   - 70-89: dados inferidos com alta certeza
+   - 50-69: dados inferidos com alguma incerteza
+   - 0-49: chute — NÃO inclua itens abaixo de 50
+4. Se o documento contiver uma tabela, extraia CADA LINHA como um item separado.
+5. Se for uma nota fiscal, extraia: número da NF, CNPJ do emitente, data de emissão nos campos de observacoes.
+6. NUNCA agrupe múltiplos itens em um só. Cada produto/serviço = um item.
+
+Retorne SEMPRE um JSON válido no formato:
+{
+  "itens": [...],
+  "modelo_usado": "nome do modelo",
+  "resumo": "breve resumo do que foi encontrado no documento"
+}
+
+Se o documento não contiver dados financeiros, retorne:
+{ "itens": [], "modelo_usado": "nome do modelo", "resumo": "Nenhum dado financeiro identificado no documento" }`;
 
 async function callOpenAI(apiKey: string, model: string, content: string) {
   const resp = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -105,6 +136,13 @@ async function callDeepSeek(apiKey: string, model: string, content: string) {
   return data.choices[0].message.content;
 }
 
+const MODEL_DEFAULTS: Record<string, string> = {
+  openai: "gpt-4o",
+  google_gemini: "gemini-2.5-flash",
+  anthropic: "claude-3.5-sonnet",
+  deepseek: "deepseek-chat",
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -127,14 +165,12 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub as string;
 
-    // Get user empresa_id
     const { data: perfil } = await supabase.from("perfis").select("empresa_id").eq("id", userId).single();
     if (!perfil?.empresa_id) {
       return new Response(JSON.stringify({ error: "Empresa não encontrada" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const empresaId = perfil.empresa_id;
 
-    // Get the configured LLM (NOT lovable_ai)
     const { data: llmConfig } = await supabase
       .from("integracoes")
       .select("*")
@@ -142,7 +178,6 @@ serve(async (req) => {
       .eq("ativo", true)
       .in("plataforma", ["openai", "google_gemini", "anthropic", "deepseek"]);
 
-    // Get LLM padrao from empresas
     const { data: empresa } = await supabase.from("empresas").select("llm_padrao").eq("id", empresaId).single();
 
     let activeLLM = null;
@@ -164,7 +199,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Conteúdo do documento não fornecido" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // If user specified a preferred LLM, try to use it
     if (preferredLLM && llmConfig) {
       const preferred = llmConfig.find((l: any) => l.plataforma === preferredLLM);
       if (preferred) activeLLM = preferred;
@@ -172,45 +206,50 @@ serve(async (req) => {
 
     const platform = activeLLM.plataforma;
     const apiKey = activeLLM.api_key_encrypted;
-    const model = activeLLM.webhook_secret || "";
+    const customModel = activeLLM.webhook_secret || "";
+    const modelUsed = customModel || MODEL_DEFAULTS[platform] || "default";
     const docContent = `Arquivo: ${fileName || "documento"}\n\nConteúdo:\n${content}`;
 
     let result: string;
     switch (platform) {
       case "openai":
-        result = await callOpenAI(apiKey, model || "gpt-4o", docContent);
+        result = await callOpenAI(apiKey, modelUsed, docContent);
         break;
       case "google_gemini":
-        result = await callGemini(apiKey, model || "gemini-2.5-flash", docContent);
+        result = await callGemini(apiKey, modelUsed, docContent);
         break;
       case "anthropic":
-        result = await callAnthropic(apiKey, model || "claude-3.5-sonnet", docContent);
+        result = await callAnthropic(apiKey, modelUsed, docContent);
         break;
       case "deepseek":
-        result = await callDeepSeek(apiKey, model || "deepseek-chat", docContent);
+        result = await callDeepSeek(apiKey, modelUsed, docContent);
         break;
       default:
         throw new Error(`Provedor LLM não suportado: ${platform}`);
     }
 
-    // Parse the JSON result
     let parsed;
     try {
       parsed = JSON.parse(result);
     } catch {
-      // Try to extract JSON from the response
       const jsonMatch = result.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         parsed = JSON.parse(jsonMatch[0]);
       } else {
-        parsed = { itens: [], mensagem: "Não foi possível interpretar a resposta da IA" };
+        parsed = { itens: [], resumo: "Não foi possível interpretar a resposta da IA" };
       }
+    }
+
+    // Filter out low-confidence items (below 50)
+    if (parsed.itens && Array.isArray(parsed.itens)) {
+      parsed.itens = parsed.itens.filter((item: any) => (item.confianca ?? 100) >= 50);
     }
 
     return new Response(JSON.stringify({
       success: true,
       provider: platform,
-      model: model || "default",
+      model: modelUsed,
+      resumo: parsed.resumo || null,
       data: parsed,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
