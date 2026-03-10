@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     const token = authHeader?.replace("Bearer ", "") || apikeyHeader || "";
 
     if (token !== serviceRoleKey) {
-      console.log("🚫 [n8n-handler] Acesso negado: credencial inválida");
+      console.log(`🚫 [n8n-handler] Acesso negado. Token recebido (primeiros 20 chars): "${token.substring(0, 20)}..." | Expected (primeiros 20 chars): "${serviceRoleKey.substring(0, 20)}..." | Header api-key presente: ${!!req.headers.get("api-key")} | Header apikey presente: ${!!req.headers.get("apikey")} | Header Authorization presente: ${!!authHeader}`);
       return new Response(JSON.stringify({ error: "Não autorizado. Envie a service_role_key no header Authorization ou apikey." }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
