@@ -137,11 +137,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (status === 'trial' && trialStarted) {
       const trialEnd = new Date(trialStarted);
       trialEnd.setDate(trialEnd.getDate() + 30);
-      const now = new Date();
-      const diffMs = trialEnd.getTime() - now.getTime();
+      // Use Brasília timezone (UTC-3) for consistent day counting
+      const nowBrasilia = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      const trialEndBrasilia = new Date(trialEnd.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      const diffMs = trialEndBrasilia.getTime() - nowBrasilia.getTime();
       const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
       setTrialDaysRemaining(daysLeft);
-      if (now <= trialEnd) {
+      if (nowBrasilia <= trialEndBrasilia) {
         setIsTrialActive(true);
         setPlanControles(defaultPlanoControles);
         return;
