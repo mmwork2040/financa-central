@@ -68,29 +68,7 @@ const ChatwootWidget: React.FC<ChatwootWidgetProps> = ({ config, loading }) => {
   }
 
   if (!config) {
-    return (
-      <div>
-        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <MessageCircle className="h-5 w-5 text-primary" />
-          Chat com Suporte
-        </h2>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="flex items-center justify-center h-14 w-14 rounded-full bg-muted mb-4">
-              <MessageCircle className="h-7 w-7 text-muted-foreground" />
-            </div>
-            <h3 className="text-base font-semibold mb-1">Chat não configurado</h3>
-            <p className="text-sm text-muted-foreground max-w-md mb-4">
-              O Chatwoot ainda não foi configurado. Acesse as Integrações para ativar o canal de suporte.
-            </p>
-            <Button variant="outline" onClick={() => navigate("/integrations")}>
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Ir para Integrações
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return null;
   }
 
   return (
