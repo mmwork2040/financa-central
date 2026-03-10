@@ -6,7 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings } from "lucide-react";
+import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -358,6 +359,14 @@ const ImportarDocumentos = () => {
 
   return (
     <div className="space-y-6">
+      {/* Banner em desenvolvimento */}
+      <Alert className="border-amber-500/40 bg-amber-500/10">
+        <FlaskConical className="h-4 w-4 text-amber-600" />
+        <AlertTitle className="text-amber-700 dark:text-amber-400 font-semibold">Recurso em desenvolvimento</AlertTitle>
+        <AlertDescription className="text-amber-600/90 dark:text-amber-300/80 text-xs">
+          A importação inteligente de documentos está em fase de testes. Os resultados podem variar conforme o tipo e a qualidade do arquivo enviado. Utilize os dados extraídos como sugestão e revise antes de confirmar.
+        </AlertDescription>
+      </Alert>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
