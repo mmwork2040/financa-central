@@ -143,7 +143,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const diffMs = trialEndBrasilia.getTime() - nowBrasilia.getTime();
       const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
       setTrialDaysRemaining(daysLeft);
-      if (now <= trialEnd) {
+      if (nowBrasilia <= trialEndBrasilia) {
         setIsTrialActive(true);
         setPlanControles(defaultPlanoControles);
         return;
