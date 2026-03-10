@@ -43,6 +43,7 @@ import VerPlanos from "./pages/VerPlanos";
 import TermosPublico from "./pages/TermosPublico";
 import TermosConfig from "./pages/TermosConfig";
 import Suporte from "./pages/Suporte";
+import ImportarDocumentos from "./pages/ImportarDocumentos";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +78,7 @@ const App = () => {
                 <Route path="/settings/termos" element={<AppLayout><TermosConfig /></AppLayout>} />
                 <Route path="/suporte" element={<AppLayout><Suporte /></AppLayout>} />
                 <Route path="/vendas-digitais" element={<AppLayout><VendasDigitais /></AppLayout>} />
+                <Route path="/importar-documentos" element={<AppLayout><ImportarDocumentos /></AppLayout>} />
                 <Route path="/anuncios" element={<ProtectedRoute path="/anuncios"><AppLayout><AnunciosDigitais /></AppLayout></ProtectedRoute>} />
                 
                 {/* Permission-protected routes */}
