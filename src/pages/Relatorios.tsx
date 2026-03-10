@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { generateStyledPDF } from "@/utils/pdfTemplate";
+import { formatCurrency } from "@/utils/formatters";
 import { Eye, EyeOff, BarChart3, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -91,27 +93,31 @@ const RelatoriosContent = () => {
   };
 
   const generatePDF = () => {
-    try {
-      const printWindow = window.open("", "_blank");
-      if (!printWindow) throw new Error("Não foi possível abrir janela");
+    const totalRec = dataFluxo.reduce((s, i) => s + i.receitas, 0);
+    const totalDesp = dataFluxo.reduce((s, i) => s + i.despesas, 0);
+    const saldo = totalRec - totalDesp;
 
-      const totalReceitas = dataFluxo.reduce((s, i) => s + i.receitas, 0);
-      const totalDespesas = dataFluxo.reduce((s, i) => s + i.despesas, 0);
-      const saldo = totalReceitas - totalDespesas;
-
-      const rows = dataFluxo
-        .map(
-          i => `<tr><td>${i.name}</td><td class="r">${i.receitas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td><td class="d">${i.despesas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td><td class="${i.receitas - i.despesas >= 0 ? "r" : "d"}">${(i.receitas - i.despesas).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td></tr>`
-        )
-        .join("");
-
-      printWindow.document.write(`<!DOCTYPE html><html><head><title>Relatório</title><style>body{font-family:Arial;margin:20px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f2f2f2}.r{color:green}.d{color:red}</style></head><body><h1>Relatório Financeiro</h1><table><thead><tr><th>Período</th><th>Receitas</th><th>Despesas</th><th>Saldo</th></tr></thead><tbody>${rows}</tbody></table><p><strong>Total Receitas:</strong> ${totalReceitas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p><p><strong>Total Despesas:</strong> ${totalDespesas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p><p><strong>Saldo:</strong> ${saldo.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></body></html>`);
-      printWindow.document.close();
-      setTimeout(() => printWindow.print(), 500);
-      toast.success("Relatório gerado");
-    } catch (error: any) {
-      toast.error(`Erro: ${error.message}`);
-    }
+    generateStyledPDF({
+      title: "Relatório Financeiro",
+      subtitle: `Período: ${periodo === "mes" ? "Mensal" : periodo === "trimestre" ? "Trimestral" : periodo === "semestre" ? "Semestral" : periodo === "ano" ? "Anual" : "Personalizado"}`,
+      summaryCards: [
+        { label: "Total Receitas", value: formatCurrency(totalRec), color: "#16a34a" },
+        { label: "Total Despesas", value: formatCurrency(totalDesp), color: "#dc2626" },
+        { label: "Saldo", value: formatCurrency(saldo), color: saldo >= 0 ? "#16a34a" : "#dc2626" },
+      ],
+      columns: [
+        { key: "periodo", header: "Período" },
+        { key: "receitas", header: "Receitas", align: "right" },
+        { key: "despesas", header: "Despesas", align: "right" },
+        { key: "saldo", header: "Saldo", align: "right" },
+      ],
+      rows: dataFluxo.map(i => ({
+        periodo: i.name,
+        receitas: formatCurrency(i.receitas),
+        despesas: formatCurrency(i.despesas),
+        saldo: formatCurrency(i.receitas - i.despesas),
+      })),
+    });
   };
 
   const handleExport = (f: "csv" | "pdf") => (f === "csv" ? exportToCSV() : generatePDF());
