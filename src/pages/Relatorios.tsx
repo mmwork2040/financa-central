@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { generateStyledPDF } from "@/utils/pdfTemplate";
+import { formatCurrency } from "@/utils/formatters";
 import { Eye, EyeOff, BarChart3, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
