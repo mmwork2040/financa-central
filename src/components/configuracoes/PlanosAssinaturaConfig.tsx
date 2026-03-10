@@ -63,7 +63,14 @@ const PlanosAssinaturaConfig = () => {
         .select("*")
         .order("ordem");
       if (error) throw error;
-      setPlanos(data || []);
+      const periodoOrder: Record<string, number> = { mensal: 0, trimestral: 1, anual: 2 };
+      const sorted = (data || []).sort((a: any, b: any) => {
+        const pa = periodoOrder[a.periodo] ?? 9;
+        const pb = periodoOrder[b.periodo] ?? 9;
+        if (pa !== pb) return pa - pb;
+        return (a.ordem ?? 0) - (b.ordem ?? 0);
+      });
+      setPlanos(sorted);
     } catch (error: any) {
       toast.error(error.message || "Erro ao carregar planos");
     } finally {
