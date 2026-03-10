@@ -79,93 +79,34 @@ const Categorias = () => {
   };
 
   const exportToPDF = () => {
-    try {
-      const printWindow = window.open('', '_blank');
-      
-      if (!printWindow) {
-        throw new Error("Não foi possível abrir uma nova janela para o PDF.");
-      }
-      
-      const style = `
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          h1 { color: #333; text-align: center; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f2f2f2; }
-          .receita { color: green; }
-          .despesa { color: red; }
-          .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
-        </style>
-      `;
-      
-      const totalReceitas = filteredCategorias.filter(cat => cat.tipo === "receita").length;
-      const totalDespesas = filteredCategorias.filter(cat => cat.tipo === "despesa").length;
-      const totalInvestimentos = filteredCategorias.filter(cat => cat.tipo === "investimento").length;
-      
-      let tableRows = "";
-      
-      filteredCategorias.forEach(categoria => {
-        const tipoClass = categoria.tipo === "receita" ? "receita" : categoria.tipo === "investimento" ? "investimento" : "despesa";
-        const tipoFormatado = categoria.tipo === "receita" ? "Receita" : categoria.tipo === "investimento" ? "Investimento" : "Despesa";
-        
-        tableRows += `
-          <tr>
-            <td>${categoria.nome}</td>
-            <td class="${tipoClass}">${tipoFormatado}</td>
-          </tr>
-        `;
-      });
-      
-      const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Relatório de Categorias</title>
-          ${style}
-        </head>
-        <body>
-          <h1>Relatório de Categorias</h1>
-          <p>Data de geração: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-          
-          <div class="resumo">
-            <p><strong>Total de categorias:</strong> ${filteredCategorias.length}</p>
-            <p><strong>Categorias de receita:</strong> <span class="receita">${totalReceitas}</span></p>
-            <p><strong>Categorias de despesa:</strong> <span class="despesa">${totalDespesas}</span></p>
-            <p><strong>Categorias de investimento:</strong> <span style="color: blue;">${totalInvestimentos}</span></p>
-          </div>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Tipo</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
-          </table>
-          
-          <div class="footer">
-            <p>Sistema Financeiro - Relatório gerado automaticamente</p>
-          </div>
-        </body>
-        </html>
-      `;
-      
-      printWindow.document.open();
-      printWindow.document.write(html);
-      printWindow.document.close();
-      
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
-      
-      toast.success("Visualização PDF gerada com sucesso");
-    } catch (error: any) {
-      toast.error(`Erro ao gerar PDF: ${error.message}`);
-    }
+    const totalReceitas = filteredCategorias.filter(cat => cat.tipo === "receita").length;
+    const totalDespesas = filteredCategorias.filter(cat => cat.tipo === "despesa").length;
+    const totalInvestimentos = filteredCategorias.filter(cat => cat.tipo === "investimento").length;
+
+    generateStyledPDF({
+      title: "Relatório de Categorias",
+      summaryCards: [
+        { label: "Total de Categorias", value: String(filteredCategorias.length) },
+        { label: "Receitas", value: String(totalReceitas), color: "#16a34a" },
+        { label: "Despesas", value: String(totalDespesas), color: "#dc2626" },
+        { label: "Investimentos", value: String(totalInvestimentos), color: "#2563eb" },
+      ],
+      columns: [
+        { key: "nome", header: "Nome" },
+        { key: "tipo", header: "Tipo" },
+      ],
+      rows: filteredCategorias.map(c => ({
+        nome: c.nome,
+        tipo: c.tipo === "receita" ? "Receita" : c.tipo === "investimento" ? "Investimento" : "Despesa",
+      })),
+      badgeColumns: {
+        tipo: {
+          receita: { bg: "#dcfce7", color: "#166534" },
+          despesa: { bg: "#fee2e2", color: "#991b1b" },
+          investimento: { bg: "#dbeafe", color: "#1e40af" },
+        },
+      },
+    });
   };
 
   return (

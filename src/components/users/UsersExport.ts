@@ -1,10 +1,10 @@
 
 import { User } from "@/types/user.types";
 import { toast } from "sonner";
+import { generateStyledPDF } from "@/utils/pdfTemplate";
 
 export const exportToCSV = (users: User[], getPermissaoLabel: (permissao: string) => string) => {
   try {
-    // Preparar dados para CSV
     const headers = "Nome,E-mail,Permissão,Data de Cadastro\n";
     let csvContent = "data:text/csv;charset=utf-8," + headers;
     
@@ -20,7 +20,6 @@ export const exportToCSV = (users: User[], getPermissaoLabel: (permissao: string
       csvContent += row + "\n";
     });
     
-    // Criar e simular clique no link de download
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -36,91 +35,30 @@ export const exportToCSV = (users: User[], getPermissaoLabel: (permissao: string
   }
 };
 
-export const exportToPDF = (users: User[], getPermissaoLabel: (permissao: string) => string, getPermissaoClass: (permissao: string) => string) => {
-  try {
-    // Abrir nova janela para o PDF
-    const printWindow = window.open('', '_blank');
-    
-    if (!printWindow) {
-      throw new Error("Não foi possível abrir uma nova janela para o PDF.");
-    }
-    
-    // Estilo para o PDF
-    const style = `
-      <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #333; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .admin { color: #e53935; }
-        .editor { color: #1e88e5; }
-        .leitura { color: #43a047; }
-        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
-      </style>
-    `;
-    
-    // Gerar conteúdo da tabela
-    let tableRows = "";
-    
-    users.forEach(user => {
-      const permissao = getPermissaoLabel(user.permissao);
-      const permissaoClass = getPermissaoClass(user.permissao);
-      
-      tableRows += `
-        <tr>
-          <td>${user.nome}</td>
-          <td>${user.email}</td>
-          <td class="${user.permissao}">${permissao}</td>
-          <td>${new Date(user.created_at).toLocaleDateString()}</td>
-        </tr>
-      `;
-    });
-    
-    // Construir documento HTML para impressão/PDF
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Relatório de Usuários</title>
-        ${style}
-      </head>
-      <body>
-        <h1>Relatório de Usuários</h1>
-        <p>Data de geração: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-        
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>E-mail</th>
-              <th>Permissão</th>
-              <th>Data de Cadastro</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${tableRows}
-          </tbody>
-        </table>
-        
-        <div class="footer">
-          <p>Sistema Financeiro - Relatório gerado automaticamente</p>
-        </div>
-      </body>
-      </html>
-    `;
-    
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-    
-    // Dar tempo para os estilos carregarem antes de imprimir
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
-    
-    toast.success("Visualização PDF gerada com sucesso");
-  } catch (error: any) {
-    toast.error(`Erro ao gerar PDF: ${error.message}`);
-  }
+export const exportToPDF = (users: User[], getPermissaoLabel: (permissao: string) => string, _getPermissaoClass: (permissao: string) => string) => {
+  generateStyledPDF({
+    title: "Relatório de Usuários",
+    summaryCards: [
+      { label: "Total de Usuários", value: String(users.length) },
+    ],
+    columns: [
+      { key: "nome", header: "Nome" },
+      { key: "email", header: "E-mail" },
+      { key: "permissao", header: "Permissão" },
+      { key: "created_at", header: "Data de Cadastro" },
+    ],
+    rows: users.map(u => ({
+      nome: u.nome,
+      email: u.email,
+      permissao: getPermissaoLabel(u.permissao),
+      created_at: new Date(u.created_at).toLocaleDateString(),
+    })),
+    badgeColumns: {
+      permissao: {
+        administrador: { bg: "#fee2e2", color: "#991b1b" },
+        editor: { bg: "#dbeafe", color: "#1e40af" },
+        leitura: { bg: "#dcfce7", color: "#166534" },
+      },
+    },
+  });
 };
