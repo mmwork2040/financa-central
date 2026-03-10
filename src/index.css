@@ -202,6 +202,20 @@
   }
 }
 
+/* Chatwoot widget theme override */
+.woot-widget-bubble {
+  background: hsl(25 95% 53%) !important;
+}
+.woot-widget-bubble:hover {
+  background: hsl(25 95% 45%) !important;
+}
+.woot--bubble-holder .woot-widget-bubble svg {
+  color: #fff !important;
+}
+.woot-widget-holder iframe {
+  --chatwoot-primary: hsl(25, 95%, 53%);
+}
+
 /* Scroll reveal animations */
 .scroll-reveal {
   opacity: 0;
