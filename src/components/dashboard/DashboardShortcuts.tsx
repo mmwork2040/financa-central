@@ -23,8 +23,8 @@ const shortcuts: Shortcut[] = [
 
 const pessoalShortcuts: Shortcut[] = [
   { label: "Novo Lançamento", icon: Plus, action: "openModal" },
+  { label: "Importar", icon: FileUp, route: "/importar-documentos" },
   { label: "Contas Bancárias", icon: Landmark, route: "/bank-accounts" },
-  { label: "Categorias", icon: Tags, route: "/categorias" },
   { label: "Relatórios", icon: BarChart3, route: "/relatorios" },
 ];
 
