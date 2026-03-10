@@ -48,6 +48,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -70,7 +80,7 @@ import NotificacoesDropdown from "@/components/common/NotificacoesDropdown";
 export const Sidebar = () => {
   const { isExpanded, toggle } = useSidebar();
   const location = useLocation();
-  const { userProfile, logout, isSuperAdmin, isPessoal, empresaId, empresas, switchEmpresa, canAccessRoute, planControles } = useAuth();
+  const { userProfile, logout, isSuperAdmin, isPessoal, empresaId, empresas, switchEmpresa, switchingEmpresa, canAccessRoute, planControles } = useAuth();
   const navigate = useNavigate();
   
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
@@ -87,6 +97,7 @@ export const Sidebar = () => {
   const [configOpen, setConfigOpen] = useState(false);
   const [createEmpresaOpen, setCreateEmpresaOpen] = useState(false);
   const [creatingPessoal, setCreatingPessoal] = useState(false);
+  const [confirmSwitchEmpresa, setConfirmSwitchEmpresa] = useState<{ id: string; nome: string } | null>(null);
 
   const hasPessoalEmpresa = empresas.some(e => e.pessoal === true);
 
@@ -312,7 +323,9 @@ export const Sidebar = () => {
                   <DropdownMenuItem
                     key={emp.empresa_id}
                     onClick={() => {
-                      if (emp.empresa_id !== empresaId) switchEmpresa(emp.empresa_id);
+                      if (emp.empresa_id !== empresaId) {
+                        setConfirmSwitchEmpresa({ id: emp.empresa_id, nome: emp.empresa_nome });
+                      }
                     }}
                     className="flex items-center justify-between"
                   >
@@ -368,7 +381,9 @@ export const Sidebar = () => {
                   <DropdownMenuItem
                     key={emp.empresa_id}
                     onClick={() => {
-                      if (emp.empresa_id !== empresaId) switchEmpresa(emp.empresa_id);
+                      if (emp.empresa_id !== empresaId) {
+                        setConfirmSwitchEmpresa({ id: emp.empresa_id, nome: emp.empresa_nome });
+                      }
                     }}
                     className="flex items-center justify-between"
                   >
@@ -569,6 +584,43 @@ export const Sidebar = () => {
       )}
 
       <CreateEmpresaDialog open={createEmpresaOpen} onOpenChange={setCreateEmpresaOpen} />
+
+      {/* Confirmation dialog for switching empresa */}
+      <AlertDialog open={!!confirmSwitchEmpresa} onOpenChange={(open) => { if (!open) setConfirmSwitchEmpresa(null); }}>
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Trocar de empresa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja trocar para a empresa <span className="font-semibold text-foreground">{confirmSwitchEmpresa?.nome}</span>? Você será redirecionado ao painel desta empresa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={switchingEmpresa}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={switchingEmpresa}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (confirmSwitchEmpresa) {
+                  await switchEmpresa(confirmSwitchEmpresa.id);
+                  setConfirmSwitchEmpresa(null);
+                }
+              }}
+            >
+              {switchingEmpresa ? "Alternando..." : "Confirmar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Loading overlay during empresa switch */}
+      {switchingEmpresa && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="text-sm font-medium text-muted-foreground">Alternando empresa...</p>
+          </div>
+        </div>
+      )}
     </>
   );
 };
