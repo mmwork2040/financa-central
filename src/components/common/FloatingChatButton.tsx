@@ -29,7 +29,7 @@ const FloatingChatButton: React.FC = () => {
       position: "right",
       locale: "pt_BR",
       type: "standard",
-      launcherTitle: "Suporte",
+      launcherTitle: "Falar com o Suporte",
     };
 
     const script = document.createElement("script");
