@@ -1356,6 +1356,13 @@ Use quando o usuário solicitar:
 
 EMISSÃO DE NOTA FISCAL:
 - Pergunte ao usuário se deseja emitir a nota fiscal junto com a venda.
+
+⚠️ PRÉ-REQUISITOS FISCAIS (verificados automaticamente pelo sistema):
+  1. A empresa deve ter a Configuração Fiscal concluída (razão social, regime tributário, etc.)
+  2. O Certificado Digital A1 (.pfx) deve estar enviado no sistema.
+  Se algum desses pré-requisitos NÃO estiver atendido, a emissão será BLOQUEADA e o sistema retornará uma mensagem orientando o usuário a acessar Configurações da Empresa → Configuração Fiscal diretamente no sistema web.
+  IMPORTANTE: Esses dados NÃO podem ser configurados via chat/n8n. O usuário DEVE acessar o sistema para configurá-los.
+
 - Se emitir_nota_fiscal = true, os seguintes campos tornam-se OBRIGATÓRIOS:
   • cliente (nome do cliente)
   • cliente_documento (CPF ou CNPJ válido, mínimo 11 dígitos numéricos)
@@ -1380,7 +1387,7 @@ Parâmetros:
 - status (opcional — aprovada, pendente, reembolsada, cancelada. Padrão: aprovada)
 - data_venda (opcional — YYYY-MM-DD. Padrão: hoje)
 - observacoes (opcional)
-- emitir_nota_fiscal (opcional — true/false. Se true, valida campos obrigatórios para emissão)
+- emitir_nota_fiscal (opcional — true/false. Se true, valida campos obrigatórios E pré-requisitos fiscais para emissão)
 
 CONTROLE DE ACESSO: Requer permissão 'pode_incluir' na tela 'vendas_digitais'.
 Para emitir NF, também requer permissão 'pode_incluir' na tela 'emissao_nf'.
