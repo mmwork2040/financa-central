@@ -194,9 +194,9 @@ export const Sidebar = () => {
 
   const allConfigItems = [
     { name: isPessoal ? "Pessoal" : "Empresa", icon: isPessoal ? UserCircle : Building2, path: "/settings" },
-    { name: "Integrações", icon: Plug, path: "/settings/integracoes", businessOnly: true },
+    { name: "Integrações", icon: Plug, path: "/settings/integracoes" },
     ...(isSuperAdmin ? [{ name: "Assinaturas", icon: CreditCard, path: "/settings/assinaturas" }] : []),
-    ...(isSuperAdmin ? [{ name: "Termos e Políticas", icon: ScrollText, path: "/settings/termos" }] : []),
+    { name: "Termos e Políticas", icon: ScrollText, path: "/settings/termos" },
     ...(isSuperAdmin ? [{ name: "Webhooks", icon: Webhook, path: "/settings/webhooks" }] : []),
     ...(isSuperAdmin ? [{ name: "n8n Templates", icon: Code2, path: "/settings/n8n-templates" }] : []),
     ...(isSuperAdmin ? [{ name: "Logs", icon: ScrollText, path: "/settings/logs" }] : []),
