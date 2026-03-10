@@ -562,8 +562,14 @@ const VendasDigitais = () => {
                                   variant="ghost"
                                   size="icon"
                                   className={cn("h-6 w-6", ready ? "text-primary" : "text-amber-500 opacity-60")}
-                                  disabled={emittingId === venda.id || !ready}
-                                  onClick={() => handleRequestEmitInvoice(venda.id)}
+                                  disabled={emittingId === venda.id}
+                                  onClick={() => {
+                                    if (!ready) {
+                                      setMissingFieldsVenda({ venda, missing });
+                                    } else {
+                                      handleRequestEmitInvoice(venda.id);
+                                    }
+                                  }}
                                 >
                                   {emittingId === venda.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
                                 </Button>
@@ -572,10 +578,7 @@ const VendasDigitais = () => {
                                 {ready ? (
                                   <p className="text-xs">Emitir Nota Fiscal</p>
                                 ) : (
-                                  <div className="text-xs space-y-0.5">
-                                    <p className="font-semibold">Campos obrigatórios faltando:</p>
-                                    {missing.map(m => <p key={m}>• {m}</p>)}
-                                  </div>
+                                  <p className="text-xs">Clique para ver pendências</p>
                                 )}
                               </TooltipContent>
                             </Tooltip>
