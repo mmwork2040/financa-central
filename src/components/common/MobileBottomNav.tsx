@@ -1,11 +1,9 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Receipt, PieChart, Send, Megaphone } from "lucide-react";
+import { Home, Receipt, PieChart, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
-
-const TELEGRAM_URL = "https://t.me/meu_agente_financeiro_bot";
 
 type NavItem = {
   name: string;
