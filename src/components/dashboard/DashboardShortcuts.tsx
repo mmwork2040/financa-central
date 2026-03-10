@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Users, Truck, BarChart3, Landmark, ShoppingCart, Tags } from "lucide-react";
+import { Plus, Users, Truck, BarChart3, Landmark, ShoppingCart, Tags, FileUp } from "lucide-react";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import { useAuth } from "@/contexts/AuthContext";
 
