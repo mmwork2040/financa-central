@@ -13,7 +13,7 @@ import InviteCodesCard from "@/components/convites/InviteCodesCard";
 import ConfiguracaoFiscal from "@/components/configuracoes/ConfiguracaoFiscal";
 
 import CepAddressFields, { AddressData } from "@/components/common/CepAddressFields";
-import { phoneInputMask } from "@/utils/format";
+import { phoneInputMask, documentInputMask } from "@/utils/format";
 
 const ConfiguracoesEmpresa = () => {
   const { empresaId, userRole, isSuperAdmin } = useAuth();
