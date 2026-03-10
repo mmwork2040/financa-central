@@ -323,6 +323,8 @@ export type Database = {
           bairro: string | null
           cep: string | null
           certificado_digital_url: string | null
+          chat_lancamentos_url: string | null
+          chat_vendas_url: string | null
           cidade: string | null
           cnpj: string | null
           complemento: string | null
@@ -352,6 +354,8 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           certificado_digital_url?: string | null
+          chat_lancamentos_url?: string | null
+          chat_vendas_url?: string | null
           cidade?: string | null
           cnpj?: string | null
           complemento?: string | null
@@ -381,6 +385,8 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           certificado_digital_url?: string | null
+          chat_lancamentos_url?: string | null
+          chat_vendas_url?: string | null
           cidade?: string | null
           cnpj?: string | null
           complemento?: string | null
