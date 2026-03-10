@@ -83,13 +83,8 @@ const InviteCodesCard = () => {
   useEffect(() => {
     if (isAdmin) {
       fetchCodes();
-      if (isSuperAdmin) fetchAllEmpresas();
     }
-  }, [empresaId, isAdmin, isSuperAdmin]);
-
-  useEffect(() => {
-    if (empresaId) setSelectedEmpresaId(empresaId);
-  }, [empresaId]);
+  }, [empresaId, isAdmin]);
 
   const fetchAllEmpresas = async () => {
     try {
