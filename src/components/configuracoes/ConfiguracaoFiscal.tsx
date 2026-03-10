@@ -132,6 +132,8 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
     if (!address.cep?.trim() || !address.rua?.trim() || !address.cidade?.trim() || !address.estado?.trim()) {
       missing.push("Endereço completo (CEP, Rua, Cidade, Estado)");
     }
+    if (!fiscal.certificado_digital_url) missing.push("Certificado Digital A1 (.pfx)");
+    if (fiscal.certificado_digital_url && !certPassword?.trim()) missing.push("Senha do Certificado Digital");
     return missing;
   };
 
