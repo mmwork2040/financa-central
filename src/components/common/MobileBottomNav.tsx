@@ -8,8 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 type NavItem = {
   name: string;
   icon: React.ElementType;
-  path?: string;
-  externalUrl?: string;
+  path: string;
 };
 
 const navItems: NavItem[] = [
