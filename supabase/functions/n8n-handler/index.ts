@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     // ─── AUTHENTICATION ───
     // Require service role key or apikey header for all requests
     const authHeader = req.headers.get("Authorization");
-    const apikeyHeader = req.headers.get("apikey");
+    const apikeyHeader = req.headers.get("apikey") || req.headers.get("api-key");
     const token = authHeader?.replace("Bearer ", "") || apikeyHeader || "";
 
     if (token !== serviceRoleKey) {
