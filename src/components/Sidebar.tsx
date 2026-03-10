@@ -15,6 +15,7 @@ import {
   Building2, 
   CreditCard, 
   Files, 
+  FileUp,
   PieChart,
   LogOut,
   Settings,
