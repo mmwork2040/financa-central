@@ -2259,6 +2259,23 @@ Deno.serve(async (req) => {
         let nfResult: any = null;
         const emitirNf = body.emitir_nota_fiscal === true || body.emitir_nota_fiscal === "true";
         if (emitirNf) {
+          // Validar pré-requisitos fiscais da empresa
+          const { data: empresaFiscal } = await supabase
+            .from("empresas")
+            .select("fiscal_configurado, certificado_digital_url")
+            .eq("id", empresa_id)
+            .single();
+
+          const fiscalMissing: string[] = [];
+          if (!empresaFiscal?.fiscal_configurado) fiscalMissing.push("Configuração fiscal da empresa não concluída");
+          if (!empresaFiscal?.certificado_digital_url) fiscalMissing.push("Certificado digital (A1 .pfx) não enviado");
+
+          if (fiscalMissing.length > 0) {
+            nfResult = {
+              emissao: "bloqueada",
+              motivo: `Pré-requisitos fiscais não atendidos: ${fiscalMissing.join("; ")}. Acesse o sistema em Configurações da Empresa → Configuração Fiscal para atualizar os dados.`,
+            };
+          } else {
           // Validar campos obrigatórios para NF
           const nfCamposFaltando: string[] = [];
           if (!cliente_venda) nfCamposFaltando.push("cliente");
@@ -2304,6 +2321,7 @@ Deno.serve(async (req) => {
               }
             }
           }
+          } // close fiscal else
         }
 
         result = {
@@ -2371,6 +2389,23 @@ Deno.serve(async (req) => {
         let nfEditResult: any = null;
         const emitirNfEdit = body.emitir_nota_fiscal === true || body.emitir_nota_fiscal === "true";
         if (emitirNfEdit) {
+          // Validar pré-requisitos fiscais da empresa
+          const { data: empresaFiscalEdit } = await supabase
+            .from("empresas")
+            .select("fiscal_configurado, certificado_digital_url")
+            .eq("id", empresa_id)
+            .single();
+
+          const fiscalMissingEdit: string[] = [];
+          if (!empresaFiscalEdit?.fiscal_configurado) fiscalMissingEdit.push("Configuração fiscal da empresa não concluída");
+          if (!empresaFiscalEdit?.certificado_digital_url) fiscalMissingEdit.push("Certificado digital (A1 .pfx) não enviado");
+
+          if (fiscalMissingEdit.length > 0) {
+            nfEditResult = {
+              emissao: "bloqueada",
+              motivo: `Pré-requisitos fiscais não atendidos: ${fiscalMissingEdit.join("; ")}. Acesse o sistema em Configurações da Empresa → Configuração Fiscal para atualizar os dados.`,
+            };
+          } else {
           const nfCampos: string[] = [];
           if (!updVenda.cliente) nfCampos.push("cliente");
           if (!updVenda.cliente_documento) nfCampos.push("cliente_documento");
@@ -2394,6 +2429,7 @@ Deno.serve(async (req) => {
               nfEditResult = { emissao: "erro", motivo: nfErr.message };
             }
           }
+          } // close fiscal else
         }
 
         result = {
