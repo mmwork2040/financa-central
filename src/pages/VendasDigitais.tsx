@@ -17,7 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMonthFilter } from "@/contexts/MonthFilterContext";
 import { useNavigate } from "react-router-dom";
 import ExportDropdown from "@/components/common/ExportDropdown";
-import { exportVendas } from "@/components/vendas/VendasExport";
+import { exportVendas, EmpresaVendaExportInfo } from "@/components/vendas/VendasExport";
 import VendaFormDialog from "@/components/vendas/VendaFormDialog";
 import {
   Dialog,
