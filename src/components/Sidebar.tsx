@@ -523,9 +523,10 @@ export const Sidebar = () => {
       <div className="px-2 py-3 border-t border-sidebar-border">
         <button 
           onClick={handleLogout}
-          className={cn("sidebar-link w-full", !showExpanded && "justify-center")}
+          className={cn("sidebar-link w-full", !showExpanded && "justify-center px-0")}
+          title={!showExpanded ? "Sair" : undefined}
         >
-          <LogOut size={18} />
+          <LogOut size={18} className="shrink-0" />
           {showExpanded && <span className="text-sm">Sair</span>}
         </button>
       </div>
