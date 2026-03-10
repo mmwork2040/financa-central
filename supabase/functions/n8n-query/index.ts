@@ -2139,6 +2139,264 @@ Deno.serve(async (req) => {
         break;
       }
 
+      // ─── CRIAR VENDA DIGITAL ───
+      case "criar-venda": {
+        const plataforma = sanitize(body.plataforma);
+        const valor_bruto_raw = body.valor_bruto;
+        
+        if (!plataforma) {
+          return new Response(JSON.stringify({ error: "plataforma é obrigatório" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (valor_bruto_raw === undefined || valor_bruto_raw === null || valor_bruto_raw === "") {
+          return new Response(JSON.stringify({ error: "valor_bruto é obrigatório" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const valor_bruto = Number(valor_bruto_raw);
+        if (isNaN(valor_bruto) || valor_bruto <= 0) {
+          return new Response(JSON.stringify({ error: "valor_bruto deve ser um número positivo" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const taxa_venda = sanitize(body.taxa) !== undefined ? Number(body.taxa) : 0;
+        const valor_liquido_raw = sanitize(body.valor_liquido);
+        const valor_liquido = valor_liquido_raw ? Number(valor_liquido_raw) : valor_bruto - (isNaN(taxa_venda) ? 0 : taxa_venda);
+
+        const vendaInsert: any = {
+          empresa_id,
+          plataforma: plataforma.toLowerCase(),
+          valor_bruto,
+          taxa: isNaN(taxa_venda) ? 0 : taxa_venda,
+          valor_liquido,
+          status: sanitize(body.status) || "aprovada",
+          origem: "manual",
+        };
+
+        const produto = normalizeText(sanitize(body.produto), "nome");
+        const cliente_venda = normalizeText(sanitize(body.cliente), "nome");
+        const cliente_email_v = sanitize(body.cliente_email);
+        const cliente_telefone_v = sanitize(body.cliente_telefone);
+        const cliente_documento_v = sanitize(body.cliente_documento);
+        const cliente_endereco_v = sanitize(body.cliente_endereco);
+        const data_venda = sanitize(body.data_venda);
+        const observacoes_v = sanitize(body.observacoes);
+
+        if (produto) vendaInsert.produto = produto;
+        if (cliente_venda) vendaInsert.cliente = cliente_venda;
+        if (cliente_email_v) vendaInsert.cliente_email = cliente_email_v;
+        if (cliente_telefone_v) vendaInsert.cliente_telefone = cliente_telefone_v;
+        if (cliente_documento_v) vendaInsert.cliente_documento = cliente_documento_v;
+        if (cliente_endereco_v) vendaInsert.cliente_endereco = cliente_endereco_v;
+        if (data_venda) vendaInsert.data_venda = data_venda;
+        if (observacoes_v) vendaInsert.observacoes = observacoes_v;
+
+        // Vincular a cliente existente por nome/documento se possível
+        if (cliente_venda) {
+          let clienteQuery = supabase.from("clientes").select("id").eq("empresa_id", empresa_id);
+          if (cliente_documento_v) {
+            clienteQuery = clienteQuery.eq("cpf_cnpj", cliente_documento_v);
+          } else {
+            clienteQuery = clienteQuery.ilike("nome", cliente_venda.trim());
+          }
+          const { data: clienteExist } = await clienteQuery.limit(1).maybeSingle();
+          if (clienteExist) vendaInsert.cliente_id = clienteExist.id;
+        }
+
+        const { data: newVenda, error: vendaErr } = await supabase
+          .from("vendas_digitais")
+          .insert(vendaInsert)
+          .select("*")
+          .single();
+
+        if (vendaErr) throw vendaErr;
+
+        // Emissão de NF se solicitado
+        let nfResult: any = null;
+        const emitirNf = body.emitir_nota_fiscal === true || body.emitir_nota_fiscal === "true";
+        if (emitirNf) {
+          // Validar campos obrigatórios para NF
+          const nfCamposFaltando: string[] = [];
+          if (!cliente_venda) nfCamposFaltando.push("cliente");
+          if (!cliente_documento_v) nfCamposFaltando.push("cliente_documento");
+          if (!produto) nfCamposFaltando.push("produto");
+          if (!valor_bruto) nfCamposFaltando.push("valor_bruto");
+
+          if (nfCamposFaltando.length > 0) {
+            nfResult = { emissao: "bloqueada", motivo: `Campos obrigatórios para NF ausentes: ${nfCamposFaltando.join(", ")}` };
+          } else {
+            // Verificar permissão de emissão de NF
+            const { data: nfPerm } = await supabase
+              .from("permissoes")
+              .select("pode_incluir")
+              .eq("perfis_id", user_id)
+              .eq("tela", "emissao_nf")
+              .maybeSingle();
+
+            const { data: userRoleNf } = await supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", user_id)
+              .eq("empresa_id", empresa_id)
+              .maybeSingle();
+            const isAdminNf = userRoleNf?.role === "admin" || userRoleNf?.role === "super_admin";
+
+            if (!isAdminNf && !nfPerm?.pode_incluir) {
+              nfResult = { emissao: "bloqueada", motivo: "Sem permissão para emitir nota fiscal" };
+            } else {
+              // Disparar emissão via spedy-emit
+              try {
+                const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+                const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+                const emitResp = await fetch(`${supabaseUrl}/functions/v1/spedy-emit`, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+                  body: JSON.stringify({ venda_id: newVenda.id }),
+                });
+                const emitData = await emitResp.json();
+                nfResult = { emissao: emitResp.ok ? "solicitada" : "erro", detalhes: emitData };
+              } catch (nfErr: any) {
+                nfResult = { emissao: "erro", motivo: nfErr.message };
+              }
+            }
+          }
+        }
+
+        result = {
+          venda: newVenda,
+          ...(nfResult ? { nota_fiscal: nfResult } : {}),
+        };
+        break;
+      }
+
+      // ─── EDITAR VENDA DIGITAL ───
+      case "editar-venda": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+        // Verificar se a venda existe e é manual
+        const { data: vendaExist } = await supabase
+          .from("vendas_digitais")
+          .select("id, origem, invoice_status")
+          .eq("id", id)
+          .eq("empresa_id", empresa_id)
+          .maybeSingle();
+
+        if (!vendaExist) return new Response(JSON.stringify({ error: "Venda não encontrada" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (vendaExist.origem !== "manual") {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Vendas de origem automática (webhook/integração) não podem ser editadas." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const updateVenda: any = {};
+        const vendaFields = ["plataforma", "produto", "cliente", "cliente_email", "cliente_telefone", "cliente_documento", "cliente_endereco", "status", "data_venda", "observacoes"];
+        for (const f of vendaFields) {
+          const v = sanitize(body[f]);
+          if (v !== undefined) {
+            updateVenda[f] = (f === "produto" || f === "cliente") ? normalizeText(v, "nome") : v;
+          }
+        }
+        if (body.valor_bruto !== undefined && sanitize(body.valor_bruto) !== undefined) updateVenda.valor_bruto = Number(body.valor_bruto);
+        if (body.taxa !== undefined && sanitize(body.taxa) !== undefined) updateVenda.taxa = Number(body.taxa);
+        if (body.valor_liquido !== undefined && sanitize(body.valor_liquido) !== undefined) updateVenda.valor_liquido = Number(body.valor_liquido);
+
+        // Auto-calcular valor_liquido se valor_bruto ou taxa mudaram
+        if ((updateVenda.valor_bruto !== undefined || updateVenda.taxa !== undefined) && updateVenda.valor_liquido === undefined) {
+          const { data: vendaAtual } = await supabase.from("vendas_digitais").select("valor_bruto, taxa").eq("id", id).single();
+          if (vendaAtual) {
+            const vb = updateVenda.valor_bruto ?? Number(vendaAtual.valor_bruto);
+            const tx = updateVenda.taxa ?? Number(vendaAtual.taxa);
+            updateVenda.valor_liquido = vb - tx;
+          }
+        }
+
+        if (Object.keys(updateVenda).length === 0) {
+          return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const { data: updVenda, error: updVendaErr } = await supabase
+          .from("vendas_digitais")
+          .update(updateVenda)
+          .eq("id", id)
+          .eq("empresa_id", empresa_id)
+          .select("*")
+          .single();
+
+        if (updVendaErr) throw updVendaErr;
+
+        // Emissão de NF se solicitado
+        let nfEditResult: any = null;
+        const emitirNfEdit = body.emitir_nota_fiscal === true || body.emitir_nota_fiscal === "true";
+        if (emitirNfEdit) {
+          const nfCampos: string[] = [];
+          if (!updVenda.cliente) nfCampos.push("cliente");
+          if (!updVenda.cliente_documento) nfCampos.push("cliente_documento");
+          if (!updVenda.produto) nfCampos.push("produto");
+          if (!updVenda.valor_bruto || Number(updVenda.valor_bruto) <= 0) nfCampos.push("valor_bruto");
+
+          if (nfCampos.length > 0) {
+            nfEditResult = { emissao: "bloqueada", motivo: `Campos obrigatórios para NF ausentes: ${nfCampos.join(", ")}` };
+          } else {
+            try {
+              const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+              const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+              const emitResp = await fetch(`${supabaseUrl}/functions/v1/spedy-emit`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ venda_id: updVenda.id }),
+              });
+              const emitData = await emitResp.json();
+              nfEditResult = { emissao: emitResp.ok ? "solicitada" : "erro", detalhes: emitData };
+            } catch (nfErr: any) {
+              nfEditResult = { emissao: "erro", motivo: nfErr.message };
+            }
+          }
+        }
+
+        result = {
+          venda: updVenda,
+          ...(nfEditResult ? { nota_fiscal: nfEditResult } : {}),
+        };
+        break;
+      }
+
+      // ─── EXCLUIR VENDA DIGITAL ───
+      case "excluir-venda": {
+        const id = sanitize(body.id);
+        if (!id) return new Response(JSON.stringify({ error: "id é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+        const { data: vendaDel } = await supabase
+          .from("vendas_digitais")
+          .select("id, origem, lancamento_id, invoice_status")
+          .eq("id", id)
+          .eq("empresa_id", empresa_id)
+          .maybeSingle();
+
+        if (!vendaDel) return new Response(JSON.stringify({ error: "Venda não encontrada" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (vendaDel.origem !== "manual") {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Vendas de origem automática não podem ser excluídas." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        if (vendaDel.invoice_status && ["ISSUED", "AUTHORIZED"].includes(vendaDel.invoice_status)) {
+          return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta venda possui nota fiscal emitida/autorizada. Cancele a NF antes de excluir." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        // Excluir recebimentos vinculados
+        await supabase.from("recebimentos_digitais").delete().eq("venda_id", id);
+
+        // Excluir lançamento vinculado se existir
+        if (vendaDel.lancamento_id) {
+          await supabase.from("lancamentos").delete().eq("id", vendaDel.lancamento_id).eq("empresa_id", empresa_id);
+        }
+
+        const { error: delVendaErr } = await supabase.from("vendas_digitais").delete().eq("id", id).eq("empresa_id", empresa_id);
+        if (delVendaErr) throw delVendaErr;
+
+        result = { message: "Venda excluída com sucesso", id, lancamento_excluido: vendaDel.lancamento_id || null };
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({
           error: "Invalid action",
@@ -2147,12 +2405,13 @@ Deno.serve(async (req) => {
             "resumo-categorias", "vendas-digitais", "recebimentos-digitais", "contas-bancarias",
             "clientes", "fornecedores", "projetos", "categorias", "formas-pagamento", "fluxo-caixa",
             "criar-lancamento", "criar-cliente", "criar-fornecedor", "criar-categoria", "criar-conta-bancaria",
-            "criar-forma-pagamento", "criar-projeto", "atualizar-telegram-id", "atualizar-telegram-cliente",
+            "criar-forma-pagamento", "criar-projeto", "criar-venda",
+            "atualizar-telegram-id", "atualizar-telegram-cliente",
             "listar-anuncios", "listar-usuarios",
             "editar-cliente", "editar-fornecedor", "editar-categoria", "editar-conta-bancaria",
-            "editar-forma-pagamento", "editar-projeto", "editar-lancamento",
+            "editar-forma-pagamento", "editar-projeto", "editar-lancamento", "editar-venda",
             "excluir-cliente", "excluir-fornecedor", "excluir-categoria", "excluir-conta-bancaria",
-            "excluir-forma-pagamento", "excluir-projeto", "excluir-lancamento",
+            "excluir-forma-pagamento", "excluir-projeto", "excluir-lancamento", "excluir-venda",
             "extrato-conta", "transferir-entre-contas"
           ],
         }), {
