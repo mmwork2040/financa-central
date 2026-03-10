@@ -1584,7 +1584,7 @@ const N8nJsonTemplates = () => {
       if (!alreadyHasUserIdInBody) {
         const entries = Object.entries(t.body);
         const empresaIdx = entries.findIndex(([k]) => k === "empresa_id");
-        entries.splice(empresaIdx + 1, 0, ["user_id", "{{ $fromAI('user_id', 'UUID do usuário para controle de permissões') }}"]);
+        entries.splice(empresaIdx + 1, 0, ["user_id", "{{ $fromAI('user_id', 'UUID do usuario para controle de permissoes') }}"]);
         newBody = Object.fromEntries(entries);
       }
 
@@ -1841,10 +1841,14 @@ const N8nJsonTemplates = () => {
         if (categoryTemplates.length === 0) return null;
         const isCategoryOpen = !collapsedCategories.has(category);
 
-        const renderTemplateCard = (template: ActionTemplate) => {
+      // Strip accents from $fromAI() descriptions to prevent n8n schema validation errors
+      const stripAccents = (str: string): string =>
+        str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      const renderTemplateCard = (template: ActionTemplate) => {
           const isExpanded = expandedActions.has(template.action);
           const isCustom = customTemplates.some(c => c.action === template.action);
-          const bodyStr = JSON.stringify(template.body, null, 2);
+          const bodyStr = stripAccents(JSON.stringify(template.body, null, 2));
           return (
             <Card key={template.action} className="overflow-hidden">
               <div
@@ -1885,7 +1889,7 @@ const N8nJsonTemplates = () => {
                           variant="ghost"
                           size="sm"
                           className="h-7 gap-1 text-xs"
-                          onClick={() => handleCopy(template.toolDescription, `desc-${template.action}`)}
+                          onClick={() => handleCopy(stripAccents(template.toolDescription), `desc-${template.action}`)}
                         >
                           {copiedId === `desc-${template.action}` ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                           Copiar
