@@ -2,18 +2,20 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Filter, Plus, Receipt, RefreshCw, Search } from "lucide-react";
+import { Eye, EyeOff, Filter, MessageCircle, Plus, Receipt, RefreshCw, Search } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import ExportDropdown from "@/components/common/ExportDropdown";
 import { useAuth } from "@/contexts/AuthContext";
 import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 import { cn } from "@/lib/utils";
+import { useChatUrls } from "@/hooks/useChatUrls";
 
 export const LancamentosHeader = () => {
   const { canPerformAction } = useAuth();
   const canIncluir = canPerformAction("lancamentos", "pode_incluir");
   const { visible, toggle } = useValuesVisibility();
+  const { chatLancamentosUrl } = useChatUrls();
 
   const { 
     handleOpenModal, 
@@ -89,6 +91,19 @@ export const LancamentosHeader = () => {
           </Tooltip>
         </TooltipProvider>
         <ExportDropdown onExport={handleExport} />
+        {chatLancamentosUrl && (
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={() => window.open(chatLancamentosUrl, "_blank")}>
+                  <MessageCircle className="mr-1.5 h-4 w-4" />
+                  <span className="hidden sm:inline">Lançar via Chat</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent><p>Lançar via chat externo</p></TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         <div className="relative flex-1 min-w-[140px] max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input

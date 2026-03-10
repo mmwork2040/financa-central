@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { SALES_PLATFORM_IDS } from "@/config/salesPlatforms";
-import { ShoppingCart, Search, RefreshCw, X, Plug, CheckCircle2, AlertTriangle, Plus, Eye, Edit, Trash2, FileText, Download, Loader2, Settings } from "lucide-react";
+import { ShoppingCart, Search, RefreshCw, X, Plug, CheckCircle2, AlertTriangle, Plus, Eye, Edit, Trash2, FileText, Download, Loader2, Settings, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -37,8 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-
+import { useChatUrls } from "@/hooks/useChatUrls";
 
 const VendasDigitais = () => {
   const { empresaId, canPerformAction, isSuperAdmin, planControles } = useAuth();
@@ -69,6 +68,7 @@ const VendasDigitais = () => {
   const [loadingSpedyConfig, setLoadingSpedyConfig] = useState(false);
   const [fiscalReady, setFiscalReady] = useState<{ configurado: boolean; certificado: boolean } | null>(null);
   const [missingFieldsVenda, setMissingFieldsVenda] = useState<{ venda: any; missing: string[] } | null>(null);
+  const { chatVendasUrl } = useChatUrls();
 
   const { selectedMonth } = useMonthFilter();
   const prevMonthRef = useRef(selectedMonth);
@@ -395,6 +395,19 @@ const VendasDigitais = () => {
           <p className="text-xs sm:text-sm text-muted-foreground">Registre vendas manuais e receba vendas das plataformas conectadas</p>
         </div>
         <div className="flex items-center gap-2">
+          {chatVendasUrl && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" onClick={() => window.open(chatVendasUrl, "_blank")}>
+                    <MessageCircle className="h-4 w-4 mr-1" />
+                    <span className="hidden sm:inline">Vender via Chat</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Registrar venda via chat externo</p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           <ExportDropdown onExport={(fmt) => exportVendas(filtered, fmt)} />
           {canIncluir && (
             <Button onClick={() => { setEditingVenda(null); setFormOpen(true); }} size="sm">

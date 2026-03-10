@@ -33,7 +33,6 @@ import {
   ScrollText,
   Briefcase,
   Code2,
-  Send,
   UserCircle,
   HelpCircle,
 } from "lucide-react";
@@ -175,7 +174,6 @@ export const Sidebar = () => {
   const showExpanded = isExpanded || isMobile;
   
   // Simplified menu structure
-  const TELEGRAM_URL = "https://t.me/meu_agente_financeiro_bot";
 
   const allMainItems = [
     { name: "Dashboard", icon: Home, path: "/dashboard" },
@@ -450,19 +448,7 @@ export const Sidebar = () => {
           {/* Main items */}
           {mainItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
 
-          {/* Lançamentos via Chat (Telegram) - only if plan allows */}
-          {planControles.chat_ia && (
-            <li>
-              <button
-                onClick={() => window.open(TELEGRAM_URL, "_blank")}
-                className={cn("sidebar-link w-full", !showExpanded && "justify-center px-0")}
-                title={!showExpanded ? "Lançamentos via Chat" : undefined}
-              >
-                <Send size={18} className="shrink-0" />
-                {showExpanded && <span className="text-sm">Lançamentos via Chat</span>}
-              </button>
-            </li>
-          )}
+          {/* Chat item removed - buttons now in Lançamentos and Vendas pages */}
           
           {/* Cadastros collapsible */}
           {showExpanded ? (

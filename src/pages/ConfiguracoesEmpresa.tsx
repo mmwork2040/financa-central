@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Building2, Upload, Loader2, User, Trash2 } from "lucide-react";
+import { Building2, Upload, Loader2, User, Trash2, MessageCircle } from "lucide-react";
 import InviteCodesCard from "@/components/convites/InviteCodesCard";
 
 import ConfiguracaoFiscal from "@/components/configuracoes/ConfiguracaoFiscal";
@@ -23,6 +23,7 @@ const ConfiguracoesEmpresa = () => {
   const [isPessoal, setIsPessoal] = useState(false);
   const [empresa, setEmpresa] = useState({
     nome: "", cnpj: "", email: "", telefone: "", endereco: "", logo_url: "",
+    chat_lancamentos_url: "", chat_vendas_url: "",
   });
   const [address, setAddress] = useState<AddressData>({
     cep: "", rua: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
@@ -49,6 +50,8 @@ const ConfiguracoesEmpresa = () => {
           telefone: data.telefone ? phoneInputMask(data.telefone.replace(/\D/g, "")) : "",
           endereco: data.endereco || "",
           logo_url: data.logo_url || "",
+          chat_lancamentos_url: (data as any).chat_lancamentos_url || "",
+          chat_vendas_url: (data as any).chat_vendas_url || "",
         });
         setAddress({
           cep: (data as any).cep || "",
@@ -93,6 +96,8 @@ const ConfiguracoesEmpresa = () => {
         cep: address.cep || null, rua: address.rua || null, numero: address.numero || null,
         complemento: address.complemento || null, bairro: address.bairro || null,
         cidade: address.cidade || null, estado: address.estado || null,
+        chat_lancamentos_url: empresa.chat_lancamentos_url?.trim() || null,
+        chat_vendas_url: empresa.chat_vendas_url?.trim() || null,
       }).eq("id", empresaId);
       if (error) throw error;
       toast.success("Dados da empresa atualizados com sucesso.");
@@ -280,6 +285,38 @@ const ConfiguracoesEmpresa = () => {
             {saving ? "Salvando..." : "Salvar Configurações"}
           </Button>
         </div>
+      )}
+
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              Links de Chat
+            </CardTitle>
+            <CardDescription>Defina os links externos que serão abertos ao clicar no botão de chat nas páginas de lançamentos e vendas. Se vazio, o botão não será exibido.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="chat_lancamentos_url">Link do Chat - Lançamentos</Label>
+              <Input
+                id="chat_lancamentos_url"
+                value={empresa.chat_lancamentos_url}
+                onChange={(e) => handleChange("chat_lancamentos_url", e.target.value)}
+                placeholder="https://t.me/seu_bot ou https://wa.me/..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="chat_vendas_url">Link do Chat - Vendas</Label>
+              <Input
+                id="chat_vendas_url"
+                value={empresa.chat_vendas_url}
+                onChange={(e) => handleChange("chat_vendas_url", e.target.value)}
+                placeholder="https://t.me/seu_bot ou https://wa.me/..."
+              />
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {!isPessoal && <InviteCodesCard />}
