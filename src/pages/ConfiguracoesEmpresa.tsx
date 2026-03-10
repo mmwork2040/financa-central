@@ -43,8 +43,11 @@ const ConfiguracoesEmpresa = () => {
       if (data) {
         setIsPessoal((data as any).pessoal === true);
         setEmpresa({
-          nome: data.nome || "", cnpj: data.cnpj ? documentInputMask(data.cnpj.replace(/\D/g, "")) : "",
-          telefone: data.telefone ? phoneInputMask(data.telefone.replace(/\D/g, "")) : "", endereco: data.endereco || "",
+          nome: data.nome || "",
+          cnpj: data.cnpj ? documentInputMask(data.cnpj.replace(/\D/g, "")) : "",
+          email: data.email || "",
+          telefone: data.telefone ? phoneInputMask(data.telefone.replace(/\D/g, "")) : "",
+          endereco: data.endereco || "",
           logo_url: data.logo_url || "",
         });
         setAddress({
