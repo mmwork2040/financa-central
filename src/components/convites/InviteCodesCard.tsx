@@ -190,17 +190,6 @@ const InviteCodesCard = () => {
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div className="flex flex-wrap items-end gap-3">
-            {isSuperAdmin && (
-              <div className="space-y-1">
-                <Label className="text-xs">Empresa</Label>
-                <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
-                  <SelectTrigger className="w-48"><SelectValue placeholder="Selecione a empresa" /></SelectTrigger>
-                  <SelectContent>
-                    {allEmpresas.map(e => (<SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <div className="flex items-center gap-2">
               <Label className="text-xs">Administrador</Label>
               <Switch checked={isAdminRole} onCheckedChange={setIsAdminRole} />
