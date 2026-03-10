@@ -34,8 +34,8 @@ const CategoriasTable: React.FC<CategoriasTableProps> = ({
 }) => {
   const showActions = canEdit || canDelete;
   const isMobile = useIsMobile();
-  const { sortedItems, sortKey, sortDir, toggleSort } = useTableSort(categorias);
-  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(sortedItems);
+  const { sortedItems, sortKey, sortDir, toggleSort } = useTableSort<Categoria>(categorias);
+  const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination<Categoria>(sortedItems);
 
   if (isMobile) {
     return (
