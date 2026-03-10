@@ -108,7 +108,7 @@ export const Sidebar = () => {
   // Auto-open submenus when on their routes
   useEffect(() => {
     const cadastrosPaths = ["/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods", "/users", "/cartoes-credito"];
-    const configPaths = ["/settings", "/settings/integracoes", "/settings/webhooks", "/settings/logs", "/settings/n8n-templates", "/settings/assinaturas"];
+    const configPaths = ["/settings", "/settings/integracoes", "/settings/webhooks", "/settings/logs", "/settings/n8n-templates", "/settings/assinaturas", "/settings/termos"];
     if (cadastrosPaths.some(p => location.pathname.startsWith(p))) setCadastrosOpen(true);
     if (configPaths.some(p => location.pathname.startsWith(p))) setConfigOpen(true);
   }, [location.pathname]);
