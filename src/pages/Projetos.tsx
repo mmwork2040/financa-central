@@ -55,26 +55,14 @@ const ProjetosContent = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <PageHeader
-          title="Projetos"
-          description="Gerencie seus projetos e acompanhe receitas e despesas por projeto"
-          buttonLabel={canIncluir ? "Novo Projeto" : undefined}
-          onButtonClick={canIncluir ? () => openModal() : undefined}
-          showButton={canIncluir}
-          icon={FolderKanban}
-        />
-        <TooltipProvider delayDuration={200}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground shrink-0">
-                {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent><p>{visible ? "Ocultar valores" : "Exibir valores"}</p></TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+      <PageHeader
+        title="Projetos"
+        description="Gerencie seus projetos e acompanhe receitas e despesas por projeto"
+        buttonLabel={canIncluir ? "Novo Projeto" : undefined}
+        onButtonClick={canIncluir ? () => openModal() : undefined}
+        showButton={canIncluir}
+        icon={FolderKanban}
+      />
 
       <div className="flex flex-col sm:flex-row gap-4 items-center">
         <div className="w-full sm:w-3/4 relative">
@@ -86,8 +74,18 @@ const ProjetosContent = () => {
             className="pl-10 w-full"
           />
         </div>
-        <div className="flex gap-2 w-full sm:w-auto justify-end">
+        <div className="flex gap-2 w-full sm:w-auto justify-end items-center">
           <ExportDropdown onExport={handleExport} />
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground shrink-0">
+                  {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent><p>{visible ? "Ocultar valores" : "Exibir valores"}</p></TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
