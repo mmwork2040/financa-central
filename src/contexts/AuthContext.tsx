@@ -74,6 +74,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   switchEmpresa: (empresaId: string) => Promise<void>;
+  switchingEmpresa: boolean;
   refreshProfile: () => Promise<void>;
 };
 
