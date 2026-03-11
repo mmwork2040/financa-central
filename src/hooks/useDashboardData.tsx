@@ -395,7 +395,7 @@ export const useDashboardData = () => {
     fetchDashboardData();
   }, [monthStart, monthEnd]);
 
-  // Realtime listener for lancamentos changes
+  // Realtime listener for lancamentos changes (skip recalc since balance was already updated by the action)
   useEffect(() => {
     const channel = supabase
       .channel('dashboard-lancamentos')
@@ -403,7 +403,7 @@ export const useDashboardData = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'lancamentos' },
         () => {
-          fetchDashboardData();
+          fetchDashboardData(true);
         }
       )
       .subscribe();
