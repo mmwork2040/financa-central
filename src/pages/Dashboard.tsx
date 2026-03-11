@@ -36,6 +36,14 @@ const DashboardContent = () => {
   const navigate = useNavigate();
   const [caixaPrevistoOpen, setCaixaPrevistoOpen] = React.useState(false);
   const [activeDialog, setActiveDialog] = React.useState<DashboardDialogType>(null);
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchDashboardData();
+    setRefreshing(false);
+  };
+  const [activeDialog, setActiveDialog] = React.useState<DashboardDialogType>(null);
 
   const health = healthConfig[healthStatus];
 
