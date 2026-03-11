@@ -9,6 +9,17 @@ const mcpServer = new McpServer({
   version: "1.0.0",
 });
 
+// ─── Auth Middleware ───
+
+function validateServiceRoleKey(req: Request): boolean {
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const authHeader = req.headers.get("Authorization");
+  const apiKeyHeader = req.headers.get("apikey") || req.headers.get("api-key");
+  
+  const token = authHeader?.replace("Bearer ", "") || apiKeyHeader;
+  return token === serviceRoleKey;
+}
+
 // ─── Helpers ───
 
 function getSupabase() {
