@@ -686,6 +686,14 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           // ÚNICO ou RECORRENTE: insere um único registro
           const insertData: any = { ...dataToSave, empresa_id: empresaId };
           
+          // Se resgate, marcar origem
+          if (isResgate) {
+            insertData.origem = "resgate_investimento";
+            insertData.tipo = "receita";
+            insertData.status = "recebido";
+            insertData.data_pagamento = new Date().toISOString().split("T")[0];
+          }
+          
           // Para recorrente, gerar grupo_id e usar data_inicio retroativa se definida
           if (dataToSave.recorrente) {
             const grupoId = crypto.randomUUID();
