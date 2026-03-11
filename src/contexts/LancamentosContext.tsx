@@ -489,6 +489,36 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (!selectedId) return;
     
     try {
+      // Find the lancamento to revert balance if needed
+      const lancamento = lancamentos.find(l => l.id === selectedId);
+
+      // Revert bank account balance if the lancamento was paid/received
+      if (lancamento && lancamento.conta_bancaria_id && ["pago", "recebido"].includes(lancamento.status)) {
+        const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento";
+        const delta = isCredit ? -lancamento.valor : lancamento.valor;
+        const { data: contaAtual } = await supabase
+          .from("contas_bancarias")
+          .select("saldo_atual")
+          .eq("id", lancamento.conta_bancaria_id)
+          .single();
+        if (contaAtual) {
+          const saldoAnterior = Number(contaAtual.saldo_atual);
+          const saldoPosterior = saldoAnterior + delta;
+          await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
+            .eq("id", lancamento.conta_bancaria_id);
+          await logMovimentacao({
+            conta_bancaria_id: lancamento.conta_bancaria_id,
+            empresa_id: empresaId || null,
+            tipo: "ajuste",
+            descricao: `Estorno (exclusão): ${lancamento.descricao}`,
+            valor: delta,
+            saldo_anterior: saldoAnterior,
+            saldo_posterior: saldoPosterior,
+            lancamento_id: lancamento.id,
+          });
+        }
+      }
+
       // Remove pending support requests for this record
       await supabase
         .from('solicitacoes_suporte')
