@@ -717,8 +717,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           if (error) throw error;
 
           // Atualizar saldo da conta se pago/recebido
-          if (data && data[0] && formData.conta_bancaria_id && ["pago", "recebido"].includes(formData.status)) {
-            const delta = formData.tipo === "receita" ? formData.valor : -formData.valor;
+          const effectiveStatus = isResgate ? "recebido" : formData.status;
+          if (data && data[0] && formData.conta_bancaria_id && ["pago", "recebido"].includes(effectiveStatus)) {
+            const delta = (isResgate || formData.tipo === "receita") ? formData.valor : -formData.valor;
             const { data: contaAtual } = await supabase
               .from("contas_bancarias")
               .select("saldo_atual")
