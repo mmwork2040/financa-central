@@ -392,6 +392,24 @@ export const useDashboardData = () => {
     };
   }, [monthStart, monthEnd]);
 
+  // Realtime listener for contas_bancarias changes (saldo updates)
+  useEffect(() => {
+    const channel = supabase
+      .channel('dashboard-contas-bancarias')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'contas_bancarias' },
+        () => {
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [monthStart, monthEnd]);
+
   return {
     loading,
     summary,
