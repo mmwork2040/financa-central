@@ -45,7 +45,7 @@ export const LancamentosFormDialog = () => {
 
   const { isPessoal } = useAuth();
 
-  const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita" | "investimento" | "resgate">(formData.tipo || "despesa");
+  const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita" | "investimento" | "resgate" | "rentabilidade">(formData.tipo || "despesa");
   const [selectedStatus, setSelectedStatus] = useState<"pendente" | "pago" | "recebido" | "cancelado">(formData.status || "pendente");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [modo, setModo] = useState<LancamentoModo>("unico");
