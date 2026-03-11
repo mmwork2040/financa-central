@@ -453,11 +453,13 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [fetchLancamentos]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value === "no-category" || value === "no-client" || value === "no-supplier" || value === "no-payment-method" || value === "no-bank-account" || value === "no-project" || value === "no-credit-card" ? null : value });
+    const nullSentinels = ["no-category", "no-client", "no-supplier", "no-payment-method", "no-bank-account", "no-project", "no-credit-card"];
+    setFormData(prev => ({ ...prev, [field]: nullSentinels.includes(value) ? null : value }));
   };
 
   const handleFilterInputChange = (
