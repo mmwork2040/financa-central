@@ -15,7 +15,7 @@ interface CategoriaSelectProps {
   value: string | null;
   onChange: (value: string) => void;
   categorias: Categoria[];
-  tipo: "despesa" | "receita" | "investimento" | "resgate";
+  tipo: "despesa" | "receita" | "investimento" | "resgate" | "rentabilidade";
   onRefresh?: () => void;
 }
 
