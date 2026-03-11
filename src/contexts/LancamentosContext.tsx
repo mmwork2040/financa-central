@@ -93,7 +93,7 @@ export type CartaoCreditoSimple = {
 };
 
 type FiltrosType = {
-  tipo?: "receita" | "despesa" | "investimento" | "resgate" | "rentabilidade" | null;
+  tipo?: "receita" | "despesa" | "investimento" | "resgate" | "rentabilidade" | "reajuste" | null;
   status?: string | null;
   data_inicio?: string | null;
   data_fim?: string | null;
