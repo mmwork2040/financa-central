@@ -579,11 +579,12 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const handleSave = async () => {
     try {
-      // Ensure proper typing
+      // Ensure proper typing — convert "resgate" to receita with special origem
+      const isResgate = formData.tipo === "resgate";
       const dataToSave: LancamentoFormData = {
         ...formData,
-        tipo: formData.tipo as "receita" | "despesa" | "investimento",
-        status: formData.status as "pendente" | "pago" | "recebido" | "cancelado"
+        tipo: isResgate ? "receita" as any : formData.tipo as "receita" | "despesa" | "investimento",
+        status: isResgate ? "recebido" as any : formData.status as "pendente" | "pago" | "recebido" | "cancelado",
       };
 
       if (!selectedId && (!empresaId || empresaId.trim() === '')) {
