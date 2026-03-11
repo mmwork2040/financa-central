@@ -194,7 +194,7 @@ export const LancamentosFormDialog = () => {
             />
           )}
           
-          {selectedTipo !== "resgate" && (
+          {selectedTipo !== "resgate" && selectedTipo !== "rentabilidade" && (
             <LancamentoModoSelect
               modo={modo}
               onModoChange={handleModoChange}
