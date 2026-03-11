@@ -194,20 +194,22 @@ export const LancamentosFormDialog = () => {
             />
           )}
           
-          <LancamentoModoSelect
-            modo={modo}
-            onModoChange={handleModoChange}
-            recorrenciaTipo={(formData as any).recorrencia_tipo || "mensal"}
-            onRecorrenciaTipoChange={handleRecorrenciaTipoChange}
-            recorrenciaFim={(formData as any).recorrencia_fim}
-            onRecorrenciaFimChange={handleRecorrenciaFimChange}
-            recorrenciaInicio={recorrenciaInicio}
-            onRecorrenciaInicioChange={setRecorrenciaInicio}
-            totalParcelas={formData.total_parcelas}
-            onTotalParcelasChange={handleParcelasChange}
-            valorTotal={formData.valor || 0}
-            isEditingRecorrente={isEditingRecorrente}
-          />
+          {selectedTipo !== "resgate" && (
+            <LancamentoModoSelect
+              modo={modo}
+              onModoChange={handleModoChange}
+              recorrenciaTipo={(formData as any).recorrencia_tipo || "mensal"}
+              onRecorrenciaTipoChange={handleRecorrenciaTipoChange}
+              recorrenciaFim={(formData as any).recorrencia_fim}
+              onRecorrenciaFimChange={handleRecorrenciaFimChange}
+              recorrenciaInicio={recorrenciaInicio}
+              onRecorrenciaInicioChange={setRecorrenciaInicio}
+              totalParcelas={formData.total_parcelas}
+              onTotalParcelasChange={handleParcelasChange}
+              valorTotal={formData.valor || 0}
+              isEditingRecorrente={isEditingRecorrente}
+            />
+          )}
           
           <CategoriaSelect 
             value={formData.categoria_id} 
