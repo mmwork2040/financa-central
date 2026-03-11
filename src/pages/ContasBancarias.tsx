@@ -10,6 +10,7 @@ import TransferenciaDialog from "@/components/contas-bancarias/TransferenciaDial
 import ExtratoDialog from "@/components/contas-bancarias/ExtratoDialog";
 import RecalcularSaldoDialog from "@/components/contas-bancarias/RecalcularSaldoDialog";
 import HistoricoMovimentacoesDialog from "@/components/contas-bancarias/HistoricoMovimentacoesDialog";
+import ResgateInvestimentoDialog from "@/components/contas-bancarias/ResgateInvestimentoDialog";
 import PageHeader from "@/components/common/PageHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { ValuesVisibilityProvider } from "@/contexts/ValuesVisibilityContext";
