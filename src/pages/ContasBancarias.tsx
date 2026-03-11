@@ -80,6 +80,12 @@ const ContasBancariasContent = () => {
               Transferir
             </Button>
           )}
+          {canAlterar && contasBancarias.length >= 1 && (
+            <Button variant="outline" size="sm" onClick={() => setOpenResgate(true)} className="gap-1.5 text-xs">
+              <ArrowDownToLine className="h-3.5 w-3.5" />
+              Resgatar
+            </Button>
+          )}
           <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground" title={visible ? "Ocultar valores" : "Exibir valores"}>
             {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </Button>
