@@ -253,13 +253,23 @@ export const useDashboardData = () => {
         12
       );
 
-      // Saldo Investido: soma acumulativa de TODOS os investimentos pagos (sem filtro de mês)
+      // Saldo Investido: soma acumulativa de TODOS os investimentos pagos - resgates
       const { data: investimentosPagos } = await supabase
         .from('lancamentos')
         .select('valor')
         .eq('tipo', 'investimento')
         .in('status', ['pago', 'recebido']);
-      const saldoInvestido = investimentosPagos?.reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+      const totalInvestido = investimentosPagos?.reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+
+      const { data: resgatesInvestimento } = await supabase
+        .from('lancamentos')
+        .select('valor')
+        .eq('tipo', 'receita')
+        .eq('origem', 'resgate_investimento')
+        .in('status', ['pago', 'recebido']);
+      const totalResgatado = resgatesInvestimento?.reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+
+      const saldoInvestido = totalInvestido - totalResgatado;
 
       const contasBancariasList = contas?.map(c => ({ id: c.id, nome: c.nome, saldo_atual: c.saldo_atual, saldo_inicial: c.saldo_inicial })) || [];
       setContasBancarias(contasBancariasList);
