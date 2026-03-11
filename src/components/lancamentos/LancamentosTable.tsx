@@ -390,8 +390,8 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTipoBadgeClass(lancamento.tipo)}`}>
-                      {lancamento.tipo === "receita" ? "Receita" : lancamento.tipo === "investimento" ? "Investimento" : "Despesa"}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTipoBadgeClass(lancamento.tipo, lancamento.origem)}`}>
+                      {lancamento.origem === "resgate_investimento" ? "Resgate" : lancamento.tipo === "receita" ? "Receita" : lancamento.tipo === "investimento" ? "Investimento" : "Despesa"}
                     </span>
                   </TableCell>
                   <TableCell>{lancamento.categoria?.nome || '-'}</TableCell>
