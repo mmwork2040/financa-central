@@ -421,7 +421,7 @@ export const useDashboardData = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'contas_bancarias' },
         () => {
-          fetchDashboardData();
+          fetchDashboardData(true);
         }
       )
       .subscribe();
