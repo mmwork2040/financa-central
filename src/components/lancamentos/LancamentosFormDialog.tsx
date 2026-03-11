@@ -61,26 +61,28 @@ export const LancamentosFormDialog = () => {
   // Derived: is this an investment sub-operation that auto-sets status?
   const isAutoStatus = selectedTipo === "investimento" && ["resgate", "rentabilidade", "reajuste"].includes(subtipoInvestimento);
 
+  // Sync selectedTipo/subtipo only when modal opens or formData.tipo changes meaningfully
+  const formTipo = formData.tipo;
+  const formStatus = formData.status;
   useEffect(() => {
-    // Map formData.tipo back to the 3-option tipo + subtipo
-    const tipo = formData.tipo;
-    if (tipo === "resgate" as any) {
+    if (formTipo === "resgate" as any) {
       setSelectedTipo("investimento");
       setSubtipoInvestimento("resgate");
-    } else if (tipo === "rentabilidade" as any) {
+    } else if (formTipo === "rentabilidade" as any) {
       setSelectedTipo("investimento");
       setSubtipoInvestimento("rentabilidade");
-    } else if (tipo === "reajuste" as any) {
+    } else if (formTipo === "reajuste" as any) {
       setSelectedTipo("investimento");
       setSubtipoInvestimento("reajuste");
-    } else if (["despesa", "receita", "investimento"].includes(tipo)) {
-      setSelectedTipo(tipo as any);
-      if (tipo === "investimento") setSubtipoInvestimento("novo");
+    } else if (["despesa", "receita", "investimento"].includes(formTipo)) {
+      setSelectedTipo(formTipo as any);
+      // Only reset subtipo to "novo" if not already set to a valid subtipo
+      // (avoids resetting when other fields change)
     } else {
       setSelectedTipo("despesa");
     }
-    setSelectedStatus(formData.status || "pendente");
-  }, [formData]);
+    setSelectedStatus(formStatus || "pendente");
+  }, [formTipo, formStatus]);
 
   // Set initial modo when modal opens
   useEffect(() => {
