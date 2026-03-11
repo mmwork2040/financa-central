@@ -658,7 +658,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         
         // Revert old balance impact if was paid/received
         if (oldLancamento && oldLancamento.conta_bancaria_id && ["pago", "recebido"].includes(oldLancamento.status)) {
-          const oldIsCredit = oldLancamento.tipo === "receita" || oldLancamento.origem === "resgate_investimento" || oldLancamento.origem === "rentabilidade_investimento";
+          const oldIsCredit = oldLancamento.tipo === "receita" || oldLancamento.origem === "resgate_investimento" || oldLancamento.origem === "rentabilidade_investimento" || oldLancamento.origem === "reajuste_investimento";
           const revertDelta = oldIsCredit ? -oldLancamento.valor : oldLancamento.valor;
           const { data: contaOld } = await supabase
             .from("contas_bancarias")
