@@ -695,6 +695,11 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           updatePayload.tipo = "receita";
           updatePayload.status = "recebido";
         }
+        if (isReajuste) {
+          updatePayload.origem = "reajuste_investimento";
+          updatePayload.tipo = "receita";
+          updatePayload.status = "recebido";
+        }
 
         const { error } = await supabase
           .from("lancamentos")
