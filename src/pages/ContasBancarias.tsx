@@ -169,6 +169,14 @@ const ContasBancariasContent = () => {
         contas={contasParaDialog}
         empresaId={empresaId}
       />
+
+      <ResgateInvestimentoDialog
+        open={openResgate}
+        onClose={() => setOpenResgate(false)}
+        contas={contasParaDialog}
+        onSuccess={() => window.location.reload()}
+        empresaId={empresaId}
+      />
     </div>
   );
 };
