@@ -494,7 +494,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       // Revert bank account balance if the lancamento was paid/received
       if (lancamento && lancamento.conta_bancaria_id && ["pago", "recebido"].includes(lancamento.status)) {
-        const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento";
+        const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento" || lancamento.origem === "reajuste_investimento";
         const delta = isCredit ? -lancamento.valor : lancamento.valor;
         const { data: contaAtual } = await supabase
           .from("contas_bancarias")
