@@ -74,10 +74,15 @@ export const LancamentosFormDialog = () => {
   }, [openModal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTipoChange = (value: string) => {
-    if (isEditingRecorrente) return; // block tipo change on recurring edit
-    const tipoValue = value as "despesa" | "receita" | "investimento";
+    if (isEditingRecorrente) return;
+    const tipoValue = value as "despesa" | "receita" | "investimento" | "resgate";
     setSelectedTipo(tipoValue);
     handleSelectChange('tipo', value);
+    // Auto-set status for resgate
+    if (tipoValue === "resgate") {
+      setSelectedStatus("recebido");
+      handleSelectChange('status', 'recebido');
+    }
   };
 
   const handleStatusChange = (value: string) => {
