@@ -43,7 +43,6 @@ const DashboardContent = () => {
     await fetchDashboardData();
     setRefreshing(false);
   };
-  const [activeDialog, setActiveDialog] = React.useState<DashboardDialogType>(null);
 
   const health = healthConfig[healthStatus];
 
