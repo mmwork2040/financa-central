@@ -589,6 +589,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     let editTipo = lancamento.tipo;
     if (lancamento.origem === "resgate_investimento") editTipo = "resgate" as any;
     if (lancamento.origem === "rentabilidade_investimento") editTipo = "rentabilidade" as any;
+    if (lancamento.origem === "reajuste_investimento") editTipo = "reajuste" as any;
     setFormData({
       descricao: lancamento.descricao,
       valor: lancamento.valor,
