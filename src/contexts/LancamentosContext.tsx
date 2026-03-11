@@ -585,11 +585,15 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const handleEdit = (lancamento: Lancamento) => {
     setSelectedId(lancamento.id || null);
+    // Map origin-based types back to their UI type for editing
+    let editTipo = lancamento.tipo;
+    if (lancamento.origem === "resgate_investimento") editTipo = "resgate" as any;
+    if (lancamento.origem === "rentabilidade_investimento") editTipo = "rentabilidade" as any;
     setFormData({
       descricao: lancamento.descricao,
       valor: lancamento.valor,
       data_vencimento: lancamento.data_vencimento,
-      tipo: lancamento.tipo,
+      tipo: editTipo,
       status: lancamento.status,
       categoria_id: lancamento.categoria_id,
       fornecedor_id: lancamento.fornecedor_id,
