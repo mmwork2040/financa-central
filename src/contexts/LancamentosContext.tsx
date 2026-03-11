@@ -795,6 +795,13 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
             insertData.status = "recebido";
             insertData.data_pagamento = new Date().toISOString().split("T")[0];
           }
+          // Se rentabilidade, marcar origem
+          if (isRentabilidade) {
+            insertData.origem = "rentabilidade_investimento";
+            insertData.tipo = "receita";
+            insertData.status = "recebido";
+            insertData.data_pagamento = new Date().toISOString().split("T")[0];
+          }
           
           // Para recorrente, gerar grupo_id e usar data_inicio retroativa se definida
           if (dataToSave.recorrente) {
