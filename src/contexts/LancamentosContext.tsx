@@ -143,7 +143,7 @@ interface LancamentosContextType {
   handleUpdateStatus: (id: string, status: "pendente" | "pago" | "recebido" | "cancelado") => void;
   getStatusBadgeClass: (status: string) => string;
   getStatusLabel: (status: string, tipo: string) => string;
-  getTipoBadgeClass: (tipo: string) => string;
+  getTipoBadgeClass: (tipo: string, origem?: string) => string;
   exportToCSV: () => void;
   exportToPDF: () => void;
   handleSort: (field: string) => void;
