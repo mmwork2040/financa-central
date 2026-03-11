@@ -427,6 +427,10 @@ mcpServer.tool({
 const transport = new StreamableHttpTransport();
 
 app.all("/*", async (c) => {
+  // Validate service role key on all requests (except CORS preflight)
+  if (c.req.method !== "OPTIONS" && !validateServiceRoleKey(c.req.raw)) {
+    return c.json({ error: "Unauthorized: valid service role key required" }, 401);
+  }
   return await transport.handleRequest(c.req.raw, mcpServer);
 });
 
