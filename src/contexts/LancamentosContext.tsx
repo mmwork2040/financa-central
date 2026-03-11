@@ -1031,6 +1031,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const getTipoBadgeClass = (tipo: string, origem?: string): string => {
     if (origem === 'resgate_investimento') return 'bg-purple-100 text-purple-800';
+    if (origem === 'rentabilidade_investimento') return 'bg-emerald-100 text-emerald-800';
     if (tipo === 'receita') return 'bg-green-100 text-green-800';
     if (tipo === 'investimento') return 'bg-blue-100 text-blue-800';
     return 'bg-red-100 text-red-800';
