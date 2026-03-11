@@ -1,57 +1,50 @@
 
 
-## Scroll Animations for Landing Page Sections
+## Plano: Unificar Operações de Investimento e Garantir Reversibilidade
 
-### Overview
-Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
+### Problema Atual
+1. O `ResgateInvestimentoDialog` em Contas Bancárias cria lançamentos diretamente via Supabase, **sem reverter o saldo da conta ao excluir/editar** o lançamento correspondente na tela de Lançamentos.
+2. O `handleDelete` do `LancamentosContext` **não reverte o saldo da conta bancária** quando exclui um lançamento que já foi pago/recebido — isso vale para qualquer tipo, incluindo resgates e investimentos.
+3. Não existe um registro visual de "Rentabilidade" como tipo de operação no sistema.
+4. O usuário não consegue editar um resgate feito via Contas Bancárias (pois não há link claro para o lançamento gerado).
 
-### Approach
-Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
+### O que será feito
 
-### Implementation Details
+**1. Reverter saldo ao excluir lançamento (`LancamentosContext.tsx`)**
+- No `handleDelete`, antes de deletar, verificar se o lançamento estava `pago/recebido` e tinha `conta_bancaria_id`.
+- Se sim, reverter o delta no saldo da conta e registrar movimentação de estorno.
+- Isso garante que exclusão de resgates, investimentos, receitas e despesas já pagos reverta corretamente o saldo.
 
-**1. Create `src/hooks/useScrollReveal.ts`**
-- A custom hook that returns a `ref` callback
-- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
-- Adds a CSS class (e.g., `revealed`) when the element is visible
-- Fires once per element (unobserves after reveal)
+**2. Reverter saldo ao editar lançamento com mudança de valor/conta (`LancamentosContext.tsx`)**
+- No `handleSave` (modo edição), se o lançamento anterior estava pago/recebido, reverter o delta antigo e aplicar o novo delta (se continuar pago/recebido).
+- Isso permite "corrigir" qualquer operação.
 
-**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
-- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
-- Accepts optional `delay` (stagger support) and `className`
-- Starts with opacity-0 and a small transform offset
-- On intersection, transitions to opacity-1 and transform-none
-- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
+**3. Adicionar tipo "Rentabilidade" ao fluxo de lançamentos**
+- Em `TipoSelect.tsx`: adicionar opção "Rentabilidade" (value: `rentabilidade`).
+- No `LancamentosContext.tsx`: tratar `rentabilidade` como `tipo: "receita"`, `origem: "rentabilidade_investimento"`, `status: "recebido"`. O delta credita a conta bancária sem afetar o saldo investido.
+- No `LancamentosTable.tsx`: badge verde-escuro para rentabilidade.
+- No `useDashboardData.tsx`: excluir lançamentos com `origem: "rentabilidade_investimento"` do cálculo de saldo investido (já que é receita, não afeta, mas deve ser claramente rastreado).
 
-**3. Update `src/pages/LandingPage.tsx`**
-Wrap each section's content with `<ScrollReveal>`:
+**4. Unificar operações — remover lógica duplicada do `ResgateInvestimentoDialog`**
+- O dialog de resgate em Contas Bancárias continuará existindo como atalho, mas internamente usará a mesma lógica do `LancamentosContext` (ou será simplificado para apenas abrir o formulário de lançamento com tipo "resgate" pré-selecionado).
+- Alternativa mais simples: manter o dialog mas garantir que ele cria lançamentos idênticos aos do fluxo principal, e que a exclusão/edição desses lançamentos na tela de Lançamentos funcione corretamente (ponto 1 e 2 já garantem isso).
 
-| Section | Animation |
-|---------|-----------|
-| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
-| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
-| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
-| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
-| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
-| Social Proof | Scale for stat cards |
-| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
-| Footer | Simple fade-up |
+**5. Exibir operações de investimento na página de Contas Bancárias**
+- No `HistoricoMovimentacoesDialog.tsx`: adicionar tipos `investimento` e `rentabilidade` ao `tipoConfig` para exibir corretamente no histórico de movimentações.
 
-**4. Add base CSS to `src/index.css`**
-```css
-.scroll-reveal {
-  opacity: 0;
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-.scroll-reveal.revealed {
-  opacity: 1;
-  transform: none !important;
-}
-```
+### Arquivos a editar
 
-### Key Decisions
-- No new dependencies -- uses native `IntersectionObserver`
-- CSS transitions (not JS-driven animations) for performance
-- Each animation fires only once (no re-hide on scroll up) for a polished feel
-- Stagger delays on card grids (50-100ms increments) for a cascading effect
+| Arquivo | Ação |
+|---|---|
+| `src/contexts/LancamentosContext.tsx` | Reverter saldo no delete e no edit; tratar tipo "rentabilidade" |
+| `src/components/lancamentos/form/TipoSelect.tsx` | Adicionar "Rentabilidade" |
+| `src/components/lancamentos/LancamentosFormDialog.tsx` | Tratar tipo "rentabilidade" (similar a resgate) |
+| `src/components/lancamentos/LancamentosTable.tsx` | Badge para rentabilidade |
+| `src/components/contas-bancarias/HistoricoMovimentacoesDialog.tsx` | Adicionar tipos investimento/rentabilidade |
+| `src/hooks/useDashboardData.tsx` | Excluir rentabilidade do saldo investido (se necessário) |
+
+### Fluxo de reversibilidade
+- **Excluir lançamento pago/recebido** → saldo da conta é revertido automaticamente + log de estorno
+- **Editar valor/conta de lançamento pago** → saldo antigo revertido, novo aplicado
+- **Mudar status para cancelado/pendente** → já funciona (handleStatus reverte delta)
 
