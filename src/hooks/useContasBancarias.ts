@@ -31,6 +31,21 @@ export const useContasBancarias = () => {
 
   useEffect(() => {
     fetchContasBancarias();
+
+    // Realtime: auto-refresh when contas_bancarias or lancamentos change
+    const channel = supabase
+      .channel('contas-bancarias-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contas_bancarias' }, () => {
+        fetchContasBancarias();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lancamentos' }, () => {
+        fetchContasBancarias();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   async function fetchContasBancarias() {
