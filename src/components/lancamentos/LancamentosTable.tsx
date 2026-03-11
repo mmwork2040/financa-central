@@ -203,7 +203,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                         </p>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getTipoBadgeClass(l.tipo, l.origem)}`}>
-                            {l.origem === "resgate_investimento" ? "Resgate" : l.origem === "rentabilidade_investimento" ? "Rentabilidade" : l.tipo === "receita" ? "Receita" : l.tipo === "investimento" ? "Investimento" : "Despesa"}
+                            {l.origem === "resgate_investimento" ? "Resgate" : l.origem === "rentabilidade_investimento" ? "Rentabilidade" : l.origem === "reajuste_investimento" ? "Reajuste" : l.tipo === "receita" ? "Receita" : l.tipo === "investimento" ? "Investimento" : "Despesa"}
                           </span>
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusBadgeClass(l.status)}`}>
                             {getStatusLabel(l.status, l.tipo)}
