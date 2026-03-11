@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface StatusSelectProps {
   value: string;
   onChange: (value: string) => void;
-  tipo: "despesa" | "receita" | "investimento" | "resgate";
+  tipo: "despesa" | "receita" | "investimento" | "resgate" | "rentabilidade";
 }
 
 export const StatusSelect = ({ value, onChange, tipo }: StatusSelectProps) => {

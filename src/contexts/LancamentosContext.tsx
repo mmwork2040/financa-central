@@ -20,7 +20,7 @@ export type Lancamento = {
   descricao: string;
   valor: number;
   data_vencimento: string;
-  tipo: "receita" | "despesa" | "investimento" | "resgate";
+  tipo: "receita" | "despesa" | "investimento" | "resgate" | "rentabilidade";
   status: "pendente" | "pago" | "recebido" | "cancelado";
   categoria_id: string | null;
   fornecedor_id: string | null;
@@ -93,7 +93,7 @@ export type CartaoCreditoSimple = {
 };
 
 type FiltrosType = {
-  tipo?: "receita" | "despesa" | "investimento" | "resgate" | null;
+  tipo?: "receita" | "despesa" | "investimento" | "resgate" | "rentabilidade" | null;
   status?: string | null;
   data_inicio?: string | null;
   data_fim?: string | null;
@@ -489,6 +489,36 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (!selectedId) return;
     
     try {
+      // Find the lancamento to revert balance if needed
+      const lancamento = lancamentos.find(l => l.id === selectedId);
+
+      // Revert bank account balance if the lancamento was paid/received
+      if (lancamento && lancamento.conta_bancaria_id && ["pago", "recebido"].includes(lancamento.status)) {
+        const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento";
+        const delta = isCredit ? -lancamento.valor : lancamento.valor;
+        const { data: contaAtual } = await supabase
+          .from("contas_bancarias")
+          .select("saldo_atual")
+          .eq("id", lancamento.conta_bancaria_id)
+          .single();
+        if (contaAtual) {
+          const saldoAnterior = Number(contaAtual.saldo_atual);
+          const saldoPosterior = saldoAnterior + delta;
+          await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
+            .eq("id", lancamento.conta_bancaria_id);
+          await logMovimentacao({
+            conta_bancaria_id: lancamento.conta_bancaria_id,
+            empresa_id: empresaId || null,
+            tipo: "ajuste",
+            descricao: `Estorno (exclusão): ${lancamento.descricao}`,
+            valor: delta,
+            saldo_anterior: saldoAnterior,
+            saldo_posterior: saldoPosterior,
+            lancamento_id: lancamento.id,
+          });
+        }
+      }
+
       // Remove pending support requests for this record
       await supabase
         .from('solicitacoes_suporte')
@@ -555,11 +585,15 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const handleEdit = (lancamento: Lancamento) => {
     setSelectedId(lancamento.id || null);
+    // Map origin-based types back to their UI type for editing
+    let editTipo = lancamento.tipo;
+    if (lancamento.origem === "resgate_investimento") editTipo = "resgate" as any;
+    if (lancamento.origem === "rentabilidade_investimento") editTipo = "rentabilidade" as any;
     setFormData({
       descricao: lancamento.descricao,
       valor: lancamento.valor,
       data_vencimento: lancamento.data_vencimento,
-      tipo: lancamento.tipo,
+      tipo: editTipo,
       status: lancamento.status,
       categoria_id: lancamento.categoria_id,
       fornecedor_id: lancamento.fornecedor_id,
@@ -579,12 +613,13 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const handleSave = async () => {
     try {
-      // Ensure proper typing — convert "resgate" to receita with special origem
+      // Ensure proper typing — convert "resgate" and "rentabilidade" to receita with special origem
       const isResgate = formData.tipo === "resgate";
+      const isRentabilidade = formData.tipo === ("rentabilidade" as any);
       const dataToSave: LancamentoFormData = {
         ...formData,
-        tipo: isResgate ? "receita" as any : formData.tipo as "receita" | "despesa" | "investimento",
-        status: isResgate ? "recebido" as any : formData.status as "pendente" | "pago" | "recebido" | "cancelado",
+        tipo: (isResgate || isRentabilidade) ? "receita" as any : formData.tipo as "receita" | "despesa" | "investimento",
+        status: (isResgate || isRentabilidade) ? "recebido" as any : formData.status as "pendente" | "pago" | "recebido" | "cancelado",
       };
 
       if (!selectedId && (!empresaId || empresaId.trim() === '')) {
@@ -615,14 +650,85 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
 
       if (selectedId) {
+        // Fetch the old lancamento to revert balance if needed
+        const oldLancamento = lancamentos.find(l => l.id === selectedId);
+        
+        // Revert old balance impact if was paid/received
+        if (oldLancamento && oldLancamento.conta_bancaria_id && ["pago", "recebido"].includes(oldLancamento.status)) {
+          const oldIsCredit = oldLancamento.tipo === "receita" || oldLancamento.origem === "resgate_investimento" || oldLancamento.origem === "rentabilidade_investimento";
+          const revertDelta = oldIsCredit ? -oldLancamento.valor : oldLancamento.valor;
+          const { data: contaOld } = await supabase
+            .from("contas_bancarias")
+            .select("saldo_atual")
+            .eq("id", oldLancamento.conta_bancaria_id)
+            .single();
+          if (contaOld) {
+            const saldoAnt = Number(contaOld.saldo_atual);
+            const saldoPos = saldoAnt + revertDelta;
+            await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPos } as any) as any)
+              .eq("id", oldLancamento.conta_bancaria_id);
+            await logMovimentacao({
+              conta_bancaria_id: oldLancamento.conta_bancaria_id,
+              empresa_id: empresaId || null,
+              tipo: "ajuste",
+              descricao: `Estorno (edição): ${oldLancamento.descricao}`,
+              valor: revertDelta,
+              saldo_anterior: saldoAnt,
+              saldo_posterior: saldoPos,
+              lancamento_id: oldLancamento.id,
+            });
+          }
+        }
+
         // Update existing lancamento
+        const updatePayload = { ...dataToSave } as any;
+        if (isResgate) {
+          updatePayload.origem = "resgate_investimento";
+          updatePayload.tipo = "receita";
+          updatePayload.status = "recebido";
+        }
+        if (isRentabilidade) {
+          updatePayload.origem = "rentabilidade_investimento";
+          updatePayload.tipo = "receita";
+          updatePayload.status = "recebido";
+        }
+
         const { error } = await supabase
           .from("lancamentos")
-          .update(dataToSave)
+          .update(updatePayload)
           .eq("id", selectedId);
 
         if (error) {
           throw error;
+        }
+
+        // Apply new balance impact if now paid/received
+        const newStatus = updatePayload.status || dataToSave.status;
+        const newContaId = dataToSave.conta_bancaria_id;
+        if (newContaId && ["pago", "recebido"].includes(newStatus)) {
+          const newIsCredit = (isResgate || isRentabilidade || dataToSave.tipo === "receita");
+          const newDelta = newIsCredit ? dataToSave.valor : -dataToSave.valor;
+          const { data: contaNew } = await supabase
+            .from("contas_bancarias")
+            .select("saldo_atual")
+            .eq("id", newContaId)
+            .single();
+          if (contaNew) {
+            const saldoAnt = Number(contaNew.saldo_atual);
+            const saldoPos = saldoAnt + newDelta;
+            await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPos } as any) as any)
+              .eq("id", newContaId);
+            await logMovimentacao({
+              conta_bancaria_id: newContaId,
+              empresa_id: empresaId || null,
+              tipo: dataToSave.tipo === "receita" ? "receita" : "despesa",
+              descricao: `Edição: ${dataToSave.descricao}`,
+              valor: newDelta,
+              saldo_anterior: saldoAnt,
+              saldo_posterior: saldoPos,
+              lancamento_id: selectedId,
+            });
+          }
         }
 
         // Fire webhook for edit
@@ -693,6 +799,13 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
             insertData.status = "recebido";
             insertData.data_pagamento = new Date().toISOString().split("T")[0];
           }
+          // Se rentabilidade, marcar origem
+          if (isRentabilidade) {
+            insertData.origem = "rentabilidade_investimento";
+            insertData.tipo = "receita";
+            insertData.status = "recebido";
+            insertData.data_pagamento = new Date().toISOString().split("T")[0];
+          }
           
           // Para recorrente, gerar grupo_id e usar data_inicio retroativa se definida
           if (dataToSave.recorrente) {
@@ -717,9 +830,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           if (error) throw error;
 
           // Atualizar saldo da conta se pago/recebido
-          const effectiveStatus = isResgate ? "recebido" : formData.status;
+            const effectiveStatus = (isResgate || isRentabilidade) ? "recebido" : formData.status;
           if (data && data[0] && formData.conta_bancaria_id && ["pago", "recebido"].includes(effectiveStatus)) {
-            const delta = (isResgate || formData.tipo === "receita") ? formData.valor : -formData.valor;
+            const delta = (isResgate || isRentabilidade || formData.tipo === "receita") ? formData.valor : -formData.valor;
             const { data: contaAtual } = await supabase
               .from("contas_bancarias")
               .select("saldo_atual")
@@ -922,6 +1035,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const getTipoBadgeClass = (tipo: string, origem?: string): string => {
     if (origem === 'resgate_investimento') return 'bg-purple-100 text-purple-800';
+    if (origem === 'rentabilidade_investimento') return 'bg-emerald-100 text-emerald-800';
     if (tipo === 'receita') return 'bg-green-100 text-green-800';
     if (tipo === 'investimento') return 'bg-blue-100 text-blue-800';
     return 'bg-red-100 text-red-800';

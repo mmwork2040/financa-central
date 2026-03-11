@@ -45,7 +45,7 @@ export const LancamentosFormDialog = () => {
 
   const { isPessoal } = useAuth();
 
-  const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita" | "investimento" | "resgate">(formData.tipo || "despesa");
+  const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita" | "investimento" | "resgate" | "rentabilidade">(formData.tipo || "despesa");
   const [selectedStatus, setSelectedStatus] = useState<"pendente" | "pago" | "recebido" | "cancelado">(formData.status || "pendente");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [modo, setModo] = useState<LancamentoModo>("unico");
@@ -75,11 +75,11 @@ export const LancamentosFormDialog = () => {
 
   const handleTipoChange = (value: string) => {
     if (isEditingRecorrente) return;
-    const tipoValue = value as "despesa" | "receita" | "investimento" | "resgate";
+    const tipoValue = value as "despesa" | "receita" | "investimento" | "resgate" | "rentabilidade";
     setSelectedTipo(tipoValue);
     handleSelectChange('tipo', value);
-    // Auto-set status for resgate
-    if (tipoValue === "resgate") {
+    // Auto-set status for resgate and rentabilidade
+    if (tipoValue === "resgate" || tipoValue === "rentabilidade") {
       setSelectedStatus("recebido");
       handleSelectChange('status', 'recebido');
     }
@@ -182,11 +182,11 @@ export const LancamentosFormDialog = () => {
             value={formData.data_vencimento} 
             onChange={(date) => handleDateChange('data_vencimento', date)} 
           />
-          {selectedTipo !== "resgate" && (
+          {selectedTipo !== "resgate" && selectedTipo !== "rentabilidade" && (
             <StatusSelect value={selectedStatus} onChange={handleStatusChange} tipo={selectedTipo} />
           )}
           
-          {selectedTipo !== "resgate" && (selectedStatus === "pago" || selectedStatus === "recebido") && (
+          {selectedTipo !== "resgate" && selectedTipo !== "rentabilidade" && (selectedStatus === "pago" || selectedStatus === "recebido") && (
             <DatePickerField 
               label={`Data de ${selectedTipo === "receita" ? "Recebimento" : "Pagamento"}`}
               value={formData.data_pagamento} 
@@ -194,7 +194,7 @@ export const LancamentosFormDialog = () => {
             />
           )}
           
-          {selectedTipo !== "resgate" && (
+          {selectedTipo !== "resgate" && selectedTipo !== "rentabilidade" && (
             <LancamentoModoSelect
               modo={modo}
               onModoChange={handleModoChange}
@@ -219,7 +219,7 @@ export const LancamentosFormDialog = () => {
             onRefresh={refreshCategorias}
           />
           
-          {!isPessoal && selectedTipo !== "resgate" && (
+          {!isPessoal && selectedTipo !== "resgate" && selectedTipo !== "rentabilidade" && (
             <ClienteFornecedorSelect 
               tipo={selectedTipo}
               clienteId={formData.cliente_id}
@@ -330,7 +330,7 @@ export const LancamentosFormDialog = () => {
                 <p>Deseja {selectedId ? "atualizar" : "registrar"} o seguinte lançamento?</p>
                 <div className="rounded-lg border bg-muted/50 p-3 space-y-1">
                   <p><strong>Descrição:</strong> {formData.descricao}</p>
-                  <p><strong>Tipo:</strong> {selectedTipo === "resgate" ? "Resgate de Investimento" : selectedTipo === "receita" ? "Receita" : selectedTipo === "investimento" ? "Investimento" : "Despesa"}</p>
+                  <p><strong>Tipo:</strong> {selectedTipo === "resgate" ? "Resgate de Investimento" : selectedTipo === "rentabilidade" ? "Rentabilidade" : selectedTipo === "receita" ? "Receita" : selectedTipo === "investimento" ? "Investimento" : "Despesa"}</p>
                   <p><strong>Valor:</strong> {formatCurrency(formData.valor || 0)}</p>
                   <p><strong>Vencimento:</strong> {formData.data_vencimento ? new Date(formData.data_vencimento + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</p>
                   <p><strong>Status:</strong> {selectedStatus === "pendente" ? "Pendente" : selectedStatus === "pago" ? "Pago" : selectedStatus === "recebido" ? "Recebido" : "Cancelado"}</p>
