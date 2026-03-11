@@ -714,7 +714,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         const newStatus = updatePayload.status || dataToSave.status;
         const newContaId = dataToSave.conta_bancaria_id;
         if (newContaId && ["pago", "recebido"].includes(newStatus)) {
-          const newIsCredit = (isResgate || isRentabilidade || dataToSave.tipo === "receita");
+          const newIsCredit = (isResgate || isRentabilidade || isReajuste || dataToSave.tipo === "receita");
           const newDelta = newIsCredit ? dataToSave.valor : -dataToSave.valor;
           const { data: contaNew } = await supabase
             .from("contas_bancarias")
