@@ -86,9 +86,30 @@ export const useDashboardData = () => {
   const [projectionData, setProjectionData] = useState<Array<{ name: string; caixa: number }>>([]);
   const [lancamentosMes, setLancamentosMes] = useState<any[]>([]);
   
-  const fetchDashboardData = async () => {
+  const recalculateBalances = async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      if (!token) return;
+      const { data, error } = await supabase.functions.invoke("recalculate-balances", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data?.corrections > 0) {
+        console.log(`Recálculo: ${data.corrections} conta(s) corrigida(s)`, data.details);
+      }
+    } catch (e) {
+      console.warn("Erro ao recalcular saldos:", e);
+    }
+  };
+
+  const fetchDashboardData = async (skipRecalc = false) => {
     try {
       setLoading(true);
+
+      // Recalculate all bank balances from scratch before loading dashboard
+      if (!skipRecalc) {
+        await recalculateBalances();
+      }
 
       // Silently process mature digital receipts (auto-convert pending → received)
       supabase.functions.invoke("process-digital-receipts").catch(() => {});
