@@ -330,7 +330,7 @@ export const LancamentosFormDialog = () => {
                 <p>Deseja {selectedId ? "atualizar" : "registrar"} o seguinte lançamento?</p>
                 <div className="rounded-lg border bg-muted/50 p-3 space-y-1">
                   <p><strong>Descrição:</strong> {formData.descricao}</p>
-                  <p><strong>Tipo:</strong> {selectedTipo === "resgate" ? "Resgate de Investimento" : selectedTipo === "receita" ? "Receita" : selectedTipo === "investimento" ? "Investimento" : "Despesa"}</p>
+                  <p><strong>Tipo:</strong> {selectedTipo === "resgate" ? "Resgate de Investimento" : selectedTipo === "rentabilidade" ? "Rentabilidade" : selectedTipo === "receita" ? "Receita" : selectedTipo === "investimento" ? "Investimento" : "Despesa"}</p>
                   <p><strong>Valor:</strong> {formatCurrency(formData.valor || 0)}</p>
                   <p><strong>Vencimento:</strong> {formData.data_vencimento ? new Date(formData.data_vencimento + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</p>
                   <p><strong>Status:</strong> {selectedStatus === "pendente" ? "Pendente" : selectedStatus === "pago" ? "Pago" : selectedStatus === "recebido" ? "Recebido" : "Cancelado"}</p>
