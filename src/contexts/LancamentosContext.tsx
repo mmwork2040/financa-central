@@ -20,7 +20,7 @@ export type Lancamento = {
   descricao: string;
   valor: number;
   data_vencimento: string;
-  tipo: "receita" | "despesa" | "investimento";
+  tipo: "receita" | "despesa" | "investimento" | "resgate";
   status: "pendente" | "pago" | "recebido" | "cancelado";
   categoria_id: string | null;
   fornecedor_id: string | null;
