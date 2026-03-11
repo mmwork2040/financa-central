@@ -20,7 +20,7 @@ export type Lancamento = {
   descricao: string;
   valor: number;
   data_vencimento: string;
-  tipo: "receita" | "despesa" | "investimento";
+  tipo: "receita" | "despesa" | "investimento" | "resgate";
   status: "pendente" | "pago" | "recebido" | "cancelado";
   categoria_id: string | null;
   fornecedor_id: string | null;
@@ -93,7 +93,7 @@ export type CartaoCreditoSimple = {
 };
 
 type FiltrosType = {
-  tipo?: "receita" | "despesa" | "investimento" | null;
+  tipo?: "receita" | "despesa" | "investimento" | "resgate" | null;
   status?: string | null;
   data_inicio?: string | null;
   data_fim?: string | null;
@@ -143,7 +143,7 @@ interface LancamentosContextType {
   handleUpdateStatus: (id: string, status: "pendente" | "pago" | "recebido" | "cancelado") => void;
   getStatusBadgeClass: (status: string) => string;
   getStatusLabel: (status: string, tipo: string) => string;
-  getTipoBadgeClass: (tipo: string) => string;
+  getTipoBadgeClass: (tipo: string, origem?: string) => string;
   exportToCSV: () => void;
   exportToPDF: () => void;
   handleSort: (field: string) => void;
@@ -579,11 +579,12 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const handleSave = async () => {
     try {
-      // Ensure proper typing
+      // Ensure proper typing — convert "resgate" to receita with special origem
+      const isResgate = formData.tipo === "resgate";
       const dataToSave: LancamentoFormData = {
         ...formData,
-        tipo: formData.tipo as "receita" | "despesa" | "investimento",
-        status: formData.status as "pendente" | "pago" | "recebido" | "cancelado"
+        tipo: isResgate ? "receita" as any : formData.tipo as "receita" | "despesa" | "investimento",
+        status: isResgate ? "recebido" as any : formData.status as "pendente" | "pago" | "recebido" | "cancelado",
       };
 
       if (!selectedId && (!empresaId || empresaId.trim() === '')) {
@@ -685,6 +686,14 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           // ÚNICO ou RECORRENTE: insere um único registro
           const insertData: any = { ...dataToSave, empresa_id: empresaId };
           
+          // Se resgate, marcar origem
+          if (isResgate) {
+            insertData.origem = "resgate_investimento";
+            insertData.tipo = "receita";
+            insertData.status = "recebido";
+            insertData.data_pagamento = new Date().toISOString().split("T")[0];
+          }
+          
           // Para recorrente, gerar grupo_id e usar data_inicio retroativa se definida
           if (dataToSave.recorrente) {
             const grupoId = crypto.randomUUID();
@@ -708,8 +717,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           if (error) throw error;
 
           // Atualizar saldo da conta se pago/recebido
-          if (data && data[0] && formData.conta_bancaria_id && ["pago", "recebido"].includes(formData.status)) {
-            const delta = formData.tipo === "receita" ? formData.valor : -formData.valor;
+          const effectiveStatus = isResgate ? "recebido" : formData.status;
+          if (data && data[0] && formData.conta_bancaria_id && ["pago", "recebido"].includes(effectiveStatus)) {
+            const delta = (isResgate || formData.tipo === "receita") ? formData.valor : -formData.valor;
             const { data: contaAtual } = await supabase
               .from("contas_bancarias")
               .select("saldo_atual")
@@ -910,7 +920,8 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     else return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
-  const getTipoBadgeClass = (tipo: string): string => {
+  const getTipoBadgeClass = (tipo: string, origem?: string): string => {
+    if (origem === 'resgate_investimento') return 'bg-purple-100 text-purple-800';
     if (tipo === 'receita') return 'bg-green-100 text-green-800';
     if (tipo === 'investimento') return 'bg-blue-100 text-blue-800';
     return 'bg-red-100 text-red-800';

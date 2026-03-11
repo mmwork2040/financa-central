@@ -202,8 +202,8 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                           )}
                         </p>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getTipoBadgeClass(l.tipo)}`}>
-                            {l.tipo === "receita" ? "Receita" : l.tipo === "investimento" ? "Investimento" : "Despesa"}
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getTipoBadgeClass(l.tipo, l.origem)}`}>
+                            {l.origem === "resgate_investimento" ? "Resgate" : l.tipo === "receita" ? "Receita" : l.tipo === "investimento" ? "Investimento" : "Despesa"}
                           </span>
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusBadgeClass(l.status)}`}>
                             {getStatusLabel(l.status, l.tipo)}
@@ -390,8 +390,8 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTipoBadgeClass(lancamento.tipo)}`}>
-                      {lancamento.tipo === "receita" ? "Receita" : lancamento.tipo === "investimento" ? "Investimento" : "Despesa"}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTipoBadgeClass(lancamento.tipo, lancamento.origem)}`}>
+                      {lancamento.origem === "resgate_investimento" ? "Resgate" : lancamento.tipo === "receita" ? "Receita" : lancamento.tipo === "investimento" ? "Investimento" : "Despesa"}
                     </span>
                   </TableCell>
                   <TableCell>{lancamento.categoria?.nome || '-'}</TableCell>

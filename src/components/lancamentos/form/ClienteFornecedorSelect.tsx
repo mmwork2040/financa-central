@@ -5,7 +5,7 @@ import { QuickAddClienteModal } from "./QuickAddClienteModal";
 import { QuickAddFornecedorModal } from "./QuickAddFornecedorModal";
 
 interface ClienteFornecedorSelectProps {
-  tipo: "despesa" | "receita" | "investimento";
+  tipo: "despesa" | "receita" | "investimento" | "resgate";
   clienteId: string | null;
   fornecedorId: string | null;
   onClienteChange: (value: string) => void;

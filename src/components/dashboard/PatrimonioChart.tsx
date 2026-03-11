@@ -93,7 +93,17 @@ const PatrimonioChart = () => {
           .in("status", ["pago", "recebido"])
           .lte("data_vencimento", endDate);
 
-        let totalInvestido = allInv?.reduce((s, l) => s + Number(l.valor), 0) || 0;
+        // Fetch resgates (receitas com origem resgate_investimento)
+        const { data: allResgates } = await supabase
+          .from("lancamentos")
+          .select("valor, data_vencimento")
+          .eq("empresa_id", empresaId)
+          .eq("tipo", "receita")
+          .eq("origem", "resgate_investimento")
+          .in("status", ["pago", "recebido"])
+          .lte("data_vencimento", endDate);
+
+        let totalInvestido = (allInv?.reduce((s, l) => s + Number(l.valor), 0) || 0) - (allResgates?.reduce((s, l) => s + Number(l.valor), 0) || 0);
 
         // Set current month
         saldos[flows.length - 1] = saldoAtual;
