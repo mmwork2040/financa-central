@@ -18,6 +18,9 @@ export const LancamentosSummary = () => {
 
   useEffect(() => {
     fetchSaldo();
+  }, [lancamentos]); // Re-fetch saldo when lancamentos change (e.g. after payment/edit/delete)
+
+  useEffect(() => {
     const channel = supabase
       .channel('lancamentos-saldo-caixa')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'contas_bancarias' }, () => fetchSaldo())

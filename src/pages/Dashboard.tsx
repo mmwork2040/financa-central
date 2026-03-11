@@ -1,6 +1,6 @@
 import React from "react";
 import FeatureBlocked from "@/components/common/FeatureBlocked";
-import { ArrowUpRight, ArrowDownRight, Wallet, AlertTriangle, Clock, Activity, Eye, EyeOff, LayoutDashboard, Landmark, TrendingUp, Calendar } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Wallet, AlertTriangle, Clock, Activity, Eye, EyeOff, LayoutDashboard, Landmark, TrendingUp, Calendar, RefreshCw } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,12 +30,19 @@ const healthConfig: Record<HealthStatus, { label: string; color: string; icon: s
 
 const DashboardContent = () => {
   const { userProfile, isSuperAdmin, isTrialActive, trialDaysRemaining, assinaturaStatus } = useAuth();
-  const { loading, summary, caixa, lancamentosRecentes, contasProximas, receitasPendentes, healthStatus, monthlyChartData, contasBancarias, projectionData, lancamentosMes } = useDashboardData();
+  const { loading, summary, caixa, lancamentosRecentes, contasProximas, receitasPendentes, healthStatus, monthlyChartData, contasBancarias, projectionData, lancamentosMes, fetchDashboardData } = useDashboardData();
   const { visible, toggle } = useValuesVisibility();
   const { myRequests, cancelRequest, actionLoading } = useSolicitacoesSaida();
   const navigate = useNavigate();
   const [caixaPrevistoOpen, setCaixaPrevistoOpen] = React.useState(false);
   const [activeDialog, setActiveDialog] = React.useState<DashboardDialogType>(null);
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchDashboardData();
+    setRefreshing(false);
+  };
 
   const health = healthConfig[healthStatus];
 
@@ -50,14 +57,20 @@ const DashboardContent = () => {
   return (
     <div className="space-y-6 pb-20">
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-primary/10">
-            <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-primary/10">
+              <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">Olá, {userProfile?.nome?.split(' ')[0] || 'Usuário'}! 👋</h1>
           </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">Olá, {userProfile?.nome?.split(' ')[0] || 'Usuário'}! 👋</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Aqui está o resumo do seu financeiro</p>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground">Aqui está o resumo do seu financeiro</p>
+        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+          <RefreshCw className={`mr-1.5 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          <span className="hidden sm:inline">Atualizar</span>
+        </Button>
       </div>
 
 
