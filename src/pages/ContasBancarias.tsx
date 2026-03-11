@@ -28,6 +28,7 @@ const ContasBancariasContent = () => {
   const [openExtrato, setOpenExtrato] = useState(false);
   const [openRecalcular, setOpenRecalcular] = useState(false);
   const [openHistorico, setOpenHistorico] = useState(false);
+  const [openResgate, setOpenResgate] = useState(false);
   const {
     contasBancarias, loading, formData, openModal, openDeleteModal, selectedId, searchQuery,
     showPrincipalConfirm, contaPrincipalExistente,
