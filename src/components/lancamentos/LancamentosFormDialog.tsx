@@ -219,7 +219,7 @@ export const LancamentosFormDialog = () => {
             onRefresh={refreshCategorias}
           />
           
-          {!isPessoal && selectedTipo !== "resgate" && (
+          {!isPessoal && selectedTipo !== "resgate" && selectedTipo !== "rentabilidade" && (
             <ClienteFornecedorSelect 
               tipo={selectedTipo}
               clienteId={formData.cliente_id}
