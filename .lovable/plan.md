@@ -1,57 +1,58 @@
 
 
-## Scroll Animations for Landing Page Sections
+## Plano: Reestruturar Tipos de Lançamento com Sub-tipos de Investimento e Reajuste Manual
 
-### Overview
-Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
+### Contexto
+Atualmente o TipoSelect exibe 5 opções (Despesa, Receita, Investimento, Resgate, Rentabilidade). O usuario quer simplificar para 3 tipos principais (Despesa, Receita, Investimento), e ao selecionar "Investimento", um segundo seletor aparece com as sub-operacoes: Novo Investimento, Rentabilidade, Resgate e **Reajuste** (nova funcionalidade para edição manual do saldo investido).
 
-### Approach
-Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
+### O que sera feito
 
-### Implementation Details
+**1. Refatorar TipoSelect para 3 opcoes + sub-tipo de investimento**
+- `TipoSelect.tsx`: Mostrar apenas Despesa, Receita, Investimento
+- Criar novo componente `InvestimentoSubtipoSelect.tsx` com opcoes: Novo Investimento, Rentabilidade, Resgate, Reajuste
+- No `LancamentosFormDialog.tsx`: quando tipo = "investimento", exibir o seletor de sub-tipo. O sub-tipo controla o comportamento (resgate, rentabilidade, reajuste, ou investimento padrao)
 
-**1. Create `src/hooks/useScrollReveal.ts`**
-- A custom hook that returns a `ref` callback
-- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
-- Adds a CSS class (e.g., `revealed`) when the element is visible
-- Fires once per element (unobserves after reveal)
+**2. Novo sub-tipo "Reajuste"**
+- Permite o usuario corrigir manualmente o saldo investido (para cima ou para baixo)
+- Sera salvo como `tipo: "receita"` ou `tipo: "despesa"` (conforme valor positivo/negativo) com `origem: "reajuste_investimento"`
+- No formulario: campo de valor com label "Valor do reajuste" e descricao auto-preenchida "Reajuste manual de investimento"
+- O delta do reajuste afeta o calculo de saldo investido no dashboard
 
-**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
-- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
-- Accepts optional `delay` (stagger support) and `className`
-- Starts with opacity-0 and a small transform offset
-- On intersection, transitions to opacity-1 and transform-none
-- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
+**3. Atualizar LancamentosFormDialog**
+- Estado local `subtipoInvestimento`: "novo" | "rentabilidade" | "resgate" | "reajuste"
+- Quando tipo = "investimento" e subtipo = "novo": comportamento atual de investimento
+- Quando subtipo = "resgate": comportamento atual (salva como receita, origem=resgate_investimento)
+- Quando subtipo = "rentabilidade": comportamento atual (salva como receita, origem=rentabilidade_investimento)
+- Quando subtipo = "reajuste": salva como receita (reajuste positivo) ou despesa (reajuste negativo) com origem=reajuste_investimento. Permite valor negativo para reduzir saldo investido
 
-**3. Update `src/pages/LandingPage.tsx`**
-Wrap each section's content with `<ScrollReveal>`:
+**4. Atualizar LancamentosContext handleSave**
+- Tratar novo sub-tipo "reajuste": definir origem="reajuste_investimento" e ajustar tipo conforme sinal do valor
+- Tratar handleEdit para mapear origem "reajuste_investimento" de volta ao sub-tipo correto
 
-| Section | Animation |
-|---------|-----------|
-| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
-| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
-| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
-| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
-| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
-| Social Proof | Scale for stat cards |
-| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
-| Footer | Simple fade-up |
+**5. Atualizar useDashboardData para considerar reajustes**
+- Incluir lancamentos com `origem: "reajuste_investimento"` no calculo do saldo investido (positivos somam, negativos subtraem)
 
-**4. Add base CSS to `src/index.css`**
-```css
-.scroll-reveal {
-  opacity: 0;
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-.scroll-reveal.revealed {
-  opacity: 1;
-  transform: none !important;
-}
-```
+**6. Atualizar badges na LancamentosTable**
+- Adicionar badge para "Reajuste" (origem=reajuste_investimento)
+- Manter badges existentes para resgate e rentabilidade
+- Exibir sub-tipo correto no badge quando tipo base for investimento/receita com origem especial
 
-### Key Decisions
-- No new dependencies -- uses native `IntersectionObserver`
-- CSS transitions (not JS-driven animations) for performance
-- Each animation fires only once (no re-hide on scroll up) for a polished feel
-- Stagger delays on card grids (50-100ms increments) for a cascading effect
+### Arquivos a criar/editar
+
+| Arquivo | Acao |
+|---|---|
+| `src/components/lancamentos/form/TipoSelect.tsx` | Reduzir para 3 opcoes |
+| `src/components/lancamentos/form/InvestimentoSubtipoSelect.tsx` | Criar — seletor de sub-operacao |
+| `src/components/lancamentos/LancamentosFormDialog.tsx` | Adicionar estado subtipo, logica condicional |
+| `src/contexts/LancamentosContext.tsx` | Tratar "reajuste" no save/edit, atualizar tipos |
+| `src/components/lancamentos/LancamentosTable.tsx` | Badge para reajuste |
+| `src/hooks/useDashboardData.tsx` | Incluir reajustes no calculo de saldo investido |
+| `src/components/dashboard/PatrimonioChart.tsx` | Considerar reajustes no calculo |
+
+### Fluxo do usuario
+1. Novo Lancamento → seleciona "Investimento"
+2. Aparece sub-seletor: Novo Investimento / Rentabilidade / Resgate / Reajuste
+3. Preenche valor e demais campos (simplificados conforme sub-tipo)
+4. Salva — sistema registra com origem adequada e atualiza saldos
+5. Na tabela, badge indica o sub-tipo especifico (Investimento, Resgate, Rentabilidade, Reajuste)
 
