@@ -20,7 +20,7 @@ export type Lancamento = {
   descricao: string;
   valor: number;
   data_vencimento: string;
-  tipo: "receita" | "despesa" | "investimento" | "resgate" | "rentabilidade";
+  tipo: "receita" | "despesa" | "investimento" | "resgate" | "rentabilidade" | "reajuste";
   status: "pendente" | "pago" | "recebido" | "cancelado";
   categoria_id: string | null;
   fornecedor_id: string | null;
@@ -93,7 +93,7 @@ export type CartaoCreditoSimple = {
 };
 
 type FiltrosType = {
-  tipo?: "receita" | "despesa" | "investimento" | "resgate" | "rentabilidade" | null;
+  tipo?: "receita" | "despesa" | "investimento" | "resgate" | "rentabilidade" | "reajuste" | null;
   status?: string | null;
   data_inicio?: string | null;
   data_fim?: string | null;
@@ -494,7 +494,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       // Revert bank account balance if the lancamento was paid/received
       if (lancamento && lancamento.conta_bancaria_id && ["pago", "recebido"].includes(lancamento.status)) {
-        const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento";
+        const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento" || lancamento.origem === "reajuste_investimento";
         const delta = isCredit ? -lancamento.valor : lancamento.valor;
         const { data: contaAtual } = await supabase
           .from("contas_bancarias")
@@ -589,6 +589,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     let editTipo = lancamento.tipo;
     if (lancamento.origem === "resgate_investimento") editTipo = "resgate" as any;
     if (lancamento.origem === "rentabilidade_investimento") editTipo = "rentabilidade" as any;
+    if (lancamento.origem === "reajuste_investimento") editTipo = "reajuste" as any;
     setFormData({
       descricao: lancamento.descricao,
       valor: lancamento.valor,
@@ -616,10 +617,12 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       // Ensure proper typing — convert "resgate" and "rentabilidade" to receita with special origem
       const isResgate = formData.tipo === "resgate";
       const isRentabilidade = formData.tipo === ("rentabilidade" as any);
+      const isReajuste = formData.tipo === ("reajuste" as any);
+      const isSpecialInvestment = isResgate || isRentabilidade || isReajuste;
       const dataToSave: LancamentoFormData = {
         ...formData,
-        tipo: (isResgate || isRentabilidade) ? "receita" as any : formData.tipo as "receita" | "despesa" | "investimento",
-        status: (isResgate || isRentabilidade) ? "recebido" as any : formData.status as "pendente" | "pago" | "recebido" | "cancelado",
+        tipo: isSpecialInvestment ? "receita" as any : formData.tipo as "receita" | "despesa" | "investimento",
+        status: isSpecialInvestment ? "recebido" as any : formData.status as "pendente" | "pago" | "recebido" | "cancelado",
       };
 
       if (!selectedId && (!empresaId || empresaId.trim() === '')) {
@@ -655,7 +658,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         
         // Revert old balance impact if was paid/received
         if (oldLancamento && oldLancamento.conta_bancaria_id && ["pago", "recebido"].includes(oldLancamento.status)) {
-          const oldIsCredit = oldLancamento.tipo === "receita" || oldLancamento.origem === "resgate_investimento" || oldLancamento.origem === "rentabilidade_investimento";
+          const oldIsCredit = oldLancamento.tipo === "receita" || oldLancamento.origem === "resgate_investimento" || oldLancamento.origem === "rentabilidade_investimento" || oldLancamento.origem === "reajuste_investimento";
           const revertDelta = oldIsCredit ? -oldLancamento.valor : oldLancamento.valor;
           const { data: contaOld } = await supabase
             .from("contas_bancarias")
@@ -692,6 +695,11 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           updatePayload.tipo = "receita";
           updatePayload.status = "recebido";
         }
+        if (isReajuste) {
+          updatePayload.origem = "reajuste_investimento";
+          updatePayload.tipo = "receita";
+          updatePayload.status = "recebido";
+        }
 
         const { error } = await supabase
           .from("lancamentos")
@@ -706,7 +714,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         const newStatus = updatePayload.status || dataToSave.status;
         const newContaId = dataToSave.conta_bancaria_id;
         if (newContaId && ["pago", "recebido"].includes(newStatus)) {
-          const newIsCredit = (isResgate || isRentabilidade || dataToSave.tipo === "receita");
+          const newIsCredit = (isResgate || isRentabilidade || isReajuste || dataToSave.tipo === "receita");
           const newDelta = newIsCredit ? dataToSave.valor : -dataToSave.valor;
           const { data: contaNew } = await supabase
             .from("contas_bancarias")
@@ -806,6 +814,13 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
             insertData.status = "recebido";
             insertData.data_pagamento = new Date().toISOString().split("T")[0];
           }
+          // Se reajuste, marcar origem
+          if (isReajuste) {
+            insertData.origem = "reajuste_investimento";
+            insertData.tipo = "receita";
+            insertData.status = "recebido";
+            insertData.data_pagamento = new Date().toISOString().split("T")[0];
+          }
           
           // Para recorrente, gerar grupo_id e usar data_inicio retroativa se definida
           if (dataToSave.recorrente) {
@@ -830,9 +845,9 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           if (error) throw error;
 
           // Atualizar saldo da conta se pago/recebido
-            const effectiveStatus = (isResgate || isRentabilidade) ? "recebido" : formData.status;
+            const effectiveStatus = isSpecialInvestment ? "recebido" : formData.status;
           if (data && data[0] && formData.conta_bancaria_id && ["pago", "recebido"].includes(effectiveStatus)) {
-            const delta = (isResgate || isRentabilidade || formData.tipo === "receita") ? formData.valor : -formData.valor;
+            const delta = (isSpecialInvestment || formData.tipo === "receita") ? formData.valor : -formData.valor;
             const { data: contaAtual } = await supabase
               .from("contas_bancarias")
               .select("saldo_atual")
@@ -1036,6 +1051,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const getTipoBadgeClass = (tipo: string, origem?: string): string => {
     if (origem === 'resgate_investimento') return 'bg-purple-100 text-purple-800';
     if (origem === 'rentabilidade_investimento') return 'bg-emerald-100 text-emerald-800';
+    if (origem === 'reajuste_investimento') return 'bg-amber-100 text-amber-800';
     if (tipo === 'receita') return 'bg-green-100 text-green-800';
     if (tipo === 'investimento') return 'bg-blue-100 text-blue-800';
     return 'bg-red-100 text-red-800';
