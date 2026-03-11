@@ -75,11 +75,11 @@ export const LancamentosFormDialog = () => {
 
   const handleTipoChange = (value: string) => {
     if (isEditingRecorrente) return;
-    const tipoValue = value as "despesa" | "receita" | "investimento" | "resgate";
+    const tipoValue = value as "despesa" | "receita" | "investimento" | "resgate" | "rentabilidade";
     setSelectedTipo(tipoValue);
     handleSelectChange('tipo', value);
-    // Auto-set status for resgate
-    if (tipoValue === "resgate") {
+    // Auto-set status for resgate and rentabilidade
+    if (tipoValue === "resgate" || tipoValue === "rentabilidade") {
       setSelectedStatus("recebido");
       handleSelectChange('status', 'recebido');
     }
