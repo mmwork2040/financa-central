@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { TipoSelect } from "./form/TipoSelect";
+import { InvestimentoSubtipoSelect, InvestimentoSubtipo } from "./form/InvestimentoSubtipoSelect";
 import { DescricaoInput } from "./form/DescricaoInput";
 import { ValorInput } from "./form/ValorInput";
 import { DatePickerField } from "./form/DatePickerField";
@@ -45,7 +46,10 @@ export const LancamentosFormDialog = () => {
 
   const { isPessoal } = useAuth();
 
-  const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita" | "investimento" | "resgate" | "rentabilidade">(formData.tipo || "despesa");
+  const [selectedTipo, setSelectedTipo] = useState<"despesa" | "receita" | "investimento">(
+    ["despesa", "receita", "investimento"].includes(formData.tipo) ? formData.tipo as any : "despesa"
+  );
+  const [subtipoInvestimento, setSubtipoInvestimento] = useState<InvestimentoSubtipo>("novo");
   const [selectedStatus, setSelectedStatus] = useState<"pendente" | "pago" | "recebido" | "cancelado">(formData.status || "pendente");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [modo, setModo] = useState<LancamentoModo>("unico");
@@ -54,8 +58,27 @@ export const LancamentosFormDialog = () => {
   // Detect if editing an existing recurring lancamento
   const isEditingRecorrente = !!selectedId && formData.recorrente && !!(formData as any).recorrencia_grupo_id;
 
+  // Derived: is this an investment sub-operation that auto-sets status?
+  const isAutoStatus = selectedTipo === "investimento" && ["resgate", "rentabilidade", "reajuste"].includes(subtipoInvestimento);
+
   useEffect(() => {
-    setSelectedTipo(formData.tipo || "despesa");
+    // Map formData.tipo back to the 3-option tipo + subtipo
+    const tipo = formData.tipo;
+    if (tipo === "resgate" as any) {
+      setSelectedTipo("investimento");
+      setSubtipoInvestimento("resgate");
+    } else if (tipo === "rentabilidade" as any) {
+      setSelectedTipo("investimento");
+      setSubtipoInvestimento("rentabilidade");
+    } else if (tipo === "reajuste" as any) {
+      setSelectedTipo("investimento");
+      setSubtipoInvestimento("reajuste");
+    } else if (["despesa", "receita", "investimento"].includes(tipo)) {
+      setSelectedTipo(tipo as any);
+      if (tipo === "investimento") setSubtipoInvestimento("novo");
+    } else {
+      setSelectedTipo("despesa");
+    }
     setSelectedStatus(formData.status || "pendente");
   }, [formData]);
 
@@ -75,13 +98,40 @@ export const LancamentosFormDialog = () => {
 
   const handleTipoChange = (value: string) => {
     if (isEditingRecorrente) return;
-    const tipoValue = value as "despesa" | "receita" | "investimento" | "resgate" | "rentabilidade";
+    const tipoValue = value as "despesa" | "receita" | "investimento";
     setSelectedTipo(tipoValue);
-    handleSelectChange('tipo', value);
-    // Auto-set status for resgate and rentabilidade
-    if (tipoValue === "resgate" || tipoValue === "rentabilidade") {
+    if (tipoValue === "investimento") {
+      setSubtipoInvestimento("novo");
+      handleSelectChange('tipo', 'investimento');
+    } else {
+      handleSelectChange('tipo', value);
+    }
+  };
+
+  const handleSubtipoChange = (value: InvestimentoSubtipo) => {
+    setSubtipoInvestimento(value);
+    // Map subtipo to internal tipo for context
+    if (value === "novo") {
+      handleSelectChange('tipo', 'investimento');
+      setSelectedStatus("pendente");
+      handleSelectChange('status', 'pendente');
+    } else if (value === "resgate") {
+      handleSelectChange('tipo', 'resgate');
       setSelectedStatus("recebido");
       handleSelectChange('status', 'recebido');
+    } else if (value === "rentabilidade") {
+      handleSelectChange('tipo', 'rentabilidade');
+      setSelectedStatus("recebido");
+      handleSelectChange('status', 'recebido');
+    } else if (value === "reajuste") {
+      handleSelectChange('tipo', 'reajuste');
+      setSelectedStatus("recebido");
+      handleSelectChange('status', 'recebido');
+      // Auto-fill description
+      const syntheticEvent = {
+        target: { name: 'descricao', value: formData.descricao || 'Reajuste manual de investimento' }
+      } as React.ChangeEvent<HTMLInputElement>;
+      if (!formData.descricao) handleInputChange(syntheticEvent);
     }
   };
 
@@ -163,6 +213,22 @@ export const LancamentosFormDialog = () => {
     setTimeout(() => handleSave(), 50);
   };
 
+  // Get display label for confirmation dialog
+  const getDisplayTipo = () => {
+    if (selectedTipo === "investimento") {
+      switch (subtipoInvestimento) {
+        case "novo": return "Novo Investimento";
+        case "resgate": return "Resgate de Investimento";
+        case "rentabilidade": return "Rentabilidade";
+        case "reajuste": return "Reajuste de Investimento";
+      }
+    }
+    return selectedTipo === "receita" ? "Receita" : "Despesa";
+  };
+
+  // Whether to show simplified fields (no status/recurrence for special investment sub-types)
+  const showFullFields = !isAutoStatus;
+
   return (
     <Dialog open={openModal} onOpenChange={setOpenModal}>
       <DialogContent className="sm:max-w-[600px]">
@@ -171,22 +237,31 @@ export const LancamentosFormDialog = () => {
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <TipoSelect value={selectedTipo} onChange={handleTipoChange} />
+          
+          {selectedTipo === "investimento" && (
+            <InvestimentoSubtipoSelect value={subtipoInvestimento} onChange={handleSubtipoChange} />
+          )}
+
           <DescricaoInput 
             value={formData.descricao || ""} 
             onChange={handleInputChange} 
             disabled={isEditingRecorrente}
           />
-          <ValorInput valor={formData.valor} onValorChange={handleValorChange} />
+          <ValorInput 
+            valor={formData.valor} 
+            onValorChange={handleValorChange}
+          />
           <DatePickerField 
             label="Data de Vencimento"
             value={formData.data_vencimento} 
             onChange={(date) => handleDateChange('data_vencimento', date)} 
           />
-          {selectedTipo !== "resgate" && selectedTipo !== "rentabilidade" && (
+          
+          {showFullFields && (
             <StatusSelect value={selectedStatus} onChange={handleStatusChange} tipo={selectedTipo} />
           )}
           
-          {selectedTipo !== "resgate" && selectedTipo !== "rentabilidade" && (selectedStatus === "pago" || selectedStatus === "recebido") && (
+          {showFullFields && (selectedStatus === "pago" || selectedStatus === "recebido") && (
             <DatePickerField 
               label={`Data de ${selectedTipo === "receita" ? "Recebimento" : "Pagamento"}`}
               value={formData.data_pagamento} 
@@ -194,7 +269,7 @@ export const LancamentosFormDialog = () => {
             />
           )}
           
-          {selectedTipo !== "resgate" && selectedTipo !== "rentabilidade" && (
+          {showFullFields && (
             <LancamentoModoSelect
               modo={modo}
               onModoChange={handleModoChange}
@@ -219,7 +294,7 @@ export const LancamentosFormDialog = () => {
             onRefresh={refreshCategorias}
           />
           
-          {!isPessoal && selectedTipo !== "resgate" && selectedTipo !== "rentabilidade" && (
+          {!isPessoal && showFullFields && (
             <ClienteFornecedorSelect 
               tipo={selectedTipo}
               clienteId={formData.cliente_id}
@@ -281,7 +356,6 @@ export const LancamentosFormDialog = () => {
                     let faturaYear = dataCompra.getFullYear();
                     
                     if (diaCompra > cartao.dia_fechamento) {
-                      // Compra após fechamento → fatura do próximo mês
                       faturaMonth += 1;
                       if (faturaMonth > 11) {
                         faturaMonth = 0;
@@ -289,7 +363,6 @@ export const LancamentosFormDialog = () => {
                       }
                     }
                     
-                    // Ajustar dia de vencimento (clamp ao último dia do mês)
                     const lastDay = new Date(faturaYear, faturaMonth + 1, 0).getDate();
                     const diaVenc = Math.min(cartao.dia_vencimento, lastDay);
                     const novaData = `${faturaYear}-${String(faturaMonth + 1).padStart(2, '0')}-${String(diaVenc).padStart(2, '0')}`;
@@ -330,7 +403,7 @@ export const LancamentosFormDialog = () => {
                 <p>Deseja {selectedId ? "atualizar" : "registrar"} o seguinte lançamento?</p>
                 <div className="rounded-lg border bg-muted/50 p-3 space-y-1">
                   <p><strong>Descrição:</strong> {formData.descricao}</p>
-                  <p><strong>Tipo:</strong> {selectedTipo === "resgate" ? "Resgate de Investimento" : selectedTipo === "rentabilidade" ? "Rentabilidade" : selectedTipo === "receita" ? "Receita" : selectedTipo === "investimento" ? "Investimento" : "Despesa"}</p>
+                  <p><strong>Tipo:</strong> {getDisplayTipo()}</p>
                   <p><strong>Valor:</strong> {formatCurrency(formData.valor || 0)}</p>
                   <p><strong>Vencimento:</strong> {formData.data_vencimento ? new Date(formData.data_vencimento + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</p>
                   <p><strong>Status:</strong> {selectedStatus === "pendente" ? "Pendente" : selectedStatus === "pago" ? "Pago" : selectedStatus === "recebido" ? "Recebido" : "Cancelado"}</p>
