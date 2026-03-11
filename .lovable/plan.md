@@ -1,57 +1,63 @@
 
 
-## Scroll Animations for Landing Page Sections
+## Plano: Resgate de Investimentos
 
-### Overview
-Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
+### Contexto
+Investimentos no sistema são lançamentos do tipo `investimento` com status `pago/recebido`. O "Saldo Investido" é a soma acumulada desses lançamentos. Atualmente não existe nenhuma funcionalidade de resgate. O resgate deve transferir valor do saldo investido para uma conta bancária, criando os lançamentos adequados.
 
-### Approach
-Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
+### O que será feito
 
-### Implementation Details
+**1. Criar componente `ResgateInvestimentoDialog`**
+- Novo arquivo: `src/components/contas-bancarias/ResgateInvestimentoDialog.tsx`
+- Dialog com campos:
+  - **Valor do resgate** (CurrencyInput, obrigatório, validação contra saldo investido disponível)
+  - **Conta destino** (Select com contas bancárias do usuário)
+  - **Descrição** (opcional, default: "Resgate de investimento")
+- Ao confirmar:
+  1. Buscar saldo investido atual (soma de lancamentos tipo=investimento, status pago/recebido)
+  2. Validar que valor <= saldo investido
+  3. Criar lançamento tipo `receita`, status `recebido`, origem `resgate_investimento`, com conta_bancaria_id do destino
+  4. Criar lançamento tipo `investimento`, status `pago`, valor negativo ou criar com origem `resgate_investimento` para rastrear a saída do investimento (usar valor positivo com origem especial para identificar resgates)
+  5. Atualizar `saldo_atual` da conta destino (+valor)
+  6. Registrar movimentação via `logMovimentacao`
 
-**1. Create `src/hooks/useScrollReveal.ts`**
-- A custom hook that returns a `ref` callback
-- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
-- Adds a CSS class (e.g., `revealed`) when the element is visible
-- Fires once per element (unobserves after reveal)
+**Lógica de lançamentos do resgate:**
+- Lançamento 1 (saída do investimento): tipo=`investimento`, valor negativo no cálculo ou criar um lançamento de "estorno" — melhor abordagem: criar lançamento tipo=`receita`, origem=`resgate_investimento`, que credita a conta bancária
+- Para reduzir o saldo investido: criar lançamento tipo=`investimento`, valor com sinal negativo não é suportado. Alternativa: usar um campo `origem=resgate_investimento` e ajustar o cálculo de saldo investido para subtrair resgates.
 
-**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
-- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
-- Accepts optional `delay` (stagger support) and `className`
-- Starts with opacity-0 and a small transform offset
-- On intersection, transitions to opacity-1 and transform-none
-- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
+**Abordagem escolhida:** Criar 2 lançamentos:
+1. **Receita** (entrada na conta): tipo=`receita`, status=`recebido`, origem=`resgate_investimento`, conta_bancaria_id=destino
+2. **Investimento negativo** (saída do investimento): tipo=`investimento`, status=`pago`, origem=`resgate_investimento`, valor com sinal positivo mas rastreado pela origem
 
-**3. Update `src/pages/LandingPage.tsx`**
-Wrap each section's content with `<ScrollReveal>`:
+Na verdade, a forma mais limpa: criar apenas 1 lançamento tipo=`receita`, origem=`resgate_investimento`. E ajustar o cálculo do `saldoInvestido` no `useDashboardData` para subtrair lançamentos de receita com origem=`resgate_investimento`.
 
-| Section | Animation |
-|---------|-----------|
-| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
-| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
-| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
-| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
-| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
-| Social Proof | Scale for stat cards |
-| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
-| Footer | Simple fade-up |
+**2. Ajustar cálculo de Saldo Investido (`src/hooks/useDashboardData.tsx`)**
+- Buscar também lançamentos com `origem = 'resgate_investimento'` e tipo `receita`
+- `saldoInvestido = totalInvestimentos - totalResgates`
 
-**4. Add base CSS to `src/index.css`**
-```css
-.scroll-reveal {
-  opacity: 0;
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-.scroll-reveal.revealed {
-  opacity: 1;
-  transform: none !important;
-}
-```
+**3. Integrar botão de Resgate na página de Contas Bancárias (`src/pages/ContasBancarias.tsx`)**
+- Adicionar botão "Resgatar" (ícone `TrendingDown` ou `ArrowDownToLine`) ao lado dos botões existentes (Histórico, Extrato, Recalcular, Transferir)
+- Visível quando `canAlterar` é true
+- Abre o `ResgateInvestimentoDialog`
 
-### Key Decisions
-- No new dependencies -- uses native `IntersectionObserver`
-- CSS transitions (not JS-driven animations) for performance
-- Each animation fires only once (no re-hide on scroll up) for a polished feel
-- Stagger delays on card grids (50-100ms increments) for a cascading effect
+**4. Integrar botão de Resgate no Dashboard**
+- No card de "Saldo Investido" (tanto empresarial quanto pessoal), adicionar um botão/link discreto "Resgatar" para acesso rápido, ou manter apenas na página de Contas Bancárias para simplicidade.
+
+### Arquivos a criar/editar
+| Arquivo | Ação |
+|---|---|
+| `src/components/contas-bancarias/ResgateInvestimentoDialog.tsx` | Criar |
+| `src/pages/ContasBancarias.tsx` | Editar - adicionar botão e dialog |
+| `src/hooks/useDashboardData.tsx` | Editar - ajustar cálculo saldoInvestido |
+| `src/components/dashboard/PatrimonioChart.tsx` | Editar - ajustar cálculo se necessário |
+
+### Fluxo do usuário
+1. Usuário acessa Contas Bancárias
+2. Clica em "Resgatar" 
+3. Informa valor, seleciona conta destino
+4. Sistema valida saldo investido disponível
+5. Cria lançamento de receita com origem `resgate_investimento`
+6. Atualiza saldo da conta destino
+7. Registra movimentação no histórico
+8. Dashboard reflete a redução no "Saldo Investido" e aumento no saldo bancário
 
