@@ -952,7 +952,8 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
         if (!wasPaid && isPaid) {
           // Entrando em pago/recebido: aplicar delta
-          const delta = lancamento.tipo === "receita" ? lancamento.valor : -lancamento.valor;
+          const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento" || lancamento.origem === "reajuste_investimento";
+          const delta = isCredit ? lancamento.valor : -lancamento.valor;
           const { data: contaAtual } = await supabase
             .from("contas_bancarias")
             .select("saldo_atual")
