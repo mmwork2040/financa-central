@@ -616,10 +616,12 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       // Ensure proper typing — convert "resgate" and "rentabilidade" to receita with special origem
       const isResgate = formData.tipo === "resgate";
       const isRentabilidade = formData.tipo === ("rentabilidade" as any);
+      const isReajuste = formData.tipo === ("reajuste" as any);
+      const isSpecialInvestment = isResgate || isRentabilidade || isReajuste;
       const dataToSave: LancamentoFormData = {
         ...formData,
-        tipo: (isResgate || isRentabilidade) ? "receita" as any : formData.tipo as "receita" | "despesa" | "investimento",
-        status: (isResgate || isRentabilidade) ? "recebido" as any : formData.status as "pendente" | "pago" | "recebido" | "cancelado",
+        tipo: isSpecialInvestment ? "receita" as any : formData.tipo as "receita" | "despesa" | "investimento",
+        status: isSpecialInvestment ? "recebido" as any : formData.status as "pendente" | "pago" | "recebido" | "cancelado",
       };
 
       if (!selectedId && (!empresaId || empresaId.trim() === '')) {
