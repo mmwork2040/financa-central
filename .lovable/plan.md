@@ -1,57 +1,50 @@
 
 
-## Scroll Animations for Landing Page Sections
+## Plano: Integrar Resgate de Investimento no Fluxo de Lançamentos
 
-### Overview
-Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
+### Contexto
+O resgate de investimento existe apenas como um dialog separado na página de Contas Bancarias. O usuario quer que funcione pelo mesmo fluxo de lancamentos, adicionando "Resgate" como uma opcao no TipoSelect, assim como ja existe "Investimento".
 
-### Approach
-Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
+### O que sera feito
 
-### Implementation Details
+**1. Adicionar tipo "resgate" no TipoSelect**
+- Arquivo: `src/components/lancamentos/form/TipoSelect.tsx`
+- Adicionar `<SelectItem value="resgate">Resgate de Investimento</SelectItem>`
 
-**1. Create `src/hooks/useScrollReveal.ts`**
-- A custom hook that returns a `ref` callback
-- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
-- Adds a CSS class (e.g., `revealed`) when the element is visible
-- Fires once per element (unobserves after reveal)
+**2. Atualizar LancamentosContext para suportar tipo "resgate"**
+- Arquivo: `src/contexts/LancamentosContext.tsx`
+- No `handleSave`: quando tipo for `resgate`, salvar como `tipo: "receita"` com `origem: "resgate_investimento"` e status `recebido`
+- No delta de saldo: tratar resgate como receita (credita a conta bancaria)
+- No `handleStatus`: tratar tipo resgate corretamente
 
-**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
-- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
-- Accepts optional `delay` (stagger support) and `className`
-- Starts with opacity-0 and a small transform offset
-- On intersection, transitions to opacity-1 and transform-none
-- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
+**3. Atualizar LancamentosFormDialog**
+- Arquivo: `src/components/lancamentos/LancamentosFormDialog.tsx`
+- Quando tipo = "resgate": auto-setar status "recebido", mostrar saldo investido disponivel como informacao, validar que valor nao excede saldo investido
+- Ocultar campos desnecessarios (cliente/fornecedor) para resgate
 
-**3. Update `src/pages/LandingPage.tsx`**
-Wrap each section's content with `<ScrollReveal>`:
+**4. Atualizar PatrimonioChart para considerar resgates**
+- Arquivo: `src/components/dashboard/PatrimonioChart.tsx`
+- Buscar lancamentos com `origem = 'resgate_investimento'` e subtrair do investido acumulado
 
-| Section | Animation |
-|---------|-----------|
-| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
-| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
-| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
-| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
-| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
-| Social Proof | Scale for stat cards |
-| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
-| Footer | Simple fade-up |
+**5. Atualizar filtros e labels**
+- `LancamentosContext`: incluir "resgate" no tipo de filtro
+- `LancamentosTable` / badges: exibir label "Resgate" com cor propria para lancamentos com origem `resgate_investimento`
 
-**4. Add base CSS to `src/index.css`**
-```css
-.scroll-reveal {
-  opacity: 0;
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-.scroll-reveal.revealed {
-  opacity: 1;
-  transform: none !important;
-}
-```
+### Fluxo do usuario
+1. Abre "Novo Lancamento"
+2. Seleciona tipo "Resgate de Investimento"
+3. Informa valor e conta bancaria destino
+4. Sistema valida contra saldo investido
+5. Cria lancamento tipo=receita, origem=resgate_investimento, status=recebido
+6. Credita saldo da conta bancaria
+7. Dashboard reflete reducao no Saldo Investido
 
-### Key Decisions
-- No new dependencies -- uses native `IntersectionObserver`
-- CSS transitions (not JS-driven animations) for performance
-- Each animation fires only once (no re-hide on scroll up) for a polished feel
-- Stagger delays on card grids (50-100ms increments) for a cascading effect
+### Arquivos a editar
+| Arquivo | Acao |
+|---|---|
+| `src/components/lancamentos/form/TipoSelect.tsx` | Adicionar opcao "resgate" |
+| `src/contexts/LancamentosContext.tsx` | Tratar resgate no save/status |
+| `src/components/lancamentos/LancamentosFormDialog.tsx` | UI para resgate (saldo, validacao) |
+| `src/components/dashboard/PatrimonioChart.tsx` | Considerar resgates no calculo |
+| `src/components/lancamentos/LancamentosTable.tsx` | Badge/label para resgate |
 
