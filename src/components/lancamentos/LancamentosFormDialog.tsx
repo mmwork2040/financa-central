@@ -182,9 +182,11 @@ export const LancamentosFormDialog = () => {
             value={formData.data_vencimento} 
             onChange={(date) => handleDateChange('data_vencimento', date)} 
           />
-          <StatusSelect value={selectedStatus} onChange={handleStatusChange} tipo={selectedTipo} />
+          {selectedTipo !== "resgate" && (
+            <StatusSelect value={selectedStatus} onChange={handleStatusChange} tipo={selectedTipo} />
+          )}
           
-          {(selectedStatus === "pago" || selectedStatus === "recebido") && (
+          {selectedTipo !== "resgate" && (selectedStatus === "pago" || selectedStatus === "recebido") && (
             <DatePickerField 
               label={`Data de ${selectedTipo === "receita" ? "Recebimento" : "Pagamento"}`}
               value={formData.data_pagamento} 
