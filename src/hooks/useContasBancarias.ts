@@ -137,9 +137,25 @@ export const useContasBancarias = () => {
       };
 
       if (selectedId) {
+        // Recalculate saldo_atual based on new saldo_inicial + all paid/received transactions
+        const { data: lancamentosData } = await supabase
+          .from('lancamentos')
+          .select('tipo, valor')
+          .eq('conta_bancaria_id', selectedId)
+          .in('status', ['pago', 'recebido']);
+
+        let saldoCalculado = contaData.saldo_inicial;
+        (lancamentosData || []).forEach((l: any) => {
+          if (l.tipo === 'receita') {
+            saldoCalculado += l.valor || 0;
+          } else if (l.tipo === 'despesa' || l.tipo === 'investimento') {
+            saldoCalculado -= l.valor || 0;
+          }
+        });
+
         const { error } = await (supabase
           .from('contas_bancarias')
-          .update(contaData as any) as any)
+          .update({ ...contaData, saldo_atual: saldoCalculado } as any) as any)
           .eq('id', selectedId);
         if (error) throw error;
         toast.success("Conta bancária atualizada com sucesso");
