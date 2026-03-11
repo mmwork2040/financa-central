@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface TipoSelectProps {
-  value: "despesa" | "receita" | "investimento" | "resgate" | "rentabilidade";
+  value: "despesa" | "receita" | "investimento";
   onChange: (value: string) => void;
 }
 
@@ -19,8 +19,6 @@ export const TipoSelect = ({ value, onChange }: TipoSelectProps) => {
           <SelectItem value="despesa">Despesa</SelectItem>
           <SelectItem value="receita">Receita</SelectItem>
           <SelectItem value="investimento">Investimento</SelectItem>
-          <SelectItem value="resgate">Resgate de Investimento</SelectItem>
-          <SelectItem value="rentabilidade">Rentabilidade</SelectItem>
         </SelectContent>
       </Select>
     </div>
