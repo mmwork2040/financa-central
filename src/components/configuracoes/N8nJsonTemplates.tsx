@@ -1164,16 +1164,19 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-lancamento",
     toolName: "editar_lancamento",
     label: "Editar Lançamento",
-    description: "Altera dados de um lançamento pendente (bloqueado se já pago/recebido). Suporta edição de recorrência.",
+    description: "Altera dados de um lançamento — permite editar campos descritivos mesmo quando pago/recebido. Suporta edição de recorrência.",
     toolDescription: `Altera dados de um lançamento financeiro existente.
 
-⚠️ REGRA DE SEGURANÇA: Lançamentos com status "pago" ou "recebido" NÃO podem ser alterados.
+⚠️ PROTEÇÃO DE INTEGRIDADE FINANCEIRA:
+- Lançamentos com status "pago" ou "recebido" permitem edição APENAS de campos descritivos:
+  ✅ descricao, categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id
+  ❌ valor, tipo, status, data_vencimento, data_pagamento (bloqueados para preservar integridade)
+- Se tentar alterar um campo bloqueado, o sistema aplica os demais e retorna aviso com os campos ignorados.
 
 ⚠️ IMPORTANTE: Use as ferramentas de listagem (categorias, clientes, fornecedores, etc.) para obter IDs válidos antes de atualizar campos de relacionamento.
 
 PROTEÇÃO DE CADEIA RECORRENTE:
-- Se o lançamento pertence a uma cadeia recorrente (possui recorrencia_grupo_id), apenas os seguintes campos podem ser alterados: valor, status, data_vencimento, data_pagamento, categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id.
-- Campos bloqueados em lançamentos recorrentes: descricao, tipo, recorrencia_tipo, recorrencia_fim. Alterar esses campos quebraria a cadeia.
+- Se o lançamento pertence a uma cadeia recorrente (possui recorrencia_grupo_id), campos bloqueados adicionais: descricao, tipo.
 - Para alterar a frequência ou encerrar uma recorrência, use os campos recorrencia_tipo e recorrencia_fim APENAS em lançamentos NÃO recorrentes que estejam sendo convertidos.
 
 RECORRÊNCIA E PARCELAMENTO:
@@ -1182,8 +1185,6 @@ RECORRÊNCIA E PARCELAMENTO:
   - recorrencia_tipo: semanal, quinzenal, mensal (padrão), trimestral ou anual
   - recorrencia_inicio: YYYY-MM-DD (data de início, aceita retroativas. Se vazio, usa data_vencimento)
   - recorrencia_fim: YYYY-MM-DD (data fim, vazio = indefinido)
-- Para alterar o fim da recorrência de um lançamento já recorrente:
-  - recorrencia_fim: YYYY-MM-DD (nova data fim)
 - Recorrente e parcelado são MUTUAMENTE EXCLUSIVOS.
 
 Parâmetros:
