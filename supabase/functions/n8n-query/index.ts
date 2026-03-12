@@ -1671,11 +1671,11 @@ Deno.serve(async (req) => {
           return new Response(JSON.stringify({ error: "Bloqueado", message: "Este cliente foi adicionado automaticamente (via integração) e não pode ser editado. Solicite a alteração via suporte." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
-        // Check vinculation
+        // Check vinculation - allow safe fields even with paid lancamentos
         const { data: vincCliente } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("cliente_id", id).in("status", ["pago", "recebido"]).limit(1);
-        if (vincCliente && vincCliente.length > 0) {
-          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este cliente possui lançamentos pagos/recebidos vinculados e não pode ser alterado." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
+        const hasVincCliente = vincCliente && vincCliente.length > 0;
+        // Safe fields: nome, contato e endereço não impactam lançamentos (referenciados por ID)
+        const safeFieldsCliente = ["nome", "email", "telefone", "cpf_cnpj", "cep", "rua", "numero", "complemento", "bairro", "cidade", "estado"];
 
         const updateData: any = {};
         const textNormFields: Record<string, "nome" | "descricao" | "endereco" | "estado"> = {
@@ -1685,16 +1685,23 @@ Deno.serve(async (req) => {
         for (const f of fields) {
           const v = sanitize(body[f]);
           if (v !== undefined) {
+            // If has vinculation, only allow safe fields
+            if (hasVincCliente && !safeFieldsCliente.includes(f)) continue;
             if (f === "ativo") updateData[f] = body[f] === true || body[f] === "true";
             else if (textNormFields[f]) updateData[f] = normalizeText(v, textNormFields[f]);
             else updateData[f] = v;
           }
         }
-        if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (Object.keys(updateData).length === 0) {
+          if (hasVincCliente) {
+            return new Response(JSON.stringify({ error: "Bloqueado", message: "Os campos solicitados não podem ser alterados pois o cliente possui lançamentos pagos/recebidos. Apenas dados descritivos (nome, contato, endereço) podem ser editados." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+          return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
 
         const { data: updCli, error: updCliErr } = await supabase.from("clientes").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
         if (updCliErr) throw updCliErr;
-        result = updCli;
+        result = { ...updCli, ...(hasVincCliente ? { aviso: "Cliente com lançamentos vinculados — apenas campos descritivos foram atualizados." } : {}) };
         break;
       }
 
