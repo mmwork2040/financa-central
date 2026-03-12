@@ -964,12 +964,14 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "editar-cliente",
     toolName: "editar_cliente",
     label: "Editar Cliente",
-    description: "Altera dados de um cliente existente (bloqueado se vinculado a lançamentos pagos/recebidos)",
+    description: "Altera dados de um cliente existente. Campos descritivos (nome, contato, endereço) podem ser editados mesmo com lançamentos vinculados.",
     toolDescription: `Altera dados de um cliente existente.
 
 ⚠️ REGRAS DE SEGURANÇA:
 1. Clientes adicionados automaticamente (via integração/webhook) NÃO podem ser editados. Somente clientes com origem "manual".
-2. Se o cliente possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA automaticamente pelo sistema.
+2. Se o cliente possuir lançamentos com status "pago" ou "recebido":
+   - Campos PERMITIDOS: nome, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado (não impactam lançamentos)
+   - Campos BLOQUEADOS: ativo (pode ocultar referências)
 
 Use quando o usuário solicitar:
 - Alterar cliente
@@ -980,6 +982,11 @@ Parâmetros:
 - empresa_id (obrigatório)
 - id (obrigatório — UUID do cliente a editar)
 - nome, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado, ativo (opcionais — envie apenas os campos que mudarão)
+
+CONTROLE DE ACESSO:
+- Super admins têm acesso total independente da empresa.
+- Admins da empresa têm acesso total.
+- Demais usuários são validados pelas permissões concedidas na empresa (tela 'clientes', ação 'pode_alterar').
 
 ⚠️ NÃO é possível editar/excluir USUÁRIOS por este template. Alterações de usuários devem ser feitas pelo sistema.
 
@@ -992,7 +999,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "email", type: "string", required: false, description: "Novo e-mail" },
       { name: "telefone", type: "string", required: false, description: "Novo telefone" },
       { name: "cpf_cnpj", type: "string", required: false, description: "Novo CPF/CNPJ" },
-      { name: "ativo", type: "boolean", required: false, description: "true ou false" },
+      { name: "ativo", type: "boolean", required: false, description: "true ou false (bloqueado se vinculado a lançamentos pagos)" },
     ],
     body: { action: "editar-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do cliente a editar') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", cpf_cnpj: "{{ $fromAI('cpf_cnpj', 'Novo CPF/CNPJ. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
   },
@@ -1000,10 +1007,18 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "editar-fornecedor",
     toolName: "editar_fornecedor",
     label: "Editar Fornecedor",
-    description: "Altera dados de um fornecedor existente (bloqueado se vinculado a lançamentos pagos/recebidos)",
+    description: "Altera dados de um fornecedor existente. Campos descritivos podem ser editados mesmo com lançamentos vinculados.",
     toolDescription: `Altera dados de um fornecedor existente.
 
-⚠️ REGRA DE SEGURANÇA: Se o fornecedor possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+⚠️ REGRAS DE SEGURANÇA:
+- Se o fornecedor possuir lançamentos com status "pago" ou "recebido":
+  - Campos PERMITIDOS: nome, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado
+  - Campos BLOQUEADOS: ativo
+
+CONTROLE DE ACESSO:
+- Super admins têm acesso total independente da empresa.
+- Admins da empresa têm acesso total.
+- Demais usuários: validados pela permissão 'pode_alterar' na tela 'fornecedores'.
 
 Parâmetros:
 - empresa_id (obrigatório)
@@ -1018,7 +1033,7 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
       { name: "nome", type: "string", required: false, description: "Novo nome" },
       { name: "email", type: "string", required: false, description: "Novo e-mail" },
       { name: "telefone", type: "string", required: false, description: "Novo telefone" },
-      { name: "ativo", type: "boolean", required: false, description: "true ou false" },
+      { name: "ativo", type: "boolean", required: false, description: "true ou false (bloqueado se vinculado)" },
     ],
     body: { action: "editar-fornecedor", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do fornecedor') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
   },
@@ -1026,16 +1041,24 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-categoria",
     toolName: "editar_categoria",
     label: "Editar Categoria",
-    description: "Altera dados de uma categoria (bloqueado se vinculada a lançamentos pagos/recebidos)",
+    description: "Altera dados de uma categoria. Nome pode ser editado mesmo com lançamentos vinculados; tipo é bloqueado.",
     toolDescription: `Altera nome ou tipo de uma categoria existente.
 
-⚠️ REGRA DE SEGURANÇA: Se a categoria possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+⚠️ REGRAS DE SEGURANÇA:
+- Se a categoria possuir lançamentos com status "pago" ou "recebido":
+  - Campo PERMITIDO: nome (não impacta lançamentos)
+  - Campo BLOQUEADO: tipo (impacta relatórios e classificação)
+
+CONTROLE DE ACESSO:
+- Super admins têm acesso total.
+- Admins da empresa têm acesso total.
+- Demais usuários: validados pela permissão 'pode_alterar' na tela 'categorias'.
 
 Parâmetros:
 - empresa_id (obrigatório)
 - id (obrigatório)
 - nome (opcional)
-- tipo: receita, despesa ou investimento (opcional)
+- tipo: receita, despesa ou investimento (opcional — bloqueado se vinculado)
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Cadastros",
@@ -1043,7 +1066,7 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "id", type: "string", required: true, description: "UUID da categoria" },
       { name: "nome", type: "string", required: false, description: "Novo nome" },
-      { name: "tipo", type: "string", required: false, description: "receita, despesa ou investimento" },
+      { name: "tipo", type: "string", required: false, description: "receita, despesa ou investimento (bloqueado se vinculado)" },
     ],
     body: { action: "editar-categoria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da categoria') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", tipo: "{{ $fromAI('tipo', 'receita, despesa ou investimento. Deixe vazio se não mudar') }}" },
   },
@@ -1051,17 +1074,25 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-conta-bancaria",
     toolName: "editar_conta_bancaria",
     label: "Editar Conta Bancária",
-    description: "Altera dados de uma conta bancária (bloqueado se vinculada a lançamentos pagos/recebidos)",
+    description: "Altera dados de uma conta bancária. Campos descritivos podem ser editados mesmo com lançamentos vinculados.",
     toolDescription: `Altera dados de uma conta bancária existente.
 
-⚠️ REGRA DE SEGURANÇA: Se a conta possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+⚠️ REGRAS DE SEGURANÇA:
+- Se a conta possuir lançamentos com status "pago" ou "recebido":
+  - Campos PERMITIDOS: nome, banco, agencia, conta (descritivos, não impactam saldo)
+  - Campos BLOQUEADOS: saldo_atual, principal (impactam integridade financeira)
+
+CONTROLE DE ACESSO:
+- Super admins têm acesso total.
+- Admins da empresa têm acesso total.
+- Demais usuários: validados pela permissão 'pode_alterar' na tela 'contas_bancarias'.
 
 Parâmetros:
 - empresa_id (obrigatório)
 - id (obrigatório)
 - nome, banco, agencia, conta (opcionais)
-- saldo_atual (numérico, opcional)
-- principal (boolean, opcional)
+- saldo_atual (numérico, opcional — bloqueado se vinculado)
+- principal (boolean, opcional — bloqueado se vinculado)
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Cadastros",
@@ -1070,8 +1101,8 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
       { name: "id", type: "string", required: true, description: "UUID da conta bancária" },
       { name: "nome", type: "string", required: false, description: "Novo nome" },
       { name: "banco", type: "string", required: false, description: "Novo banco" },
-      { name: "saldo_atual", type: "number", required: false, description: "Novo saldo atual" },
-      { name: "principal", type: "boolean", required: false, description: "true ou false" },
+      { name: "saldo_atual", type: "number", required: false, description: "Novo saldo atual (bloqueado se vinculado)" },
+      { name: "principal", type: "boolean", required: false, description: "true ou false (bloqueado se vinculado)" },
     ],
     body: { action: "editar-conta-bancaria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da conta bancária') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", banco: "{{ $fromAI('banco', 'Novo banco. Deixe vazio se não mudar') }}", saldo_atual: "{{ $fromAI('saldo_atual', 'Novo saldo. Deixe vazio se não mudar') }}", principal: "{{ $fromAI('principal', 'true ou false. Deixe vazio se não mudar') }}" },
   },
@@ -1079,10 +1110,15 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-forma-pagamento",
     toolName: "editar_forma_pagamento",
     label: "Editar Forma de Pagamento",
-    description: "Altera descrição de uma forma de pagamento (bloqueado se vinculada a lançamentos pagos/recebidos)",
+    description: "Altera descrição de uma forma de pagamento (permitido mesmo com lançamentos vinculados)",
     toolDescription: `Altera a descrição de uma forma de pagamento.
 
-⚠️ REGRA DE SEGURANÇA: Se a forma de pagamento possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+A descrição pode ser alterada livremente — lançamentos referenciam formas de pagamento por ID, não pelo nome. Portanto, editar a descrição NÃO impacta lançamentos existentes.
+
+CONTROLE DE ACESSO:
+- Super admins têm acesso total.
+- Admins da empresa têm acesso total.
+- Demais usuários: validados pela permissão 'pode_alterar' na tela 'formas_pagamento'.
 
 Parâmetros:
 - empresa_id (obrigatório)
