@@ -1747,18 +1747,28 @@ Deno.serve(async (req) => {
         if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         
         const { data: vincCat } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("categoria_id", id).in("status", ["pago", "recebido"]).limit(1);
-        if (vincCat && vincCat.length > 0) {
-          return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta categoria possui lançamentos pagos/recebidos vinculados e não pode ser alterada." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
+        const hasVincCat = vincCat && vincCat.length > 0;
 
         const updateData: any = {};
+        // Nome é seguro (lançamentos referenciam por ID). Tipo é bloqueado se vinculado (impacta relatórios).
         if (sanitize(body.nome)) updateData.nome = normalizeText(sanitize(body.nome), "nome");
-        if (sanitize(body.tipo)) updateData.tipo = sanitize(body.tipo);
-        if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (sanitize(body.tipo)) {
+          if (hasVincCat) {
+            // Tipo bloqueado quando vinculado - não adiciona ao update silenciosamente
+          } else {
+            updateData.tipo = sanitize(body.tipo);
+          }
+        }
+        if (Object.keys(updateData).length === 0) {
+          if (hasVincCat) {
+            return new Response(JSON.stringify({ error: "Bloqueado", message: "O campo 'tipo' não pode ser alterado pois a categoria possui lançamentos pagos/recebidos. Apenas o nome pode ser editado." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+          return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
 
         const { data: updCat, error: updCatErr } = await supabase.from("categorias").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
         if (updCatErr) throw updCatErr;
-        result = updCat;
+        result = { ...updCat, ...(hasVincCat ? { aviso: "Categoria com lançamentos vinculados — apenas o nome foi atualizado." } : {}) };
         break;
       }
 
