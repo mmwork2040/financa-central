@@ -1711,9 +1711,8 @@ Deno.serve(async (req) => {
         if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         
         const { data: vincForn } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("fornecedor_id", id).in("status", ["pago", "recebido"]).limit(1);
-        if (vincForn && vincForn.length > 0) {
-          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este fornecedor possui lançamentos pagos/recebidos vinculados e não pode ser alterado." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
+        const hasVincForn = vincForn && vincForn.length > 0;
+        const safeFieldsForn = ["nome", "email", "telefone", "cpf_cnpj", "cep", "rua", "numero", "complemento", "bairro", "cidade", "estado"];
 
         const updateData: any = {};
         const textNormFields: Record<string, "nome" | "descricao" | "endereco" | "estado"> = {
@@ -1723,16 +1722,22 @@ Deno.serve(async (req) => {
         for (const f of fields) {
           const v = sanitize(body[f]);
           if (v !== undefined) {
+            if (hasVincForn && !safeFieldsForn.includes(f)) continue;
             if (f === "ativo") updateData[f] = body[f] === true || body[f] === "true";
             else if (textNormFields[f]) updateData[f] = normalizeText(v, textNormFields[f]);
             else updateData[f] = v;
           }
         }
-        if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (Object.keys(updateData).length === 0) {
+          if (hasVincForn) {
+            return new Response(JSON.stringify({ error: "Bloqueado", message: "Os campos solicitados não podem ser alterados pois o fornecedor possui lançamentos pagos/recebidos. Apenas dados descritivos (nome, contato, endereço) podem ser editados." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+          return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
 
         const { data: updForn, error: updFornErr } = await supabase.from("fornecedores").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
         if (updFornErr) throw updFornErr;
-        result = updForn;
+        result = { ...updForn, ...(hasVincForn ? { aviso: "Fornecedor com lançamentos vinculados — apenas campos descritivos foram atualizados." } : {}) };
         break;
       }
 
