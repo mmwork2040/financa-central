@@ -2378,39 +2378,28 @@ Deno.serve(async (req) => {
           return new Response(JSON.stringify({ error: "Bloqueado", message: "Vendas de origem automática (webhook/integração) não podem ser editadas." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
-        // Check if linked lancamento is pago/recebido
-        let lancamentoPago = false;
+        // Check if linked lancamento is pago/recebido — block ALL edits
         if (vendaExist.lancamento_id) {
           const { data: lancVinc } = await supabase.from("lancamentos").select("status").eq("id", vendaExist.lancamento_id).maybeSingle();
-          if (lancVinc && ["pago", "recebido"].includes(lancVinc.status)) lancamentoPago = true;
-        }
-
-        // Safe fields: descriptive, no financial impact
-        const vendaSafeFields = ["produto", "cliente", "cliente_email", "cliente_telefone", "cliente_documento", "cliente_endereco", "observacoes"];
-        // Financial fields: blocked when lancamento is pago/recebido
-        const vendaFinancialFields = ["plataforma", "status", "data_venda"];
-
-        const updateVenda: any = {};
-        const vendaBlockedFields: string[] = [];
-
-        for (const f of [...vendaSafeFields, ...vendaFinancialFields]) {
-          const v = sanitize(body[f]);
-          if (v !== undefined) {
-            if (lancamentoPago && vendaFinancialFields.includes(f)) { vendaBlockedFields.push(f); continue; }
-            updateVenda[f] = (f === "produto" || f === "cliente") ? normalizeText(v, "nome") : v;
+          if (lancVinc && ["pago", "recebido"].includes(lancVinc.status)) {
+            return new Response(JSON.stringify({ 
+              error: "Bloqueado", 
+              message: `Esta venda possui um lançamento vinculado já ${lancVinc.status} e não pode ser alterada via n8n/chat. Para editar registros pagos ou recebidos, acesse diretamente o sistema web.`,
+            }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
           }
         }
 
-        // Financial values: blocked when lancamento pago/recebido
-        if (body.valor_bruto !== undefined && sanitize(body.valor_bruto) !== undefined) {
-          if (lancamentoPago) { vendaBlockedFields.push("valor_bruto"); } else { updateVenda.valor_bruto = Number(body.valor_bruto); }
+        const updateVenda: any = {};
+        const vendaFields = ["plataforma", "produto", "cliente", "cliente_email", "cliente_telefone", "cliente_documento", "cliente_endereco", "status", "data_venda", "observacoes"];
+        for (const f of vendaFields) {
+          const v = sanitize(body[f]);
+          if (v !== undefined) {
+            updateVenda[f] = (f === "produto" || f === "cliente") ? normalizeText(v, "nome") : v;
+          }
         }
-        if (body.taxa !== undefined && sanitize(body.taxa) !== undefined) {
-          if (lancamentoPago) { vendaBlockedFields.push("taxa"); } else { updateVenda.taxa = Number(body.taxa); }
-        }
-        if (body.valor_liquido !== undefined && sanitize(body.valor_liquido) !== undefined) {
-          if (lancamentoPago) { vendaBlockedFields.push("valor_liquido"); } else { updateVenda.valor_liquido = Number(body.valor_liquido); }
-        }
+        if (body.valor_bruto !== undefined && sanitize(body.valor_bruto) !== undefined) updateVenda.valor_bruto = Number(body.valor_bruto);
+        if (body.taxa !== undefined && sanitize(body.taxa) !== undefined) updateVenda.taxa = Number(body.taxa);
+        if (body.valor_liquido !== undefined && sanitize(body.valor_liquido) !== undefined) updateVenda.valor_liquido = Number(body.valor_liquido);
 
         // Auto-calcular valor_liquido se valor_bruto ou taxa mudaram
         if ((updateVenda.valor_bruto !== undefined || updateVenda.taxa !== undefined) && updateVenda.valor_liquido === undefined) {
@@ -2423,13 +2412,6 @@ Deno.serve(async (req) => {
         }
 
         if (Object.keys(updateVenda).length === 0) {
-          if (vendaBlockedFields.length > 0) {
-            return new Response(JSON.stringify({ 
-              error: "Bloqueado", 
-              message: `Os campos [${vendaBlockedFields.join(", ")}] não podem ser alterados pois o lançamento vinculado já foi pago/recebido. Apenas campos descritivos (produto, cliente, observações) podem ser editados.`,
-              campos_bloqueados: vendaBlockedFields,
-            }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-          }
           return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
