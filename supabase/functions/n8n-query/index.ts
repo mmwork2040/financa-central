@@ -1854,77 +1854,54 @@ Deno.serve(async (req) => {
         const { data: lancExist } = await supabase.from("lancamentos").select("id, status, origem, recorrencia_grupo_id, recorrente").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
         if (!lancExist) return new Response(JSON.stringify({ error: "Lançamento não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-        const isPagoRecebido = ["pago", "recebido"].includes(lancExist.status);
-        const isRecorrente = !!(lancExist as any).recorrencia_grupo_id;
+        if (["pago", "recebido"].includes(lancExist.status)) {
+          return new Response(JSON.stringify({ 
+            error: "Bloqueado", 
+            message: `Este lançamento já foi ${lancExist.status} e não pode ser alterado via n8n/chat. Para editar registros pagos ou recebidos, acesse diretamente o sistema web.`,
+          }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
 
-        // Fields that are safe to edit even when pago/recebido (descriptive, no financial impact)
-        const safeFields = ["descricao", "categoria_id", "cliente_id", "fornecedor_id", "conta_bancaria_id", "forma_pagamento_id", "projeto_id"];
-        // Fields that impact financial integrity — blocked when pago/recebido
-        const financialFields = ["tipo", "status", "data_vencimento", "data_pagamento"];
-        const allFields = [...safeFields, ...financialFields];
+        const isRecorrente = !!(lancExist as any).recorrencia_grupo_id;
         const blockedInRecorrente = ["descricao", "tipo"];
+        const fields = ["descricao", "tipo", "status", "data_vencimento", "data_pagamento", "categoria_id", "cliente_id", "fornecedor_id", "conta_bancaria_id", "forma_pagamento_id", "projeto_id"];
 
         const updateData: any = {};
-        const blockedFields: string[] = [];
         
-        for (const f of allFields) {
+        for (const f of fields) {
           const v = sanitize(body[f]);
           if (v !== undefined) {
-            if (isRecorrente && blockedInRecorrente.includes(f)) { blockedFields.push(f); continue; }
-            if (isPagoRecebido && financialFields.includes(f)) { blockedFields.push(f); continue; }
+            if (isRecorrente && blockedInRecorrente.includes(f)) continue;
             updateData[f] = f === "descricao" ? normalizeText(v, "descricao") : v;
           }
         }
+        if (body.valor !== undefined && sanitize(body.valor) !== undefined) updateData.valor = Number(body.valor);
         
-        // Valor: blocked when pago/recebido
-        if (body.valor !== undefined && sanitize(body.valor) !== undefined) {
-          if (isPagoRecebido) {
-            blockedFields.push("valor");
-          } else {
-            updateData.valor = Number(body.valor);
-          }
-        }
-        
-        // Handle recurrence fields (only when NOT pago/recebido)
-        if (!isPagoRecebido) {
-          const recorrenteFlag = sanitize(body.recorrente);
-          if (recorrenteFlag === "true" || recorrenteFlag === true) {
-            if (!isRecorrente) {
-              updateData.recorrente = true;
-              const recTipo = sanitize(body.recorrencia_tipo);
-              if (recTipo && ["semanal", "quinzenal", "mensal", "trimestral", "anual"].includes(recTipo)) {
-                updateData.recorrencia_tipo = recTipo;
-              } else {
-                updateData.recorrencia_tipo = "mensal";
-              }
-              const recInicio = sanitize(body.recorrencia_inicio);
-              if (recInicio) updateData.data_vencimento = recInicio;
+        // Handle recurrence fields
+        const recorrenteFlag = sanitize(body.recorrente);
+        if (recorrenteFlag === "true" || recorrenteFlag === true) {
+          if (!isRecorrente) {
+            updateData.recorrente = true;
+            const recTipo = sanitize(body.recorrencia_tipo);
+            if (recTipo && ["semanal", "quinzenal", "mensal", "trimestral", "anual"].includes(recTipo)) {
+              updateData.recorrencia_tipo = recTipo;
+            } else {
+              updateData.recorrencia_tipo = "mensal";
             }
-          }
-          
-          const recFim = sanitize(body.recorrencia_fim);
-          if (recFim !== undefined) {
-            updateData.recorrencia_fim = recFim || null;
+            const recInicio = sanitize(body.recorrencia_inicio);
+            if (recInicio) updateData.data_vencimento = recInicio;
           }
         }
         
-        if (Object.keys(updateData).length === 0) {
-          if (blockedFields.length > 0) {
-            return new Response(JSON.stringify({ 
-              error: "Bloqueado", 
-              message: `Os campos [${blockedFields.join(", ")}] não podem ser alterados pois o lançamento já foi ${lancExist.status}. Apenas campos descritivos (descrição, categoria, cliente, fornecedor, conta, forma de pagamento, projeto) podem ser editados.`,
-              campos_bloqueados: blockedFields,
-            }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-          }
-          return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const recFim = sanitize(body.recorrencia_fim);
+        if (recFim !== undefined) {
+          updateData.recorrencia_fim = recFim || null;
         }
+        
+        if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
         const { data: updLanc, error: updLancErr } = await supabase.from("lancamentos").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
         if (updLancErr) throw updLancErr;
-        result = {
-          ...updLanc,
-          ...(blockedFields.length > 0 ? { _aviso: `Campos bloqueados por integridade (${lancExist.status}): ${blockedFields.join(", ")}. Apenas campos descritivos foram atualizados.`, campos_bloqueados: blockedFields } : {}),
-        };
+        result = updLanc;
         break;
       }
 
