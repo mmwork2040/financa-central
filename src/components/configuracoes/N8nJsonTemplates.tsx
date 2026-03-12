@@ -1164,16 +1164,19 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-lancamento",
     toolName: "editar_lancamento",
     label: "Editar Lançamento",
-    description: "Altera dados de um lançamento pendente (bloqueado se já pago/recebido). Suporta edição de recorrência.",
+    description: "Altera dados de um lançamento — permite editar campos descritivos mesmo quando pago/recebido. Suporta edição de recorrência.",
     toolDescription: `Altera dados de um lançamento financeiro existente.
 
-⚠️ REGRA DE SEGURANÇA: Lançamentos com status "pago" ou "recebido" NÃO podem ser alterados.
+⚠️ PROTEÇÃO DE INTEGRIDADE FINANCEIRA:
+- Lançamentos com status "pago" ou "recebido" permitem edição APENAS de campos descritivos:
+  ✅ descricao, categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id
+  ❌ valor, tipo, status, data_vencimento, data_pagamento (bloqueados para preservar integridade)
+- Se tentar alterar um campo bloqueado, o sistema aplica os demais e retorna aviso com os campos ignorados.
 
 ⚠️ IMPORTANTE: Use as ferramentas de listagem (categorias, clientes, fornecedores, etc.) para obter IDs válidos antes de atualizar campos de relacionamento.
 
 PROTEÇÃO DE CADEIA RECORRENTE:
-- Se o lançamento pertence a uma cadeia recorrente (possui recorrencia_grupo_id), apenas os seguintes campos podem ser alterados: valor, status, data_vencimento, data_pagamento, categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id.
-- Campos bloqueados em lançamentos recorrentes: descricao, tipo, recorrencia_tipo, recorrencia_fim. Alterar esses campos quebraria a cadeia.
+- Se o lançamento pertence a uma cadeia recorrente (possui recorrencia_grupo_id), campos bloqueados adicionais: descricao, tipo.
 - Para alterar a frequência ou encerrar uma recorrência, use os campos recorrencia_tipo e recorrencia_fim APENAS em lançamentos NÃO recorrentes que estejam sendo convertidos.
 
 RECORRÊNCIA E PARCELAMENTO:
@@ -1182,8 +1185,6 @@ RECORRÊNCIA E PARCELAMENTO:
   - recorrencia_tipo: semanal, quinzenal, mensal (padrão), trimestral ou anual
   - recorrencia_inicio: YYYY-MM-DD (data de início, aceita retroativas. Se vazio, usa data_vencimento)
   - recorrencia_fim: YYYY-MM-DD (data fim, vazio = indefinido)
-- Para alterar o fim da recorrência de um lançamento já recorrente:
-  - recorrencia_fim: YYYY-MM-DD (nova data fim)
 - Recorrente e parcelado são MUTUAMENTE EXCLUSIVOS.
 
 Parâmetros:
@@ -1472,12 +1473,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "editar-venda",
     toolName: "editar_venda",
     label: "Editar Venda Digital",
-    description: "Altera dados de uma venda digital existente, com opção de emissão de NF",
+    description: "Altera dados de uma venda digital — permite editar campos descritivos mesmo com lançamento pago/recebido",
     toolDescription: `Altera dados de uma venda digital existente.
 
 ⚠️ REGRAS DE SEGURANÇA:
 1. Vendas com origem automática (webhook/integração) NÃO podem ser editadas. Somente vendas com origem "manual".
-2. Envie apenas os campos que deseja alterar. Campos não enviados ou vazios serão mantidos.
+2. Se o lançamento vinculado à venda estiver "pago" ou "recebido", apenas campos descritivos podem ser editados:
+   ✅ produto, cliente, cliente_email, cliente_telefone, cliente_documento, cliente_endereco, observacoes
+   ❌ plataforma, valor_bruto, taxa, valor_liquido, status, data_venda (bloqueados para preservar integridade)
+3. Se tentar alterar um campo bloqueado, o sistema aplica os demais e retorna aviso com os campos ignorados.
 
 EMISSÃO DE NOTA FISCAL:
 - Se o usuário deseja emitir NF na edição, envie emitir_nota_fiscal = true.
@@ -1485,8 +1489,8 @@ EMISSÃO DE NOTA FISCAL:
 ⚠️ PRÉ-REQUISITOS FISCAIS (verificados automaticamente pelo sistema):
   1. A empresa deve ter a Configuração Fiscal concluída (razão social, regime tributário, etc.)
   2. O Certificado Digital A1 (.pfx) deve estar enviado no sistema.
-  Se algum desses pré-requisitos NÃO estiver atendido, a emissão será BLOQUEADA e o sistema retornará uma mensagem orientando o usuário a acessar Configurações da Empresa → Configuração Fiscal diretamente no sistema web.
-  IMPORTANTE: Esses dados NÃO podem ser configurados via chat/n8n. O usuário DEVE acessar o sistema para configurá-los.
+  Se algum desses pré-requisitos NÃO estiver atendido, a emissão será BLOQUEADA.
+  IMPORTANTE: Esses dados NÃO podem ser configurados via chat/n8n. O usuário DEVE acessar o sistema.
 
 - Antes de emitir, verifique se a venda possui todos os campos obrigatórios:
   • cliente (nome do cliente)
@@ -1494,7 +1498,6 @@ EMISSÃO DE NOTA FISCAL:
   • produto (nome do produto)
   • valor_bruto (maior que zero)
   • data_venda
-- Se algum campo estiver faltando, inclua-o na edição OU informe ao usuário.
 
 Use quando o usuário solicitar:
 - Editar venda
@@ -1506,10 +1509,9 @@ Parâmetros:
 - user_id (obrigatório — UUID do usuário para controle de permissões)
 - id (obrigatório — UUID da venda a editar)
 - plataforma, valor_bruto, taxa, valor_liquido, produto, cliente, cliente_email, cliente_telefone, cliente_documento, cliente_endereco, status, data_venda, observacoes (opcionais)
-- emitir_nota_fiscal (opcional — true/false. Se true, valida campos obrigatórios E pré-requisitos fiscais)
+- emitir_nota_fiscal (opcional — true/false)
 
 CONTROLE DE ACESSO: Requer permissão 'pode_alterar' na tela 'vendas_digitais'.
-Para emitir NF, também requer permissão 'pode_incluir' na tela 'emissao_nf'.
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Vendas",

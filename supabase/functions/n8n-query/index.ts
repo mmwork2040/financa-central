@@ -1851,56 +1851,80 @@ Deno.serve(async (req) => {
         const id = sanitize(body.id);
         if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         
-        // Check if lancamento is paid/received - block edit
         const { data: lancExist } = await supabase.from("lancamentos").select("id, status, origem, recorrencia_grupo_id, recorrente").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
         if (!lancExist) return new Response(JSON.stringify({ error: "Lançamento não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        if (["pago", "recebido"].includes(lancExist.status)) {
-          return new Response(JSON.stringify({ error: "Bloqueado", message: "Este lançamento já foi pago/recebido e não pode ser alterado." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
+
+        const isPagoRecebido = ["pago", "recebido"].includes(lancExist.status);
+        const isRecorrente = !!(lancExist as any).recorrencia_grupo_id;
+
+        // Fields that are safe to edit even when pago/recebido (descriptive, no financial impact)
+        const safeFields = ["descricao", "categoria_id", "cliente_id", "fornecedor_id", "conta_bancaria_id", "forma_pagamento_id", "projeto_id"];
+        // Fields that impact financial integrity — blocked when pago/recebido
+        const financialFields = ["tipo", "status", "data_vencimento", "data_pagamento"];
+        const allFields = [...safeFields, ...financialFields];
+        const blockedInRecorrente = ["descricao", "tipo"];
 
         const updateData: any = {};
-        const fields = ["descricao", "tipo", "status", "data_vencimento", "data_pagamento", "categoria_id", "cliente_id", "fornecedor_id", "conta_bancaria_id", "forma_pagamento_id", "projeto_id"];
+        const blockedFields: string[] = [];
         
-        // Check if lancamento belongs to a recurring chain
-        const isRecorrente = !!(lancExist as any).recorrencia_grupo_id;
-        const blockedInRecorrente = ["descricao", "tipo"];
-        
-        for (const f of fields) {
+        for (const f of allFields) {
           const v = sanitize(body[f]);
           if (v !== undefined) {
-            // Block certain fields if part of recurring chain
-            if (isRecorrente && blockedInRecorrente.includes(f)) continue;
+            if (isRecorrente && blockedInRecorrente.includes(f)) { blockedFields.push(f); continue; }
+            if (isPagoRecebido && financialFields.includes(f)) { blockedFields.push(f); continue; }
             updateData[f] = f === "descricao" ? normalizeText(v, "descricao") : v;
           }
         }
-        if (body.valor !== undefined && sanitize(body.valor) !== undefined) updateData.valor = Number(body.valor);
         
-        // Handle recurrence fields
-        const recorrenteFlag = sanitize(body.recorrente);
-        if (recorrenteFlag === "true" || recorrenteFlag === true) {
-          if (!isRecorrente) {
-            updateData.recorrente = true;
-            const recTipo = sanitize(body.recorrencia_tipo);
-            if (recTipo && ["semanal", "quinzenal", "mensal", "trimestral", "anual"].includes(recTipo)) {
-              updateData.recorrencia_tipo = recTipo;
-            } else {
-              updateData.recorrencia_tipo = "mensal";
-            }
-            const recInicio = sanitize(body.recorrencia_inicio);
-            if (recInicio) updateData.data_vencimento = recInicio;
+        // Valor: blocked when pago/recebido
+        if (body.valor !== undefined && sanitize(body.valor) !== undefined) {
+          if (isPagoRecebido) {
+            blockedFields.push("valor");
+          } else {
+            updateData.valor = Number(body.valor);
           }
         }
         
-        const recFim = sanitize(body.recorrencia_fim);
-        if (recFim !== undefined) {
-          updateData.recorrencia_fim = recFim || null;
+        // Handle recurrence fields (only when NOT pago/recebido)
+        if (!isPagoRecebido) {
+          const recorrenteFlag = sanitize(body.recorrente);
+          if (recorrenteFlag === "true" || recorrenteFlag === true) {
+            if (!isRecorrente) {
+              updateData.recorrente = true;
+              const recTipo = sanitize(body.recorrencia_tipo);
+              if (recTipo && ["semanal", "quinzenal", "mensal", "trimestral", "anual"].includes(recTipo)) {
+                updateData.recorrencia_tipo = recTipo;
+              } else {
+                updateData.recorrencia_tipo = "mensal";
+              }
+              const recInicio = sanitize(body.recorrencia_inicio);
+              if (recInicio) updateData.data_vencimento = recInicio;
+            }
+          }
+          
+          const recFim = sanitize(body.recorrencia_fim);
+          if (recFim !== undefined) {
+            updateData.recorrencia_fim = recFim || null;
+          }
         }
         
-        if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (Object.keys(updateData).length === 0) {
+          if (blockedFields.length > 0) {
+            return new Response(JSON.stringify({ 
+              error: "Bloqueado", 
+              message: `Os campos [${blockedFields.join(", ")}] não podem ser alterados pois o lançamento já foi ${lancExist.status}. Apenas campos descritivos (descrição, categoria, cliente, fornecedor, conta, forma de pagamento, projeto) podem ser editados.`,
+              campos_bloqueados: blockedFields,
+            }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+          return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
 
         const { data: updLanc, error: updLancErr } = await supabase.from("lancamentos").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
         if (updLancErr) throw updLancErr;
-        result = updLanc;
+        result = {
+          ...updLanc,
+          ...(blockedFields.length > 0 ? { _aviso: `Campos bloqueados por integridade (${lancExist.status}): ${blockedFields.join(", ")}. Apenas campos descritivos foram atualizados.`, campos_bloqueados: blockedFields } : {}),
+        };
         break;
       }
 
@@ -2367,7 +2391,7 @@ Deno.serve(async (req) => {
         // Verificar se a venda existe e é manual
         const { data: vendaExist } = await supabase
           .from("vendas_digitais")
-          .select("id, origem, invoice_status")
+          .select("id, origem, invoice_status, lancamento_id")
           .eq("id", id)
           .eq("empresa_id", empresa_id)
           .maybeSingle();
@@ -2377,17 +2401,39 @@ Deno.serve(async (req) => {
           return new Response(JSON.stringify({ error: "Bloqueado", message: "Vendas de origem automática (webhook/integração) não podem ser editadas." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
+        // Check if linked lancamento is pago/recebido
+        let lancamentoPago = false;
+        if (vendaExist.lancamento_id) {
+          const { data: lancVinc } = await supabase.from("lancamentos").select("status").eq("id", vendaExist.lancamento_id).maybeSingle();
+          if (lancVinc && ["pago", "recebido"].includes(lancVinc.status)) lancamentoPago = true;
+        }
+
+        // Safe fields: descriptive, no financial impact
+        const vendaSafeFields = ["produto", "cliente", "cliente_email", "cliente_telefone", "cliente_documento", "cliente_endereco", "observacoes"];
+        // Financial fields: blocked when lancamento is pago/recebido
+        const vendaFinancialFields = ["plataforma", "status", "data_venda"];
+
         const updateVenda: any = {};
-        const vendaFields = ["plataforma", "produto", "cliente", "cliente_email", "cliente_telefone", "cliente_documento", "cliente_endereco", "status", "data_venda", "observacoes"];
-        for (const f of vendaFields) {
+        const vendaBlockedFields: string[] = [];
+
+        for (const f of [...vendaSafeFields, ...vendaFinancialFields]) {
           const v = sanitize(body[f]);
           if (v !== undefined) {
+            if (lancamentoPago && vendaFinancialFields.includes(f)) { vendaBlockedFields.push(f); continue; }
             updateVenda[f] = (f === "produto" || f === "cliente") ? normalizeText(v, "nome") : v;
           }
         }
-        if (body.valor_bruto !== undefined && sanitize(body.valor_bruto) !== undefined) updateVenda.valor_bruto = Number(body.valor_bruto);
-        if (body.taxa !== undefined && sanitize(body.taxa) !== undefined) updateVenda.taxa = Number(body.taxa);
-        if (body.valor_liquido !== undefined && sanitize(body.valor_liquido) !== undefined) updateVenda.valor_liquido = Number(body.valor_liquido);
+
+        // Financial values: blocked when lancamento pago/recebido
+        if (body.valor_bruto !== undefined && sanitize(body.valor_bruto) !== undefined) {
+          if (lancamentoPago) { vendaBlockedFields.push("valor_bruto"); } else { updateVenda.valor_bruto = Number(body.valor_bruto); }
+        }
+        if (body.taxa !== undefined && sanitize(body.taxa) !== undefined) {
+          if (lancamentoPago) { vendaBlockedFields.push("taxa"); } else { updateVenda.taxa = Number(body.taxa); }
+        }
+        if (body.valor_liquido !== undefined && sanitize(body.valor_liquido) !== undefined) {
+          if (lancamentoPago) { vendaBlockedFields.push("valor_liquido"); } else { updateVenda.valor_liquido = Number(body.valor_liquido); }
+        }
 
         // Auto-calcular valor_liquido se valor_bruto ou taxa mudaram
         if ((updateVenda.valor_bruto !== undefined || updateVenda.taxa !== undefined) && updateVenda.valor_liquido === undefined) {
@@ -2400,6 +2446,13 @@ Deno.serve(async (req) => {
         }
 
         if (Object.keys(updateVenda).length === 0) {
+          if (vendaBlockedFields.length > 0) {
+            return new Response(JSON.stringify({ 
+              error: "Bloqueado", 
+              message: `Os campos [${vendaBlockedFields.join(", ")}] não podem ser alterados pois o lançamento vinculado já foi pago/recebido. Apenas campos descritivos (produto, cliente, observações) podem ser editados.`,
+              campos_bloqueados: vendaBlockedFields,
+            }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
           return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
@@ -2463,6 +2516,7 @@ Deno.serve(async (req) => {
         result = {
           venda: updVenda,
           ...(nfEditResult ? { nota_fiscal: nfEditResult } : {}),
+          ...(vendaBlockedFields.length > 0 ? { _aviso: `Campos bloqueados por integridade (lançamento pago/recebido): ${vendaBlockedFields.join(", ")}. Apenas campos descritivos foram atualizados.`, campos_bloqueados: vendaBlockedFields } : {}),
         };
         break;
       }
