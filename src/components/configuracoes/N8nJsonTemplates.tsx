@@ -964,12 +964,14 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "editar-cliente",
     toolName: "editar_cliente",
     label: "Editar Cliente",
-    description: "Altera dados de um cliente existente (bloqueado se vinculado a lançamentos pagos/recebidos)",
+    description: "Altera dados de um cliente existente. Campos descritivos (nome, contato, endereço) podem ser editados mesmo com lançamentos vinculados.",
     toolDescription: `Altera dados de um cliente existente.
 
 ⚠️ REGRAS DE SEGURANÇA:
 1. Clientes adicionados automaticamente (via integração/webhook) NÃO podem ser editados. Somente clientes com origem "manual".
-2. Se o cliente possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA automaticamente pelo sistema.
+2. Se o cliente possuir lançamentos com status "pago" ou "recebido":
+   - Campos PERMITIDOS: nome, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado (não impactam lançamentos)
+   - Campos BLOQUEADOS: ativo (pode ocultar referências)
 
 Use quando o usuário solicitar:
 - Alterar cliente
@@ -980,6 +982,11 @@ Parâmetros:
 - empresa_id (obrigatório)
 - id (obrigatório — UUID do cliente a editar)
 - nome, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado, ativo (opcionais — envie apenas os campos que mudarão)
+
+CONTROLE DE ACESSO:
+- Super admins têm acesso total independente da empresa.
+- Admins da empresa têm acesso total.
+- Demais usuários são validados pelas permissões concedidas na empresa (tela 'clientes', ação 'pode_alterar').
 
 ⚠️ NÃO é possível editar/excluir USUÁRIOS por este template. Alterações de usuários devem ser feitas pelo sistema.
 
@@ -992,7 +999,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "email", type: "string", required: false, description: "Novo e-mail" },
       { name: "telefone", type: "string", required: false, description: "Novo telefone" },
       { name: "cpf_cnpj", type: "string", required: false, description: "Novo CPF/CNPJ" },
-      { name: "ativo", type: "boolean", required: false, description: "true ou false" },
+      { name: "ativo", type: "boolean", required: false, description: "true ou false (bloqueado se vinculado a lançamentos pagos)" },
     ],
     body: { action: "editar-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do cliente a editar') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", cpf_cnpj: "{{ $fromAI('cpf_cnpj', 'Novo CPF/CNPJ. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
   },
