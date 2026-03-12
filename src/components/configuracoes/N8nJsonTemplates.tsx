@@ -1110,10 +1110,15 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-forma-pagamento",
     toolName: "editar_forma_pagamento",
     label: "Editar Forma de Pagamento",
-    description: "Altera descrição de uma forma de pagamento (bloqueado se vinculada a lançamentos pagos/recebidos)",
+    description: "Altera descrição de uma forma de pagamento (permitido mesmo com lançamentos vinculados)",
     toolDescription: `Altera a descrição de uma forma de pagamento.
 
-⚠️ REGRA DE SEGURANÇA: Se a forma de pagamento possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+A descrição pode ser alterada livremente — lançamentos referenciam formas de pagamento por ID, não pelo nome. Portanto, editar a descrição NÃO impacta lançamentos existentes.
+
+CONTROLE DE ACESSO:
+- Super admins têm acesso total.
+- Admins da empresa têm acesso total.
+- Demais usuários: validados pela permissão 'pode_alterar' na tela 'formas_pagamento'.
 
 Parâmetros:
 - empresa_id (obrigatório)
