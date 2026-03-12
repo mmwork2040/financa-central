@@ -1007,10 +1007,18 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "editar-fornecedor",
     toolName: "editar_fornecedor",
     label: "Editar Fornecedor",
-    description: "Altera dados de um fornecedor existente (bloqueado se vinculado a lançamentos pagos/recebidos)",
+    description: "Altera dados de um fornecedor existente. Campos descritivos podem ser editados mesmo com lançamentos vinculados.",
     toolDescription: `Altera dados de um fornecedor existente.
 
-⚠️ REGRA DE SEGURANÇA: Se o fornecedor possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+⚠️ REGRAS DE SEGURANÇA:
+- Se o fornecedor possuir lançamentos com status "pago" ou "recebido":
+  - Campos PERMITIDOS: nome, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado
+  - Campos BLOQUEADOS: ativo
+
+CONTROLE DE ACESSO:
+- Super admins têm acesso total independente da empresa.
+- Admins da empresa têm acesso total.
+- Demais usuários: validados pela permissão 'pode_alterar' na tela 'fornecedores'.
 
 Parâmetros:
 - empresa_id (obrigatório)
@@ -1025,7 +1033,7 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
       { name: "nome", type: "string", required: false, description: "Novo nome" },
       { name: "email", type: "string", required: false, description: "Novo e-mail" },
       { name: "telefone", type: "string", required: false, description: "Novo telefone" },
-      { name: "ativo", type: "boolean", required: false, description: "true ou false" },
+      { name: "ativo", type: "boolean", required: false, description: "true ou false (bloqueado se vinculado)" },
     ],
     body: { action: "editar-fornecedor", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do fornecedor') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
   },
