@@ -1074,17 +1074,25 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-conta-bancaria",
     toolName: "editar_conta_bancaria",
     label: "Editar Conta Bancária",
-    description: "Altera dados de uma conta bancária (bloqueado se vinculada a lançamentos pagos/recebidos)",
+    description: "Altera dados de uma conta bancária. Campos descritivos podem ser editados mesmo com lançamentos vinculados.",
     toolDescription: `Altera dados de uma conta bancária existente.
 
-⚠️ REGRA DE SEGURANÇA: Se a conta possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+⚠️ REGRAS DE SEGURANÇA:
+- Se a conta possuir lançamentos com status "pago" ou "recebido":
+  - Campos PERMITIDOS: nome, banco, agencia, conta (descritivos, não impactam saldo)
+  - Campos BLOQUEADOS: saldo_atual, principal (impactam integridade financeira)
+
+CONTROLE DE ACESSO:
+- Super admins têm acesso total.
+- Admins da empresa têm acesso total.
+- Demais usuários: validados pela permissão 'pode_alterar' na tela 'contas_bancarias'.
 
 Parâmetros:
 - empresa_id (obrigatório)
 - id (obrigatório)
 - nome, banco, agencia, conta (opcionais)
-- saldo_atual (numérico, opcional)
-- principal (boolean, opcional)
+- saldo_atual (numérico, opcional — bloqueado se vinculado)
+- principal (boolean, opcional — bloqueado se vinculado)
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Cadastros",
@@ -1093,8 +1101,8 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
       { name: "id", type: "string", required: true, description: "UUID da conta bancária" },
       { name: "nome", type: "string", required: false, description: "Novo nome" },
       { name: "banco", type: "string", required: false, description: "Novo banco" },
-      { name: "saldo_atual", type: "number", required: false, description: "Novo saldo atual" },
-      { name: "principal", type: "boolean", required: false, description: "true ou false" },
+      { name: "saldo_atual", type: "number", required: false, description: "Novo saldo atual (bloqueado se vinculado)" },
+      { name: "principal", type: "boolean", required: false, description: "true ou false (bloqueado se vinculado)" },
     ],
     body: { action: "editar-conta-bancaria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da conta bancária') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", banco: "{{ $fromAI('banco', 'Novo banco. Deixe vazio se não mudar') }}", saldo_atual: "{{ $fromAI('saldo_atual', 'Novo saldo. Deixe vazio se não mudar') }}", principal: "{{ $fromAI('principal', 'true ou false. Deixe vazio se não mudar') }}" },
   },
