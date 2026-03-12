@@ -1164,19 +1164,15 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-lancamento",
     toolName: "editar_lancamento",
     label: "Editar Lançamento",
-    description: "Altera dados de um lançamento — permite editar campos descritivos mesmo quando pago/recebido. Suporta edição de recorrência.",
+    description: "Altera dados de um lançamento pendente. Lançamentos pagos/recebidos devem ser alterados no sistema web.",
     toolDescription: `Altera dados de um lançamento financeiro existente.
 
-⚠️ PROTEÇÃO DE INTEGRIDADE FINANCEIRA:
-- Lançamentos com status "pago" ou "recebido" permitem edição APENAS de campos descritivos:
-  ✅ descricao, categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id
-  ❌ valor, tipo, status, data_vencimento, data_pagamento (bloqueados para preservar integridade)
-- Se tentar alterar um campo bloqueado, o sistema aplica os demais e retorna aviso com os campos ignorados.
+⚠️ REGRA DE SEGURANÇA: Lançamentos com status "pago" ou "recebido" NÃO podem ser alterados via n8n/chat. Informe ao usuário que registros pagos ou recebidos devem ser editados diretamente no sistema web.
 
 ⚠️ IMPORTANTE: Use as ferramentas de listagem (categorias, clientes, fornecedores, etc.) para obter IDs válidos antes de atualizar campos de relacionamento.
 
 PROTEÇÃO DE CADEIA RECORRENTE:
-- Se o lançamento pertence a uma cadeia recorrente (possui recorrencia_grupo_id), campos bloqueados adicionais: descricao, tipo.
+- Se o lançamento pertence a uma cadeia recorrente (possui recorrencia_grupo_id), campos bloqueados: descricao, tipo.
 - Para alterar a frequência ou encerrar uma recorrência, use os campos recorrencia_tipo e recorrencia_fim APENAS em lançamentos NÃO recorrentes que estejam sendo convertidos.
 
 RECORRÊNCIA E PARCELAMENTO:
