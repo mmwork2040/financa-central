@@ -410,7 +410,9 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check if user is admin or super_admin (they have full access)
+      // Check if user is super_admin (global bypass) or admin of this empresa
+      const { data: isSuperAdmin } = await supabase.rpc("is_super_admin", { _user_id: user_id });
+
       const { data: userRole } = await supabase
         .from("user_roles")
         .select("role")
@@ -419,7 +421,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       const role = userRole?.role;
-      const isAdminOrSuper = role === "admin" || role === "super_admin";
+      const isAdminOrSuper = isSuperAdmin === true || role === "admin" || role === "super_admin";
 
       if (!isAdminOrSuper) {
         // Check screen-level permissions
