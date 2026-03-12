@@ -2475,7 +2475,6 @@ Deno.serve(async (req) => {
         result = {
           venda: updVenda,
           ...(nfEditResult ? { nota_fiscal: nfEditResult } : {}),
-          ...(vendaBlockedFields.length > 0 ? { _aviso: `Campos bloqueados por integridade (lançamento pago/recebido): ${vendaBlockedFields.join(", ")}. Apenas campos descritivos foram atualizados.`, campos_bloqueados: vendaBlockedFields } : {}),
         };
         break;
       }
