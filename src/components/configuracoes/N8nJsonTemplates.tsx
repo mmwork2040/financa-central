@@ -1469,31 +1469,20 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "editar-venda",
     toolName: "editar_venda",
     label: "Editar Venda Digital",
-    description: "Altera dados de uma venda digital — permite editar campos descritivos mesmo com lançamento pago/recebido",
+    description: "Altera dados de uma venda digital pendente. Vendas com lançamento pago/recebido devem ser alteradas no sistema web.",
     toolDescription: `Altera dados de uma venda digital existente.
 
 ⚠️ REGRAS DE SEGURANÇA:
 1. Vendas com origem automática (webhook/integração) NÃO podem ser editadas. Somente vendas com origem "manual".
-2. Se o lançamento vinculado à venda estiver "pago" ou "recebido", apenas campos descritivos podem ser editados:
-   ✅ produto, cliente, cliente_email, cliente_telefone, cliente_documento, cliente_endereco, observacoes
-   ❌ plataforma, valor_bruto, taxa, valor_liquido, status, data_venda (bloqueados para preservar integridade)
-3. Se tentar alterar um campo bloqueado, o sistema aplica os demais e retorna aviso com os campos ignorados.
+2. Se o lançamento vinculado à venda estiver "pago" ou "recebido", a edição é TOTALMENTE BLOQUEADA. Informe ao usuário que registros pagos ou recebidos devem ser editados diretamente no sistema web.
 
 EMISSÃO DE NOTA FISCAL:
 - Se o usuário deseja emitir NF na edição, envie emitir_nota_fiscal = true.
 
 ⚠️ PRÉ-REQUISITOS FISCAIS (verificados automaticamente pelo sistema):
-  1. A empresa deve ter a Configuração Fiscal concluída (razão social, regime tributário, etc.)
-  2. O Certificado Digital A1 (.pfx) deve estar enviado no sistema.
-  Se algum desses pré-requisitos NÃO estiver atendido, a emissão será BLOQUEADA.
+  1. A empresa deve ter a Configuração Fiscal concluída.
+  2. O Certificado Digital A1 (.pfx) deve estar enviado.
   IMPORTANTE: Esses dados NÃO podem ser configurados via chat/n8n. O usuário DEVE acessar o sistema.
-
-- Antes de emitir, verifique se a venda possui todos os campos obrigatórios:
-  • cliente (nome do cliente)
-  • cliente_documento (CPF ou CNPJ válido)
-  • produto (nome do produto)
-  • valor_bruto (maior que zero)
-  • data_venda
 
 Use quando o usuário solicitar:
 - Editar venda
