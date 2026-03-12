@@ -1778,22 +1778,30 @@ Deno.serve(async (req) => {
         if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         
         const { data: vincConta } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("conta_bancaria_id", id).in("status", ["pago", "recebido"]).limit(1);
-        if (vincConta && vincConta.length > 0) {
-          return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta conta bancária possui lançamentos pagos/recebidos vinculados e não pode ser alterada." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
+        const hasVincConta = vincConta && vincConta.length > 0;
+        // Campos seguros: nome, banco, agência, conta não impactam lançamentos. saldo_atual e principal podem impactar.
+        const safeFieldsConta = ["nome", "banco", "agencia", "conta"];
 
         const updateData: any = {};
         const fields = ["nome", "banco", "agencia", "conta", "principal"];
         for (const f of fields) {
           const v = sanitize(body[f]);
           if (v !== undefined) {
+            if (hasVincConta && !safeFieldsConta.includes(f)) continue;
             if (f === "principal") updateData[f] = body[f] === true || body[f] === "true";
             else if (f === "nome" || f === "banco") updateData[f] = normalizeText(v, "nome");
             else updateData[f] = v;
           }
         }
-        if (body.saldo_atual !== undefined && sanitize(body.saldo_atual) !== undefined) updateData.saldo_atual = Number(body.saldo_atual);
-        if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (!hasVincConta && body.saldo_atual !== undefined && sanitize(body.saldo_atual) !== undefined) {
+          updateData.saldo_atual = Number(body.saldo_atual);
+        }
+        if (Object.keys(updateData).length === 0) {
+          if (hasVincConta) {
+            return new Response(JSON.stringify({ error: "Bloqueado", message: "Os campos solicitados não podem ser alterados pois a conta possui lançamentos pagos/recebidos. Apenas dados descritivos (nome, banco, agência, conta) podem ser editados." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+          return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
 
         if (updateData.principal === true) {
           await supabase.from("contas_bancarias").update({ principal: false }).eq("empresa_id", empresa_id).eq("principal", true).neq("id", id);
@@ -1801,7 +1809,7 @@ Deno.serve(async (req) => {
 
         const { data: updConta, error: updContaErr } = await supabase.from("contas_bancarias").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
         if (updContaErr) throw updContaErr;
-        result = updConta;
+        result = { ...updConta, ...(hasVincConta ? { aviso: "Conta com lançamentos vinculados — apenas campos descritivos foram atualizados." } : {}) };
         break;
       }
 
