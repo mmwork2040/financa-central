@@ -1818,11 +1818,7 @@ Deno.serve(async (req) => {
         const id = sanitize(body.id);
         if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         
-        const { data: vincForma } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("forma_pagamento_id", id).in("status", ["pago", "recebido"]).limit(1);
-        if (vincForma && vincForma.length > 0) {
-          return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta forma de pagamento possui lançamentos pagos/recebidos vinculados e não pode ser alterada." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
+        // Descrição é segura — lançamentos referenciam por ID, não pelo nome
         const descricao = normalizeText(sanitize(body.descricao), "descricao");
         if (!descricao) return new Response(JSON.stringify({ error: "descricao is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
