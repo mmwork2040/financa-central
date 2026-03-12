@@ -1041,16 +1041,24 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-categoria",
     toolName: "editar_categoria",
     label: "Editar Categoria",
-    description: "Altera dados de uma categoria (bloqueado se vinculada a lançamentos pagos/recebidos)",
+    description: "Altera dados de uma categoria. Nome pode ser editado mesmo com lançamentos vinculados; tipo é bloqueado.",
     toolDescription: `Altera nome ou tipo de uma categoria existente.
 
-⚠️ REGRA DE SEGURANÇA: Se a categoria possuir lançamentos com status "pago" ou "recebido", a edição será BLOQUEADA.
+⚠️ REGRAS DE SEGURANÇA:
+- Se a categoria possuir lançamentos com status "pago" ou "recebido":
+  - Campo PERMITIDO: nome (não impacta lançamentos)
+  - Campo BLOQUEADO: tipo (impacta relatórios e classificação)
+
+CONTROLE DE ACESSO:
+- Super admins têm acesso total.
+- Admins da empresa têm acesso total.
+- Demais usuários: validados pela permissão 'pode_alterar' na tela 'categorias'.
 
 Parâmetros:
 - empresa_id (obrigatório)
 - id (obrigatório)
 - nome (opcional)
-- tipo: receita, despesa ou investimento (opcional)
+- tipo: receita, despesa ou investimento (opcional — bloqueado se vinculado)
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Cadastros",
@@ -1058,7 +1066,7 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "id", type: "string", required: true, description: "UUID da categoria" },
       { name: "nome", type: "string", required: false, description: "Novo nome" },
-      { name: "tipo", type: "string", required: false, description: "receita, despesa ou investimento" },
+      { name: "tipo", type: "string", required: false, description: "receita, despesa ou investimento (bloqueado se vinculado)" },
     ],
     body: { action: "editar-categoria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da categoria') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", tipo: "{{ $fromAI('tipo', 'receita, despesa ou investimento. Deixe vazio se não mudar') }}" },
   },
