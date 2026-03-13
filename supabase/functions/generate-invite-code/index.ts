@@ -20,7 +20,7 @@ serve(async (req) => {
       });
     }
 
-    const { role, maxUses, expiresInDays, permissoes } = await req.json();
+    const { role, maxUses, expiresInDays, permissoes, perfilAcessoId } = await req.json();
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -41,16 +41,6 @@ serve(async (req) => {
       });
     }
 
-    // Check if caller is super_admin
-    const { data: superAdminCheck } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", callerData.user.id)
-      .eq("role", "super_admin")
-      .maybeSingle();
-
-    const isSuperAdmin = !!superAdminCheck;
-
     // Get caller's empresa and verify admin
     const { data: callerRole } = await supabaseAdmin
       .from("user_roles")
@@ -67,7 +57,6 @@ serve(async (req) => {
       });
     }
 
-    // Always use caller's empresa
     const finalEmpresaId = callerRole.empresa_id;
 
     // Generate a random 8-char code
@@ -84,6 +73,7 @@ serve(async (req) => {
       role: role || "leitura",
       max_uses: typeof maxUses === "number" ? maxUses : 1,
       expires_at: expiresAt,
+      perfil_acesso_id: perfilAcessoId || null,
     }).select().single();
 
     if (error) {
@@ -93,8 +83,32 @@ serve(async (req) => {
       });
     }
 
-    // Save permissions for the invite code
-    if (permissoes && Array.isArray(permissoes) && permissoes.length > 0) {
+    // If perfilAcessoId is set, copy permissions from the profile
+    if (perfilAcessoId) {
+      const { data: profilePerms } = await supabaseAdmin
+        .from("perfis_acesso_permissoes")
+        .select("tela, pode_incluir, pode_alterar, pode_excluir")
+        .eq("perfil_acesso_id", perfilAcessoId);
+
+      if (profilePerms && profilePerms.length > 0) {
+        const permRows = profilePerms.map((p: any) => ({
+          invite_code_id: data.id,
+          tela: p.tela,
+          pode_incluir: p.pode_incluir,
+          pode_alterar: p.pode_alterar,
+          pode_excluir: p.pode_excluir,
+        }));
+
+        const { error: permError } = await supabaseAdmin
+          .from("invite_code_permissoes")
+          .insert(permRows);
+
+        if (permError) {
+          console.error("Error saving invite permissions from profile:", permError);
+        }
+      }
+    } else if (permissoes && Array.isArray(permissoes) && permissoes.length > 0) {
+      // Manual permissions (legacy behavior)
       const permRows = permissoes.map((p: any) => ({
         invite_code_id: data.id,
         tela: p.tela,

@@ -6,6 +6,50 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const DEFAULT_SCREENS = [
+  "users","permissions","fornecedores","clientes","categorias",
+  "contas_bancarias","formas_pagamento","lancamentos","relatorios",
+  "projetos","vendas_digitais","cartoes_credito"
+];
+
+async function seedDefaultProfiles(supabaseAdmin: any, empresaId: string) {
+  // Sócio - full access
+  const { data: socio } = await supabaseAdmin.from("perfis_acesso")
+    .insert({ empresa_id: empresaId, nome: "Sócio", descricao: "Acesso total a todos os módulos", is_default: true })
+    .select("id").single();
+  if (socio) {
+    await supabaseAdmin.from("perfis_acesso_permissoes").insert(
+      DEFAULT_SCREENS.map(tela => ({ perfil_acesso_id: socio.id, tela, pode_incluir: true, pode_alterar: true, pode_excluir: true }))
+    );
+  }
+
+  // Colaborador
+  const { data: colab } = await supabaseAdmin.from("perfis_acesso")
+    .insert({ empresa_id: empresaId, nome: "Colaborador", descricao: "Lançamentos, Clientes, Fornecedores, Categorias. Sem excluir, sem relatórios", is_default: true })
+    .select("id").single();
+  if (colab) {
+    await supabaseAdmin.from("perfis_acesso_permissoes").insert([
+      { perfil_acesso_id: colab.id, tela: "lancamentos", pode_incluir: true, pode_alterar: true, pode_excluir: false },
+      { perfil_acesso_id: colab.id, tela: "clientes", pode_incluir: true, pode_alterar: true, pode_excluir: false },
+      { perfil_acesso_id: colab.id, tela: "fornecedores", pode_incluir: true, pode_alterar: true, pode_excluir: false },
+      { perfil_acesso_id: colab.id, tela: "categorias", pode_incluir: true, pode_alterar: true, pode_excluir: false },
+    ]);
+  }
+
+  // Contador
+  const { data: contador } = await supabaseAdmin.from("perfis_acesso")
+    .insert({ empresa_id: empresaId, nome: "Contador", descricao: "Relatórios, Lançamentos, Categorias e Contas Bancárias em leitura. Emissão de notas fiscais.", is_default: true })
+    .select("id").single();
+  if (contador) {
+    await supabaseAdmin.from("perfis_acesso_permissoes").insert([
+      { perfil_acesso_id: contador.id, tela: "relatorios", pode_incluir: false, pode_alterar: false, pode_excluir: false },
+      { perfil_acesso_id: contador.id, tela: "lancamentos", pode_incluir: false, pode_alterar: false, pode_excluir: false },
+      { perfil_acesso_id: contador.id, tela: "categorias", pode_incluir: false, pode_alterar: false, pode_excluir: false },
+      { perfil_acesso_id: contador.id, tela: "contas_bancarias", pode_incluir: false, pode_alterar: false, pode_excluir: false },
+    ]);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -77,12 +121,11 @@ serve(async (req) => {
       }
 
       // Determine max_empresas
-      let maxEmpresas = 1; // default for non-subscribers
+      let maxEmpresas = 1;
 
       const status = perfil?.assinatura_status || "trial";
 
       if (status === "ativo" && perfil?.assinatura_plano_id) {
-        // Get plan limit
         const { data: plano } = await supabaseAdmin
           .from("planos_assinatura")
           .select("max_empresas")
@@ -93,17 +136,16 @@ serve(async (req) => {
           maxEmpresas = plano.max_empresas === 0 ? Infinity : (plano.max_empresas ?? 999);
         }
       } else if (status === "trial") {
-        // Check if trial is still active
         const trialStarted = perfil?.trial_started_at || perfil?.created_at;
         if (trialStarted) {
           const trialEnd = new Date(trialStarted);
           trialEnd.setDate(trialEnd.getDate() + 30);
           if (new Date() > trialEnd) {
-            maxEmpresas = 0; // trial expired
+            maxEmpresas = 0;
           }
         }
       } else {
-        maxEmpresas = 0; // expired/cancelled
+        maxEmpresas = 0;
       }
 
       if (nonPersonalCount >= maxEmpresas) {
@@ -172,6 +214,14 @@ serve(async (req) => {
       .from("perfis")
       .update({ empresa_id: empresaId, permissao: "admin" })
       .eq("id", userId);
+
+    // Seed default access profiles
+    try {
+      await seedDefaultProfiles(supabaseAdmin, empresaId);
+    } catch (seedErr) {
+      console.error("Error seeding default profiles:", seedErr);
+      // Non-blocking — empresa still created successfully
+    }
 
     return new Response(JSON.stringify({ success: true, empresaId, empresaNome: nomeEmpresa }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
