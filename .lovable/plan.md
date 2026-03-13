@@ -1,57 +1,26 @@
 
 
-## Scroll Animations for Landing Page Sections
+## Problema
 
-### Overview
-Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
+A listagem de usuários busca da tabela `perfis` e depende da RLS `perfis_select` que filtra por `perfis.empresa_id = get_user_empresa_id(auth.uid())`. Porém, `perfis.empresa_id` representa a **empresa ativa atual** do usuário, não a empresa à qual ele pertence. Se um usuário troca para a empresa B, ele desaparece da lista da empresa A e aparece na lista da empresa B.
 
-### Approach
-Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
+A fonte correta de pertencimento é a tabela `user_roles`, que registra explicitamente quais empresas cada usuário pode acessar.
 
-### Implementation Details
+## Correção
 
-**1. Create `src/hooks/useScrollReveal.ts`**
-- A custom hook that returns a `ref` callback
-- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
-- Adds a CSS class (e.g., `revealed`) when the element is visible
-- Fires once per element (unobserves after reveal)
+**Arquivo: `src/services/userService.ts` — função `fetchUsersData`**
 
-**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
-- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
-- Accepts optional `delay` (stagger support) and `className`
-- Starts with opacity-0 and a small transform offset
-- On intersection, transitions to opacity-1 and transform-none
-- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
+Para usuários não-super-admin:
+1. Primeiro buscar os `user_id`s da tabela `user_roles` filtrados pela empresa ativa do usuário (`empresaId`)
+2. Usar esses IDs para filtrar os perfis com `.in('id', userIds)`
+3. Isso garante que apenas usuários com vínculo real à empresa apareçam na lista
 
-**3. Update `src/pages/LandingPage.tsx`**
-Wrap each section's content with `<ScrollReveal>`:
+Para super admin: manter o comportamento atual (ver todos).
 
-| Section | Animation |
-|---------|-----------|
-| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
-| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
-| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
-| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
-| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
-| Social Proof | Scale for stat cards |
-| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
-| Footer | Simple fade-up |
+**Mudanças necessárias:**
 
-**4. Add base CSS to `src/index.css`**
-```css
-.scroll-reveal {
-  opacity: 0;
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-.scroll-reveal.revealed {
-  opacity: 1;
-  transform: none !important;
-}
-```
+1. **`fetchUsersData`** — receber `empresaId` como parâmetro e, para não-super-admin, buscar `user_roles` da empresa e filtrar perfis pelos IDs encontrados
+2. **`useUsers.ts`** — passar `empresaId` para `fetchUsersData`
 
-### Key Decisions
-- No new dependencies -- uses native `IntersectionObserver`
-- CSS transitions (not JS-driven animations) for performance
-- Each animation fires only once (no re-hide on scroll up) for a polished feel
-- Stagger delays on card grids (50-100ms increments) for a cascading effect
+Nenhuma alteração de banco de dados é necessária — a tabela `user_roles` já tem os dados corretos e as políticas RLS já filtram por empresa.
 
