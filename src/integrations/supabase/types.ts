@@ -633,6 +633,7 @@ export type Database = {
           expires_at: string | null
           id: string
           max_uses: number | null
+          perfil_acesso_id: string | null
           redeemed_at: string | null
           redeemed_by: string | null
           redeemed_by_email: string | null
@@ -649,6 +650,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           max_uses?: number | null
+          perfil_acesso_id?: string | null
           redeemed_at?: string | null
           redeemed_by?: string | null
           redeemed_by_email?: string | null
@@ -665,6 +667,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           max_uses?: number | null
+          perfil_acesso_id?: string | null
           redeemed_at?: string | null
           redeemed_by?: string | null
           redeemed_by_email?: string | null
@@ -678,6 +681,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_codes_perfil_acesso_id_fkey"
+            columns: ["perfil_acesso_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_acesso"
             referencedColumns: ["id"]
           },
         ]
@@ -1078,6 +1088,76 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      perfis_acesso: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          empresa_id: string
+          id: string
+          is_default: boolean
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          empresa_id: string
+          id?: string
+          is_default?: boolean
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string
+          id?: string
+          is_default?: boolean
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perfis_acesso_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      perfis_acesso_permissoes: {
+        Row: {
+          id: string
+          perfil_acesso_id: string
+          pode_alterar: boolean
+          pode_excluir: boolean
+          pode_incluir: boolean
+          tela: string
+        }
+        Insert: {
+          id?: string
+          perfil_acesso_id: string
+          pode_alterar?: boolean
+          pode_excluir?: boolean
+          pode_incluir?: boolean
+          tela: string
+        }
+        Update: {
+          id?: string
+          perfil_acesso_id?: string
+          pode_alterar?: boolean
+          pode_excluir?: boolean
+          pode_incluir?: boolean
+          tela?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perfis_acesso_permissoes_perfil_acesso_id_fkey"
+            columns: ["perfil_acesso_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_acesso"
             referencedColumns: ["id"]
           },
         ]
