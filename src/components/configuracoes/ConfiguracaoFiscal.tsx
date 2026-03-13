@@ -343,17 +343,6 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label>Senha do certificado</Label>
-                <Input
-                  type="password"
-                  value={certPassword}
-                  onChange={e => setCertPassword(e.target.value)}
-                  placeholder="Senha do arquivo .pfx"
-                  disabled={!isAdmin}
-                />
-              </div>
-
               {isAdmin && (
                 <div>
                   <Label
@@ -372,10 +361,22 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
                     disabled={uploadingCert || !isAdmin}
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Arquivo .pfx ou .p12 — Máx 10MB. A senha é necessária para validar o certificado.
+                    Arquivo .pfx ou .p12 — Máx 10MB.
                   </p>
                 </div>
               )}
+
+              <div className="space-y-2">
+                <Label>Senha do certificado</Label>
+                <Input
+                  type="password"
+                  value={certPassword}
+                  onChange={e => setCertPassword(e.target.value)}
+                  placeholder="Senha do arquivo .pfx"
+                  disabled={!isAdmin}
+                />
+                <p className="text-xs text-muted-foreground">Necessária ao salvar a configuração fiscal</p>
+              </div>
             </CardContent>
           </Card>
         </div>
