@@ -102,11 +102,6 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
       return;
     }
 
-    if (!certPassword.trim()) {
-      toast.error("Informe a senha do certificado antes de enviar.");
-      return;
-    }
-
     setUploadingCert(true);
     try {
       const path = `${empresaId}/certificado.pfx`;
