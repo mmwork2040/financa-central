@@ -1,26 +1,57 @@
 
 
-## Problema
+## Scroll Animations for Landing Page Sections
 
-O `PricingCard` trata `annualPrice` como o valor **total anual** e divide por 12 para mostrar o preço mensal equivalente. Mas na realidade, `annualPrice` já representa o valor **por mês** no plano anual (ex: R$ 49/mês), não o total do ano.
+### Overview
+Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
 
-Isso causa:
-- **Plano Start anual**: mostra R$ 4,08/mês (49/12) quando deveria mostrar R$ 49,00/mês
-- **Plano Growth anual**: mostra R$ 8,08/mês (97/12) quando deveria mostrar R$ 97,00/mês
-- **Plano Pro anual**: mostra R$ 24,75/mês (297/12) quando deveria mostrar R$ 297,00/mês
+### Approach
+Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
 
-## Correção
+### Implementation Details
 
-**Arquivo: `src/components/landing/PricingCard.tsx`**
+**1. Create `src/hooks/useScrollReveal.ts`**
+- A custom hook that returns a `ref` callback
+- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
+- Adds a CSS class (e.g., `revealed`) when the element is visible
+- Fires once per element (unobserves after reveal)
 
-1. Remover a divisão por 12 na linha 42 — `annualPrice` já é o valor mensal:
-   - `currentPrice = billingPeriod === "anual" && annualPrice ? annualPrice : monthlyPrice`
+**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
+- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
+- Accepts optional `delay` (stagger support) and `className`
+- Starts with opacity-0 and a small transform offset
+- On intersection, transitions to opacity-1 and transform-none
+- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
 
-2. Atualizar o texto "cobrado anualmente" (linha 91) para mostrar o total correto (`annualPrice * 12`):
-   - Ex: "R$ 588,00 cobrado anualmente"
+**3. Update `src/pages/LandingPage.tsx`**
+Wrap each section's content with `<ScrollReveal>`:
 
-3. Atualizar o texto alternativo no modo mensal (linha 96) para mostrar `annualPrice` diretamente em vez de `altPrice / 12`:
-   - Ex: "ou R$ 49,00/mês no plano anual"
+| Section | Animation |
+|---------|-----------|
+| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
+| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
+| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
+| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
+| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
+| Social Proof | Scale for stat cards |
+| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
+| Footer | Simple fade-up |
 
-Nenhuma alteração necessária nos valores passados pela `LandingPage.tsx` — os valores `49`, `97`, `297` já estão corretos como preço mensal.
+**4. Add base CSS to `src/index.css`**
+```css
+.scroll-reveal {
+  opacity: 0;
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: none !important;
+}
+```
+
+### Key Decisions
+- No new dependencies -- uses native `IntersectionObserver`
+- CSS transitions (not JS-driven animations) for performance
+- Each animation fires only once (no re-hide on scroll up) for a polished feel
+- Stagger delays on card grids (50-100ms increments) for a cascading effect
 
