@@ -17,7 +17,7 @@ export const useUsers = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const data = await fetchUsersData(isSuperAdmin);
+      const data = await fetchUsersData(isSuperAdmin, empresaId);
       setUsers(data);
     } catch (error: any) {
       toast.error(error.message || "Erro ao carregar usuários");
