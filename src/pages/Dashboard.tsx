@@ -73,6 +73,25 @@ const DashboardContent = () => {
         </Button>
       </div>
 
+      {/* Super Admin Indicator */}
+      {isSuperAdmin && (
+        <div className="rounded-xl border border-amber-300/50 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-700/30 p-3">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-900/30">
+              👑 Super Admin
+            </Badge>
+            <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Visão privilegiada</span>
+          </div>
+          <p className="text-[11px] text-amber-600/80 dark:text-amber-500/80 leading-relaxed">
+            Você tem acesso irrestrito a todos os recursos. Usuários comuns podem ter restrições de plano como: 
+            <span className="font-medium"> Dashboard bloqueado</span>, 
+            <span className="font-medium"> limite de lançamentos</span>, 
+            <span className="font-medium"> relatórios restritos</span> e 
+            <span className="font-medium"> limite de notas fiscais</span>.
+          </p>
+        </div>
+      )}
+
 
 
       <MyExitRequests requests={myRequests} onCancel={cancelRequest} loading={actionLoading} />
