@@ -44,6 +44,7 @@ import TermosPublico from "./pages/TermosPublico";
 import TermosConfig from "./pages/TermosConfig";
 import Suporte from "./pages/Suporte";
 import ImportarDocumentos from "./pages/ImportarDocumentos";
+import PerfisAcesso from "./pages/PerfisAcesso";
 
 const queryClient = new QueryClient();
 
