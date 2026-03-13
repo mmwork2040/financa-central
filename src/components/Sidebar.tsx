@@ -36,6 +36,7 @@ import {
   Code2,
   UserCircle,
   HelpCircle,
+  UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
@@ -216,6 +217,7 @@ export const Sidebar = () => {
 
   const adminItems = [
     { name: "Permissões", icon: ShieldCheck, path: "/permissions" },
+    { name: "Perfis de Acesso", icon: UserCog, path: "/perfis-acesso" },
   ];
 
   const handleLogout = async (e: React.MouseEvent) => {

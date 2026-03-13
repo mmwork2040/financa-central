@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -17,7 +16,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import InvitePermissionsConfig from "./InvitePermissionsConfig";
+import { usePerfisAcesso } from "@/hooks/usePerfisAcesso";
 
 interface InviteCode {
   id: string;
@@ -33,6 +40,7 @@ interface InviteCode {
   redeemed_by_name?: string | null;
   redeemed_by_email?: string | null;
   redeemed_at?: string | null;
+  perfil_acesso_id?: string | null;
 }
 
 export interface ScreenPermission {
@@ -63,19 +71,36 @@ const InviteCodesCard = () => {
   const [codes, setCodes] = useState<InviteCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [isAdminRole, setIsAdminRole] = useState(false);
   const [maxUses, setMaxUses] = useState("5");
   const [expiresInDays, setExpiresInDays] = useState("7");
   const [deleteTarget, setDeleteTarget] = useState<InviteCode | null>(null);
   const [deletingCode, setDeletingCode] = useState(false);
   const [showConfirmGenerate, setShowConfirmGenerate] = useState(false);
   const [screenPermissions, setScreenPermissions] = useState<ScreenPermission[]>(defaultPermissions());
+  const [selectedPerfilId, setSelectedPerfilId] = useState<string>("custom");
 
+  const { perfis } = usePerfisAcesso();
   const isAdmin = userRole === "admin" || isSuperAdmin;
 
   useEffect(() => {
     if (isAdmin && empresaId) fetchCodes();
   }, [empresaId, isAdmin]);
+
+  // When a profile is selected, fill permissions from it
+  useEffect(() => {
+    if (selectedPerfilId === "custom" || selectedPerfilId === "admin") {
+      setScreenPermissions(defaultPermissions());
+      return;
+    }
+    const perfil = perfis.find(p => p.id === selectedPerfilId);
+    if (perfil && perfil.permissoes) {
+      const mapped = defaultPermissions().map(dp => {
+        const pp = perfil.permissoes!.find((p: any) => p.tela === dp.tela);
+        return pp ? { ...dp, pode_incluir: pp.pode_incluir, pode_alterar: pp.pode_alterar, pode_excluir: pp.pode_excluir } : dp;
+      });
+      setScreenPermissions(mapped);
+    }
+  }, [selectedPerfilId, perfis]);
 
   const fetchCodes = async () => {
     try {
@@ -94,22 +119,42 @@ const InviteCodesCard = () => {
     }
   };
 
+  const getSelectedRole = () => {
+    if (selectedPerfilId === "admin") return "admin";
+    return "usuario";
+  };
+
+  const getSelectedLabel = () => {
+    if (selectedPerfilId === "admin") return "Administrador";
+    if (selectedPerfilId === "custom") return "Personalizado";
+    const perfil = perfis.find(p => p.id === selectedPerfilId);
+    return perfil?.nome || "Perfil";
+  };
+
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const role = isAdminRole ? "admin" : "usuario";
-      const body: any = { role, maxUses: parseInt(maxUses), expiresInDays: parseInt(expiresInDays) };
-      if (!isAdminRole) {
+      const role = getSelectedRole();
+      const body: any = {
+        role,
+        maxUses: parseInt(maxUses),
+        expiresInDays: parseInt(expiresInDays),
+      };
+
+      if (selectedPerfilId !== "admin" && selectedPerfilId !== "custom") {
+        body.perfilAcessoId = selectedPerfilId;
+      } else if (selectedPerfilId === "custom") {
         const activePerms = screenPermissions.filter(p => p.pode_incluir || p.pode_alterar || p.pode_excluir);
         body.permissoes = activePerms.map(p => ({ tela: p.tela, pode_incluir: p.pode_incluir, pode_alterar: p.pode_alterar, pode_excluir: p.pode_excluir }));
       }
+
       const { data, error } = await supabase.functions.invoke("generate-invite-code", { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success(`Código gerado: ${data.invite.code}`);
       fetchCodes();
       setScreenPermissions(defaultPermissions());
-      setIsAdminRole(false);
+      setSelectedPerfilId("custom");
     } catch (error: any) {
       toast.error(error.message || "Erro ao gerar código");
     } finally {
@@ -151,6 +196,9 @@ const InviteCodesCard = () => {
 
   if (!isAdmin) return null;
 
+  const isProfileSelected = selectedPerfilId !== "admin" && selectedPerfilId !== "custom";
+  const showPermissions = selectedPerfilId === "custom";
+
   return (
     <>
       <Card>
@@ -167,9 +215,20 @@ const InviteCodesCard = () => {
           {/* Formulário de geração */}
           <div className="space-y-4 rounded-lg border p-4 bg-muted/20">
             <div className="flex flex-wrap items-end gap-4">
-              <div className="flex items-center gap-2">
-                <Label className="text-xs whitespace-nowrap">Administrador</Label>
-                <Switch checked={isAdminRole} onCheckedChange={setIsAdminRole} />
+              <div className="space-y-1 min-w-[180px]">
+                <Label className="text-xs">Perfil de Acesso</Label>
+                <Select value={selectedPerfilId} onValueChange={setSelectedPerfilId}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecione o perfil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                    {perfis.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                    ))}
+                    <SelectItem value="custom">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Máx. usos (0 = ilimitado)</Label>
@@ -184,7 +243,28 @@ const InviteCodesCard = () => {
               </Button>
             </div>
 
-            {!isAdminRole && (
+            {/* Show profile permissions preview (read-only) */}
+            {isProfileSelected && (
+              <div className="rounded-md border p-3 bg-background/50">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Permissões do perfil "{getSelectedLabel()}":</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                  {screenPermissions.filter(p => p.pode_incluir || p.pode_alterar || p.pode_excluir).length === 0 ? (
+                    <p className="text-xs text-muted-foreground col-span-full">Somente visualização nas telas configuradas</p>
+                  ) : (
+                    screenPermissions.filter(p => p.pode_incluir || p.pode_alterar || p.pode_excluir).map(p => (
+                      <div key={p.tela} className="text-xs flex gap-1 items-center">
+                        <span>{p.nome}</span>
+                        {p.pode_incluir && <Badge variant="outline" className="text-[10px] px-1">I</Badge>}
+                        {p.pode_alterar && <Badge variant="outline" className="text-[10px] px-1">A</Badge>}
+                        {p.pode_excluir && <Badge variant="outline" className="text-[10px] px-1">E</Badge>}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {showPermissions && (
               <InvitePermissionsConfig
                 screenPermissions={screenPermissions}
                 onPermissionChange={(tela, field, value) =>
@@ -208,7 +288,7 @@ const InviteCodesCard = () => {
             <p className="text-sm text-muted-foreground text-center py-4">Nenhum código gerado ainda.</p>
           ) : (
             <div className="space-y-2">
-              {codes.map(code => <InviteCodeItem key={code.id} code={code} onCopy={handleCopy} onDelete={setDeleteTarget} />)}
+              {codes.map(code => <InviteCodeItem key={code.id} code={code} onCopy={handleCopy} onDelete={setDeleteTarget} perfis={perfis} />)}
             </div>
           )}
         </CardContent>
@@ -241,7 +321,7 @@ const InviteCodesCard = () => {
           <DialogHeader>
             <DialogTitle>Gerar Código de Convite</DialogTitle>
             <DialogDescription>
-              Será gerado um código com perfil <strong>{isAdminRole ? "Administrador" : "Usuário"}</strong>,
+              Será gerado um código com perfil <strong>{getSelectedLabel()}</strong>,
               máximo de <strong>{maxUses === "0" ? "ilimitados" : maxUses}</strong> usos
               {expiresInDays !== "0" && <>, expirando em <strong>{expiresInDays} dias</strong></>}.
             </DialogDescription>
@@ -260,10 +340,11 @@ const InviteCodesCard = () => {
 };
 
 // Sub-componente para cada código
-const InviteCodeItem = ({ code, onCopy, onDelete }: { code: InviteCode; onCopy: (c: string) => void; onDelete: (c: InviteCode) => void }) => {
+const InviteCodeItem = ({ code, onCopy, onDelete, perfis }: { code: InviteCode; onCopy: (c: string) => void; onDelete: (c: InviteCode) => void; perfis: any[] }) => {
   const isExpired = code.expires_at && new Date(code.expires_at) < new Date();
   const isUsedUp = code.max_uses > 0 && code.uses >= code.max_uses;
   const isInactive = !code.active;
+  const perfilNome = code.perfil_acesso_id ? perfis.find(p => p.id === code.perfil_acesso_id)?.nome : null;
 
   return (
     <div className={`rounded-lg border p-3 space-y-1.5 ${isInactive ? "opacity-60" : ""}`}>
@@ -275,7 +356,7 @@ const InviteCodeItem = ({ code, onCopy, onDelete }: { code: InviteCode; onCopy: 
           </Button>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          <Badge variant="outline" className="text-xs">{code.role}</Badge>
+          <Badge variant="outline" className="text-xs">{perfilNome || code.role}</Badge>
           <span className="text-xs text-muted-foreground">{code.uses}/{code.max_uses === 0 ? "∞" : code.max_uses} usos</span>
           {isInactive && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
           {isExpired && <Badge variant="destructive" className="text-xs">Expirado</Badge>}

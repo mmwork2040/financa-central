@@ -1,70 +1,57 @@
-## Perfis de Acesso (Templates de Permissão)
-
-O sistema já possui convites com permissões granulares por tela, mas hoje o admin precisa configurar cada permissão manualmente a cada convite. A proposta é criar **perfis de acesso** (templates pré-configurados) que agrupam permissões por tipo de colaborador, agilizando o convite e padronizando o acesso.
-
-### O que muda para o usuário
-
-1. Na tela de convites, em vez de marcar permissão por permissão, o admin seleciona um **perfil de acesso** (ex: "Colaborador", "Contador", "Sócio") e as permissões são preenchidas automaticamente
-2. O admin pode **criar perfis personalizados** com qualquer combinação de telas/ações
-3. Os perfis pré-configurados vêm prontos ao criar a empresa, mas podem ser editados
-4. Ao resgatar o convite, as permissões do perfil são aplicadas automaticamente ao novo usuário
-
-### Perfis pré-configurados
 
 
-| Perfil          | Acesso                                                                                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Sócio**       | Acesso total                                                                                                                                                 |
-| **Colaborador** | Lançamentos (incluir/alterar), Clientes, Fornecedores, Categorias. Sem excluir, sem relatórios financeiros                                                   |
-| **Contador**    | Relatórios, Lançamentos (visualizar), Categorias (visualizar), Contas Bancárias (visualizar). Somente leitura. Permitido geração e emissão de notas fiscais. |
+## Scroll Animations for Landing Page Sections
 
+### Overview
+Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
 
-### Mudanças técnicas
+### Approach
+Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
 
-**1. Nova tabela `perfis_acesso**` (templates de permissão por empresa)
+### Implementation Details
 
-- `id`, `empresa_id`, `nome` (ex: "Contador"), `descricao`, `is_default` (pré-configurado), `created_at`
-- RLS: filtrado por `empresa_id` do usuário
+**1. Create `src/hooks/useScrollReveal.ts`**
+- A custom hook that returns a `ref` callback
+- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
+- Adds a CSS class (e.g., `revealed`) when the element is visible
+- Fires once per element (unobserves after reveal)
 
-**2. Nova tabela `perfis_acesso_permissoes**` (permissões de cada perfil)
+**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
+- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
+- Accepts optional `delay` (stagger support) and `className`
+- Starts with opacity-0 and a small transform offset
+- On intersection, transitions to opacity-1 and transform-none
+- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
 
-- `id`, `perfil_acesso_id`, `tela`, `pode_incluir`, `pode_alterar`, `pode_excluir`
-- RLS: via join com `perfis_acesso.empresa_id`
+**3. Update `src/pages/LandingPage.tsx`**
+Wrap each section's content with `<ScrollReveal>`:
 
-**3. Coluna `perfil_acesso_id` na tabela `invite_codes**`
+| Section | Animation |
+|---------|-----------|
+| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
+| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
+| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
+| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
+| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
+| Social Proof | Scale for stat cards |
+| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
+| Footer | Simple fade-up |
 
-- Opcional — quando preenchido, ao resgatar o convite as permissões vêm do perfil
+**4. Add base CSS to `src/index.css`**
+```css
+.scroll-reveal {
+  opacity: 0;
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: none !important;
+}
+```
 
-**4. Nova página/seção "Perfis de Acesso"** na configuração da empresa
+### Key Decisions
+- No new dependencies -- uses native `IntersectionObserver`
+- CSS transitions (not JS-driven animations) for performance
+- Each animation fires only once (no re-hide on scroll up) for a polished feel
+- Stagger delays on card grids (50-100ms increments) for a cascading effect
 
-- CRUD de perfis com tabela de permissões por tela (mesma UI da tela de Permissões)
-- Cards para cada perfil pré-configurado e custom
-
-**5. Atualização do formulário de convites** (`InviteCodesCard`)
-
-- Dropdown para selecionar perfil de acesso (substitui o switch admin/config manual)
-- Opção "Personalizado" para manter o comportamento atual de marcar permissões manualmente
-- Ao selecionar um perfil, as permissões são preenchidas automaticamente (read-only preview)
-
-**6. Atualização da Edge Function `generate-invite-code**`
-
-- Receber `perfil_acesso_id` opcional
-- Se informado, copiar permissões do perfil para `invite_code_permissoes`
-
-**7. Atualização da Edge Function `redeem-invite-code**`
-
-- Sem mudança — já copia de `invite_code_permissoes` para `permissoes` do usuário
-
-**8. Seed dos perfis padrão**
-
-- Migration que insere os 3 perfis default para cada empresa existente
-- Trigger ou lógica no `create-empresa` para criar os perfis default em novas empresas
-
-### Arquivos impactados
-
-- **Novas migrations**: criar tabelas + seed + RLS
-- `**supabase/functions/generate-invite-code/index.ts**`: suporte a `perfil_acesso_id`
-- `**supabase/functions/create-empresa/index.ts**`: seed dos perfis default
-- `**src/components/convites/InviteCodesCard.tsx**`: dropdown de perfil + preview
-- **Nova página/componente**: CRUD de perfis de acesso
-- `**src/components/Sidebar.tsx**`: link para nova seção (se separada)
