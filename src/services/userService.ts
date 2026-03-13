@@ -2,15 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, FormData } from "@/types/user.types";
 
-export const fetchUsersData = async (isSuperAdmin: boolean = false) => {
-  // Super admin: fetch all users; regular admin: RLS handles filtering by empresa
-  const { data: perfisData, error } = await supabase
-    .from('perfis')
-    .select('*')
-    .order('nome');
-
-  if (error) throw error;
-  
+export const fetchUsersData = async (isSuperAdmin: boolean = false, empresaId?: string | null) => {
   // Fetch super_admin user_ids to flag them
   const { data: superAdminRoles } = await supabase
     .from('user_roles')
@@ -19,20 +11,48 @@ export const fetchUsersData = async (isSuperAdmin: boolean = false) => {
   
   const superAdminIds = new Set(superAdminRoles?.map(r => r.user_id) || []);
 
-  if (isSuperAdmin && perfisData) {
-    // For super admin, also fetch empresa names for each user
-    const empresaIds = [...new Set(perfisData.filter(p => p.empresa_id).map(p => p.empresa_id!))];
+  if (isSuperAdmin) {
+    // Super admin: fetch all users
+    const { data: perfisData, error } = await supabase
+      .from('perfis')
+      .select('*')
+      .order('nome');
+
+    if (error) throw error;
+
+    const empresaIds = [...new Set((perfisData || []).filter(p => p.empresa_id).map(p => p.empresa_id!))];
     const { data: empresas } = await supabase
       .from('empresas')
       .select('id, nome')
-      .in('id', empresaIds);
-    
-    return perfisData.map(p => ({
+      .in('id', empresaIds.length > 0 ? empresaIds : ['00000000-0000-0000-0000-000000000000']);
+
+    return (perfisData || []).map(p => ({
       ...p,
       empresa_nome: empresas?.find(e => e.id === p.empresa_id)?.nome || null,
       is_super_admin: superAdminIds.has(p.id),
     }));
   }
+
+  // Regular admin: fetch only users that belong to this empresa via user_roles
+  if (!empresaId) return [];
+
+  const { data: rolesData, error: rolesError } = await supabase
+    .from('user_roles')
+    .select('user_id')
+    .eq('empresa_id', empresaId);
+
+  if (rolesError) throw rolesError;
+
+  const userIds = rolesData?.map(r => r.user_id) || [];
+  if (userIds.length === 0) return [];
+
+  const { data: perfisData, error } = await supabase
+    .from('perfis')
+    .select('*')
+    .in('id', userIds)
+    .order('nome');
+
+  if (error) throw error;
 
   return (perfisData || []).map(p => ({
     ...p,
