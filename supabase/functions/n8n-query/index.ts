@@ -1850,8 +1850,15 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR FORMA DE PAGAMENTO ───
       case "editar-forma-pagamento": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchNome = sanitize(body.search) || sanitize(body.descricao_atual) || sanitize(body.descricao);
+          if (!searchNome) return new Response(JSON.stringify({ error: "id ou descricao/search é obrigatório para identificar a forma de pagamento" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("formas_pagamento").select("id, descricao").eq("empresa_id", empresa_id).ilike("descricao", `%${searchNome}%`).limit(5);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Forma de pagamento não encontrada", message: `Nenhuma forma de pagamento encontrada com "${searchNome}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplas formas encontradas", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         
         // Descrição é segura — lançamentos referenciam por ID, não pelo nome
         const descricao = normalizeText(sanitize(body.descricao), "descricao");
