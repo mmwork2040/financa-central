@@ -315,14 +315,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "contas-bancarias",
     toolName: "contas_bancarias",
     label: "Contas Bancárias",
-    description: "Lista de todas as contas bancárias e seus saldos",
-    toolDescription: `Consulta contas bancárias e saldos.
+    description: "Lista de todas as contas bancárias e seus saldos. SOMENTE LEITURA.",
+    toolDescription: `Consulta contas bancárias e saldos. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR contas. Para EDITAR uma conta bancária, use "editar_conta_bancaria" diretamente (ela já busca por nome).
 
 Use quando o usuário solicitar:
 - Saldo das contas
 - Contas bancárias
 - Quanto tenho no banco
-- Buscar conta bancária
 
 Parâmetros:
 - empresa_id
