@@ -1206,12 +1206,13 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     toolName: "editar_lancamento",
     label: "Editar Lançamento",
     description: "Altera dados de um lançamento pendente. Busca por descrição quando ID não informado. Suporta edição em cadeia recorrente. Lançamentos pagos/recebidos devem ser alterados no sistema web.",
-    toolDescription: `Altera dados de um lançamento financeiro existente.
+    toolDescription: `Altera dados de um lançamento financeiro existente. Use SEMPRE esta ferramenta quando o usuário pedir para alterar, renomear, mudar ou atualizar um lançamento. NÃO use a ferramenta "lancamentos" para buscar antes — esta ferramenta já faz a busca internamente.
 
-RESOLUÇÃO POR DESCRIÇÃO:
+RESOLUÇÃO POR DESCRIÇÃO (BUSCA AUTOMÁTICA):
 - Se o ID não for informado, envie o campo "search" com a descrição (ou parte) do lançamento.
 - O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
 - Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
+- NÃO é necessário listar lançamentos antes. Basta enviar o search com o nome/descrição.
 
 EDIÇÃO EM CADEIA RECORRENTE:
 - Para editar TODOS os lançamentos pendentes de uma cadeia recorrente de uma só vez, envie editar_cadeia: true.
