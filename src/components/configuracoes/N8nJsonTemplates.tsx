@@ -71,14 +71,19 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "lancamentos",
     toolName: "lancamentos",
     label: "Lançamentos",
-    description: "Lista de lançamentos com filtros por tipo, status e categoria",
-    toolDescription: `Consulta lançamentos financeiros (receitas e despesas).
+    description: "Lista de lançamentos com filtros por tipo, status e categoria. SOMENTE LEITURA.",
+    toolDescription: `Consulta lançamentos financeiros (receitas e despesas). FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-Use quando o usuário solicitar:
-- Lançamentos do mês
-- Receitas ou despesas
-- Contas a pagar / receber
-- Movimentações financeiras
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR lançamentos. NÃO use para buscar um lançamento antes de editá-lo.
+- Para EDITAR um lançamento: use a ferramenta "editar_lancamento" diretamente, informando o campo "search" com o nome/descrição. Ela já faz a busca internamente.
+- Para EXCLUIR um lançamento: use a ferramenta "excluir_lancamento" diretamente, informando o campo "search".
+- Para CRIAR um lançamento: use a ferramenta "criar_lancamento".
+
+Use SOMENTE quando o usuário solicitar:
+- Listar lançamentos do mês
+- Consultar receitas ou despesas
+- Ver contas a pagar / receber
+- Exibir movimentações financeiras
 
 Parâmetros:
 - empresa_id (obrigatório)
@@ -224,8 +229,10 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "vendas-digitais",
     toolName: "vendas_digitais",
     label: "Vendas Digitais",
-    description: "Vendas de plataformas externas com filtros por plataforma e status",
-    toolDescription: `Consulta vendas realizadas em plataformas digitais.
+    description: "Vendas de plataformas externas com filtros por plataforma e status. SOMENTE LEITURA.",
+    toolDescription: `Consulta vendas realizadas em plataformas digitais. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR vendas. Para EDITAR uma venda, use "editar_venda" diretamente (ela já busca por produto/nome).
 
 Use quando o usuário solicitar:
 - Vendas online
@@ -310,14 +317,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "contas-bancarias",
     toolName: "contas_bancarias",
     label: "Contas Bancárias",
-    description: "Lista de todas as contas bancárias e seus saldos",
-    toolDescription: `Consulta contas bancárias e saldos.
+    description: "Lista de todas as contas bancárias e seus saldos. SOMENTE LEITURA.",
+    toolDescription: `Consulta contas bancárias e saldos. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR contas. Para EDITAR uma conta bancária, use "editar_conta_bancaria" diretamente (ela já busca por nome).
 
 Use quando o usuário solicitar:
 - Saldo das contas
 - Contas bancárias
 - Quanto tenho no banco
-- Buscar conta bancária
 
 Parâmetros:
 - empresa_id
@@ -335,13 +343,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "clientes",
     toolName: "clientes",
     label: "Clientes",
-    description: "Lista de clientes com filtros de busca e status",
-    toolDescription: `Consulta lista de clientes cadastrados.
+    description: "Lista de clientes com filtros de busca e status. SOMENTE LEITURA.",
+    toolDescription: `Consulta lista de clientes cadastrados. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR clientes. Para EDITAR um cliente, use "editar_cliente" diretamente (ela já busca por nome).
 
 Use quando o usuário solicitar:
 - Lista de clientes
-- Buscar cliente
 - Clientes ativos
+- Consultar dados de um cliente
 
 Parâmetros:
 - empresa_id
@@ -363,13 +373,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "fornecedores",
     toolName: "fornecedores",
     label: "Fornecedores",
-    description: "Lista de fornecedores com filtros de busca e status",
-    toolDescription: `Consulta lista de fornecedores cadastrados.
+    description: "Lista de fornecedores com filtros de busca e status. SOMENTE LEITURA.",
+    toolDescription: `Consulta lista de fornecedores cadastrados. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR fornecedores. Para EDITAR um fornecedor, use "editar_fornecedor" diretamente (ela já busca por nome).
 
 Use quando o usuário solicitar:
 - Lista de fornecedores
-- Buscar fornecedor
 - Fornecedores ativos
+- Consultar dados de um fornecedor
 
 Parâmetros:
 - empresa_id
@@ -391,14 +403,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "projetos",
     toolName: "projetos",
     label: "Projetos",
-    description: "Lista de projetos com filtro por status",
-    toolDescription: `Consulta projetos cadastrados.
+    description: "Lista de projetos com filtro por status. SOMENTE LEITURA.",
+    toolDescription: `Consulta projetos cadastrados. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR projetos. Para EDITAR um projeto, use "editar_projeto" diretamente (ela já busca por nome).
 
 Use quando o usuário solicitar:
 - Lista de projetos
 - Projetos ativos
 - Status dos projetos
-- Buscar projeto
 
 Parâmetros:
 - empresa_id
@@ -420,13 +433,14 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "categorias",
     toolName: "categorias",
     label: "Categorias",
-    description: "Lista de todas as categorias cadastradas",
-    toolDescription: `Consulta categorias cadastradas.
+    description: "Lista de todas as categorias cadastradas. SOMENTE LEITURA.",
+    toolDescription: `Consulta categorias cadastradas. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR categorias. Para EDITAR uma categoria, use "editar_categoria" diretamente (ela já busca por nome).
 
 Use quando o usuário solicitar:
 - Lista de categorias
 - Categorias disponíveis
-- Buscar categoria
 
 Parâmetros:
 - empresa_id
@@ -444,13 +458,14 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "formas-pagamento",
     toolName: "formas_pagamento",
     label: "Formas de Pagamento",
-    description: "Lista de formas de pagamento cadastradas",
-    toolDescription: `Consulta formas de pagamento cadastradas.
+    description: "Lista de formas de pagamento cadastradas. SOMENTE LEITURA.",
+    toolDescription: `Consulta formas de pagamento cadastradas. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR formas de pagamento. Para EDITAR uma forma de pagamento, use "editar_forma_pagamento" diretamente (ela já busca por descrição).
 
 Use quando o usuário solicitar:
 - Formas de pagamento
 - Meios de pagamento disponíveis
-- Buscar forma de pagamento
 
 Parâmetros:
 - empresa_id
@@ -1201,12 +1216,13 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     toolName: "editar_lancamento",
     label: "Editar Lançamento",
     description: "Altera dados de um lançamento pendente. Busca por descrição quando ID não informado. Suporta edição em cadeia recorrente. Lançamentos pagos/recebidos devem ser alterados no sistema web.",
-    toolDescription: `Altera dados de um lançamento financeiro existente.
+    toolDescription: `Altera dados de um lançamento financeiro existente. Use SEMPRE esta ferramenta quando o usuário pedir para alterar, renomear, mudar ou atualizar um lançamento. NÃO use a ferramenta "lancamentos" para buscar antes — esta ferramenta já faz a busca internamente.
 
-RESOLUÇÃO POR DESCRIÇÃO:
+RESOLUÇÃO POR DESCRIÇÃO (BUSCA AUTOMÁTICA):
 - Se o ID não for informado, envie o campo "search" com a descrição (ou parte) do lançamento.
 - O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
 - Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
+- NÃO é necessário listar lançamentos antes. Basta enviar o search com o nome/descrição.
 
 EDIÇÃO EM CADEIA RECORRENTE:
 - Para editar TODOS os lançamentos pendentes de uma cadeia recorrente de uma só vez, envie editar_cadeia: true.
