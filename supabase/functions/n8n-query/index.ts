@@ -1662,8 +1662,16 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR CLIENTE ───
       case "editar-cliente": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        // Resolver por nome se ID não fornecido
+        if (!id) {
+          const searchNome = sanitize(body.search) || sanitize(body.nome_atual) || sanitize(body.nome);
+          if (!searchNome) return new Response(JSON.stringify({ error: "id ou nome/search é obrigatório para identificar o cliente" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("clientes").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", `%${searchNome}%`).limit(5);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Cliente não encontrado", message: `Nenhum cliente encontrado com o nome "${searchNome}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplos clientes encontrados", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         
         // Check if client was added automatically
         const { data: cliOrigem } = await supabase.from("clientes").select("origem").eq("id", id).eq("empresa_id", empresa_id).single();
