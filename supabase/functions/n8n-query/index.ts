@@ -2435,8 +2435,22 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR VENDA DIGITAL ───
       case "editar-venda": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchTerm = sanitize(body.search) || sanitize(body.produto) || sanitize(body.cliente);
+          if (!searchTerm) return new Response(JSON.stringify({ error: "id ou produto/cliente/search é obrigatório para identificar a venda" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          let query = supabase.from("vendas_digitais").select("id, produto, cliente, plataforma, data_venda, valor_bruto, status").eq("empresa_id", empresa_id);
+          // Try product first, then client
+          const { data: byProduto } = await query.ilike("produto", `%${searchTerm}%`).order("data_venda", { ascending: false }).limit(5);
+          let found = byProduto || [];
+          if (found.length === 0) {
+            const { data: byCliente } = await supabase.from("vendas_digitais").select("id, produto, cliente, plataforma, data_venda, valor_bruto, status").eq("empresa_id", empresa_id).ilike("cliente", `%${searchTerm}%`).order("data_venda", { ascending: false }).limit(5);
+            found = byCliente || [];
+          }
+          if (found.length === 0) return new Response(JSON.stringify({ error: "Venda não encontrada", message: `Nenhuma venda encontrada com "${searchTerm}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplas vendas encontradas", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
 
         // Verificar se a venda existe e é manual
         const { data: vendaExist } = await supabase
