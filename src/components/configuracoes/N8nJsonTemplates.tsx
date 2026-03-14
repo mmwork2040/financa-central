@@ -1291,17 +1291,25 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
 2. Se o cliente possuir lançamentos com status "pago" ou "recebido", a exclusão será BLOQUEADA automaticamente.
 ⚠️ NÃO é possível excluir USUÁRIOS por este template.
 
+🔍 Resolução por Nome: Se o "id" não for informado, use o campo "search" com o nome do cliente. O sistema buscará automaticamente.
+- Se encontrar exatamente 1 resultado, a exclusão será executada.
+- Se encontrar múltiplos resultados, retornará erro 409 com a lista para o usuário escolher.
+
+⚠️ NÃO use a ferramenta de listagem "clientes" para buscar antes — esta ferramenta já faz a busca internamente via campo "search".
+
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório — UUID do cliente)
+- id (opcional se usar search)
+- search (opcional — nome do cliente para busca)
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID do cliente a excluir" },
+      { name: "id", type: "string", required: false, description: "UUID do cliente (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome do cliente para busca automática" },
     ],
-    body: { action: "excluir-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do cliente a excluir') }}" },
+    body: { action: "excluir-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do cliente. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome do cliente para busca. Deixe vazio se usar ID') }}" },
   },
   {
     action: "excluir-fornecedor",
@@ -1312,17 +1320,25 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
 
 ⚠️ REGRA DE SEGURANÇA: Se o fornecedor possuir lançamentos com status "pago" ou "recebido", a exclusão será BLOQUEADA.
 
+🔍 Resolução por Nome: Se o "id" não for informado, use o campo "search" com o nome do fornecedor. O sistema buscará automaticamente.
+- Se encontrar exatamente 1 resultado, a exclusão será executada.
+- Se encontrar múltiplos resultados, retornará erro 409 com a lista para o usuário escolher.
+
+⚠️ NÃO use a ferramenta de listagem "fornecedores" para buscar antes — esta ferramenta já faz a busca internamente via campo "search".
+
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório)
+- id (opcional se usar search)
+- search (opcional — nome do fornecedor)
 
 Sempre usar a empresa_id ativa.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID do fornecedor" },
+      { name: "id", type: "string", required: false, description: "UUID do fornecedor (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome do fornecedor para busca automática" },
     ],
-    body: { action: "excluir-fornecedor", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do fornecedor') }}" },
+    body: { action: "excluir-fornecedor", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do fornecedor. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome do fornecedor para busca. Deixe vazio se usar ID') }}" },
   },
   {
     action: "excluir-categoria",
@@ -1333,17 +1349,25 @@ Sempre usar a empresa_id ativa.`,
 
 ⚠️ REGRA DE SEGURANÇA: Bloqueada se possuir lançamentos pagos/recebidos.
 
+🔍 Resolução por Nome: Se o "id" não for informado, use o campo "search" com o nome da categoria.
+- Se encontrar exatamente 1 resultado, a exclusão será executada.
+- Se encontrar múltiplos resultados, retornará erro 409 com a lista.
+
+⚠️ NÃO use a ferramenta de listagem "categorias" para buscar antes — esta ferramenta já faz a busca internamente via campo "search".
+
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório)
+- id (opcional se usar search)
+- search (opcional — nome da categoria)
 
 Sempre usar a empresa_id ativa.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID da categoria" },
+      { name: "id", type: "string", required: false, description: "UUID da categoria (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome da categoria para busca automática" },
     ],
-    body: { action: "excluir-categoria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da categoria') }}" },
+    body: { action: "excluir-categoria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da categoria. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome da categoria para busca. Deixe vazio se usar ID') }}" },
   },
   {
     action: "excluir-conta-bancaria",
@@ -1354,17 +1378,25 @@ Sempre usar a empresa_id ativa.`,
 
 ⚠️ REGRA DE SEGURANÇA: Bloqueada se possuir lançamentos pagos/recebidos.
 
+🔍 Resolução por Nome: Se o "id" não for informado, use o campo "search" com o nome da conta.
+- Se encontrar exatamente 1 resultado, a exclusão será executada.
+- Se encontrar múltiplos resultados, retornará erro 409 com a lista.
+
+⚠️ NÃO use a ferramenta de listagem "contas-bancarias" para buscar antes — esta ferramenta já faz a busca internamente via campo "search".
+
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório)
+- id (opcional se usar search)
+- search (opcional — nome da conta)
 
 Sempre usar a empresa_id ativa.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID da conta bancária" },
+      { name: "id", type: "string", required: false, description: "UUID da conta bancária (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome da conta para busca automática" },
     ],
-    body: { action: "excluir-conta-bancaria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da conta bancária') }}" },
+    body: { action: "excluir-conta-bancaria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da conta. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome da conta para busca. Deixe vazio se usar ID') }}" },
   },
   {
     action: "excluir-forma-pagamento",
@@ -1375,17 +1407,25 @@ Sempre usar a empresa_id ativa.`,
 
 ⚠️ REGRA DE SEGURANÇA: Bloqueada se possuir lançamentos pagos/recebidos.
 
+🔍 Resolução por Descrição: Se o "id" não for informado, use o campo "search" com a descrição da forma de pagamento.
+- Se encontrar exatamente 1 resultado, a exclusão será executada.
+- Se encontrar múltiplos resultados, retornará erro 409 com a lista.
+
+⚠️ NÃO use a ferramenta de listagem "formas-pagamento" para buscar antes — esta ferramenta já faz a busca internamente via campo "search".
+
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório)
+- id (opcional se usar search)
+- search (opcional — descrição da forma de pagamento)
 
 Sempre usar a empresa_id ativa.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID da forma de pagamento" },
+      { name: "id", type: "string", required: false, description: "UUID da forma de pagamento (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Descrição da forma de pagamento para busca automática" },
     ],
-    body: { action: "excluir-forma-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da forma de pagamento') }}" },
+    body: { action: "excluir-forma-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da forma de pagamento. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Descrição da forma de pagamento para busca. Deixe vazio se usar ID') }}" },
   },
   {
     action: "excluir-projeto",
@@ -1396,17 +1436,25 @@ Sempre usar a empresa_id ativa.`,
 
 Projetos são um controle à parte do usuário — podem ser excluídos livremente. Lançamentos vinculados NÃO são afetados, apenas perdem a referência ao projeto.
 
+🔍 Resolução por Nome: Se o "id" não for informado, use o campo "search" com o nome do projeto.
+- Se encontrar exatamente 1 resultado, a exclusão será executada.
+- Se encontrar múltiplos resultados, retornará erro 409 com a lista.
+
+⚠️ NÃO use a ferramenta de listagem "projetos" para buscar antes — esta ferramenta já faz a busca internamente via campo "search".
+
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório)
+- id (opcional se usar search)
+- search (opcional — nome do projeto)
 
 Sempre usar a empresa_id ativa.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID do projeto" },
+      { name: "id", type: "string", required: false, description: "UUID do projeto (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome do projeto para busca automática" },
     ],
-    body: { action: "excluir-projeto", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do projeto') }}" },
+    body: { action: "excluir-projeto", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do projeto. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome do projeto para busca. Deixe vazio se usar ID') }}" },
   },
   {
     action: "excluir-lancamento",
@@ -1417,6 +1465,12 @@ Sempre usar a empresa_id ativa.`,
 
 ⚠️ REGRA DE SEGURANÇA: Lançamentos com status "pago" ou "recebido" NÃO podem ser excluídos.
 
+🔍 Resolução por Descrição: Se o "id" não for informado, use o campo "search" com a descrição do lançamento.
+- Se encontrar exatamente 1 resultado, a exclusão será executada.
+- Se encontrar múltiplos resultados, retornará erro 409 com a lista para o usuário escolher.
+
+⚠️ NÃO use a ferramenta de listagem "lancamentos" para buscar antes — esta ferramenta já faz a busca internamente via campo "search".
+
 LANÇAMENTOS RECORRENTES:
 - Por padrão, exclui APENAS a ocorrência informada (pelo id).
 - Para excluir TODA a cadeia recorrente (todas as ocorrências futuras pendentes do mesmo grupo), envie: excluir_cadeia: true.
@@ -1424,17 +1478,19 @@ LANÇAMENTOS RECORRENTES:
 
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório — UUID do lançamento)
+- id (opcional se usar search)
+- search (opcional — descrição do lançamento para busca)
 - excluir_cadeia (opcional — true para excluir todas as ocorrências pendentes da cadeia recorrente)
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID do lançamento" },
+      { name: "id", type: "string", required: false, description: "UUID do lançamento (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Descrição do lançamento para busca automática" },
       { name: "excluir_cadeia", type: "string", required: false, description: "true para excluir toda a cadeia recorrente pendente" },
     ],
-    body: { action: "excluir-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento') }}", excluir_cadeia: "{{ $fromAI('excluir_cadeia', 'true para excluir toda a cadeia recorrente. Deixe vazio para excluir apenas esta ocorrência') }}" },
+    body: { action: "excluir-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Descrição do lançamento para busca. Deixe vazio se usar ID') }}", excluir_cadeia: "{{ $fromAI('excluir_cadeia', 'true para excluir toda a cadeia recorrente. Deixe vazio para excluir apenas esta ocorrência') }}" },
   },
   // ─── VENDAS DIGITAIS CRUD ───
   {
