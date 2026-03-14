@@ -1998,10 +1998,16 @@ Deno.serve(async (req) => {
 
       // ─── EXCLUIR CLIENTE ───
       case "excluir-cliente": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchTerm = sanitize(body.search) || sanitize(body.nome);
+          if (!searchTerm) return new Response(JSON.stringify({ error: "id ou search é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("clientes").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", `%${searchTerm}%`);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Nenhum cliente encontrado com esse nome" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplos clientes encontrados. Seja mais específico.", resultados: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         
-        // Check if client was added automatically
         const { data: cliDelOrigem } = await supabase.from("clientes").select("origem").eq("id", id).eq("empresa_id", empresa_id).single();
         if (cliDelOrigem && cliDelOrigem.origem !== "manual") {
           return new Response(JSON.stringify({ error: "Bloqueado", message: "Este cliente foi adicionado automaticamente (via integração) e não pode ser excluído. Solicite a exclusão via suporte." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -2019,8 +2025,15 @@ Deno.serve(async (req) => {
 
       // ─── EXCLUIR FORNECEDOR ───
       case "excluir-fornecedor": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchTerm = sanitize(body.search) || sanitize(body.nome);
+          if (!searchTerm) return new Response(JSON.stringify({ error: "id ou search é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("fornecedores").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", `%${searchTerm}%`);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Nenhum fornecedor encontrado com esse nome" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplos fornecedores encontrados. Seja mais específico.", resultados: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         const { data: vincDelForn } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("fornecedor_id", id).in("status", ["pago", "recebido"]).limit(1);
         if (vincDelForn && vincDelForn.length > 0) {
           return new Response(JSON.stringify({ error: "Bloqueado", message: "Este fornecedor possui lançamentos pagos/recebidos vinculados e não pode ser excluído." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -2033,8 +2046,15 @@ Deno.serve(async (req) => {
 
       // ─── EXCLUIR CATEGORIA ───
       case "excluir-categoria": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchTerm = sanitize(body.search) || sanitize(body.nome);
+          if (!searchTerm) return new Response(JSON.stringify({ error: "id ou search é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("categorias").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", `%${searchTerm}%`);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Nenhuma categoria encontrada com esse nome" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplas categorias encontradas. Seja mais específico.", resultados: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         const { data: vincDelCat } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("categoria_id", id).in("status", ["pago", "recebido"]).limit(1);
         if (vincDelCat && vincDelCat.length > 0) {
           return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta categoria possui lançamentos pagos/recebidos vinculados e não pode ser excluída." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -2047,8 +2067,15 @@ Deno.serve(async (req) => {
 
       // ─── EXCLUIR CONTA BANCÁRIA ───
       case "excluir-conta-bancaria": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchTerm = sanitize(body.search) || sanitize(body.nome);
+          if (!searchTerm) return new Response(JSON.stringify({ error: "id ou search é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("contas_bancarias").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", `%${searchTerm}%`);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Nenhuma conta bancária encontrada com esse nome" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplas contas encontradas. Seja mais específico.", resultados: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         const { data: vincDelConta } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("conta_bancaria_id", id).in("status", ["pago", "recebido"]).limit(1);
         if (vincDelConta && vincDelConta.length > 0) {
           return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta conta bancária possui lançamentos pagos/recebidos vinculados e não pode ser excluída." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -2061,8 +2088,15 @@ Deno.serve(async (req) => {
 
       // ─── EXCLUIR FORMA DE PAGAMENTO ───
       case "excluir-forma-pagamento": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchTerm = sanitize(body.search) || sanitize(body.descricao);
+          if (!searchTerm) return new Response(JSON.stringify({ error: "id ou search é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("formas_pagamento").select("id, descricao").eq("empresa_id", empresa_id).ilike("descricao", `%${searchTerm}%`);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Nenhuma forma de pagamento encontrada com essa descrição" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplas formas de pagamento encontradas. Seja mais específico.", resultados: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         const { data: vincDelForma } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("forma_pagamento_id", id).in("status", ["pago", "recebido"]).limit(1);
         if (vincDelForma && vincDelForma.length > 0) {
           return new Response(JSON.stringify({ error: "Bloqueado", message: "Esta forma de pagamento possui lançamentos pagos/recebidos vinculados e não pode ser excluída." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -2075,8 +2109,15 @@ Deno.serve(async (req) => {
 
       // ─── EXCLUIR PROJETO ───
       case "excluir-projeto": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchTerm = sanitize(body.search) || sanitize(body.nome);
+          if (!searchTerm) return new Response(JSON.stringify({ error: "id ou search é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("projetos").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", `%${searchTerm}%`);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Nenhum projeto encontrado com esse nome" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplos projetos encontrados. Seja mais específico.", resultados: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         const { error: delProjErr } = await supabase.from("projetos").delete().eq("id", id).eq("empresa_id", empresa_id);
         if (delProjErr) throw delProjErr;
         result = { message: "Projeto excluído com sucesso", id };
@@ -2085,8 +2126,15 @@ Deno.serve(async (req) => {
 
       // ─── EXCLUIR LANÇAMENTO ───
       case "excluir-lancamento": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchTerm = sanitize(body.search) || sanitize(body.descricao);
+          if (!searchTerm) return new Response(JSON.stringify({ error: "id ou search é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("lancamentos").select("id, descricao, valor, tipo, status, data_vencimento").eq("empresa_id", empresa_id).ilike("descricao", `%${searchTerm}%`);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Nenhum lançamento encontrado com essa descrição" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplos lançamentos encontrados. Seja mais específico.", resultados: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         const { data: lancDel } = await supabase.from("lancamentos").select("id, status, recorrencia_grupo_id, recorrente").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
         if (!lancDel) return new Response(JSON.stringify({ error: "Lançamento não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         if (["pago", "recebido"].includes(lancDel.status)) {
@@ -2097,7 +2145,6 @@ Deno.serve(async (req) => {
         const shouldDeleteChain = excluirCadeia === true || excluirCadeia === "true";
 
         if (shouldDeleteChain && lancDel.recorrencia_grupo_id) {
-          // Excluir todas as ocorrências pendentes da cadeia recorrente
           const { data: cadeiaItems } = await supabase
             .from("lancamentos")
             .select("id, status")
@@ -2122,7 +2169,6 @@ Deno.serve(async (req) => {
             recorrencia_grupo_id: lancDel.recorrencia_grupo_id,
           };
         } else {
-          // Excluir apenas esta ocorrência
           const { error: delLancErr } = await supabase.from("lancamentos").delete().eq("id", id).eq("empresa_id", empresa_id);
           if (delLancErr) throw delLancErr;
           result = { message: "Lançamento excluído com sucesso", id };
