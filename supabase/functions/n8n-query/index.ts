@@ -1662,8 +1662,16 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR CLIENTE ───
       case "editar-cliente": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        // Resolver por nome se ID não fornecido
+        if (!id) {
+          const searchNome = sanitize(body.search) || sanitize(body.nome_atual) || sanitize(body.nome);
+          if (!searchNome) return new Response(JSON.stringify({ error: "id ou nome/search é obrigatório para identificar o cliente" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("clientes").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", `%${searchNome}%`).limit(5);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Cliente não encontrado", message: `Nenhum cliente encontrado com o nome "${searchNome}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplos clientes encontrados", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         
         // Check if client was added automatically
         const { data: cliOrigem } = await supabase.from("clientes").select("origem").eq("id", id).eq("empresa_id", empresa_id).single();
@@ -1707,8 +1715,15 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR FORNECEDOR ───
       case "editar-fornecedor": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchNome = sanitize(body.search) || sanitize(body.nome_atual) || sanitize(body.nome);
+          if (!searchNome) return new Response(JSON.stringify({ error: "id ou nome/search é obrigatório para identificar o fornecedor" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("fornecedores").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", `%${searchNome}%`).limit(5);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Fornecedor não encontrado", message: `Nenhum fornecedor encontrado com o nome "${searchNome}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplos fornecedores encontrados", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         
         const { data: vincForn } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("fornecedor_id", id).in("status", ["pago", "recebido"]).limit(1);
         const hasVincForn = vincForn && vincForn.length > 0;
@@ -1743,8 +1758,15 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR CATEGORIA ───
       case "editar-categoria": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchNome = sanitize(body.search) || sanitize(body.nome_atual) || sanitize(body.nome);
+          if (!searchNome) return new Response(JSON.stringify({ error: "id ou nome/search é obrigatório para identificar a categoria" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("categorias").select("id, nome, tipo").eq("empresa_id", empresa_id).ilike("nome", `%${searchNome}%`).limit(5);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Categoria não encontrada", message: `Nenhuma categoria encontrada com o nome "${searchNome}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplas categorias encontradas", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         
         const { data: vincCat } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("categoria_id", id).in("status", ["pago", "recebido"]).limit(1);
         const hasVincCat = vincCat && vincCat.length > 0;
@@ -1774,8 +1796,21 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR CONTA BANCÁRIA ───
       case "editar-conta-bancaria": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchNome = sanitize(body.search) || sanitize(body.nome_atual) || sanitize(body.nome);
+          if (!searchNome) return new Response(JSON.stringify({ error: "id ou nome/search é obrigatório para identificar a conta bancária" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          let found: any[] = [];
+          const { data: byNome } = await supabase.from("contas_bancarias").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", `%${searchNome}%`).limit(5);
+          found = byNome || [];
+          if (found.length === 0) {
+            const { data: byBanco } = await supabase.from("contas_bancarias").select("id, nome").eq("empresa_id", empresa_id).ilike("banco", `%${searchNome}%`).limit(5);
+            found = byBanco || [];
+          }
+          if (found.length === 0) return new Response(JSON.stringify({ error: "Conta bancária não encontrada", message: `Nenhuma conta encontrada com o nome "${searchNome}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplas contas encontradas", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         
         const { data: vincConta } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("conta_bancaria_id", id).in("status", ["pago", "recebido"]).limit(1);
         const hasVincConta = vincConta && vincConta.length > 0;
@@ -1815,8 +1850,15 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR FORMA DE PAGAMENTO ───
       case "editar-forma-pagamento": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchNome = sanitize(body.search) || sanitize(body.descricao_atual) || sanitize(body.descricao);
+          if (!searchNome) return new Response(JSON.stringify({ error: "id ou descricao/search é obrigatório para identificar a forma de pagamento" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("formas_pagamento").select("id, descricao").eq("empresa_id", empresa_id).ilike("descricao", `%${searchNome}%`).limit(5);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Forma de pagamento não encontrada", message: `Nenhuma forma de pagamento encontrada com "${searchNome}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplas formas encontradas", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         
         // Descrição é segura — lançamentos referenciam por ID, não pelo nome
         const descricao = normalizeText(sanitize(body.descricao), "descricao");
@@ -1830,8 +1872,15 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR PROJETO ───
       case "editar-projeto": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchNome = sanitize(body.search) || sanitize(body.nome_atual) || sanitize(body.nome);
+          if (!searchNome) return new Response(JSON.stringify({ error: "id ou nome/search é obrigatório para identificar o projeto" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("projetos").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", `%${searchNome}%`).limit(5);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Projeto não encontrado", message: `Nenhum projeto encontrado com o nome "${searchNome}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplos projetos encontrados", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         
         const updateData: any = {};
         if (sanitize(body.nome)) updateData.nome = normalizeText(sanitize(body.nome), "nome");
@@ -1848,8 +1897,32 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR LANÇAMENTO ───
       case "editar-lancamento": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchDesc = sanitize(body.search) || sanitize(body.descricao_atual) || sanitize(body.descricao);
+          if (!searchDesc) return new Response(JSON.stringify({ error: "id ou descricao/search é obrigatório para identificar o lançamento" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("lancamentos").select("id, descricao, tipo, valor, status, data_vencimento, recorrente, recorrencia_grupo_id").eq("empresa_id", empresa_id).ilike("descricao", `%${searchDesc}%`).order("data_vencimento", { ascending: false }).limit(10);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Lançamento não encontrado", message: `Nenhum lançamento encontrado com a descrição "${searchDesc}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) {
+            // If all share the same recorrencia_grupo_id, treat as a recurring group
+            const grupoIds = [...new Set(found.filter((f: any) => f.recorrencia_grupo_id).map((f: any) => f.recorrencia_grupo_id))];
+            if (grupoIds.length === 1 && found.every((f: any) => f.recorrencia_grupo_id === grupoIds[0])) {
+              // Apply edit to all pending in the chain if body.editar_cadeia is true
+              const editarCadeia = body.editar_cadeia === true || body.editar_cadeia === "true";
+              if (editarCadeia) {
+                // Will be handled below after building updateData — store all IDs
+                id = found[0].id;
+                body._cadeia_ids = found.filter((f: any) => f.status === "pendente").map((f: any) => f.id);
+              } else {
+                return new Response(JSON.stringify({ error: "Múltiplos lançamentos recorrentes encontrados", message: "Encontrados lançamentos recorrentes. Envie editar_cadeia=true para alterar todos os pendentes, ou use o ID específico.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+              }
+            } else {
+              return new Response(JSON.stringify({ error: "Múltiplos lançamentos encontrados", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+            }
+          } else {
+            id = found[0].id;
+          }
+        }
         
         const { data: lancExist } = await supabase.from("lancamentos").select("id, status, origem, recorrencia_grupo_id, recorrente").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
         if (!lancExist) return new Response(JSON.stringify({ error: "Lançamento não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -1862,11 +1935,18 @@ Deno.serve(async (req) => {
         }
 
         const isRecorrente = !!(lancExist as any).recorrencia_grupo_id;
-        const blockedInRecorrente = ["descricao", "tipo"];
+        // When editing by name (search), allow descricao edits even on recorrentes
+        const editingByName = !sanitize(body.id);
+        const blockedInRecorrente = editingByName ? ["tipo"] : ["descricao", "tipo"];
         const fields = ["descricao", "tipo", "status", "data_vencimento", "data_pagamento", "categoria_id", "cliente_id", "fornecedor_id", "conta_bancaria_id", "forma_pagamento_id", "projeto_id"];
 
         const updateData: any = {};
         
+        // Support nova_descricao as alias for descricao (useful for rename operations)
+        if (sanitize(body.nova_descricao) && !sanitize(body.descricao)) {
+          body.descricao = body.nova_descricao;
+        }
+
         for (const f of fields) {
           const v = sanitize(body[f]);
           if (v !== undefined) {
@@ -1899,9 +1979,20 @@ Deno.serve(async (req) => {
         
         if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-        const { data: updLanc, error: updLancErr } = await supabase.from("lancamentos").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
-        if (updLancErr) throw updLancErr;
-        result = updLanc;
+        // Chain edit: update all pending lancamentos in the recurrence group
+        const cadeiaIds = body._cadeia_ids as string[] | undefined;
+        if (cadeiaIds && cadeiaIds.length > 0) {
+          let successCount = 0;
+          for (const cId of cadeiaIds) {
+            const { error: cErr } = await supabase.from("lancamentos").update(updateData).eq("id", cId).eq("empresa_id", empresa_id);
+            if (!cErr) successCount++;
+          }
+          result = { message: `${successCount} lançamento(s) pendente(s) da cadeia recorrente atualizado(s) com sucesso`, ids_atualizados: cadeiaIds };
+        } else {
+          const { data: updLanc, error: updLancErr } = await supabase.from("lancamentos").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
+          if (updLancErr) throw updLancErr;
+          result = updLanc;
+        }
         break;
       }
 
@@ -2362,8 +2453,22 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR VENDA DIGITAL ───
       case "editar-venda": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchTerm = sanitize(body.search) || sanitize(body.produto) || sanitize(body.cliente);
+          if (!searchTerm) return new Response(JSON.stringify({ error: "id ou produto/cliente/search é obrigatório para identificar a venda" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          let query = supabase.from("vendas_digitais").select("id, produto, cliente, plataforma, data_venda, valor_bruto, status").eq("empresa_id", empresa_id);
+          // Try product first, then client
+          const { data: byProduto } = await query.ilike("produto", `%${searchTerm}%`).order("data_venda", { ascending: false }).limit(5);
+          let found = byProduto || [];
+          if (found.length === 0) {
+            const { data: byCliente } = await supabase.from("vendas_digitais").select("id, produto, cliente, plataforma, data_venda, valor_bruto, status").eq("empresa_id", empresa_id).ilike("cliente", `%${searchTerm}%`).order("data_venda", { ascending: false }).limit(5);
+            found = byCliente || [];
+          }
+          if (found.length === 0) return new Response(JSON.stringify({ error: "Venda não encontrada", message: `Nenhuma venda encontrada com "${searchTerm}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplas vendas encontradas", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
 
         // Verificar se a venda existe e é manual
         const { data: vendaExist } = await supabase
