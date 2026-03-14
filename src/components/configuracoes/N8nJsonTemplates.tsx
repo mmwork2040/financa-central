@@ -1748,6 +1748,32 @@ const N8nJsonTemplates = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTemplate, setNewTemplate] = useState({ action: "", label: "", description: "", json: "{}" });
 
+  // Helper: transform $fromAI calls for optional params to include default empty string
+  // This makes them truly optional in the n8n tool schema, preventing "Received tool input did not match expected schema" errors
+  const addDefaultsToOptionalFromAI = (body: Record<string, any>, params: ToolParam[]): Record<string, any> => {
+    const requiredParamNames = new Set(params.filter(p => p.required).map(p => p.name));
+    const newBody: Record<string, any> = {};
+    for (const [key, value] of Object.entries(body)) {
+      if (key === "action" || typeof value !== "string") {
+        newBody[key] = value;
+        continue;
+      }
+      // If param is required, keep as-is (2 args = required in n8n schema)
+      if (requiredParamNames.has(key)) {
+        newBody[key] = value;
+        continue;
+      }
+      // For optional params: convert $fromAI('name', 'desc') → $fromAI('name', 'desc', 'string', '')
+      const fromAiMatch = value.match(/\{\{\s*\$fromAI\('([^']+)',\s*'([^']+)'\)\s*\}\}/);
+      if (fromAiMatch && !value.includes("'string'")) {
+        newBody[key] = `{{ $fromAI('${fromAiMatch[1]}', '${fromAiMatch[2]}', 'string', '') }}`;
+      } else {
+        newBody[key] = value;
+      }
+    }
+    return newBody;
+  };
+
   // Auto-inject user_id into all templates for permission control
   const injectUserId = (templates: ActionTemplate[]): ActionTemplate[] => {
     return templates.map(t => {
@@ -1769,6 +1795,9 @@ const N8nJsonTemplates = () => {
         entries.splice(empresaIdx + 1, 0, ["user_id", "{{ $fromAI('user_id', 'UUID do usuario para controle de permissoes') }}"]);
         newBody = Object.fromEntries(entries);
       }
+
+      // Add default values to optional $fromAI params
+      newBody = addDefaultsToOptionalFromAI(newBody, params);
 
       // Always ensure user_id is in the Parâmetros section of the description
       let toolDescription = t.toolDescription;
