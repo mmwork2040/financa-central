@@ -1796,8 +1796,21 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR CONTA BANCÁRIA ───
       case "editar-conta-bancaria": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchNome = sanitize(body.search) || sanitize(body.nome_atual) || sanitize(body.nome);
+          if (!searchNome) return new Response(JSON.stringify({ error: "id ou nome/search é obrigatório para identificar a conta bancária" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          let found: any[] = [];
+          const { data: byNome } = await supabase.from("contas_bancarias").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", `%${searchNome}%`).limit(5);
+          found = byNome || [];
+          if (found.length === 0) {
+            const { data: byBanco } = await supabase.from("contas_bancarias").select("id, nome").eq("empresa_id", empresa_id).ilike("banco", `%${searchNome}%`).limit(5);
+            found = byBanco || [];
+          }
+          if (found.length === 0) return new Response(JSON.stringify({ error: "Conta bancária não encontrada", message: `Nenhuma conta encontrada com o nome "${searchNome}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplas contas encontradas", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         
         const { data: vincConta } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("conta_bancaria_id", id).in("status", ["pago", "recebido"]).limit(1);
         const hasVincConta = vincConta && vincConta.length > 0;
