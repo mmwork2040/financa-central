@@ -1517,8 +1517,13 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "editar-venda",
     toolName: "editar_venda",
     label: "Editar Venda Digital",
-    description: "Altera dados de uma venda digital pendente. Vendas com lançamento pago/recebido devem ser alteradas no sistema web.",
+    description: "Altera dados de uma venda digital pendente. Busca por produto quando ID não informado. Vendas com lançamento pago/recebido devem ser alteradas no sistema web.",
     toolDescription: `Altera dados de uma venda digital existente.
+
+RESOLUÇÃO POR PRODUTO:
+- Se o ID não for informado, envie o campo "search" com o nome do produto (ou parte).
+- O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
+- Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
 
 ⚠️ REGRAS DE SEGURANÇA:
 1. Vendas com origem automática (webhook/integração) NÃO podem ser editadas. Somente vendas com origem "manual".
@@ -1540,7 +1545,7 @@ Use quando o usuário solicitar:
 Parâmetros:
 - empresa_id (obrigatório)
 - user_id (obrigatório — UUID do usuário para controle de permissões)
-- id (obrigatório — UUID da venda a editar)
+- id OU search (um dos dois é obrigatório)
 - plataforma, valor_bruto, taxa, valor_liquido, produto, cliente, cliente_email, cliente_telefone, cliente_documento, cliente_endereco, status, data_venda, observacoes (opcionais)
 - emitir_nota_fiscal (opcional — true/false)
 
@@ -1551,7 +1556,8 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
-      { name: "id", type: "string", required: true, description: "UUID da venda a editar" },
+      { name: "id", type: "string", required: false, description: "UUID da venda (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome do produto para busca (usado quando ID não informado)" },
       { name: "plataforma", type: "string", required: false, description: "Nova plataforma" },
       { name: "valor_bruto", type: "string", required: false, description: "Novo valor bruto (número puro)" },
       { name: "taxa", type: "string", required: false, description: "Nova taxa/comissão (número puro)" },
@@ -1571,7 +1577,8 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       action: "editar-venda",
       empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}",
       user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}",
-      id: "{{ $fromAI('id', 'UUID da venda a editar') }}",
+      id: "{{ $fromAI('id', 'UUID da venda. Deixe vazio se usar search') }}",
+      search: "{{ $fromAI('search', 'Nome do produto para busca. Deixe vazio se usar ID') }}",
       plataforma: "{{ $fromAI('plataforma', 'Nova plataforma. Vazio se não mudar') }}",
       valor_bruto: "{{ $fromAI('valor_bruto', 'Novo valor bruto. Vazio se não mudar') }}",
       taxa: "{{ $fromAI('taxa', 'Nova taxa. Vazio se não mudar') }}",
