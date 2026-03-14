@@ -1013,8 +1013,13 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "editar-fornecedor",
     toolName: "editar_fornecedor",
     label: "Editar Fornecedor",
-    description: "Altera dados de um fornecedor existente. Campos descritivos podem ser editados mesmo com lançamentos vinculados.",
+    description: "Altera dados de um fornecedor existente. Busca por nome quando ID não informado. Campos descritivos podem ser editados mesmo com lançamentos vinculados.",
     toolDescription: `Altera dados de um fornecedor existente.
+
+RESOLUÇÃO POR NOME:
+- Se o ID não for informado, envie o campo "search" com o nome (ou parte do nome) do fornecedor.
+- O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
+- Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
 
 ⚠️ REGRAS DE SEGURANÇA:
 - Se o fornecedor possuir lançamentos com status "pago" ou "recebido":
@@ -1028,20 +1033,21 @@ CONTROLE DE ACESSO:
 
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório — UUID do fornecedor)
+- id OU search (um dos dois é obrigatório)
 - nome, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado, ativo (opcionais)
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID do fornecedor a editar" },
+      { name: "id", type: "string", required: false, description: "UUID do fornecedor (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome do fornecedor para busca (usado quando ID não informado)" },
       { name: "nome", type: "string", required: false, description: "Novo nome" },
       { name: "email", type: "string", required: false, description: "Novo e-mail" },
       { name: "telefone", type: "string", required: false, description: "Novo telefone" },
       { name: "ativo", type: "boolean", required: false, description: "true ou false (bloqueado se vinculado)" },
     ],
-    body: { action: "editar-fornecedor", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do fornecedor') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
+    body: { action: "editar-fornecedor", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do fornecedor. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome do fornecedor para busca. Deixe vazio se usar ID') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
   },
   {
     action: "editar-categoria",
