@@ -1935,11 +1935,18 @@ Deno.serve(async (req) => {
         }
 
         const isRecorrente = !!(lancExist as any).recorrencia_grupo_id;
-        const blockedInRecorrente = ["descricao", "tipo"];
+        // When editing by name (search), allow descricao edits even on recorrentes
+        const editingByName = !sanitize(body.id);
+        const blockedInRecorrente = editingByName ? ["tipo"] : ["descricao", "tipo"];
         const fields = ["descricao", "tipo", "status", "data_vencimento", "data_pagamento", "categoria_id", "cliente_id", "fornecedor_id", "conta_bancaria_id", "forma_pagamento_id", "projeto_id"];
 
         const updateData: any = {};
         
+        // Support nova_descricao as alias for descricao (useful for rename operations)
+        if (sanitize(body.nova_descricao) && !sanitize(body.descricao)) {
+          body.descricao = body.nova_descricao;
+        }
+
         for (const f of fields) {
           const v = sanitize(body[f]);
           if (v !== undefined) {
@@ -1972,9 +1979,20 @@ Deno.serve(async (req) => {
         
         if (Object.keys(updateData).length === 0) return new Response(JSON.stringify({ error: "Nenhum campo para atualizar" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-        const { data: updLanc, error: updLancErr } = await supabase.from("lancamentos").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
-        if (updLancErr) throw updLancErr;
-        result = updLanc;
+        // Chain edit: update all pending lancamentos in the recurrence group
+        const cadeiaIds = body._cadeia_ids as string[] | undefined;
+        if (cadeiaIds && cadeiaIds.length > 0) {
+          let successCount = 0;
+          for (const cId of cadeiaIds) {
+            const { error: cErr } = await supabase.from("lancamentos").update(updateData).eq("id", cId).eq("empresa_id", empresa_id);
+            if (!cErr) successCount++;
+          }
+          result = { message: `${successCount} lançamento(s) pendente(s) da cadeia recorrente atualizado(s) com sucesso`, ids_atualizados: cadeiaIds };
+        } else {
+          const { data: updLanc, error: updLancErr } = await supabase.from("lancamentos").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
+          if (updLancErr) throw updLancErr;
+          result = updLanc;
+        }
         break;
       }
 
