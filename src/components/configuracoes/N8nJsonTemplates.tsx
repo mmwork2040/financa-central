@@ -341,13 +341,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "clientes",
     toolName: "clientes",
     label: "Clientes",
-    description: "Lista de clientes com filtros de busca e status",
-    toolDescription: `Consulta lista de clientes cadastrados.
+    description: "Lista de clientes com filtros de busca e status. SOMENTE LEITURA.",
+    toolDescription: `Consulta lista de clientes cadastrados. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR clientes. Para EDITAR um cliente, use "editar_cliente" diretamente (ela já busca por nome).
 
 Use quando o usuário solicitar:
 - Lista de clientes
-- Buscar cliente
 - Clientes ativos
+- Consultar dados de um cliente
 
 Parâmetros:
 - empresa_id
