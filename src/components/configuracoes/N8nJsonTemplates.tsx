@@ -1679,15 +1679,17 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 2. Se a venda possuir um lançamento vinculado, ele será excluído junto.
 3. Se a venda possuir nota fiscal emitida (invoice_status = ISSUED ou AUTHORIZED), a exclusão será BLOQUEADA. A nota fiscal deve ser cancelada antes.
 
-Use quando o usuário solicitar:
-- Excluir venda
-- Apagar venda
-- Remover venda
+🔍 Resolução por Produto: Se o "id" não for informado, use o campo "search" com o nome do produto da venda.
+- Se encontrar exatamente 1 resultado, a exclusão será executada.
+- Se encontrar múltiplos resultados, retornará erro 409 com a lista para o usuário escolher.
+
+⚠️ NÃO use a ferramenta de listagem "vendas-digitais" para buscar antes — esta ferramenta já faz a busca internamente via campo "search".
 
 Parâmetros:
 - empresa_id (obrigatório)
 - user_id (obrigatório — UUID do usuário para controle de permissões)
-- id (obrigatório — UUID da venda a excluir)
+- id (opcional se usar search)
+- search (opcional — nome do produto da venda para busca)
 
 CONTROLE DE ACESSO: Requer permissão 'pode_excluir' na tela 'vendas_digitais'.
 
@@ -1696,13 +1698,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
-      { name: "id", type: "string", required: true, description: "UUID da venda a excluir" },
+      { name: "id", type: "string", required: false, description: "UUID da venda (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome do produto da venda para busca automática" },
     ],
     body: {
       action: "excluir-venda",
       empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}",
       user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}",
-      id: "{{ $fromAI('id', 'UUID da venda a excluir') }}",
+      id: "{{ $fromAI('id', 'UUID da venda. Deixe vazio se usar search') }}",
+      search: "{{ $fromAI('search', 'Nome do produto da venda para busca. Deixe vazio se usar ID') }}",
     },
   },
 ];
