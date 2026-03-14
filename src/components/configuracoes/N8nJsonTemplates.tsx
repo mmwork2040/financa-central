@@ -1053,8 +1053,13 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-categoria",
     toolName: "editar_categoria",
     label: "Editar Categoria",
-    description: "Altera dados de uma categoria. Nome pode ser editado mesmo com lançamentos vinculados; tipo é bloqueado.",
+    description: "Altera dados de uma categoria. Busca por nome quando ID não informado. Nome pode ser editado mesmo com lançamentos vinculados; tipo é bloqueado.",
     toolDescription: `Altera nome ou tipo de uma categoria existente.
+
+RESOLUÇÃO POR NOME:
+- Se o ID não for informado, envie o campo "search" com o nome (ou parte do nome) da categoria.
+- O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
+- Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
 
 ⚠️ REGRAS DE SEGURANÇA:
 - Se a categoria possuir lançamentos com status "pago" ou "recebido":
@@ -1068,7 +1073,7 @@ CONTROLE DE ACESSO:
 
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório)
+- id OU search (um dos dois é obrigatório)
 - nome (opcional)
 - tipo: receita, despesa ou investimento (opcional — bloqueado se vinculado)
 
@@ -1076,11 +1081,12 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID da categoria" },
+      { name: "id", type: "string", required: false, description: "UUID da categoria (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome da categoria para busca (usado quando ID não informado)" },
       { name: "nome", type: "string", required: false, description: "Novo nome" },
       { name: "tipo", type: "string", required: false, description: "receita, despesa ou investimento (bloqueado se vinculado)" },
     ],
-    body: { action: "editar-categoria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da categoria') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", tipo: "{{ $fromAI('tipo', 'receita, despesa ou investimento. Deixe vazio se não mudar') }}" },
+    body: { action: "editar-categoria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da categoria. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome da categoria para busca. Deixe vazio se usar ID') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", tipo: "{{ $fromAI('tipo', 'receita, despesa ou investimento. Deixe vazio se não mudar') }}" },
   },
   {
     action: "editar-conta-bancaria",
