@@ -91,7 +91,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 <MonthCarousel />
               </div>
             )}
-            <div className="animate-fade-in">
+            <div className="animate-fade-in" key={empresaId}>
               {children}
             </div>
           </div>
