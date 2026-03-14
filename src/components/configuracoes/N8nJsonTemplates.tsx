@@ -403,14 +403,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "projetos",
     toolName: "projetos",
     label: "Projetos",
-    description: "Lista de projetos com filtro por status",
-    toolDescription: `Consulta projetos cadastrados.
+    description: "Lista de projetos com filtro por status. SOMENTE LEITURA.",
+    toolDescription: `Consulta projetos cadastrados. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR projetos. Para EDITAR um projeto, use "editar_projeto" diretamente (ela já busca por nome).
 
 Use quando o usuário solicitar:
 - Lista de projetos
 - Projetos ativos
 - Status dos projetos
-- Buscar projeto
 
 Parâmetros:
 - empresa_id
