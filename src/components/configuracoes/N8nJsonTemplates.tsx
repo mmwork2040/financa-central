@@ -430,13 +430,14 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "categorias",
     toolName: "categorias",
     label: "Categorias",
-    description: "Lista de todas as categorias cadastradas",
-    toolDescription: `Consulta categorias cadastradas.
+    description: "Lista de todas as categorias cadastradas. SOMENTE LEITURA.",
+    toolDescription: `Consulta categorias cadastradas. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR categorias. Para EDITAR uma categoria, use "editar_categoria" diretamente (ela já busca por nome).
 
 Use quando o usuário solicitar:
 - Lista de categorias
 - Categorias disponíveis
-- Buscar categoria
 
 Parâmetros:
 - empresa_id
