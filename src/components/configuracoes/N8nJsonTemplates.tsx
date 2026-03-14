@@ -964,8 +964,13 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "editar-cliente",
     toolName: "editar_cliente",
     label: "Editar Cliente",
-    description: "Altera dados de um cliente existente. Campos descritivos (nome, contato, endereço) podem ser editados mesmo com lançamentos vinculados.",
+    description: "Altera dados de um cliente existente. Busca por nome quando ID não informado. Campos descritivos podem ser editados mesmo com lançamentos vinculados.",
     toolDescription: `Altera dados de um cliente existente.
+
+RESOLUÇÃO POR NOME:
+- Se o ID não for informado, envie o campo "search" com o nome (ou parte do nome) do cliente.
+- O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
+- Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
 
 ⚠️ REGRAS DE SEGURANÇA:
 1. Clientes adicionados automaticamente (via integração/webhook) NÃO podem ser editados. Somente clientes com origem "manual".
@@ -980,7 +985,7 @@ Use quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório — UUID do cliente a editar)
+- id OU search (um dos dois é obrigatório — UUID do cliente ou nome para busca)
 - nome, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado, ativo (opcionais — envie apenas os campos que mudarão)
 
 CONTROLE DE ACESSO:
@@ -994,21 +999,27 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID do cliente a editar" },
+      { name: "id", type: "string", required: false, description: "UUID do cliente (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome do cliente para busca (usado quando ID não informado)" },
       { name: "nome", type: "string", required: false, description: "Novo nome" },
       { name: "email", type: "string", required: false, description: "Novo e-mail" },
       { name: "telefone", type: "string", required: false, description: "Novo telefone" },
       { name: "cpf_cnpj", type: "string", required: false, description: "Novo CPF/CNPJ" },
       { name: "ativo", type: "boolean", required: false, description: "true ou false (bloqueado se vinculado a lançamentos pagos)" },
     ],
-    body: { action: "editar-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do cliente a editar') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", cpf_cnpj: "{{ $fromAI('cpf_cnpj', 'Novo CPF/CNPJ. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
+    body: { action: "editar-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do cliente. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome do cliente para busca. Deixe vazio se usar ID') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", cpf_cnpj: "{{ $fromAI('cpf_cnpj', 'Novo CPF/CNPJ. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
   },
   {
     action: "editar-fornecedor",
     toolName: "editar_fornecedor",
     label: "Editar Fornecedor",
-    description: "Altera dados de um fornecedor existente. Campos descritivos podem ser editados mesmo com lançamentos vinculados.",
+    description: "Altera dados de um fornecedor existente. Busca por nome quando ID não informado. Campos descritivos podem ser editados mesmo com lançamentos vinculados.",
     toolDescription: `Altera dados de um fornecedor existente.
+
+RESOLUÇÃO POR NOME:
+- Se o ID não for informado, envie o campo "search" com o nome (ou parte do nome) do fornecedor.
+- O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
+- Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
 
 ⚠️ REGRAS DE SEGURANÇA:
 - Se o fornecedor possuir lançamentos com status "pago" ou "recebido":
@@ -1022,27 +1033,33 @@ CONTROLE DE ACESSO:
 
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório — UUID do fornecedor)
+- id OU search (um dos dois é obrigatório)
 - nome, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado, ativo (opcionais)
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID do fornecedor a editar" },
+      { name: "id", type: "string", required: false, description: "UUID do fornecedor (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome do fornecedor para busca (usado quando ID não informado)" },
       { name: "nome", type: "string", required: false, description: "Novo nome" },
       { name: "email", type: "string", required: false, description: "Novo e-mail" },
       { name: "telefone", type: "string", required: false, description: "Novo telefone" },
       { name: "ativo", type: "boolean", required: false, description: "true ou false (bloqueado se vinculado)" },
     ],
-    body: { action: "editar-fornecedor", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do fornecedor') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
+    body: { action: "editar-fornecedor", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do fornecedor. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome do fornecedor para busca. Deixe vazio se usar ID') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
   },
   {
     action: "editar-categoria",
     toolName: "editar_categoria",
     label: "Editar Categoria",
-    description: "Altera dados de uma categoria. Nome pode ser editado mesmo com lançamentos vinculados; tipo é bloqueado.",
+    description: "Altera dados de uma categoria. Busca por nome quando ID não informado. Nome pode ser editado mesmo com lançamentos vinculados; tipo é bloqueado.",
     toolDescription: `Altera nome ou tipo de uma categoria existente.
+
+RESOLUÇÃO POR NOME:
+- Se o ID não for informado, envie o campo "search" com o nome (ou parte do nome) da categoria.
+- O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
+- Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
 
 ⚠️ REGRAS DE SEGURANÇA:
 - Se a categoria possuir lançamentos com status "pago" ou "recebido":
@@ -1056,7 +1073,7 @@ CONTROLE DE ACESSO:
 
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório)
+- id OU search (um dos dois é obrigatório)
 - nome (opcional)
 - tipo: receita, despesa ou investimento (opcional — bloqueado se vinculado)
 
@@ -1064,18 +1081,24 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID da categoria" },
+      { name: "id", type: "string", required: false, description: "UUID da categoria (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome da categoria para busca (usado quando ID não informado)" },
       { name: "nome", type: "string", required: false, description: "Novo nome" },
       { name: "tipo", type: "string", required: false, description: "receita, despesa ou investimento (bloqueado se vinculado)" },
     ],
-    body: { action: "editar-categoria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da categoria') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", tipo: "{{ $fromAI('tipo', 'receita, despesa ou investimento. Deixe vazio se não mudar') }}" },
+    body: { action: "editar-categoria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da categoria. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome da categoria para busca. Deixe vazio se usar ID') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", tipo: "{{ $fromAI('tipo', 'receita, despesa ou investimento. Deixe vazio se não mudar') }}" },
   },
   {
     action: "editar-conta-bancaria",
     toolName: "editar_conta_bancaria",
     label: "Editar Conta Bancária",
-    description: "Altera dados de uma conta bancária. Campos descritivos podem ser editados mesmo com lançamentos vinculados.",
+    description: "Altera dados de uma conta bancária. Busca por nome quando ID não informado. Campos descritivos podem ser editados mesmo com lançamentos vinculados.",
     toolDescription: `Altera dados de uma conta bancária existente.
+
+RESOLUÇÃO POR NOME:
+- Se o ID não for informado, envie o campo "search" com o nome (ou parte do nome) da conta.
+- O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
+- Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
 
 ⚠️ REGRAS DE SEGURANÇA:
 - Se a conta possuir lançamentos com status "pago" ou "recebido":
@@ -1089,7 +1112,7 @@ CONTROLE DE ACESSO:
 
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório)
+- id OU search (um dos dois é obrigatório)
 - nome, banco, agencia, conta (opcionais)
 - saldo_atual (numérico, opcional — bloqueado se vinculado)
 - principal (boolean, opcional — bloqueado se vinculado)
@@ -1098,20 +1121,26 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID da conta bancária" },
+      { name: "id", type: "string", required: false, description: "UUID da conta bancária (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome da conta para busca (usado quando ID não informado)" },
       { name: "nome", type: "string", required: false, description: "Novo nome" },
       { name: "banco", type: "string", required: false, description: "Novo banco" },
       { name: "saldo_atual", type: "number", required: false, description: "Novo saldo atual (bloqueado se vinculado)" },
       { name: "principal", type: "boolean", required: false, description: "true ou false (bloqueado se vinculado)" },
     ],
-    body: { action: "editar-conta-bancaria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da conta bancária') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", banco: "{{ $fromAI('banco', 'Novo banco. Deixe vazio se não mudar') }}", saldo_atual: "{{ $fromAI('saldo_atual', 'Novo saldo. Deixe vazio se não mudar') }}", principal: "{{ $fromAI('principal', 'true ou false. Deixe vazio se não mudar') }}" },
+    body: { action: "editar-conta-bancaria", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da conta bancária. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome da conta para busca. Deixe vazio se usar ID') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", banco: "{{ $fromAI('banco', 'Novo banco. Deixe vazio se não mudar') }}", saldo_atual: "{{ $fromAI('saldo_atual', 'Novo saldo. Deixe vazio se não mudar') }}", principal: "{{ $fromAI('principal', 'true ou false. Deixe vazio se não mudar') }}" },
   },
   {
     action: "editar-forma-pagamento",
     toolName: "editar_forma_pagamento",
     label: "Editar Forma de Pagamento",
-    description: "Altera descrição de uma forma de pagamento (permitido mesmo com lançamentos vinculados)",
+    description: "Altera descrição de uma forma de pagamento. Busca por descrição quando ID não informado. Permitido mesmo com lançamentos vinculados.",
     toolDescription: `Altera a descrição de uma forma de pagamento.
+
+RESOLUÇÃO POR NOME:
+- Se o ID não for informado, envie o campo "search" com a descrição (ou parte) da forma de pagamento.
+- O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
+- Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
 
 A descrição pode ser alterada livremente — lançamentos referenciam formas de pagamento por ID, não pelo nome. Portanto, editar a descrição NÃO impacta lançamentos existentes.
 
@@ -1122,50 +1151,66 @@ CONTROLE DE ACESSO:
 
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório)
+- id OU search (um dos dois é obrigatório)
 - descricao (obrigatório — nova descrição)
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID da forma de pagamento" },
+      { name: "id", type: "string", required: false, description: "UUID da forma de pagamento (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Descrição atual para busca (usado quando ID não informado)" },
       { name: "descricao", type: "string", required: true, description: "Nova descrição" },
     ],
-    body: { action: "editar-forma-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da forma de pagamento') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição') }}" },
+    body: { action: "editar-forma-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da forma de pagamento. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Descrição atual para busca. Deixe vazio se usar ID') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição') }}" },
   },
   {
     action: "editar-projeto",
     toolName: "editar_projeto",
     label: "Editar Projeto",
-    description: "Altera dados de um projeto (sem restrições de lançamentos vinculados)",
+    description: "Altera dados de um projeto. Busca por nome quando ID não informado. Sem restrições de lançamentos vinculados.",
     toolDescription: `Altera dados de um projeto existente.
+
+RESOLUÇÃO POR NOME:
+- Se o ID não for informado, envie o campo "search" com o nome (ou parte do nome) do projeto.
+- O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
+- Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
 
 Projetos são um controle à parte do usuário — podem ser editados livremente independente de lançamentos vinculados. O saldo de receitas e despesas é apenas informativo.
 
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório)
+- id OU search (um dos dois é obrigatório)
 - nome, descricao, status, orcamento (opcionais)
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID do projeto" },
+      { name: "id", type: "string", required: false, description: "UUID do projeto (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome do projeto para busca (usado quando ID não informado)" },
       { name: "nome", type: "string", required: false, description: "Novo nome" },
       { name: "descricao", type: "string", required: false, description: "Nova descrição" },
       { name: "status", type: "string", required: false, description: "ativo, concluido ou cancelado" },
       { name: "orcamento", type: "number", required: false, description: "Novo orçamento" },
     ],
-    body: { action: "editar-projeto", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do projeto') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição. Deixe vazio se não mudar') }}", status: "{{ $fromAI('status', 'ativo, concluido ou cancelado. Deixe vazio se não mudar') }}", orcamento: "{{ $fromAI('orcamento', 'Novo orçamento. Deixe vazio se não mudar') }}" },
+    body: { action: "editar-projeto", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do projeto. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome do projeto para busca. Deixe vazio se usar ID') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição. Deixe vazio se não mudar') }}", status: "{{ $fromAI('status', 'ativo, concluido ou cancelado. Deixe vazio se não mudar') }}", orcamento: "{{ $fromAI('orcamento', 'Novo orçamento. Deixe vazio se não mudar') }}" },
   },
   {
     action: "editar-lancamento",
     toolName: "editar_lancamento",
     label: "Editar Lançamento",
-    description: "Altera dados de um lançamento pendente. Lançamentos pagos/recebidos devem ser alterados no sistema web.",
+    description: "Altera dados de um lançamento pendente. Busca por descrição quando ID não informado. Suporta edição em cadeia recorrente. Lançamentos pagos/recebidos devem ser alterados no sistema web.",
     toolDescription: `Altera dados de um lançamento financeiro existente.
+
+RESOLUÇÃO POR DESCRIÇÃO:
+- Se o ID não for informado, envie o campo "search" com a descrição (ou parte) do lançamento.
+- O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
+- Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
+
+EDIÇÃO EM CADEIA RECORRENTE:
+- Para editar TODOS os lançamentos pendentes de uma cadeia recorrente de uma só vez, envie editar_cadeia: true.
+- O sistema encontra o grupo de recorrência e aplica as alterações a todas as ocorrências pendentes.
 
 ⚠️ REGRA DE SEGURANÇA: Lançamentos com status "pago" ou "recebido" NÃO podem ser alterados via n8n/chat. Informe ao usuário que registros pagos ou recebidos devem ser editados diretamente no sistema web.
 
@@ -1185,7 +1230,8 @@ RECORRÊNCIA E PARCELAMENTO:
 
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório — UUID do lançamento)
+- id OU search (um dos dois é obrigatório)
+- editar_cadeia (opcional — true para editar toda a cadeia recorrente pendente)
 - descricao, valor, tipo, status, data_vencimento, data_pagamento (opcionais)
 - categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id (opcionais)
 - recorrente, recorrencia_tipo, recorrencia_inicio, recorrencia_fim (opcionais — para controle de recorrência)
@@ -1194,8 +1240,10 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID do lançamento" },
-      { name: "descricao", type: "string", required: false, description: "Nova descrição (bloqueado em recorrentes)" },
+      { name: "id", type: "string", required: false, description: "UUID do lançamento (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Descrição do lançamento para busca (usado quando ID não informado)" },
+      { name: "editar_cadeia", type: "string", required: false, description: "true para editar toda a cadeia recorrente pendente" },
+      { name: "descricao", type: "string", required: false, description: "Nova descrição (bloqueado em recorrentes individuais)" },
       { name: "valor", type: "string", required: false, description: "Novo valor (ex: 500.00)" },
       { name: "tipo", type: "string", required: false, description: "receita ou despesa (bloqueado em recorrentes)" },
       { name: "status", type: "string", required: false, description: "pendente, pago ou recebido" },
@@ -1212,7 +1260,7 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
       { name: "forma_pagamento_id", type: "string", required: false, description: "UUID da forma de pagamento" },
       { name: "projeto_id", type: "string", required: false, description: "UUID do projeto" },
     ],
-    body: { action: "editar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição. Deixe vazio se não mudar. BLOQUEADO em recorrentes') }}", valor: "{{ $fromAI('valor', 'Novo valor. Deixe vazio se não mudar') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa. Deixe vazio se não mudar. BLOQUEADO em recorrentes') }}", status: "{{ $fromAI('status', 'pendente, pago ou recebido. Deixe vazio se não mudar') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'YYYY-MM-DD. Deixe vazio se não mudar') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'YYYY-MM-DD. Deixe vazio se não mudar') }}", recorrente: "{{ $fromAI('recorrente', 'true para tornar recorrente. Deixe vazio se não mudar') }}", recorrencia_tipo: "{{ $fromAI('recorrencia_tipo', 'semanal, quinzenal, mensal, trimestral ou anual. Deixe vazio se não mudar') }}", recorrencia_inicio: "{{ $fromAI('recorrencia_inicio', 'Data início recorrência YYYY-MM-DD. Aceita retroativas. Deixe vazio se não mudar') }}", recorrencia_fim: "{{ $fromAI('recorrencia_fim', 'Data fim recorrência YYYY-MM-DD. Vazio = indefinido. Deixe vazio se não mudar') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Deixe vazio se não mudar') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Deixe vazio se não mudar') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor. Deixe vazio se não mudar') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária. Deixe vazio se não mudar') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento. Deixe vazio se não mudar') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não mudar') }}" },
+    body: { action: "editar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Descrição do lançamento para busca. Deixe vazio se usar ID') }}", editar_cadeia: "{{ $fromAI('editar_cadeia', 'true para editar toda a cadeia recorrente. Deixe vazio para editar apenas este') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição. Deixe vazio se não mudar') }}", valor: "{{ $fromAI('valor', 'Novo valor. Deixe vazio se não mudar') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa. Deixe vazio se não mudar') }}", status: "{{ $fromAI('status', 'pendente, pago ou recebido. Deixe vazio se não mudar') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'YYYY-MM-DD. Deixe vazio se não mudar') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'YYYY-MM-DD. Deixe vazio se não mudar') }}", recorrente: "{{ $fromAI('recorrente', 'true para tornar recorrente. Deixe vazio se não mudar') }}", recorrencia_tipo: "{{ $fromAI('recorrencia_tipo', 'semanal, quinzenal, mensal, trimestral ou anual. Deixe vazio se não mudar') }}", recorrencia_inicio: "{{ $fromAI('recorrencia_inicio', 'Data início recorrência YYYY-MM-DD. Deixe vazio se não mudar') }}", recorrencia_fim: "{{ $fromAI('recorrencia_fim', 'Data fim recorrência YYYY-MM-DD. Deixe vazio se não mudar') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Deixe vazio se não mudar') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Deixe vazio se não mudar') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor. Deixe vazio se não mudar') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária. Deixe vazio se não mudar') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento. Deixe vazio se não mudar') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Deixe vazio se não mudar') }}" },
   },
   // ─── EXCLUIR ───
   {
@@ -1469,8 +1517,13 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "editar-venda",
     toolName: "editar_venda",
     label: "Editar Venda Digital",
-    description: "Altera dados de uma venda digital pendente. Vendas com lançamento pago/recebido devem ser alteradas no sistema web.",
+    description: "Altera dados de uma venda digital pendente. Busca por produto quando ID não informado. Vendas com lançamento pago/recebido devem ser alteradas no sistema web.",
     toolDescription: `Altera dados de uma venda digital existente.
+
+RESOLUÇÃO POR PRODUTO:
+- Se o ID não for informado, envie o campo "search" com o nome do produto (ou parte).
+- O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
+- Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
 
 ⚠️ REGRAS DE SEGURANÇA:
 1. Vendas com origem automática (webhook/integração) NÃO podem ser editadas. Somente vendas com origem "manual".
@@ -1492,7 +1545,7 @@ Use quando o usuário solicitar:
 Parâmetros:
 - empresa_id (obrigatório)
 - user_id (obrigatório — UUID do usuário para controle de permissões)
-- id (obrigatório — UUID da venda a editar)
+- id OU search (um dos dois é obrigatório)
 - plataforma, valor_bruto, taxa, valor_liquido, produto, cliente, cliente_email, cliente_telefone, cliente_documento, cliente_endereco, status, data_venda, observacoes (opcionais)
 - emitir_nota_fiscal (opcional — true/false)
 
@@ -1503,7 +1556,8 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
-      { name: "id", type: "string", required: true, description: "UUID da venda a editar" },
+      { name: "id", type: "string", required: false, description: "UUID da venda (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome do produto para busca (usado quando ID não informado)" },
       { name: "plataforma", type: "string", required: false, description: "Nova plataforma" },
       { name: "valor_bruto", type: "string", required: false, description: "Novo valor bruto (número puro)" },
       { name: "taxa", type: "string", required: false, description: "Nova taxa/comissão (número puro)" },
@@ -1523,7 +1577,8 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       action: "editar-venda",
       empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}",
       user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}",
-      id: "{{ $fromAI('id', 'UUID da venda a editar') }}",
+      id: "{{ $fromAI('id', 'UUID da venda. Deixe vazio se usar search') }}",
+      search: "{{ $fromAI('search', 'Nome do produto para busca. Deixe vazio se usar ID') }}",
       plataforma: "{{ $fromAI('plataforma', 'Nova plataforma. Vazio se não mudar') }}",
       valor_bruto: "{{ $fromAI('valor_bruto', 'Novo valor bruto. Vazio se não mudar') }}",
       taxa: "{{ $fromAI('taxa', 'Nova taxa. Vazio se não mudar') }}",
