@@ -458,13 +458,14 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "formas-pagamento",
     toolName: "formas_pagamento",
     label: "Formas de Pagamento",
-    description: "Lista de formas de pagamento cadastradas",
-    toolDescription: `Consulta formas de pagamento cadastradas.
+    description: "Lista de formas de pagamento cadastradas. SOMENTE LEITURA.",
+    toolDescription: `Consulta formas de pagamento cadastradas. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR formas de pagamento. Para EDITAR uma forma de pagamento, use "editar_forma_pagamento" diretamente (ela já busca por descrição).
 
 Use quando o usuário solicitar:
 - Formas de pagamento
 - Meios de pagamento disponíveis
-- Buscar forma de pagamento
 
 Parâmetros:
 - empresa_id
