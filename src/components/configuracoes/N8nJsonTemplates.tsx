@@ -964,8 +964,13 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "editar-cliente",
     toolName: "editar_cliente",
     label: "Editar Cliente",
-    description: "Altera dados de um cliente existente. Campos descritivos (nome, contato, endereço) podem ser editados mesmo com lançamentos vinculados.",
+    description: "Altera dados de um cliente existente. Busca por nome quando ID não informado. Campos descritivos podem ser editados mesmo com lançamentos vinculados.",
     toolDescription: `Altera dados de um cliente existente.
+
+RESOLUÇÃO POR NOME:
+- Se o ID não for informado, envie o campo "search" com o nome (ou parte do nome) do cliente.
+- O sistema buscará automaticamente. Se encontrar um único resultado, aplica a edição.
+- Se encontrar MÚLTIPLOS resultados, retorna a lista para o usuário escolher.
 
 ⚠️ REGRAS DE SEGURANÇA:
 1. Clientes adicionados automaticamente (via integração/webhook) NÃO podem ser editados. Somente clientes com origem "manual".
@@ -980,7 +985,7 @@ Use quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id (obrigatório)
-- id (obrigatório — UUID do cliente a editar)
+- id OU search (um dos dois é obrigatório — UUID do cliente ou nome para busca)
 - nome, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado, ativo (opcionais — envie apenas os campos que mudarão)
 
 CONTROLE DE ACESSO:
@@ -994,14 +999,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "id", type: "string", required: true, description: "UUID do cliente a editar" },
+      { name: "id", type: "string", required: false, description: "UUID do cliente (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Nome do cliente para busca (usado quando ID não informado)" },
       { name: "nome", type: "string", required: false, description: "Novo nome" },
       { name: "email", type: "string", required: false, description: "Novo e-mail" },
       { name: "telefone", type: "string", required: false, description: "Novo telefone" },
       { name: "cpf_cnpj", type: "string", required: false, description: "Novo CPF/CNPJ" },
       { name: "ativo", type: "boolean", required: false, description: "true ou false (bloqueado se vinculado a lançamentos pagos)" },
     ],
-    body: { action: "editar-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do cliente a editar') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", cpf_cnpj: "{{ $fromAI('cpf_cnpj', 'Novo CPF/CNPJ. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
+    body: { action: "editar-cliente", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do cliente. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome do cliente para busca. Deixe vazio se usar ID') }}", nome: "{{ $fromAI('nome', 'Novo nome. Deixe vazio se não mudar') }}", email: "{{ $fromAI('email', 'Novo email. Deixe vazio se não mudar') }}", telefone: "{{ $fromAI('telefone', 'Novo telefone. Deixe vazio se não mudar') }}", cpf_cnpj: "{{ $fromAI('cpf_cnpj', 'Novo CPF/CNPJ. Deixe vazio se não mudar') }}", ativo: "{{ $fromAI('ativo', 'true ou false. Deixe vazio se não mudar') }}" },
   },
   {
     action: "editar-fornecedor",
