@@ -229,8 +229,10 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "vendas-digitais",
     toolName: "vendas_digitais",
     label: "Vendas Digitais",
-    description: "Vendas de plataformas externas com filtros por plataforma e status",
-    toolDescription: `Consulta vendas realizadas em plataformas digitais.
+    description: "Vendas de plataformas externas com filtros por plataforma e status. SOMENTE LEITURA.",
+    toolDescription: `Consulta vendas realizadas em plataformas digitais. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR vendas. Para EDITAR uma venda, use "editar_venda" diretamente (ela já busca por produto/nome).
 
 Use quando o usuário solicitar:
 - Vendas online
