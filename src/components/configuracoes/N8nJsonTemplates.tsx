@@ -1433,10 +1433,11 @@ Sempre usar a empresa_id ativa.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
       { name: "id", type: "string", required: false, description: "UUID da forma de pagamento (opcional se usar search)" },
       { name: "search", type: "string", required: false, description: "Descrição da forma de pagamento para busca automática" },
     ],
-    body: { action: "excluir-forma-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID da forma de pagamento. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Descrição da forma de pagamento para busca. Deixe vazio se usar ID') }}" },
+    body: { action: "excluir-forma-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", id: "{{ $fromAI('id', 'UUID da forma de pagamento. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Descrição da forma de pagamento para busca. Deixe vazio se usar ID') }}" },
   },
   {
     action: "excluir-projeto",
