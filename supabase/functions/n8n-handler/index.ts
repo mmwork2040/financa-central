@@ -359,12 +359,33 @@ Deno.serve(async (req) => {
 
       const { data: lancamentos } = await supabase
         .from("lancamentos")
-        .select("tipo, valor, status, descricao, data_vencimento")
+        .select("id, tipo, valor, status, descricao, data_vencimento, recorrente, recorrencia_grupo_id")
         .eq("empresa_id", empresaId)
         .gte("data_vencimento", inicioMes)
         .lte("data_vencimento", fimMes)
         .order("data_vencimento", { ascending: false })
-        .limit(20);
+        .limit(30);
+
+      // ─── Search lancamentos by keywords from user message ───
+      const stopWords = ["o", "a", "os", "as", "de", "do", "da", "dos", "das", "em", "no", "na", "um", "uma",
+        "para", "por", "com", "que", "me", "meu", "minha", "qual", "quais", "como", "onde",
+        "tem", "tenho", "ter", "foi", "ser", "está", "são", "esse", "essa", "isso",
+        "alterar", "mudar", "buscar", "encontrar", "mostrar", "ver", "listar"];
+      const keywords = message.toLowerCase().replace(/[^\w\sà-ú]/g, "").split(/\s+/).filter((w: string) => w.length > 2 && !stopWords.includes(w));
+      
+      let searchedLancamentos: any[] = [];
+      if (keywords.length > 0) {
+        const searchTerms = keywords.slice(0, 3);
+        let query = supabase
+          .from("lancamentos")
+          .select("id, tipo, valor, status, descricao, data_vencimento, recorrente, recorrencia_grupo_id")
+          .eq("empresa_id", empresaId);
+        for (const term of searchTerms) {
+          query = query.ilike("descricao", `%${term}%`);
+        }
+        const { data: searched } = await query.order("data_vencimento", { ascending: false }).limit(20);
+        if (searched && searched.length > 0) searchedLancamentos = searched;
+      }
 
       const { data: contas } = await supabase
         .from("contas_bancarias")
@@ -379,6 +400,19 @@ Deno.serve(async (req) => {
       const saldoContas = (contas || []).map((c: any) => `${c.nome}: R$${Number(c.saldo_atual).toFixed(2)}`).join("; ");
       const pendentes = (lancamentos || []).filter((l: any) => l.status === "pendente").length;
 
+      // Build searched results context
+      let searchContext = "";
+      if (searchedLancamentos.length > 0) {
+        const searchResults = searchedLancamentos.map((l: any) => 
+          `- ID:${l.id} | "${l.descricao}" | ${l.tipo} | R$${Number(l.valor).toFixed(2)} | ${l.status} | Venc:${l.data_vencimento} | Recorrente:${l.recorrente ? "Sim" : "Não"}${l.recorrencia_grupo_id ? ` | Grupo:${l.recorrencia_grupo_id}` : ""}`
+        ).join("\n");
+        searchContext = `\n\nLANÇAMENTOS ENCONTRADOS POR BUSCA:\n${searchResults}`;
+      }
+
+      const lancamentosContext = (lancamentos || []).map((l: any) =>
+        `- ID:${l.id} | "${l.descricao}" | ${l.tipo} | R$${Number(l.valor).toFixed(2)} | ${l.status} | Venc:${l.data_vencimento} | Recorrente:${l.recorrente ? "Sim" : "Não"}`
+      ).join("\n");
+
       const userContext = [
         `Mês: ${mesAtual}`,
         `Receitas: R$${totalReceitas.toFixed(2)} (${receitas.length})`,
@@ -388,10 +422,23 @@ Deno.serve(async (req) => {
         saldoContas ? `Contas: ${saldoContas}` : "",
       ].filter(Boolean).join(" | ");
 
+      const fullContext = userContext + 
+        (lancamentosContext ? `\n\nLANÇAMENTOS DO MÊS:\n${lancamentosContext}` : "") +
+        searchContext;
+
       const systemPrompt = `Você é um assistente financeiro do FinançaCentral atendendo "${userName}".
-Responda em português brasileiro, de forma concisa (máx 150 chars, exceto relatórios: máx 500).
+Responda em português brasileiro, de forma concisa (máx 300 chars, exceto relatórios: máx 500).
 Use SOMENTE os dados abaixo. Se não for sobre finanças, diga: "Só posso ajudar com assuntos financeiros."
-DADOS: ${userContext}`;
+
+CAPACIDADES DE EDIÇÃO:
+- Você PODE alterar descrições de lançamentos quando solicitado.
+- Quando o usuário pedir para alterar/renomear um lançamento, responda com o formato EXATO:
+  [AÇÃO:ATUALIZAR_DESCRICAO|ID:uuid-do-lancamento|NOVA_DESCRICAO:nova descrição aqui]
+  seguido de uma confirmação amigável.
+- Se encontrar MÚLTIPLOS lançamentos correspondentes (recorrentes), liste-os e pergunte se deseja alterar todos ou apenas um específico.
+- Se o usuário confirmar "todos" ou "sim", use múltiplas linhas de ação, uma para cada ID.
+
+DADOS: ${fullContext}`;
 
       const messages = [
         { role: "system", content: systemPrompt },
@@ -410,12 +457,12 @@ DADOS: ${userContext}`;
         const model = selectedModel || "google/gemini-3-flash-preview";
         llmUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
         llmHeaders = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" };
-        llmBody = { model, messages, max_tokens: 100 };
+        llmBody = { model, messages, max_tokens: 300 };
       } else if (llmProvider === "openai") {
         const model = selectedModel || "gpt-4o-mini";
         llmUrl = "https://api.openai.com/v1/chat/completions";
         llmHeaders = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" };
-        llmBody = { model, messages, max_tokens: 100 };
+        llmBody = { model, messages, max_tokens: 300 };
       } else if (llmProvider === "google_gemini") {
         const model = selectedModel || "gemini-2.0-flash";
         llmUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -426,7 +473,7 @@ DADOS: ${userContext}`;
             parts: [{ text: m.content }],
           })),
           systemInstruction: { parts: [{ text: messages.find((m: any) => m.role === "system")?.content || "" }] },
-          generationConfig: { maxOutputTokens: 100 },
+          generationConfig: { maxOutputTokens: 300 },
         };
       } else if (llmProvider === "anthropic") {
         const model = selectedModel || "claude-3-haiku-20240307";
@@ -434,7 +481,7 @@ DADOS: ${userContext}`;
         llmHeaders = { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" };
         llmBody = {
           model,
-          max_tokens: 100,
+          max_tokens: 300,
           system: messages.find((m: any) => m.role === "system")?.content || "",
           messages: messages.filter((m: any) => m.role !== "system"),
         };
@@ -442,7 +489,7 @@ DADOS: ${userContext}`;
         const model = selectedModel || "deepseek-chat";
         llmUrl = "https://api.deepseek.com/chat/completions";
         llmHeaders = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" };
-        llmBody = { model, messages, max_tokens: 100 };
+        llmBody = { model, messages, max_tokens: 300 };
       }
 
       const llmResponse = await fetch(llmUrl, {
@@ -470,6 +517,51 @@ DADOS: ${userContext}`;
       }
 
       reply = reply || "Desculpe, não consegui processar.";
+
+      // ─── Process action commands from LLM response ───
+      const actionRegex = /\[AÇÃO:ATUALIZAR_DESCRICAO\|ID:([a-f0-9-]+)\|NOVA_DESCRICAO:(.+?)\]/gi;
+      let match;
+      const updates: { id: string; newDesc: string }[] = [];
+      
+      while ((match = actionRegex.exec(reply)) !== null) {
+        updates.push({ id: match[1], newDesc: match[2] });
+      }
+
+      if (updates.length > 0) {
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const upd of updates) {
+          const { error } = await supabase
+            .from("lancamentos")
+            .update({ descricao: upd.newDesc })
+            .eq("id", upd.id)
+            .eq("empresa_id", empresaId);
+          
+          if (error) {
+            console.error(`Failed to update lancamento ${upd.id}:`, error);
+            failCount++;
+          } else {
+            successCount++;
+          }
+        }
+
+        // Clean action tags from reply
+        reply = reply.replace(/\[AÇÃO:ATUALIZAR_DESCRICAO\|ID:[a-f0-9-]+\|NOVA_DESCRICAO:.+?\]/gi, "").trim();
+        
+        if (!reply) {
+          if (successCount > 0 && failCount === 0) {
+            reply = `✅ ${successCount} lançamento(s) atualizado(s) com sucesso!`;
+          } else if (failCount > 0) {
+            reply = `⚠️ ${successCount} atualizado(s), ${failCount} com erro. Verifique os dados.`;
+          }
+        }
+      }
+
+      // Enforce character limits
+      if (reply.length > 800) {
+        reply = reply.substring(0, 797) + "...";
+      }
 
       // Save AI response
       await supabase.from("mensagens_chat").insert({
