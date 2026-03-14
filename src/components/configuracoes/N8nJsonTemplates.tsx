@@ -965,7 +965,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "valor", type: "number", required: true, description: "Valor da transferência (número puro)" },
+      { name: "valor", type: "string", required: true, description: "Valor da transferência como string numérica (ex: '500.00')" },
       { name: "conta_origem_id", type: "string", required: false, description: "UUID da conta origem" },
       { name: "conta_origem_nome", type: "string", required: false, description: "Nome ou banco da conta origem" },
       { name: "conta_destino_id", type: "string", required: false, description: "UUID da conta destino" },
