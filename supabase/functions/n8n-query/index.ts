@@ -1872,8 +1872,15 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR PROJETO ───
       case "editar-projeto": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchNome = sanitize(body.search) || sanitize(body.nome_atual) || sanitize(body.nome);
+          if (!searchNome) return new Response(JSON.stringify({ error: "id ou nome/search é obrigatório para identificar o projeto" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("projetos").select("id, nome").eq("empresa_id", empresa_id).ilike("nome", `%${searchNome}%`).limit(5);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Projeto não encontrado", message: `Nenhum projeto encontrado com o nome "${searchNome}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplos projetos encontrados", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         
         const updateData: any = {};
         if (sanitize(body.nome)) updateData.nome = normalizeText(sanitize(body.nome), "nome");
