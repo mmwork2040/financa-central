@@ -71,14 +71,19 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "lancamentos",
     toolName: "lancamentos",
     label: "Lançamentos",
-    description: "Lista de lançamentos com filtros por tipo, status e categoria",
-    toolDescription: `Consulta lançamentos financeiros (receitas e despesas).
+    description: "Lista de lançamentos com filtros por tipo, status e categoria. SOMENTE LEITURA.",
+    toolDescription: `Consulta lançamentos financeiros (receitas e despesas). FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-Use quando o usuário solicitar:
-- Lançamentos do mês
-- Receitas ou despesas
-- Contas a pagar / receber
-- Movimentações financeiras
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR lançamentos. NÃO use para buscar um lançamento antes de editá-lo.
+- Para EDITAR um lançamento: use a ferramenta "editar_lancamento" diretamente, informando o campo "search" com o nome/descrição. Ela já faz a busca internamente.
+- Para EXCLUIR um lançamento: use a ferramenta "excluir_lancamento" diretamente, informando o campo "search".
+- Para CRIAR um lançamento: use a ferramenta "criar_lancamento".
+
+Use SOMENTE quando o usuário solicitar:
+- Listar lançamentos do mês
+- Consultar receitas ou despesas
+- Ver contas a pagar / receber
+- Exibir movimentações financeiras
 
 Parâmetros:
 - empresa_id (obrigatório)
