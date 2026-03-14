@@ -1897,8 +1897,32 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR LANÇAMENTO ───
       case "editar-lancamento": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchDesc = sanitize(body.search) || sanitize(body.descricao_atual) || sanitize(body.descricao);
+          if (!searchDesc) return new Response(JSON.stringify({ error: "id ou descricao/search é obrigatório para identificar o lançamento" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("lancamentos").select("id, descricao, tipo, valor, status, data_vencimento, recorrente, recorrencia_grupo_id").eq("empresa_id", empresa_id).ilike("descricao", `%${searchDesc}%`).order("data_vencimento", { ascending: false }).limit(10);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Lançamento não encontrado", message: `Nenhum lançamento encontrado com a descrição "${searchDesc}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) {
+            // If all share the same recorrencia_grupo_id, treat as a recurring group
+            const grupoIds = [...new Set(found.filter((f: any) => f.recorrencia_grupo_id).map((f: any) => f.recorrencia_grupo_id))];
+            if (grupoIds.length === 1 && found.every((f: any) => f.recorrencia_grupo_id === grupoIds[0])) {
+              // Apply edit to all pending in the chain if body.editar_cadeia is true
+              const editarCadeia = body.editar_cadeia === true || body.editar_cadeia === "true";
+              if (editarCadeia) {
+                // Will be handled below after building updateData — store all IDs
+                id = found[0].id;
+                body._cadeia_ids = found.filter((f: any) => f.status === "pendente").map((f: any) => f.id);
+              } else {
+                return new Response(JSON.stringify({ error: "Múltiplos lançamentos recorrentes encontrados", message: "Encontrados lançamentos recorrentes. Envie editar_cadeia=true para alterar todos os pendentes, ou use o ID específico.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+              }
+            } else {
+              return new Response(JSON.stringify({ error: "Múltiplos lançamentos encontrados", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+            }
+          } else {
+            id = found[0].id;
+          }
+        }
         
         const { data: lancExist } = await supabase.from("lancamentos").select("id, status, origem, recorrencia_grupo_id, recorrente").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
         if (!lancExist) return new Response(JSON.stringify({ error: "Lançamento não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
