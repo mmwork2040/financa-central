@@ -1758,8 +1758,15 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR CATEGORIA ───
       case "editar-categoria": {
-        const id = sanitize(body.id);
-        if (!id) return new Response(JSON.stringify({ error: "id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let id = sanitize(body.id);
+        if (!id) {
+          const searchNome = sanitize(body.search) || sanitize(body.nome_atual) || sanitize(body.nome);
+          if (!searchNome) return new Response(JSON.stringify({ error: "id ou nome/search é obrigatório para identificar a categoria" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          const { data: found } = await supabase.from("categorias").select("id, nome, tipo").eq("empresa_id", empresa_id).ilike("nome", `%${searchNome}%`).limit(5);
+          if (!found || found.length === 0) return new Response(JSON.stringify({ error: "Categoria não encontrada", message: `Nenhuma categoria encontrada com o nome "${searchNome}".` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          if (found.length > 1) return new Response(JSON.stringify({ error: "Múltiplas categorias encontradas", message: "Especifique melhor ou use o ID.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          id = found[0].id;
+        }
         
         const { data: vincCat } = await supabase.from("lancamentos").select("id").eq("empresa_id", empresa_id).eq("categoria_id", id).in("status", ["pago", "recebido"]).limit(1);
         const hasVincCat = vincCat && vincCat.length > 0;
