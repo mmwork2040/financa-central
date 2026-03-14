@@ -1499,11 +1499,12 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
       { name: "id", type: "string", required: false, description: "UUID do lançamento (opcional se usar search)" },
       { name: "search", type: "string", required: false, description: "Descrição do lançamento para busca automática" },
       { name: "excluir_cadeia", type: "string", required: false, description: "true para excluir toda a cadeia recorrente pendente" },
     ],
-    body: { action: "excluir-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do lançamento. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Descrição do lançamento para busca. Deixe vazio se usar ID') }}", excluir_cadeia: "{{ $fromAI('excluir_cadeia', 'true para excluir toda a cadeia recorrente. Deixe vazio para excluir apenas esta ocorrência') }}" },
+    body: { action: "excluir-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", id: "{{ $fromAI('id', 'UUID do lançamento. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Descrição do lançamento para busca. Deixe vazio se usar ID') }}", excluir_cadeia: "{{ $fromAI('excluir_cadeia', 'true para excluir toda a cadeia recorrente. Deixe vazio para excluir apenas esta ocorrência') }}" },
   },
   // ─── VENDAS DIGITAIS CRUD ───
   {
