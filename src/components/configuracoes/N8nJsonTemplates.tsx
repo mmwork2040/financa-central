@@ -371,13 +371,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "fornecedores",
     toolName: "fornecedores",
     label: "Fornecedores",
-    description: "Lista de fornecedores com filtros de busca e status",
-    toolDescription: `Consulta lista de fornecedores cadastrados.
+    description: "Lista de fornecedores com filtros de busca e status. SOMENTE LEITURA.",
+    toolDescription: `Consulta lista de fornecedores cadastrados. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR fornecedores. Para EDITAR um fornecedor, use "editar_fornecedor" diretamente (ela já busca por nome).
 
 Use quando o usuário solicitar:
 - Lista de fornecedores
-- Buscar fornecedor
 - Fornecedores ativos
+- Consultar dados de um fornecedor
 
 Parâmetros:
 - empresa_id
