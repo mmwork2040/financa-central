@@ -1463,10 +1463,11 @@ Sempre usar a empresa_id ativa.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
       { name: "id", type: "string", required: false, description: "UUID do projeto (opcional se usar search)" },
       { name: "search", type: "string", required: false, description: "Nome do projeto para busca automática" },
     ],
-    body: { action: "excluir-projeto", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", id: "{{ $fromAI('id', 'UUID do projeto. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome do projeto para busca. Deixe vazio se usar ID') }}" },
+    body: { action: "excluir-projeto", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", id: "{{ $fromAI('id', 'UUID do projeto. Deixe vazio se usar search') }}", search: "{{ $fromAI('search', 'Nome do projeto para busca. Deixe vazio se usar ID') }}" },
   },
   {
     action: "excluir-lancamento",
