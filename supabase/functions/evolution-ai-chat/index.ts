@@ -53,16 +53,54 @@ const LLM_CONFIGS: Record<string, { url: string; buildHeaders: (key: string) => 
 
 const NO_AI_MSG = "Não há IA configurada no sistema. Entre em contato com o administrador.";
 
-const buildSystemPrompt = (userName: string, userContext: string) => `Você é um assistente financeiro conciso do sistema FinançaCentral.
+// ─── Helper: detect update intent and extract details ───
+function detectUpdateIntent(text: string): { isUpdate: boolean; searchTerm: string; newDescription: string } {
+  const lower = text.toLowerCase();
+  // Patterns like "alterar descrição de X para Y", "renomear X para Y", "mudar X para Y"
+  const patterns = [
+    /(?:alterar|mudar|renomear|trocar|atualizar)\s+(?:a\s+)?(?:descri[çc][aã]o\s+)?(?:de\s+|do\s+|da\s+)?["']?(.+?)["']?\s+para\s+["']?(.+?)["']?$/i,
+    /(?:alterar|mudar|renomear|trocar|atualizar)\s+["']?(.+?)["']?\s+para\s+["']?(.+?)["']?$/i,
+  ];
+  for (const p of patterns) {
+    const match = text.match(p);
+    if (match) {
+      return { isUpdate: true, searchTerm: match[1].trim(), newDescription: match[2].trim() };
+    }
+  }
+  return { isUpdate: false, searchTerm: "", newDescription: "" };
+}
+
+// ─── Helper: extract search keywords from message ───
+function extractSearchKeywords(text: string): string[] {
+  const lower = text.toLowerCase();
+  // Remove common stop words
+  const stopWords = ["o", "a", "os", "as", "de", "do", "da", "dos", "das", "em", "no", "na", "um", "uma",
+    "para", "por", "com", "que", "me", "meu", "minha", "qual", "quais", "como", "onde",
+    "tem", "tenho", "ter", "foi", "ser", "está", "são", "esse", "essa", "esse", "isso",
+    "alterar", "mudar", "buscar", "encontrar", "mostrar", "ver", "listar"];
+  const words = lower.replace(/[^\w\sà-ú]/g, "").split(/\s+/).filter(w => w.length > 2 && !stopWords.includes(w));
+  return words;
+}
+
+const buildSystemPrompt = (userName: string, userContext: string, canUpdate: boolean) => `Você é um assistente financeiro conciso do sistema FinançaCentral.
 Você está atendendo EXCLUSIVAMENTE o usuário "${userName}".
 REGRAS OBRIGATÓRIAS:
 - A conversa é INDIVIDUAL e INTRANSFERÍVEL. NUNCA compartilhe dados de outros usuários.
 - Use SOMENTE os dados fornecidos no contexto abaixo para responder. NÃO invente dados.
 - Responda SOMENTE sobre assuntos do sistema financeiro (lançamentos, categorias, contas, clientes, fornecedores, relatórios).
-- Limite TODAS as respostas a no máximo 150 caracteres, exceto relatórios financeiros (máximo 500 caracteres).
+- Limite TODAS as respostas a no máximo 300 caracteres, exceto relatórios financeiros (máximo 800 caracteres).
 - Se o assunto não for relacionado ao sistema, responda: "Só posso ajudar com assuntos do sistema financeiro."
 - Seja direto e objetivo. Sem saudações longas.
 - Responda em português brasileiro.
+${canUpdate ? `
+CAPACIDADES DE EDIÇÃO:
+- Você PODE alterar descrições de lançamentos quando solicitado.
+- Quando o usuário pedir para alterar/renomear um lançamento, responda com o formato EXATO:
+  [AÇÃO:ATUALIZAR_DESCRICAO|ID:uuid-do-lancamento|NOVA_DESCRICAO:nova descrição aqui]
+  seguido de uma confirmação amigável.
+- Se encontrar MÚLTIPLOS lançamentos correspondentes (recorrentes), liste-os e pergunte se deseja alterar todos ou apenas um específico.
+- Se o usuário confirmar "todos" ou "sim", use múltiplas linhas de ação, uma para cada ID.
+` : ""}
 
 DADOS DO USUÁRIO (contexto financeiro atual):
 ${userContext}`;
@@ -123,9 +161,6 @@ Deno.serve(async (req) => {
           .maybeSingle();
         
         if (!perfil) {
-          // Try searching by a telefone-like pattern in nome or email isn't ideal,
-          // let's also check clientes table for phone
-          // But for user identification, we need perfis
           continue;
         }
         userId = perfil.id;
@@ -140,7 +175,6 @@ Deno.serve(async (req) => {
       const trimmedMsg = messageText.trim().toLowerCase();
       
       if (emailRegex.test(trimmedMsg)) {
-        // User is providing their email for identification
         const { data: perfil } = await supabase
           .from("perfis")
           .select("id, nome, empresa_id")
@@ -152,7 +186,6 @@ Deno.serve(async (req) => {
           userId = perfil.id;
           userName = perfil.nome;
 
-          // Save phone association for future identification
           if (phoneNumber) {
             await supabase
               .from("perfis")
@@ -172,7 +205,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Not identified and not providing email → ask for email
       return new Response(JSON.stringify({ reply: IDENTIFY_MSG }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -195,7 +227,6 @@ Deno.serve(async (req) => {
         llmProvider = "lovable_ai";
         apiKey = Deno.env.get("LOVABLE_API_KEY") || null;
       } else {
-        // Fetch credentials for the configured LLM
         const { data: integ } = await supabase
           .from("integracoes")
           .select("api_key_encrypted, ativo")
@@ -220,15 +251,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    // No LLM available at all
     if (!llmProvider || !apiKey) {
       return new Response(JSON.stringify({ reply: NO_AI_MSG }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ─── Step 4: Load conversation history (last 10 messages) ───
-    // Find or create conversation
+    // ─── Step 4: Load conversation history ───
     let { data: conversa } = await supabase
       .from("conversas_chat")
       .select("id")
@@ -261,7 +290,7 @@ Deno.serve(async (req) => {
       conteudo: messageText.trim(),
     });
 
-    // Load recent messages for context (limit to save tokens)
+    // Load recent messages for context
     const { data: recentMsgs } = await supabase
       .from("mensagens_chat")
       .select("remetente, conteudo")
@@ -271,19 +300,45 @@ Deno.serve(async (req) => {
 
     // ─── Fetch user-specific financial data for context ───
     const now = new Date();
-    const mesAtual = now.toISOString().slice(0, 7); // YYYY-MM
+    const mesAtual = now.toISOString().slice(0, 7);
     const inicioMes = `${mesAtual}-01`;
     const fimMes = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
 
-    // Get user's lancamentos (scoped to empresa)
+    // Current month lancamentos
     const { data: lancamentos } = await supabase
       .from("lancamentos")
-      .select("tipo, valor, status, descricao, data_vencimento")
+      .select("id, tipo, valor, status, descricao, data_vencimento, recorrente, recorrencia_grupo_id")
       .eq("empresa_id", empresaId)
       .gte("data_vencimento", inicioMes)
       .lte("data_vencimento", fimMes)
       .order("data_vencimento", { ascending: false })
-      .limit(20);
+      .limit(30);
+
+    // ─── Search lancamentos by keywords from user message ───
+    const keywords = extractSearchKeywords(messageText);
+    let searchedLancamentos: any[] = [];
+    
+    if (keywords.length > 0) {
+      // Search by description across ALL periods (not just current month)
+      const searchTerms = keywords.slice(0, 3); // max 3 keywords
+      let query = supabase
+        .from("lancamentos")
+        .select("id, tipo, valor, status, descricao, data_vencimento, recorrente, recorrencia_grupo_id")
+        .eq("empresa_id", empresaId);
+      
+      // Use ilike for each keyword (AND)
+      for (const term of searchTerms) {
+        query = query.ilike("descricao", `%${term}%`);
+      }
+      
+      const { data: searched } = await query
+        .order("data_vencimento", { ascending: false })
+        .limit(20);
+      
+      if (searched && searched.length > 0) {
+        searchedLancamentos = searched;
+      }
+    }
 
     // Get contas bancárias
     const { data: contas } = await supabase
@@ -300,6 +355,20 @@ Deno.serve(async (req) => {
     const saldoContas = (contas || []).map((c: any) => `${c.nome}: R$${Number(c.saldo_atual).toFixed(2)}`).join("; ");
     const pendentes = (lancamentos || []).filter((l: any) => l.status === "pendente").length;
 
+    // Build searched results context
+    let searchContext = "";
+    if (searchedLancamentos.length > 0) {
+      const searchResults = searchedLancamentos.map((l: any) => 
+        `- ID:${l.id} | "${l.descricao}" | ${l.tipo} | R$${Number(l.valor).toFixed(2)} | ${l.status} | Venc:${l.data_vencimento} | Recorrente:${l.recorrente ? "Sim" : "Não"}${l.recorrencia_grupo_id ? ` | Grupo:${l.recorrencia_grupo_id}` : ""}`
+      ).join("\n");
+      searchContext = `\n\nLANÇAMENTOS ENCONTRADOS POR BUSCA:\n${searchResults}`;
+    }
+
+    // Also list current month lancamentos with IDs
+    const lancamentosContext = (lancamentos || []).map((l: any) =>
+      `- ID:${l.id} | "${l.descricao}" | ${l.tipo} | R$${Number(l.valor).toFixed(2)} | ${l.status} | Venc:${l.data_vencimento} | Recorrente:${l.recorrente ? "Sim" : "Não"}`
+    ).join("\n");
+
     const userContext = [
       `Mês: ${mesAtual}`,
       `Receitas: R$${totalReceitas.toFixed(2)} (${receitas.length} lançamentos)`,
@@ -309,8 +378,12 @@ Deno.serve(async (req) => {
       saldoContas ? `Contas: ${saldoContas}` : "",
     ].filter(Boolean).join(" | ");
 
+    const fullContext = userContext + 
+      (lancamentosContext ? `\n\nLANÇAMENTOS DO MÊS:\n${lancamentosContext}` : "") +
+      searchContext;
+
     const messages: any[] = [
-      { role: "system", content: buildSystemPrompt(userName || "Usuário", userContext) },
+      { role: "system", content: buildSystemPrompt(userName || "Usuário", fullContext, true) },
       ...(recentMsgs || []).map((m: any) => ({
         role: m.remetente === "usuario" ? "user" : "assistant",
         content: m.conteudo,
@@ -326,12 +399,11 @@ Deno.serve(async (req) => {
     }
 
     let url = config.url;
-    // Google Gemini needs key in URL
     if (llmProvider === "google_gemini") {
       url = `${config.url}?key=${apiKey}`;
     }
 
-    const maxTokens = 100; // ~150 chars limit
+    const maxTokens = 300;
 
     const llmResponse = await fetch(url, {
       method: "POST",
@@ -343,7 +415,6 @@ Deno.serve(async (req) => {
       const errText = await llmResponse.text();
       console.error(`LLM error (${llmProvider}):`, llmResponse.status, errText);
 
-      // If rate limited or payment required on Lovable AI, inform user
       if (llmResponse.status === 429 || llmResponse.status === 402) {
         return new Response(JSON.stringify({ reply: "Sistema temporariamente indisponível. Tente novamente em alguns minutos." }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -358,11 +429,49 @@ Deno.serve(async (req) => {
     const llmData = await llmResponse.json();
     let reply = config.extractResponse(llmData) || "Desculpe, não consegui processar sua mensagem.";
 
-    // Enforce 150 char limit (except financial reports)
-    if (reply.length > 150 && !messageText.toLowerCase().includes("relatório") && !messageText.toLowerCase().includes("relatorio")) {
-      reply = reply.substring(0, 147) + "...";
-    } else if (reply.length > 500) {
-      reply = reply.substring(0, 497) + "...";
+    // ─── Step 6: Process action commands from LLM response ───
+    const actionRegex = /\[AÇÃO:ATUALIZAR_DESCRICAO\|ID:([a-f0-9-]+)\|NOVA_DESCRICAO:(.+?)\]/gi;
+    let match;
+    const updates: { id: string; newDesc: string }[] = [];
+    
+    while ((match = actionRegex.exec(reply)) !== null) {
+      updates.push({ id: match[1], newDesc: match[2] });
+    }
+
+    if (updates.length > 0) {
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const upd of updates) {
+        const { error } = await supabase
+          .from("lancamentos")
+          .update({ descricao: upd.newDesc })
+          .eq("id", upd.id)
+          .eq("empresa_id", empresaId);
+        
+        if (error) {
+          console.error(`Failed to update lancamento ${upd.id}:`, error);
+          failCount++;
+        } else {
+          successCount++;
+        }
+      }
+
+      // Clean action tags from reply
+      reply = reply.replace(/\[AÇÃO:ATUALIZAR_DESCRICAO\|ID:[a-f0-9-]+\|NOVA_DESCRICAO:.+?\]/gi, "").trim();
+      
+      if (!reply) {
+        if (successCount > 0 && failCount === 0) {
+          reply = `✅ ${successCount} lançamento(s) atualizado(s) com sucesso!`;
+        } else if (failCount > 0) {
+          reply = `⚠️ ${successCount} atualizado(s), ${failCount} com erro. Verifique os dados.`;
+        }
+      }
+    }
+
+    // Enforce character limits
+    if (reply.length > 800) {
+      reply = reply.substring(0, 797) + "...";
     }
 
     // Save AI response
