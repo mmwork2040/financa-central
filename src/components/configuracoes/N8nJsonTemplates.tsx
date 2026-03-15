@@ -615,13 +615,13 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 CAMPOS OBRIGATÓRIOS:
 - empresa_id, user_id, descricao, valor (número puro, ex: 1900.00), tipo (receita ou despesa), data_vencimento (YYYY-MM-DD)
 
-DEPENDÊNCIAS (envie _nome OU _id para cada):
-- categoria_nome OU categoria_id
-- forma_pagamento_nome OU forma_pagamento_id
-- conta_bancaria_nome OU conta_bancaria_id (somente nome do banco, ex: "Santander")
-- Se receita: cliente_nome OU cliente_id
-- Se despesa: fornecedor_nome OU fornecedor_id
-O sistema busca por nome ou cria automaticamente se não existir.
+DEPENDÊNCIAS (envie o _nome para cada — o sistema busca ou cria automaticamente):
+- categoria_nome (ex: "Prestação de Serviços")
+- forma_pagamento_nome (ex: "PIX")
+- conta_bancaria_nome (somente nome do banco, ex: "Santander")
+- Se receita: cliente_nome
+- Se despesa: fornecedor_nome
+- projeto_nome (opcional)
 
 DADOS ADICIONAIS DE CADASTRO (opcionais):
 - cliente_cpf_cnpj: CPF/CNPJ do cliente (usado ao criar novo)
@@ -646,6 +646,7 @@ STATUS AUTOMÁTICO:
 
 REGRAS:
 - valor SEMPRE número puro (500, 1900.00). NUNCA "R$ 1.900,00".
+- ⚠️ NÃO envie campos _id (categoria_id, cliente_id, etc). Use SEMPRE os campos _nome.
 - Campos não utilizados devem ser enviados como "" (string vazia).
 - NUNCA invente campos extras além dos listados.`,
     category: "Financeiro",
@@ -658,15 +659,11 @@ REGRAS:
       { name: "data_vencimento", type: "string", required: true, description: "Data de vencimento YYYY-MM-DD" },
       { name: "status", type: "string", required: false, description: "pendente, pago ou recebido. Vazio = auto-definido" },
       { name: "categoria_nome", type: "string", required: false, description: "Nome da categoria (busca ou cria)" },
-      { name: "categoria_id", type: "string", required: false, description: "UUID da categoria" },
       { name: "forma_pagamento_nome", type: "string", required: false, description: "Nome da forma de pagamento (busca ou cria)" },
-      { name: "forma_pagamento_id", type: "string", required: false, description: "UUID da forma de pagamento" },
       { name: "conta_bancaria_nome", type: "string", required: false, description: "SOMENTE nome do banco (ex: Santander). NÃO inclua agência/número" },
-      { name: "conta_bancaria_id", type: "string", required: false, description: "UUID da conta bancária" },
       { name: "cliente_nome", type: "string", required: false, description: "Nome do cliente (obrigatório se receita)" },
-      { name: "cliente_id", type: "string", required: false, description: "UUID do cliente" },
       { name: "fornecedor_nome", type: "string", required: false, description: "Nome do fornecedor (obrigatório se despesa)" },
-      { name: "fornecedor_id", type: "string", required: false, description: "UUID do fornecedor" },
+      { name: "projeto_nome", type: "string", required: false, description: "Nome do projeto" },
       { name: "recorrente", type: "string", required: false, description: "Envie 'true' para recorrente, '' para único" },
       { name: "recorrencia_tipo", type: "string", required: false, description: "mensal, semanal, quinzenal, trimestral ou anual" },
       { name: "recorrencia_inicio", type: "string", required: false, description: "Data início recorrência YYYY-MM-DD. Vazio = usa data_vencimento" },
@@ -678,7 +675,6 @@ REGRAS:
       { name: "conta_bancaria_agencia", type: "string", required: false, description: "Número da agência bancária" },
       { name: "conta_bancaria_conta", type: "string", required: false, description: "Número da conta bancária" },
       { name: "data_pagamento", type: "string", required: false, description: "Data de pagamento YYYY-MM-DD" },
-      { name: "projeto_id", type: "string", required: false, description: "UUID do projeto" },
     ],
     body: {
       action: "criar-lancamento",
@@ -688,29 +684,24 @@ REGRAS:
       valor: "{{ $fromAI('valor', 'Valor numérico puro. Ex: 500, 1900.00') }}",
       tipo: "{{ $fromAI('tipo', 'receita ou despesa') }}",
       data_vencimento: "{{ $fromAI('data_vencimento', 'Data YYYY-MM-DD') }}",
-      status: "{{ $fromAI('status', 'pendente, pago ou recebido. Vazio para auto') }}",
-      categoria_nome: "{{ $fromAI('categoria_nome', 'Nome da categoria. Vazio se usar ID') }}",
-      categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Vazio se usar nome') }}",
-      forma_pagamento_nome: "{{ $fromAI('forma_pagamento_nome', 'Nome da forma pgto. Vazio se usar ID') }}",
-      forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID forma pgto. Vazio se usar nome') }}",
-      conta_bancaria_nome: "{{ $fromAI('conta_bancaria_nome', 'Nome do banco. Vazio se usar ID') }}",
-      conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID conta bancária. Vazio se usar nome') }}",
-      cliente_nome: "{{ $fromAI('cliente_nome', 'Nome do cliente. Obrigatório se receita') }}",
-      cliente_id: "{{ $fromAI('cliente_id', 'UUID cliente. Vazio se usar nome') }}",
-      fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'Nome do fornecedor. Obrigatório se despesa') }}",
-      fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID fornecedor. Vazio se usar nome') }}",
-      recorrente: "{{ $fromAI('recorrente', 'true para recorrente ou vazio') }}",
-      recorrencia_tipo: "{{ $fromAI('recorrencia_tipo', 'mensal, semanal, quinzenal, trimestral, anual. Vazio se não recorrente') }}",
-      recorrencia_inicio: "{{ $fromAI('recorrencia_inicio', 'Data início recorrência YYYY-MM-DD. Vazio = usa data_vencimento') }}",
-      recorrencia_fim: "{{ $fromAI('recorrencia_fim', 'Data fim YYYY-MM-DD. Vazio = indefinido') }}",
-      total_parcelas: "{{ $fromAI('total_parcelas', 'Número de parcelas. Vazio se não parcelado') }}",
-      cliente_cpf_cnpj: "{{ $fromAI('cliente_cpf_cnpj', 'CPF/CNPJ do cliente. Vazio se não informado') }}",
-      fornecedor_cpf_cnpj: "{{ $fromAI('fornecedor_cpf_cnpj', 'CPF/CNPJ do fornecedor. Vazio se não informado') }}",
-      conta_bancaria_banco: "{{ $fromAI('conta_bancaria_banco', 'Nome do banco. Vazio se não informado') }}",
-      conta_bancaria_agencia: "{{ $fromAI('conta_bancaria_agencia', 'Agência bancária. Vazio se não informado') }}",
-      conta_bancaria_conta: "{{ $fromAI('conta_bancaria_conta', 'Número da conta. Vazio se não informado') }}",
-      data_pagamento: "{{ $fromAI('data_pagamento', 'Data pgto YYYY-MM-DD. Vazio se pendente') }}",
-      projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Vazio se não informado') }}",
+      status: "{{ $fromAI('status', 'pendente pago ou recebido. Vazio para auto', 'string', '') }}",
+      categoria_nome: "{{ $fromAI('categoria_nome', 'Nome da categoria. Vazio se não informado', 'string', '') }}",
+      forma_pagamento_nome: "{{ $fromAI('forma_pagamento_nome', 'Nome da forma pgto. Vazio se não informado', 'string', '') }}",
+      conta_bancaria_nome: "{{ $fromAI('conta_bancaria_nome', 'Nome do banco. Vazio se não informado', 'string', '') }}",
+      cliente_nome: "{{ $fromAI('cliente_nome', 'Nome do cliente. Vazio se despesa', 'string', '') }}",
+      fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'Nome do fornecedor. Vazio se receita', 'string', '') }}",
+      projeto_nome: "{{ $fromAI('projeto_nome', 'Nome do projeto. Vazio se não informado', 'string', '') }}",
+      recorrente: "{{ $fromAI('recorrente', 'true para recorrente ou vazio', 'string', '') }}",
+      recorrencia_tipo: "{{ $fromAI('recorrencia_tipo', 'mensal semanal quinzenal trimestral anual. Vazio se não recorrente', 'string', '') }}",
+      recorrencia_inicio: "{{ $fromAI('recorrencia_inicio', 'Data início YYYY-MM-DD. Vazio para usar data_vencimento', 'string', '') }}",
+      recorrencia_fim: "{{ $fromAI('recorrencia_fim', 'Data fim YYYY-MM-DD. Vazio para indefinido', 'string', '') }}",
+      total_parcelas: "{{ $fromAI('total_parcelas', 'Número de parcelas. Vazio se não parcelado', 'string', '') }}",
+      cliente_cpf_cnpj: "{{ $fromAI('cliente_cpf_cnpj', 'CPF/CNPJ do cliente. Vazio se não informado', 'string', '') }}",
+      fornecedor_cpf_cnpj: "{{ $fromAI('fornecedor_cpf_cnpj', 'CPF/CNPJ do fornecedor. Vazio se não informado', 'string', '') }}",
+      conta_bancaria_banco: "{{ $fromAI('conta_bancaria_banco', 'Nome do banco. Vazio se não informado', 'string', '') }}",
+      conta_bancaria_agencia: "{{ $fromAI('conta_bancaria_agencia', 'Agência bancária. Vazio se não informado', 'string', '') }}",
+      conta_bancaria_conta: "{{ $fromAI('conta_bancaria_conta', 'Número da conta. Vazio se não informado', 'string', '') }}",
+      data_pagamento: "{{ $fromAI('data_pagamento', 'Data pgto YYYY-MM-DD. Vazio se pendente', 'string', '') }}",
     },
   },
   {
@@ -1355,8 +1346,9 @@ Parâmetros:
 - editar_cadeia (opcional — true para editar toda a cadeia recorrente pendente)
 - descricao, valor, tipo, status, data_vencimento, data_pagamento (opcionais)
 - categoria_nome, cliente_nome, fornecedor_nome, conta_bancaria_nome, forma_pagamento_nome, projeto_nome (opcionais — NOME para resolução automática)
-- categoria_id, cliente_id, fornecedor_id, conta_bancaria_id, forma_pagamento_id, projeto_id (opcionais — UUID direto, use apenas se já tiver o ID)
 - recorrente, recorrencia_tipo, recorrencia_inicio, recorrencia_fim (opcionais — para controle de recorrência)
+
+⚠️ NÃO envie campos _id (categoria_id, cliente_id, etc). Use SEMPRE os campos _nome para resolução automática.
 
 Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     category: "Financeiro",
@@ -1382,14 +1374,8 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
       { name: "conta_bancaria_nome", type: "string", required: false, description: "NOME da conta bancária (resolução automática)" },
       { name: "forma_pagamento_nome", type: "string", required: false, description: "DESCRIÇÃO da forma de pagamento (resolução automática)" },
       { name: "projeto_nome", type: "string", required: false, description: "NOME do projeto (resolução automática)" },
-      { name: "categoria_id", type: "string", required: false, description: "UUID da categoria (use categoria_nome de preferência)" },
-      { name: "cliente_id", type: "string", required: false, description: "UUID do cliente (use cliente_nome de preferência)" },
-      { name: "fornecedor_id", type: "string", required: false, description: "UUID do fornecedor (use fornecedor_nome de preferência)" },
-      { name: "conta_bancaria_id", type: "string", required: false, description: "UUID da conta bancária (use conta_bancaria_nome de preferência)" },
-      { name: "forma_pagamento_id", type: "string", required: false, description: "UUID da forma de pagamento (use forma_pagamento_nome de preferência)" },
-      { name: "projeto_id", type: "string", required: false, description: "UUID do projeto (use projeto_nome de preferência)" },
     ],
-    body: { action: "editar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", id: "{{ $fromAI('id', 'UUID do lançamento. Deixe vazio se usar search', 'string', '') }}", search: "{{ $fromAI('search', 'Descrição do lançamento para busca. Deixe vazio se usar ID', 'string', '') }}", editar_cadeia: "{{ $fromAI('editar_cadeia', 'true para editar toda a cadeia recorrente. Deixe vazio para editar apenas este', 'string', '') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição. Deixe vazio se não mudar', 'string', '') }}", valor: "{{ $fromAI('valor', 'Novo valor. Deixe vazio se não mudar', 'string', '') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa. Deixe vazio se não mudar', 'string', '') }}", status: "{{ $fromAI('status', 'pendente, pago ou recebido. Deixe vazio se não mudar', 'string', '') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}", recorrente: "{{ $fromAI('recorrente', 'true para tornar recorrente. Deixe vazio se não mudar', 'string', '') }}", recorrencia_tipo: "{{ $fromAI('recorrencia_tipo', 'semanal, quinzenal, mensal, trimestral ou anual. Deixe vazio se não mudar', 'string', '') }}", recorrencia_inicio: "{{ $fromAI('recorrencia_inicio', 'Data início recorrência YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}", recorrencia_fim: "{{ $fromAI('recorrencia_fim', 'Data fim recorrência YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}", categoria_nome: "{{ $fromAI('categoria_nome', 'NOME da categoria para resolução automática. Ex: Prestação de Serviços. Deixe vazio se não mudar', 'string', '') }}", cliente_nome: "{{ $fromAI('cliente_nome', 'NOME do cliente para resolução automática. Deixe vazio se não mudar', 'string', '') }}", fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'NOME do fornecedor para resolução automática. Deixe vazio se não mudar', 'string', '') }}", conta_bancaria_nome: "{{ $fromAI('conta_bancaria_nome', 'NOME da conta bancária para resolução automática. Deixe vazio se não mudar', 'string', '') }}", forma_pagamento_nome: "{{ $fromAI('forma_pagamento_nome', 'DESCRIÇÃO da forma de pagamento para resolução automática. Deixe vazio se não mudar', 'string', '') }}", projeto_nome: "{{ $fromAI('projeto_nome', 'NOME do projeto para resolução automática. Deixe vazio se não mudar', 'string', '') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Prefira usar categoria_nome. Deixe vazio se não mudar', 'string', '') }}", cliente_id: "{{ $fromAI('cliente_id', 'UUID do cliente. Prefira usar cliente_nome. Deixe vazio se não mudar', 'string', '') }}", fornecedor_id: "{{ $fromAI('fornecedor_id', 'UUID do fornecedor. Prefira usar fornecedor_nome. Deixe vazio se não mudar', 'string', '') }}", conta_bancaria_id: "{{ $fromAI('conta_bancaria_id', 'UUID da conta bancária. Prefira usar conta_bancaria_nome. Deixe vazio se não mudar', 'string', '') }}", forma_pagamento_id: "{{ $fromAI('forma_pagamento_id', 'UUID da forma de pagamento. Prefira usar forma_pagamento_nome. Deixe vazio se não mudar', 'string', '') }}", projeto_id: "{{ $fromAI('projeto_id', 'UUID do projeto. Prefira usar projeto_nome. Deixe vazio se não mudar', 'string', '') }}" },
+    body: { action: "editar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", id: "{{ $fromAI('id', 'UUID do lançamento. Deixe vazio se usar search', 'string', '') }}", search: "{{ $fromAI('search', 'Descrição do lançamento para busca. Deixe vazio se usar ID', 'string', '') }}", editar_cadeia: "{{ $fromAI('editar_cadeia', 'true para editar toda a cadeia recorrente. Deixe vazio para editar apenas este', 'string', '') }}", descricao: "{{ $fromAI('descricao', 'Nova descrição. Deixe vazio se não mudar', 'string', '') }}", valor: "{{ $fromAI('valor', 'Novo valor. Deixe vazio se não mudar', 'string', '') }}", tipo: "{{ $fromAI('tipo', 'receita ou despesa. Deixe vazio se não mudar', 'string', '') }}", status: "{{ $fromAI('status', 'pendente pago ou recebido. Deixe vazio se não mudar', 'string', '') }}", data_vencimento: "{{ $fromAI('data_vencimento', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}", data_pagamento: "{{ $fromAI('data_pagamento', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}", recorrente: "{{ $fromAI('recorrente', 'true para tornar recorrente. Deixe vazio se não mudar', 'string', '') }}", recorrencia_tipo: "{{ $fromAI('recorrencia_tipo', 'semanal quinzenal mensal trimestral ou anual. Deixe vazio se não mudar', 'string', '') }}", recorrencia_inicio: "{{ $fromAI('recorrencia_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}", recorrencia_fim: "{{ $fromAI('recorrencia_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}", categoria_nome: "{{ $fromAI('categoria_nome', 'NOME da categoria. Ex: Prestação de Serviços. Deixe vazio se não mudar', 'string', '') }}", cliente_nome: "{{ $fromAI('cliente_nome', 'NOME do cliente. Deixe vazio se não mudar', 'string', '') }}", fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'NOME do fornecedor. Deixe vazio se não mudar', 'string', '') }}", conta_bancaria_nome: "{{ $fromAI('conta_bancaria_nome', 'NOME da conta bancária. Deixe vazio se não mudar', 'string', '') }}", forma_pagamento_nome: "{{ $fromAI('forma_pagamento_nome', 'DESCRIÇÃO da forma de pagamento. Deixe vazio se não mudar', 'string', '') }}", projeto_nome: "{{ $fromAI('projeto_nome', 'NOME do projeto. Deixe vazio se não mudar', 'string', '') }}" },
   },
   // ─── EXCLUIR ───
   {
@@ -1691,18 +1677,18 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}",
       plataforma: "{{ $fromAI('plataforma', 'Plataforma: hotmart, kiwify, eduzz, monetizze, manual') }}",
       valor_bruto: "{{ $fromAI('valor_bruto', 'Valor bruto numérico. Ex: 197.00') }}",
-      taxa: "{{ $fromAI('taxa', 'Taxa/comissão. Vazio se não houver') }}",
-      valor_liquido: "{{ $fromAI('valor_liquido', 'Valor líquido. Vazio para calcular auto') }}",
-      produto: "{{ $fromAI('produto', 'Nome do produto. Vazio se não informado') }}",
-      cliente: "{{ $fromAI('cliente', 'Nome do cliente. Vazio se não informado') }}",
-      cliente_email: "{{ $fromAI('cliente_email', 'Email do cliente. Vazio se não informado') }}",
-      cliente_telefone: "{{ $fromAI('cliente_telefone', 'Telefone do cliente. Vazio se não informado') }}",
-      cliente_documento: "{{ $fromAI('cliente_documento', 'CPF/CNPJ do cliente. Vazio se não informado') }}",
-      cliente_endereco: "{{ $fromAI('cliente_endereco', 'Endereço do cliente. Vazio se não informado') }}",
-      status: "{{ $fromAI('status', 'aprovada, pendente, reembolsada ou cancelada. Padrão: aprovada') }}",
-      data_venda: "{{ $fromAI('data_venda', 'Data YYYY-MM-DD. Vazio para hoje') }}",
-      observacoes: "{{ $fromAI('observacoes', 'Observações. Vazio se não houver') }}",
-      emitir_nota_fiscal: "{{ $fromAI('emitir_nota_fiscal', 'true para emitir NF ou vazio') }}",
+      taxa: "{{ $fromAI('taxa', 'Taxa/comissão. Vazio se não houver', 'string', '') }}",
+      valor_liquido: "{{ $fromAI('valor_liquido', 'Valor líquido. Vazio para calcular auto', 'string', '') }}",
+      produto: "{{ $fromAI('produto', 'Nome do produto. Vazio se não informado', 'string', '') }}",
+      cliente: "{{ $fromAI('cliente', 'Nome do cliente. Vazio se não informado', 'string', '') }}",
+      cliente_email: "{{ $fromAI('cliente_email', 'Email do cliente. Vazio se não informado', 'string', '') }}",
+      cliente_telefone: "{{ $fromAI('cliente_telefone', 'Telefone do cliente. Vazio se não informado', 'string', '') }}",
+      cliente_documento: "{{ $fromAI('cliente_documento', 'CPF/CNPJ do cliente. Vazio se não informado', 'string', '') }}",
+      cliente_endereco: "{{ $fromAI('cliente_endereco', 'Endereço do cliente. Vazio se não informado', 'string', '') }}",
+      status: "{{ $fromAI('status', 'aprovada pendente reembolsada ou cancelada. Padrão: aprovada', 'string', '') }}",
+      data_venda: "{{ $fromAI('data_venda', 'Data YYYY-MM-DD. Vazio para hoje', 'string', '') }}",
+      observacoes: "{{ $fromAI('observacoes', 'Observações. Vazio se não houver', 'string', '') }}",
+      emitir_nota_fiscal: "{{ $fromAI('emitir_nota_fiscal', 'true para emitir NF ou vazio', 'string', '') }}",
     },
   },
   {
@@ -1769,22 +1755,22 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       action: "editar-venda",
       empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}",
       user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}",
-      id: "{{ $fromAI('id', 'UUID da venda. Deixe vazio se usar search') }}",
-      search: "{{ $fromAI('search', 'Nome do produto para busca. Deixe vazio se usar ID') }}",
-      plataforma: "{{ $fromAI('plataforma', 'Nova plataforma. Vazio se não mudar') }}",
-      valor_bruto: "{{ $fromAI('valor_bruto', 'Novo valor bruto. Vazio se não mudar') }}",
-      taxa: "{{ $fromAI('taxa', 'Nova taxa. Vazio se não mudar') }}",
-      valor_liquido: "{{ $fromAI('valor_liquido', 'Novo valor líquido. Vazio se não mudar') }}",
-      produto: "{{ $fromAI('produto', 'Novo produto. Vazio se não mudar') }}",
-      cliente: "{{ $fromAI('cliente', 'Novo cliente. Vazio se não mudar') }}",
-      cliente_email: "{{ $fromAI('cliente_email', 'Novo email. Vazio se não mudar') }}",
-      cliente_telefone: "{{ $fromAI('cliente_telefone', 'Novo telefone. Vazio se não mudar') }}",
-      cliente_documento: "{{ $fromAI('cliente_documento', 'Novo CPF/CNPJ. Vazio se não mudar') }}",
-      cliente_endereco: "{{ $fromAI('cliente_endereco', 'Novo endereço. Vazio se não mudar') }}",
-      status: "{{ $fromAI('status', 'Novo status. Vazio se não mudar') }}",
-      data_venda: "{{ $fromAI('data_venda', 'Nova data YYYY-MM-DD. Vazio se não mudar') }}",
-      observacoes: "{{ $fromAI('observacoes', 'Novas observações. Vazio se não mudar') }}",
-      emitir_nota_fiscal: "{{ $fromAI('emitir_nota_fiscal', 'true para emitir NF ou vazio') }}",
+      id: "{{ $fromAI('id', 'UUID da venda. Deixe vazio se usar search', 'string', '') }}",
+      search: "{{ $fromAI('search', 'Nome do produto para busca. Deixe vazio se usar ID', 'string', '') }}",
+      plataforma: "{{ $fromAI('plataforma', 'Nova plataforma. Vazio se não mudar', 'string', '') }}",
+      valor_bruto: "{{ $fromAI('valor_bruto', 'Novo valor bruto. Vazio se não mudar', 'string', '') }}",
+      taxa: "{{ $fromAI('taxa', 'Nova taxa. Vazio se não mudar', 'string', '') }}",
+      valor_liquido: "{{ $fromAI('valor_liquido', 'Novo valor líquido. Vazio se não mudar', 'string', '') }}",
+      produto: "{{ $fromAI('produto', 'Novo produto. Vazio se não mudar', 'string', '') }}",
+      cliente: "{{ $fromAI('cliente', 'Novo cliente. Vazio se não mudar', 'string', '') }}",
+      cliente_email: "{{ $fromAI('cliente_email', 'Novo email. Vazio se não mudar', 'string', '') }}",
+      cliente_telefone: "{{ $fromAI('cliente_telefone', 'Novo telefone. Vazio se não mudar', 'string', '') }}",
+      cliente_documento: "{{ $fromAI('cliente_documento', 'Novo CPF/CNPJ. Vazio se não mudar', 'string', '') }}",
+      cliente_endereco: "{{ $fromAI('cliente_endereco', 'Novo endereço. Vazio se não mudar', 'string', '') }}",
+      status: "{{ $fromAI('status', 'Novo status. Vazio se não mudar', 'string', '') }}",
+      data_venda: "{{ $fromAI('data_venda', 'Nova data YYYY-MM-DD. Vazio se não mudar', 'string', '') }}",
+      observacoes: "{{ $fromAI('observacoes', 'Novas observações. Vazio se não mudar', 'string', '') }}",
+      emitir_nota_fiscal: "{{ $fromAI('emitir_nota_fiscal', 'true para emitir NF ou vazio', 'string', '') }}",
     },
   },
   {
