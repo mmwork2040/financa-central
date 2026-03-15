@@ -350,6 +350,8 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 ⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
 - Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR uma conta bancária, NÃO use esta ferramenta.
 - Use "editar_conta_bancaria" diretamente com o campo "search" (nome da conta).
+- Se o usuário pedir para EXCLUIR uma conta bancária, NÃO use esta ferramenta.
+- Use "excluir_conta_bancaria" diretamente com o campo "search" (nome da conta).
 - Se o usuário pedir para ALTERAR a CONTA BANCÁRIA de um LANÇAMENTO, NÃO use esta ferramenta.
 - Use "editar_lancamento" e informe conta_bancaria_nome (ex: "Santander") + search do lançamento.
 
