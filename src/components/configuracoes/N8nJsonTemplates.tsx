@@ -446,9 +446,13 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
   {
     action: "categorias",
     toolName: "categorias",
-    label: "Categorias",
+    label: "Categorias (consulta)",
     description: "Lista de todas as categorias cadastradas. SOMENTE LEITURA.",
     toolDescription: `Consulta categorias cadastradas. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para MUDAR a CATEGORIA de um LANÇAMENTO, NÃO use esta ferramenta.
+- Use "editar_lancamento" e informe categoria_nome (ex: "Prestação de Serviços") + search do lançamento.
 
 ⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR categorias. Para EDITAR uma categoria, use "editar_categoria" diretamente (ela já busca por nome).
 
@@ -466,7 +470,11 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "search", type: "string", required: false, description: "Busca por nome" },
     ],
-    body: { action: "categorias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}" },
+    body: {
+      action: "categorias",
+      empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}",
+      search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos', 'string', '') }}",
+    },
   },
   {
     action: "formas-pagamento",
