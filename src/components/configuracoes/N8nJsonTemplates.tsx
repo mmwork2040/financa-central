@@ -134,10 +134,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "despesas-pendentes",
     toolName: "despesas_pendentes",
     label: "Despesas Pendentes",
-    description: "Lista de despesas com status pendente ordenadas por vencimento",
-    toolDescription: `Consulta despesas pendentes de pagamento.
+    description: "Lista de despesas com status pendente ordenadas por vencimento. SOMENTE LEITURA.",
+    toolDescription: `Consulta despesas pendentes de pagamento. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-Use quando o usuário solicitar:
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/PAGAR/ATUALIZAR uma despesa, NÃO use esta ferramenta.
+- Use "editar_lancamento" diretamente com o campo "search" (descrição da despesa).
+- Se o usuário pedir para EXCLUIR uma despesa, use "excluir_lancamento" diretamente com o campo "search".
+
+Use SOMENTE quando o usuário solicitar:
 - Despesas pendentes
 - Contas a pagar
 - O que preciso pagar
@@ -165,16 +170,21 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
       { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: { action: "despesas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Deixe vazio para listar todas') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: { action: "despesas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Deixe vazio para listar todas', 'string', '') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}" },
   },
   {
     action: "receitas-pendentes",
     toolName: "receitas_pendentes",
     label: "Receitas Pendentes",
-    description: "Lista de receitas com status pendente ordenadas por vencimento",
-    toolDescription: `Consulta receitas pendentes de recebimento.
+    description: "Lista de receitas com status pendente ordenadas por vencimento. SOMENTE LEITURA.",
+    toolDescription: `Consulta receitas pendentes de recebimento. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-Use quando o usuário solicitar:
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/RECEBER/ATUALIZAR uma receita, NÃO use esta ferramenta.
+- Use "editar_lancamento" diretamente com o campo "search" (descrição da receita).
+- Se o usuário pedir para EXCLUIR uma receita, use "excluir_lancamento" diretamente com o campo "search".
+
+Use SOMENTE quando o usuário solicitar:
 - Receitas pendentes
 - Contas a receber
 - O que tenho para receber
@@ -202,7 +212,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
       { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: { action: "receitas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Deixe vazio para listar todas') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: { action: "receitas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Deixe vazio para listar todas', 'string', '') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}" },
   },
   {
     action: "resumo-categorias",
@@ -246,9 +256,14 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Vendas de plataformas externas com filtros por plataforma e status. SOMENTE LEITURA.",
     toolDescription: `Consulta vendas realizadas em plataformas digitais. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR vendas. Para EDITAR uma venda, use "editar_venda" diretamente (ela já busca por produto/nome).
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR uma venda, NÃO use esta ferramenta.
+- Use "editar_venda" diretamente com o campo "search" (produto ou nome do cliente).
+- Se o usuário pedir para EXCLUIR uma venda, use "excluir_venda" diretamente com o campo "search".
 
-Use quando o usuário solicitar:
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR vendas. NÃO use para buscar uma venda antes de editá-la.
+
+Use SOMENTE quando o usuário solicitar:
 - Vendas online
 - Vendas Hotmart, Monetizze, Eduzz ou similiar
 - Vendas digitais aprovadas
@@ -270,8 +285,6 @@ REGRAS DE PERÍODO (OBRIGATÓRIAS):
 
 IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
-Não usar para recebimentos pendentes.
-
 CONTROLE DE ACESSO: Sempre envie o user_id do usuário solicitante. O sistema verificará se o usuário tem permissão de visualização para vendas digitais.
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
@@ -286,7 +299,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "status", type: "string", required: false, description: "Status da venda (ex: aprovada, pendente)" },
       { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: { action: "vendas-digitais", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário solicitante') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Padrão: mes') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado') }}", plataforma: "{{ $fromAI('plataforma', 'Nome da plataforma ex: Hotmart, Kiwify. Deixe vazio para todas') }}", status: "{{ $fromAI('status', 'Status da venda ex: aprovada, pendente. Deixe vazio para todos') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: { action: "vendas-digitais", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário solicitante') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Padrão: mes', 'string', 'mes') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}", plataforma: "{{ $fromAI('plataforma', 'Nome da plataforma ex: Hotmart, Kiwify. Deixe vazio para todas', 'string', '') }}", status: "{{ $fromAI('status', 'Status da venda ex: aprovada, pendente. Deixe vazio para todos', 'string', '') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}" },
   },
   {
     action: "recebimentos-digitais",
@@ -368,9 +381,16 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Lista de clientes com filtros de busca e status. SOMENTE LEITURA.",
     toolDescription: `Consulta lista de clientes cadastrados. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR clientes. Para EDITAR um cliente, use "editar_cliente" diretamente (ela já busca por nome).
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR um cliente, NÃO use esta ferramenta.
+- Use "editar_cliente" diretamente com o campo "search" (nome do cliente).
+- Se o usuário pedir para EXCLUIR um cliente, use "excluir_cliente" diretamente com o campo "search".
+- Se o usuário pedir para ALTERAR o CLIENTE de um LANÇAMENTO, NÃO use esta ferramenta.
+- Use "editar_lancamento" e informe cliente_nome (ex: "Nome do Cliente") + search do lançamento.
 
-Use quando o usuário solicitar:
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR clientes. NÃO use para buscar um cliente antes de editá-lo.
+
+Use SOMENTE quando o usuário solicitar:
 - Lista de clientes
 - Clientes ativos
 - Consultar dados de um cliente
@@ -381,6 +401,8 @@ Parâmetros:
 - search
 - limit
 
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
+
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
@@ -389,7 +411,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "search", type: "string", required: false, description: "Busca por nome" },
       { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: { action: "clientes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", ativo: "{{ $fromAI('ativo', 'Filtrar por status ativo true ou false. Deixe vazio para todos') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: { action: "clientes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", ativo: "{{ $fromAI('ativo', 'Filtrar por status ativo true ou false. Deixe vazio para todos', 'string', '') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos', 'string', '') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}" },
   },
   {
     action: "fornecedores",
