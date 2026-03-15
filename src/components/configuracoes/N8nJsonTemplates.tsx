@@ -334,9 +334,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Lista de todas as contas bancárias e seus saldos. SOMENTE LEITURA.",
     toolDescription: `Consulta contas bancárias e saldos. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR contas. Para EDITAR uma conta bancária, use "editar_conta_bancaria" diretamente (ela já busca por nome).
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR uma conta bancária, NÃO use esta ferramenta.
+- Use "editar_conta_bancaria" diretamente com o campo "search" (nome da conta).
+- Se o usuário pedir para ALTERAR a CONTA BANCÁRIA de um LANÇAMENTO, NÃO use esta ferramenta.
+- Use "editar_lancamento" e informe conta_bancaria_nome (ex: "Santander") + search do lançamento.
 
-Use quando o usuário solicitar:
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR contas. NÃO use para buscar uma conta antes de editá-la.
+
+Use SOMENTE quando o usuário solicitar:
 - Saldo das contas
 - Contas bancárias
 - Quanto tenho no banco
@@ -345,13 +351,15 @@ Parâmetros:
 - empresa_id
 - search (busca por nome)
 
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
+
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "search", type: "string", required: false, description: "Busca por nome" },
     ],
-    body: { action: "contas-bancarias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}" },
+    body: { action: "contas-bancarias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos', 'string', '') }}" },
   },
   {
     action: "clientes",
