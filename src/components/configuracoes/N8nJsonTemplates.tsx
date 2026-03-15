@@ -350,6 +350,8 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 ⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
 - Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR uma conta bancária, NÃO use esta ferramenta.
 - Use "editar_conta_bancaria" diretamente com o campo "search" (nome da conta).
+- Se o usuário pedir para EXCLUIR uma conta bancária, NÃO use esta ferramenta.
+- Use "excluir_conta_bancaria" diretamente com o campo "search" (nome da conta).
 - Se o usuário pedir para ALTERAR a CONTA BANCÁRIA de um LANÇAMENTO, NÃO use esta ferramenta.
 - Use "editar_lancamento" e informe conta_bancaria_nome (ex: "Santander") + search do lançamento.
 
@@ -423,6 +425,8 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 ⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
 - Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR um fornecedor, NÃO use esta ferramenta.
 - Use "editar_fornecedor" diretamente com o campo "search" (nome do fornecedor).
+- Se o usuário pedir para EXCLUIR um fornecedor, NÃO use esta ferramenta.
+- Use "excluir_fornecedor" diretamente com o campo "search" (nome do fornecedor).
 - Se o usuário pedir para ALTERAR o FORNECEDOR de um LANÇAMENTO, NÃO use esta ferramenta.
 - Use "editar_lancamento" e informe fornecedor_nome (ex: "Nome do Fornecedor") + search do lançamento.
 
@@ -461,6 +465,8 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 ⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
 - Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR um projeto, NÃO use esta ferramenta.
 - Use "editar_projeto" diretamente com o campo "search" (nome do projeto).
+- Se o usuário pedir para EXCLUIR um projeto, NÃO use esta ferramenta.
+- Use "excluir_projeto" diretamente com o campo "search" (nome do projeto).
 - Se o usuário pedir para ALTERAR o PROJETO de um LANÇAMENTO, NÃO use esta ferramenta.
 - Use "editar_lancamento" e informe projeto_nome (ex: "Nome do Projeto") + search do lançamento.
 
@@ -539,6 +545,8 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 ⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
 - Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR uma forma de pagamento, NÃO use esta ferramenta.
 - Use "editar_forma_pagamento" diretamente com o campo "search" (descrição da forma).
+- Se o usuário pedir para EXCLUIR uma forma de pagamento, NÃO use esta ferramenta.
+- Use "excluir_forma_pagamento" diretamente com o campo "search" (descrição da forma).
 - Se o usuário pedir para ALTERAR a FORMA DE PAGAMENTO de um LANÇAMENTO, NÃO use esta ferramenta.
 - Use "editar_lancamento" e informe forma_pagamento_nome (ex: "PIX") + search do lançamento.
 
