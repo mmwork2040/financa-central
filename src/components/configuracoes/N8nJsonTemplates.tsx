@@ -493,34 +493,41 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "categorias",
     toolName: "categorias",
     label: "Categorias (consulta)",
-    description: "Lista de todas as categorias cadastradas. SOMENTE LEITURA.",
+    description: "Lista de categorias cadastradas com filtros de busca, tipo e status. SOMENTE LEITURA.",
     toolDescription: `Consulta categorias cadastradas. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
 ⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR uma categoria, NÃO use esta ferramenta.
+- Use "editar_categoria" diretamente com o campo "search" (nome da categoria).
+- Se o usuário pedir para EXCLUIR uma categoria, NÃO use esta ferramenta.
+- Use "excluir_categoria" diretamente com o campo "search" (nome da categoria).
 - Se o usuário pedir para MUDAR a CATEGORIA de um LANÇAMENTO, NÃO use esta ferramenta.
 - Use "editar_lancamento" e informe categoria_nome (ex: "Prestação de Serviços") + search do lançamento.
 
-⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR categorias. Para EDITAR uma categoria, use "editar_categoria" diretamente (ela já busca por nome).
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR categorias. NÃO use para buscar uma categoria antes de editá-la.
 
-Use quando o usuário solicitar:
+Use SOMENTE quando o usuário solicitar:
 - Lista de categorias
 - Categorias disponíveis
+- Categorias de um tipo específico (receita, despesa, investimento)
 
 Parâmetros:
 - empresa_id
 - search (busca por nome)
+- tipo (receita, despesa ou investimento)
+- limit
+
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "search", type: "string", required: false, description: "Busca por nome" },
+      { name: "tipo", type: "string", required: false, description: "Tipo: receita, despesa ou investimento" },
+      { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: {
-      action: "categorias",
-      empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}",
-      search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos', 'string', '') }}",
-    },
+    body: { action: "categorias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos', 'string', '') }}", tipo: "{{ $fromAI('tipo', 'Tipo: receita, despesa ou investimento. Deixe vazio para todos', 'string', '') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}" },
   },
   {
     action: "formas-pagamento",
