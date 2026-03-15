@@ -91,6 +91,7 @@ Use SOMENTE quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id (obrigatório)
+- user_id (obrigatório — UUID do usuário para controle de permissões)
 - periodo: semana, mes, trimestre, semestre ou ano
 - data_inicio: YYYY-MM-DD
 - data_fim: YYYY-MM-DD
@@ -106,10 +107,13 @@ REGRAS DE PERÍODO (OBRIGATÓRIAS):
 
 IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
-Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.
+
+CONTROLE DE ACESSO: Sempre envie o user_id para que o sistema valide as permissões do usuário antes de executar a ação.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
+      { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
       { name: "periodo", type: "string", required: false, description: "semana, mes, trimestre, semestre ou ano" },
       { name: "data_inicio", type: "string", required: false, description: "Data início personalizada (YYYY-MM-DD)" },
       { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
@@ -121,6 +125,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     body: {
       action: "lancamentos",
       empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}",
+      user_id: "{{ $fromAI('user_id', 'UUID do usuário para controle de permissões') }}",
       periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Regras: se usar datas, periodo deve ser vazio. Padrão: mes', 'string', 'mes') }}",
       data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}",
       data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}",
