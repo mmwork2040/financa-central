@@ -1910,9 +1910,15 @@ Deno.serve(async (req) => {
               // Apply edit to all pending in the chain if body.editar_cadeia is true
               const editarCadeia = body.editar_cadeia === true || body.editar_cadeia === "true";
               if (editarCadeia) {
-                // Will be handled below after building updateData — store all IDs
+                // Fetch ALL pending lancamentos in the recurrence group (not limited by initial search)
+                const grupoId = grupoIds[0];
+                const { data: allInGroup } = await supabase.from("lancamentos")
+                  .select("id, status")
+                  .eq("empresa_id", empresa_id)
+                  .eq("recorrencia_grupo_id", grupoId)
+                  .eq("status", "pendente");
                 id = found[0].id;
-                body._cadeia_ids = found.filter((f: any) => f.status === "pendente").map((f: any) => f.id);
+                body._cadeia_ids = (allInGroup || []).map((f: any) => f.id);
               } else {
                 return new Response(JSON.stringify({ error: "Múltiplos lançamentos recorrentes encontrados", message: "Encontrados lançamentos recorrentes. Envie editar_cadeia=true para alterar todos os pendentes, ou use o ID específico.", registros: found }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
               }
