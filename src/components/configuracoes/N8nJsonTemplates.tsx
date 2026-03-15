@@ -378,9 +378,16 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Lista de clientes com filtros de busca e status. SOMENTE LEITURA.",
     toolDescription: `Consulta lista de clientes cadastrados. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR clientes. Para EDITAR um cliente, use "editar_cliente" diretamente (ela já busca por nome).
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR um cliente, NÃO use esta ferramenta.
+- Use "editar_cliente" diretamente com o campo "search" (nome do cliente).
+- Se o usuário pedir para EXCLUIR um cliente, use "excluir_cliente" diretamente com o campo "search".
+- Se o usuário pedir para ALTERAR o CLIENTE de um LANÇAMENTO, NÃO use esta ferramenta.
+- Use "editar_lancamento" e informe cliente_nome (ex: "Nome do Cliente") + search do lançamento.
 
-Use quando o usuário solicitar:
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR clientes. NÃO use para buscar um cliente antes de editá-lo.
+
+Use SOMENTE quando o usuário solicitar:
 - Lista de clientes
 - Clientes ativos
 - Consultar dados de um cliente
@@ -391,6 +398,8 @@ Parâmetros:
 - search
 - limit
 
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
+
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
@@ -399,7 +408,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "search", type: "string", required: false, description: "Busca por nome" },
       { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: { action: "clientes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", ativo: "{{ $fromAI('ativo', 'Filtrar por status ativo true ou false. Deixe vazio para todos') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: { action: "clientes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", ativo: "{{ $fromAI('ativo', 'Filtrar por status ativo true ou false. Deixe vazio para todos', 'string', '') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos', 'string', '') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}" },
   },
   {
     action: "fornecedores",
