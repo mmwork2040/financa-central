@@ -1897,6 +1897,21 @@ Deno.serve(async (req) => {
 
       // ─── EDITAR LANÇAMENTO ───
       case "editar-lancamento": {
+        // Support "alteracoes" as a JSON string with all optional fields merged into body
+        if (body.alteracoes && typeof body.alteracoes === "string") {
+          try {
+            const parsed = JSON.parse(body.alteracoes);
+            if (typeof parsed === "object" && parsed !== null) {
+              for (const [k, v] of Object.entries(parsed)) {
+                if (!body[k] || !sanitize(body[k])) body[k] = v;
+              }
+            }
+          } catch (_) { /* ignore parse errors */ }
+        } else if (body.alteracoes && typeof body.alteracoes === "object") {
+          for (const [k, v] of Object.entries(body.alteracoes)) {
+            if (!body[k] || !sanitize(body[k])) body[k] = v;
+          }
+        }
         let id = sanitize(body.id);
         if (!id) {
           const searchDesc = sanitize(body.search) || sanitize(body.descricao_atual) || sanitize(body.descricao);
