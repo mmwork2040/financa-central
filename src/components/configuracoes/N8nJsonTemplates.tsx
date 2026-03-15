@@ -545,6 +545,8 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 ⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
 - Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR uma forma de pagamento, NÃO use esta ferramenta.
 - Use "editar_forma_pagamento" diretamente com o campo "search" (descrição da forma).
+- Se o usuário pedir para EXCLUIR uma forma de pagamento, NÃO use esta ferramenta.
+- Use "excluir_forma_pagamento" diretamente com o campo "search" (descrição da forma).
 - Se o usuário pedir para ALTERAR a FORMA DE PAGAMENTO de um LANÇAMENTO, NÃO use esta ferramenta.
 - Use "editar_lancamento" e informe forma_pagamento_nome (ex: "PIX") + search do lançamento.
 
