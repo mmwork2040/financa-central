@@ -615,13 +615,13 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 CAMPOS OBRIGATÓRIOS:
 - empresa_id, user_id, descricao, valor (número puro, ex: 1900.00), tipo (receita ou despesa), data_vencimento (YYYY-MM-DD)
 
-DEPENDÊNCIAS (envie _nome OU _id para cada):
-- categoria_nome OU categoria_id
-- forma_pagamento_nome OU forma_pagamento_id
-- conta_bancaria_nome OU conta_bancaria_id (somente nome do banco, ex: "Santander")
-- Se receita: cliente_nome OU cliente_id
-- Se despesa: fornecedor_nome OU fornecedor_id
-O sistema busca por nome ou cria automaticamente se não existir.
+DEPENDÊNCIAS (envie o _nome para cada — o sistema busca ou cria automaticamente):
+- categoria_nome (ex: "Prestação de Serviços")
+- forma_pagamento_nome (ex: "PIX")
+- conta_bancaria_nome (somente nome do banco, ex: "Santander")
+- Se receita: cliente_nome
+- Se despesa: fornecedor_nome
+- projeto_nome (opcional)
 
 DADOS ADICIONAIS DE CADASTRO (opcionais):
 - cliente_cpf_cnpj: CPF/CNPJ do cliente (usado ao criar novo)
@@ -646,6 +646,7 @@ STATUS AUTOMÁTICO:
 
 REGRAS:
 - valor SEMPRE número puro (500, 1900.00). NUNCA "R$ 1.900,00".
+- ⚠️ NÃO envie campos _id (categoria_id, cliente_id, etc). Use SEMPRE os campos _nome.
 - Campos não utilizados devem ser enviados como "" (string vazia).
 - NUNCA invente campos extras além dos listados.`,
     category: "Financeiro",
