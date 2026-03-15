@@ -74,6 +74,10 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Lista de lançamentos com filtros por tipo, status e categoria. SOMENTE LEITURA.",
     toolDescription: `Consulta lançamentos financeiros (receitas e despesas). FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR um lançamento, NÃO use esta ferramenta.
+- Use "editar_lancamento" diretamente com o campo "search" (descrição) e, quando for trocar relacionamentos, prefira campos por NOME (ex: categoria_nome).
+
 ⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR lançamentos. NÃO use para buscar um lançamento antes de editá-lo.
 - Para EDITAR um lançamento: use a ferramenta "editar_lancamento" diretamente, informando o campo "search" com o nome/descrição. Ela já faz a busca internamente.
 - Para EXCLUIR um lançamento: use a ferramenta "excluir_lancamento" diretamente, informando o campo "search".
@@ -114,7 +118,17 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "categoria_id", type: "string", required: false, description: "UUID da categoria" },
       { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: { action: "lancamentos", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Padrão: mes') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado') }}", tipo: "{{ $fromAI('tipo', 'Filtro: receita ou despesa. Deixe vazio para todos') }}", status: "{{ $fromAI('status', 'Filtro: pendente ou pago. Deixe vazio para todos') }}", categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Deixe vazio se não informado') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: {
+      action: "lancamentos",
+      empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}",
+      periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Regras: se usar datas, periodo deve ser vazio. Padrão: mes', 'string', 'mes') }}",
+      data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}",
+      data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}",
+      tipo: "{{ $fromAI('tipo', 'Filtro: receita ou despesa. Deixe vazio para todos', 'string', '') }}",
+      status: "{{ $fromAI('status', 'Filtro: pendente ou pago. Deixe vazio para todos', 'string', '') }}",
+      categoria_id: "{{ $fromAI('categoria_id', 'UUID da categoria. Deixe vazio se não informado', 'string', '') }}",
+      limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}",
+    },
   },
   {
     action: "despesas-pendentes",
@@ -432,9 +446,13 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
   {
     action: "categorias",
     toolName: "categorias",
-    label: "Categorias",
+    label: "Categorias (consulta)",
     description: "Lista de todas as categorias cadastradas. SOMENTE LEITURA.",
     toolDescription: `Consulta categorias cadastradas. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
+
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para MUDAR a CATEGORIA de um LANÇAMENTO, NÃO use esta ferramenta.
+- Use "editar_lancamento" e informe categoria_nome (ex: "Prestação de Serviços") + search do lançamento.
 
 ⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR categorias. Para EDITAR uma categoria, use "editar_categoria" diretamente (ela já busca por nome).
 
@@ -452,7 +470,11 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "search", type: "string", required: false, description: "Busca por nome" },
     ],
-    body: { action: "categorias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}" },
+    body: {
+      action: "categorias",
+      empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}",
+      search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos', 'string', '') }}",
+    },
   },
   {
     action: "formas-pagamento",
