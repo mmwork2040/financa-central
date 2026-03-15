@@ -91,6 +91,7 @@ Use SOMENTE quando o usuário solicitar:
 
 Parâmetros:
 - empresa_id (obrigatório)
+- user_id (obrigatório — UUID do usuário para controle de permissões)
 - periodo: semana, mes, trimestre, semestre ou ano
 - data_inicio: YYYY-MM-DD
 - data_fim: YYYY-MM-DD
@@ -106,7 +107,9 @@ REGRAS DE PERÍODO (OBRIGATÓRIAS):
 
 IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
-Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
+Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.
+
+CONTROLE DE ACESSO: Sempre envie o user_id para que o sistema valide as permissões do usuário antes de executar a ação.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
