@@ -134,10 +134,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "despesas-pendentes",
     toolName: "despesas_pendentes",
     label: "Despesas Pendentes",
-    description: "Lista de despesas com status pendente ordenadas por vencimento",
-    toolDescription: `Consulta despesas pendentes de pagamento.
+    description: "Lista de despesas com status pendente ordenadas por vencimento. SOMENTE LEITURA.",
+    toolDescription: `Consulta despesas pendentes de pagamento. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-Use quando o usuário solicitar:
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/PAGAR/ATUALIZAR uma despesa, NÃO use esta ferramenta.
+- Use "editar_lancamento" diretamente com o campo "search" (descrição da despesa).
+- Se o usuário pedir para EXCLUIR uma despesa, use "excluir_lancamento" diretamente com o campo "search".
+
+Use SOMENTE quando o usuário solicitar:
 - Despesas pendentes
 - Contas a pagar
 - O que preciso pagar
@@ -165,7 +170,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
       { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: { action: "despesas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Deixe vazio para listar todas') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: { action: "despesas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Deixe vazio para listar todas', 'string', '') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}" },
   },
   {
     action: "receitas-pendentes",
