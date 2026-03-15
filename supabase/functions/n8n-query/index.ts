@@ -1953,6 +1953,43 @@ Deno.serve(async (req) => {
           body.descricao = body.nova_descricao;
         }
 
+        // ─── FK NAME RESOLUTION: resolve names to UUIDs for FK fields ───
+        // Also support "categoria_nome", "cliente_nome", etc. as alternative field names
+        const fkResolution: { field: string; nameFields: string[]; table: string; searchColumn: string; extraFilter?: { col: string; val: string } }[] = [
+          { field: "categoria_id", nameFields: ["categoria_nome", "categoria"], table: "categorias", searchColumn: "nome" },
+          { field: "cliente_id", nameFields: ["cliente_nome", "cliente"], table: "clientes", searchColumn: "nome" },
+          { field: "fornecedor_id", nameFields: ["fornecedor_nome", "fornecedor"], table: "fornecedores", searchColumn: "nome" },
+          { field: "conta_bancaria_id", nameFields: ["conta_bancaria_nome", "conta_bancaria", "conta"], table: "contas_bancarias", searchColumn: "nome" },
+          { field: "forma_pagamento_id", nameFields: ["forma_pagamento_nome", "forma_pagamento"], table: "formas_pagamento", searchColumn: "descricao" },
+          { field: "projeto_id", nameFields: ["projeto_nome", "projeto"], table: "projetos", searchColumn: "nome" },
+        ];
+
+        for (const fk of fkResolution) {
+          let rawVal = sanitize(body[fk.field]);
+          // If FK field not provided or not a UUID, check alternative name fields
+          if (!rawVal || !uuidRegex.test(rawVal)) {
+            const nameVal = rawVal || fk.nameFields.map(nf => sanitize(body[nf])).find(v => v);
+            if (nameVal && !uuidRegex.test(nameVal)) {
+              // Resolve by name
+              const { data: fkFound } = await supabase.from(fk.table).select("id, " + fk.searchColumn).eq("empresa_id", empresa_id).ilike(fk.searchColumn, `%${nameVal}%`).limit(5);
+              if (!fkFound || fkFound.length === 0) {
+                return new Response(JSON.stringify({ error: `${fk.table} não encontrado`, message: `Nenhum registro encontrado com "${nameVal}" na tabela ${fk.table}.` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+              }
+              if (fkFound.length > 1) {
+                // Try exact match first
+                const exact = fkFound.find((r: any) => r[fk.searchColumn]?.toLowerCase() === nameVal.toLowerCase());
+                if (exact) {
+                  body[fk.field] = exact.id;
+                } else {
+                  return new Response(JSON.stringify({ error: `Múltiplos registros encontrados em ${fk.table}`, message: "Especifique melhor ou use o ID.", registros: fkFound }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+                }
+              } else {
+                body[fk.field] = fkFound[0].id;
+              }
+            }
+          }
+        }
+
         for (const f of fields) {
           const v = sanitize(body[f]);
           if (v !== undefined) {
