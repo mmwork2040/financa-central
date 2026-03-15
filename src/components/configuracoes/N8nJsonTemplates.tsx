@@ -334,9 +334,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Lista de todas as contas bancárias e seus saldos. SOMENTE LEITURA.",
     toolDescription: `Consulta contas bancárias e saldos. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR contas. Para EDITAR uma conta bancária, use "editar_conta_bancaria" diretamente (ela já busca por nome).
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR uma conta bancária, NÃO use esta ferramenta.
+- Use "editar_conta_bancaria" diretamente com o campo "search" (nome da conta).
+- Se o usuário pedir para ALTERAR a CONTA BANCÁRIA de um LANÇAMENTO, NÃO use esta ferramenta.
+- Use "editar_lancamento" e informe conta_bancaria_nome (ex: "Santander") + search do lançamento.
 
-Use quando o usuário solicitar:
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR contas. NÃO use para buscar uma conta antes de editá-la.
+
+Use SOMENTE quando o usuário solicitar:
 - Saldo das contas
 - Contas bancárias
 - Quanto tenho no banco
@@ -345,13 +351,15 @@ Parâmetros:
 - empresa_id
 - search (busca por nome)
 
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
+
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "search", type: "string", required: false, description: "Busca por nome" },
     ],
-    body: { action: "contas-bancarias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}" },
+    body: { action: "contas-bancarias", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos', 'string', '') }}" },
   },
   {
     action: "clientes",
@@ -390,9 +398,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Lista de fornecedores com filtros de busca e status. SOMENTE LEITURA.",
     toolDescription: `Consulta lista de fornecedores cadastrados. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR fornecedores. Para EDITAR um fornecedor, use "editar_fornecedor" diretamente (ela já busca por nome).
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR um fornecedor, NÃO use esta ferramenta.
+- Use "editar_fornecedor" diretamente com o campo "search" (nome do fornecedor).
+- Se o usuário pedir para ALTERAR o FORNECEDOR de um LANÇAMENTO, NÃO use esta ferramenta.
+- Use "editar_lancamento" e informe fornecedor_nome (ex: "Nome do Fornecedor") + search do lançamento.
 
-Use quando o usuário solicitar:
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR fornecedores. NÃO use para buscar um fornecedor antes de editá-lo.
+
+Use SOMENTE quando o usuário solicitar:
 - Lista de fornecedores
 - Fornecedores ativos
 - Consultar dados de um fornecedor
@@ -403,6 +417,8 @@ Parâmetros:
 - search
 - limit
 
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
+
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
@@ -411,7 +427,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "search", type: "string", required: false, description: "Busca por nome" },
       { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: { action: "fornecedores", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", ativo: "{{ $fromAI('ativo', 'Filtrar por status ativo true ou false. Deixe vazio para todos') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: { action: "fornecedores", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", ativo: "{{ $fromAI('ativo', 'Filtrar por status ativo true ou false. Deixe vazio para todos', 'string', '') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos', 'string', '') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}" },
   },
   {
     action: "projetos",
@@ -420,9 +436,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Lista de projetos com filtro por status. SOMENTE LEITURA.",
     toolDescription: `Consulta projetos cadastrados. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR projetos. Para EDITAR um projeto, use "editar_projeto" diretamente (ela já busca por nome).
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR um projeto, NÃO use esta ferramenta.
+- Use "editar_projeto" diretamente com o campo "search" (nome do projeto).
+- Se o usuário pedir para ALTERAR o PROJETO de um LANÇAMENTO, NÃO use esta ferramenta.
+- Use "editar_lancamento" e informe projeto_nome (ex: "Nome do Projeto") + search do lançamento.
 
-Use quando o usuário solicitar:
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR projetos. NÃO use para buscar um projeto antes de editá-lo.
+
+Use SOMENTE quando o usuário solicitar:
 - Lista de projetos
 - Projetos ativos
 - Status dos projetos
@@ -433,6 +455,8 @@ Parâmetros:
 - status
 - limit
 
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
+
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
@@ -441,7 +465,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "status", type: "string", required: false, description: "Status: ativo, concluido ou cancelado" },
       { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: { action: "projetos", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}", status: "{{ $fromAI('status', 'Status: ativo, concluido ou cancelado. Deixe vazio para todos') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: { action: "projetos", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos', 'string', '') }}", status: "{{ $fromAI('status', 'Status: ativo, concluido ou cancelado. Deixe vazio para todos', 'string', '') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}" },
   },
   {
     action: "categorias",
@@ -483,9 +507,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Lista de formas de pagamento cadastradas. SOMENTE LEITURA.",
     toolDescription: `Consulta formas de pagamento cadastradas. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR formas de pagamento. Para EDITAR uma forma de pagamento, use "editar_forma_pagamento" diretamente (ela já busca por descrição).
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR uma forma de pagamento, NÃO use esta ferramenta.
+- Use "editar_forma_pagamento" diretamente com o campo "search" (descrição da forma).
+- Se o usuário pedir para ALTERAR a FORMA DE PAGAMENTO de um LANÇAMENTO, NÃO use esta ferramenta.
+- Use "editar_lancamento" e informe forma_pagamento_nome (ex: "PIX") + search do lançamento.
 
-Use quando o usuário solicitar:
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR formas de pagamento. NÃO use para buscar uma forma antes de editá-la.
+
+Use SOMENTE quando o usuário solicitar:
 - Formas de pagamento
 - Meios de pagamento disponíveis
 
@@ -493,13 +523,15 @@ Parâmetros:
 - empresa_id
 - search (busca por descrição)
 
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
+
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "search", type: "string", required: false, description: "Busca por descrição" },
     ],
-    body: { action: "formas-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por descrição. Deixe vazio para listar todos') }}" },
+    body: { action: "formas-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por descrição. Deixe vazio para listar todos', 'string', '') }}" },
   },
   {
     action: "fluxo-caixa",
