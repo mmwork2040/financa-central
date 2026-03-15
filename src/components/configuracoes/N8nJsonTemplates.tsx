@@ -176,10 +176,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "receitas-pendentes",
     toolName: "receitas_pendentes",
     label: "Receitas Pendentes",
-    description: "Lista de receitas com status pendente ordenadas por vencimento",
-    toolDescription: `Consulta receitas pendentes de recebimento.
+    description: "Lista de receitas com status pendente ordenadas por vencimento. SOMENTE LEITURA.",
+    toolDescription: `Consulta receitas pendentes de recebimento. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-Use quando o usuário solicitar:
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/RECEBER/ATUALIZAR uma receita, NÃO use esta ferramenta.
+- Use "editar_lancamento" diretamente com o campo "search" (descrição da receita).
+- Se o usuário pedir para EXCLUIR uma receita, use "excluir_lancamento" diretamente com o campo "search".
+
+Use SOMENTE quando o usuário solicitar:
 - Receitas pendentes
 - Contas a receber
 - O que tenho para receber
@@ -207,7 +212,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "data_fim", type: "string", required: false, description: "Data fim personalizada (YYYY-MM-DD)" },
       { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: { action: "receitas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Deixe vazio para listar todas') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: { action: "receitas-pendentes", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Deixe vazio para listar todas', 'string', '') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}" },
   },
   {
     action: "resumo-categorias",
