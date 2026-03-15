@@ -1930,7 +1930,7 @@ Deno.serve(async (req) => {
           }
         }
         
-        const { data: lancExist } = await supabase.from("lancamentos").select("id, status, origem, recorrencia_grupo_id, recorrente").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
+        const { data: lancExist } = await supabase.from("lancamentos").select("id, status, origem, recorrencia_grupo_id, recorrente, tipo").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
         if (!lancExist) return new Response(JSON.stringify({ error: "Lançamento não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
         if (["pago", "recebido"].includes(lancExist.status)) {
