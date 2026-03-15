@@ -256,9 +256,14 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Vendas de plataformas externas com filtros por plataforma e status. SOMENTE LEITURA.",
     toolDescription: `Consulta vendas realizadas em plataformas digitais. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR vendas. Para EDITAR uma venda, use "editar_venda" diretamente (ela já busca por produto/nome).
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR uma venda, NÃO use esta ferramenta.
+- Use "editar_venda" diretamente com o campo "search" (produto ou nome do cliente).
+- Se o usuário pedir para EXCLUIR uma venda, use "excluir_venda" diretamente com o campo "search".
 
-Use quando o usuário solicitar:
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR vendas. NÃO use para buscar uma venda antes de editá-la.
+
+Use SOMENTE quando o usuário solicitar:
 - Vendas online
 - Vendas Hotmart, Monetizze, Eduzz ou similiar
 - Vendas digitais aprovadas
@@ -280,8 +285,6 @@ REGRAS DE PERÍODO (OBRIGATÓRIAS):
 
 IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
 
-Não usar para recebimentos pendentes.
-
 CONTROLE DE ACESSO: Sempre envie o user_id do usuário solicitante. O sistema verificará se o usuário tem permissão de visualização para vendas digitais.
 
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
@@ -296,7 +299,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "status", type: "string", required: false, description: "Status da venda (ex: aprovada, pendente)" },
       { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: { action: "vendas-digitais", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário solicitante') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Padrão: mes') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado') }}", plataforma: "{{ $fromAI('plataforma', 'Nome da plataforma ex: Hotmart, Kiwify. Deixe vazio para todas') }}", status: "{{ $fromAI('status', 'Status da venda ex: aprovada, pendente. Deixe vazio para todos') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: { action: "vendas-digitais", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário solicitante') }}", periodo: "{{ $fromAI('periodo', 'Periodo: semana, mes, trimestre, semestre ou ano. Padrão: mes', 'string', 'mes') }}", data_inicio: "{{ $fromAI('data_inicio', 'Data início YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}", data_fim: "{{ $fromAI('data_fim', 'Data fim YYYY-MM-DD. Deixe vazio se não informado', 'string', '') }}", plataforma: "{{ $fromAI('plataforma', 'Nome da plataforma ex: Hotmart, Kiwify. Deixe vazio para todas', 'string', '') }}", status: "{{ $fromAI('status', 'Status da venda ex: aprovada, pendente. Deixe vazio para todos', 'string', '') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}" },
   },
   {
     action: "recebimentos-digitais",
