@@ -2063,11 +2063,11 @@ Deno.serve(async (req) => {
             const { error: cErr } = await supabase.from("lancamentos").update(updateData).eq("id", cId).eq("empresa_id", empresa_id);
             if (!cErr) successCount++;
           }
-          result = { message: `${successCount} lançamento(s) pendente(s) da cadeia recorrente atualizado(s) com sucesso`, ids_atualizados: cadeiaIds };
+          result = { message: `${successCount} lançamento(s) pendente(s) da cadeia recorrente atualizado(s) com sucesso`, ids_atualizados: cadeiaIds, ...(Object.keys(registros_criados_edit).length > 0 ? { registros_criados: registros_criados_edit } : {}) };
         } else {
           const { data: updLanc, error: updLancErr } = await supabase.from("lancamentos").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
           if (updLancErr) throw updLancErr;
-          result = updLanc;
+          result = { ...updLanc, ...(Object.keys(registros_criados_edit).length > 0 ? { registros_criados: registros_criados_edit } : {}) };
         }
         break;
       }
