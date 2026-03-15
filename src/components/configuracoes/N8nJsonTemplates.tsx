@@ -465,6 +465,8 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 ⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
 - Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR um projeto, NÃO use esta ferramenta.
 - Use "editar_projeto" diretamente com o campo "search" (nome do projeto).
+- Se o usuário pedir para EXCLUIR um projeto, NÃO use esta ferramenta.
+- Use "excluir_projeto" diretamente com o campo "search" (nome do projeto).
 - Se o usuário pedir para ALTERAR o PROJETO de um LANÇAMENTO, NÃO use esta ferramenta.
 - Use "editar_lancamento" e informe projeto_nome (ex: "Nome do Projeto") + search do lançamento.
 
