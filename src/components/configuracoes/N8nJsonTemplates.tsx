@@ -507,9 +507,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Lista de formas de pagamento cadastradas. SOMENTE LEITURA.",
     toolDescription: `Consulta formas de pagamento cadastradas. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR formas de pagamento. Para EDITAR uma forma de pagamento, use "editar_forma_pagamento" diretamente (ela já busca por descrição).
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR uma forma de pagamento, NÃO use esta ferramenta.
+- Use "editar_forma_pagamento" diretamente com o campo "search" (descrição da forma).
+- Se o usuário pedir para ALTERAR a FORMA DE PAGAMENTO de um LANÇAMENTO, NÃO use esta ferramenta.
+- Use "editar_lancamento" e informe forma_pagamento_nome (ex: "PIX") + search do lançamento.
 
-Use quando o usuário solicitar:
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR formas de pagamento. NÃO use para buscar uma forma antes de editá-la.
+
+Use SOMENTE quando o usuário solicitar:
 - Formas de pagamento
 - Meios de pagamento disponíveis
 
@@ -517,13 +523,15 @@ Parâmetros:
 - empresa_id
 - search (busca por descrição)
 
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
+
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
       { name: "search", type: "string", required: false, description: "Busca por descrição" },
     ],
-    body: { action: "formas-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por descrição. Deixe vazio para listar todos') }}" },
+    body: { action: "formas-pagamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por descrição. Deixe vazio para listar todos', 'string', '') }}" },
   },
   {
     action: "fluxo-caixa",
