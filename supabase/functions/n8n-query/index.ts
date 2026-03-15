@@ -1930,7 +1930,7 @@ Deno.serve(async (req) => {
           }
         }
         
-        const { data: lancExist } = await supabase.from("lancamentos").select("id, status, origem, recorrencia_grupo_id, recorrente").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
+        const { data: lancExist } = await supabase.from("lancamentos").select("id, status, origem, recorrencia_grupo_id, recorrente, tipo").eq("id", id).eq("empresa_id", empresa_id).maybeSingle();
         if (!lancExist) return new Response(JSON.stringify({ error: "Lançamento não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
         if (["pago", "recebido"].includes(lancExist.status)) {
@@ -1955,13 +1955,48 @@ Deno.serve(async (req) => {
 
         // ─── FK NAME RESOLUTION: resolve names to UUIDs for FK fields ───
         // Also support "categoria_nome", "cliente_nome", etc. as alternative field names
-        const fkResolution: { field: string; nameFields: string[]; table: string; searchColumn: string; extraFilter?: { col: string; val: string } }[] = [
-          { field: "categoria_id", nameFields: ["categoria_nome", "categoria"], table: "categorias", searchColumn: "nome" },
-          { field: "cliente_id", nameFields: ["cliente_nome", "cliente"], table: "clientes", searchColumn: "nome" },
+        // AUTO-CREATE: If FK record not found, auto-create it instead of returning 404
+        const lancTipo = sanitize(body.tipo) || (lancExist as any)?.tipo || "despesa";
+        const registros_criados_edit: Record<string, any> = {};
+
+        const resolveOrCreateEdit = async (
+          table: string, nameField: string, nameValue: string, extraInsert: Record<string, any> = {}
+        ): Promise<string | null> => {
+          if (!nameValue) return null;
+          // Search existing by name (ilike for partial match)
+          const { data: existing } = await supabase
+            .from(table)
+            .select("id, " + nameField)
+            .eq("empresa_id", empresa_id)
+            .ilike(nameField, `%${nameValue.trim()}%`)
+            .limit(5);
+          if (existing && existing.length === 1) return existing[0].id;
+          if (existing && existing.length > 1) {
+            // Try exact match
+            const exact = existing.find((r: any) => r[nameField]?.toLowerCase() === nameValue.trim().toLowerCase());
+            if (exact) return exact.id;
+            // Multiple ambiguous results — return null and let caller handle
+            return null;
+          }
+          // Not found — auto-create
+          const insertPayload: any = { empresa_id, [nameField]: normalizeText(nameValue.trim(), "nome"), ...extraInsert };
+          const { data: created, error: createErr } = await supabase.from(table).insert(insertPayload).select("id").single();
+          if (createErr) {
+            console.log(`⚠️ [n8n-query] Erro ao auto-criar ${table}: ${createErr.message}`);
+            return null;
+          }
+          registros_criados_edit[table] = { id: created?.id, [nameField]: nameValue.trim(), auto_criado: true };
+          console.log(`✅ [n8n-query] Auto-criado ${table}: "${nameValue.trim()}" → ${created?.id}`);
+          return created?.id || null;
+        };
+
+        const fkResolution: { field: string; nameFields: string[]; table: string; searchColumn: string; extraInsert?: Record<string, any> }[] = [
+          { field: "categoria_id", nameFields: ["categoria_nome", "categoria"], table: "categorias", searchColumn: "nome", extraInsert: { tipo: lancTipo } },
+          { field: "cliente_id", nameFields: ["cliente_nome", "cliente"], table: "clientes", searchColumn: "nome", extraInsert: { origem: "n8n" } },
           { field: "fornecedor_id", nameFields: ["fornecedor_nome", "fornecedor"], table: "fornecedores", searchColumn: "nome" },
-          { field: "conta_bancaria_id", nameFields: ["conta_bancaria_nome", "conta_bancaria", "conta"], table: "contas_bancarias", searchColumn: "nome" },
+          { field: "conta_bancaria_id", nameFields: ["conta_bancaria_nome", "conta_bancaria", "conta"], table: "contas_bancarias", searchColumn: "nome", extraInsert: { saldo_inicial: 0, saldo_atual: 0, principal: false } },
           { field: "forma_pagamento_id", nameFields: ["forma_pagamento_nome", "forma_pagamento"], table: "formas_pagamento", searchColumn: "descricao" },
-          { field: "projeto_id", nameFields: ["projeto_nome", "projeto"], table: "projetos", searchColumn: "nome" },
+          { field: "projeto_id", nameFields: ["projeto_nome", "projeto"], table: "projetos", searchColumn: "nome", extraInsert: { status: "ativo", orcamento: 0 } },
         ];
 
         for (const fk of fkResolution) {
@@ -1970,21 +2005,19 @@ Deno.serve(async (req) => {
           if (!rawVal || !uuidRegex.test(rawVal)) {
             const nameVal = rawVal || fk.nameFields.map(nf => sanitize(body[nf])).find(v => v);
             if (nameVal && !uuidRegex.test(nameVal)) {
-              // Resolve by name
-              const { data: fkFound } = await supabase.from(fk.table).select("id, " + fk.searchColumn).eq("empresa_id", empresa_id).ilike(fk.searchColumn, `%${nameVal}%`).limit(5);
-              if (!fkFound || fkFound.length === 0) {
-                return new Response(JSON.stringify({ error: `${fk.table} não encontrado`, message: `Nenhum registro encontrado com "${nameVal}" na tabela ${fk.table}.` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-              }
-              if (fkFound.length > 1) {
-                // Try exact match first
-                const exact = fkFound.find((r: any) => r[fk.searchColumn]?.toLowerCase() === nameVal.toLowerCase());
-                if (exact) {
-                  body[fk.field] = exact.id;
-                } else {
-                  return new Response(JSON.stringify({ error: `Múltiplos registros encontrados em ${fk.table}`, message: "Especifique melhor ou use o ID.", registros: fkFound }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-                }
+              const normalizedName = normalizeText(nameVal, "nome") || nameVal;
+              // Try to resolve or auto-create
+              const resolvedId = await resolveOrCreateEdit(fk.table, fk.searchColumn, normalizedName, fk.extraInsert || {});
+              if (resolvedId) {
+                body[fk.field] = resolvedId;
               } else {
-                body[fk.field] = fkFound[0].id;
+                // Check if it was ambiguous (multiple results)
+                const { data: checkMultiple } = await supabase.from(fk.table).select("id, " + fk.searchColumn).eq("empresa_id", empresa_id).ilike(fk.searchColumn, `%${nameVal}%`).limit(5);
+                if (checkMultiple && checkMultiple.length > 1) {
+                  return new Response(JSON.stringify({ error: `Múltiplos registros encontrados em ${fk.table}`, message: "Especifique melhor ou use o ID.", registros: checkMultiple }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+                }
+                // Could not create — skip this FK silently
+                console.log(`⚠️ [n8n-query] Não foi possível resolver/criar ${fk.table} para "${nameVal}"`);
               }
             }
           }
@@ -2030,11 +2063,11 @@ Deno.serve(async (req) => {
             const { error: cErr } = await supabase.from("lancamentos").update(updateData).eq("id", cId).eq("empresa_id", empresa_id);
             if (!cErr) successCount++;
           }
-          result = { message: `${successCount} lançamento(s) pendente(s) da cadeia recorrente atualizado(s) com sucesso`, ids_atualizados: cadeiaIds };
+          result = { message: `${successCount} lançamento(s) pendente(s) da cadeia recorrente atualizado(s) com sucesso`, ids_atualizados: cadeiaIds, ...(Object.keys(registros_criados_edit).length > 0 ? { registros_criados: registros_criados_edit } : {}) };
         } else {
           const { data: updLanc, error: updLancErr } = await supabase.from("lancamentos").update(updateData).eq("id", id).eq("empresa_id", empresa_id).select("*").single();
           if (updLancErr) throw updLancErr;
-          result = updLanc;
+          result = { ...updLanc, ...(Object.keys(registros_criados_edit).length > 0 ? { registros_criados: registros_criados_edit } : {}) };
         }
         break;
       }
