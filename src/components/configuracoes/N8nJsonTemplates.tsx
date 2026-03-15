@@ -436,9 +436,15 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     description: "Lista de projetos com filtro por status. SOMENTE LEITURA.",
     toolDescription: `Consulta projetos cadastrados. FERRAMENTA SOMENTE DE LEITURA/CONSULTA.
 
-⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR projetos. Para EDITAR um projeto, use "editar_projeto" diretamente (ela já busca por nome).
+⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
+- Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR um projeto, NÃO use esta ferramenta.
+- Use "editar_projeto" diretamente com o campo "search" (nome do projeto).
+- Se o usuário pedir para ALTERAR o PROJETO de um LANÇAMENTO, NÃO use esta ferramenta.
+- Use "editar_lancamento" e informe projeto_nome (ex: "Nome do Projeto") + search do lançamento.
 
-Use quando o usuário solicitar:
+⚠️ IMPORTANTE: Esta ferramenta é APENAS para LISTAR/CONSULTAR projetos. NÃO use para buscar um projeto antes de editá-lo.
+
+Use SOMENTE quando o usuário solicitar:
 - Lista de projetos
 - Projetos ativos
 - Status dos projetos
@@ -449,6 +455,8 @@ Parâmetros:
 - status
 - limit
 
+IMPORTANTE: Nunca omita campos do body. Campos não utilizados devem ser enviados como "" (string vazia).
+
 Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     category: "Cadastros",
     params: [
@@ -457,7 +465,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
       { name: "status", type: "string", required: false, description: "Status: ativo, concluido ou cancelado" },
       { name: "limit", type: "string", required: false, description: "Limite de resultados (número como string)" },
     ],
-    body: { action: "projetos", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos') }}", status: "{{ $fromAI('status', 'Status: ativo, concluido ou cancelado. Deixe vazio para todos') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão') }}" },
+    body: { action: "projetos", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", search: "{{ $fromAI('search', 'Busca por nome. Deixe vazio para listar todos', 'string', '') }}", status: "{{ $fromAI('status', 'Status: ativo, concluido ou cancelado. Deixe vazio para todos', 'string', '') }}", limit: "{{ $fromAI('limit', 'Limite de resultados. Deixe vazio para padrão', 'string', '') }}" },
   },
   {
     action: "categorias",
