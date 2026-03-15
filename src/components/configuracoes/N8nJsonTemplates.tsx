@@ -1309,43 +1309,104 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     toolName: "editar_lancamento",
     label: "Editar Lançamento",
     description: "Altera dados de um lançamento pendente. Busca por descrição quando ID não informado. Suporta edição em cadeia recorrente e criação automática de categorias/entidades inexistentes.",
-    toolDescription: `Altera dados de um lançamento financeiro existente. Use SEMPRE esta ferramenta quando o usuário pedir para alterar, renomear, mudar ou atualizar um lançamento.
+    toolDescription: `Altera dados de um lancamento financeiro existente. Use SEMPRE esta ferramenta quando o usuario pedir para alterar, renomear, mudar ou atualizar um lancamento. NAO use a ferramenta "lancamentos" para buscar antes — esta ferramenta ja faz a busca internamente.
 
-COMO USAR:
-- empresa_id e user_id são OBRIGATÓRIOS.
-- search: descrição (ou parte) do lançamento para busca. O sistema encontra automaticamente.
-- alteracoes: JSON string com TODOS os campos a alterar. Exemplos:
-  {"categoria_nome":"Prestação de Serviços"}
-  {"valor":"500","status":"pago","categoria_nome":"Marketing"}
-  {"descricao":"Novo nome","data_vencimento":"2026-04-01"}
+RESOLUCAO POR DESCRICAO (BUSCA AUTOMATICA):
+- Se o ID nao for informado, envie o campo "search" com a descricao (ou parte) do lancamento.
+- O sistema buscara automaticamente. Se encontrar um unico resultado, aplica a edicao.
+- Se encontrar MULTIPLOS resultados, retorna a lista para o usuario escolher.
+- NAO e necessario listar lancamentos antes. Basta enviar o search com o nome/descricao.
 
-CAMPOS SUPORTADOS em "alteracoes":
-- descricao: nova descrição
-- valor: novo valor (ex: "500.00")
-- tipo: "receita" ou "despesa"
-- status: "pendente", "pago" ou "recebido"
-- data_vencimento: "YYYY-MM-DD"
-- data_pagamento: "YYYY-MM-DD"
-- categoria_nome: NOME da categoria (resolve ou CRIA automaticamente se não existir)
-- cliente_nome: NOME do cliente (resolve ou cria)
-- fornecedor_nome: NOME do fornecedor (resolve ou cria)
-- conta_bancaria_nome: NOME da conta bancária
-- forma_pagamento_nome: DESCRIÇÃO da forma de pagamento
-- projeto_nome: NOME do projeto
-- editar_cadeia: "true" para editar toda a cadeia recorrente pendente
+RESOLUCAO AUTOMATICA DE NOMES (SEM NECESSIDADE DE BUSCAR IDs):
+- Para alterar categoria: envie categoria_nome com o NOME da categoria (ex: "Prestacao de Servicos"). O sistema resolve o UUID automaticamente.
+- Para alterar cliente: envie cliente_nome com o NOME do cliente.
+- Para alterar fornecedor: envie fornecedor_nome com o NOME do fornecedor.
+- Para alterar conta bancaria: envie conta_bancaria_nome com o NOME da conta.
+- Para alterar forma de pagamento: envie forma_pagamento_nome com a DESCRICAO da forma de pagamento.
+- Para alterar projeto: envie projeto_nome com o NOME do projeto.
+- ⚠️ NAO use ferramentas de listagem (categorias, clientes, etc.) para obter IDs. Envie o NOME diretamente e o sistema resolve.
+- Se houver multiplas correspondencias, o sistema retorna a lista para escolha.
 
-⚠️ Lançamentos pagos/recebidos NÃO podem ser alterados via chat. Informe ao usuário.
-⚠️ NÃO use ferramentas de listagem antes. Esta ferramenta faz busca + edição em um passo.
+EDICAO EM CADEIA RECORRENTE:
+- Para editar TODOS os lancamentos pendentes de uma cadeia recorrente de uma so vez, envie editar_cadeia: true.
+- O sistema encontra o grupo de recorrencia e aplica as alteracoes a todas as ocorrencias pendentes.
 
-Sempre usar a empresa_id ativa. Nunca inventar dados.`,
+⚠️ REGRA DE SEGURANCA: Lancamentos com status "pago" ou "recebido" NAO podem ser alterados via n8n/chat. Informe ao usuario que registros pagos ou recebidos devem ser editados diretamente no sistema web.
+
+PROTECAO DE CADEIA RECORRENTE:
+- Se o lancamento pertence a uma cadeia recorrente (possui recorrencia_grupo_id), campos bloqueados: descricao, tipo.
+- Para alterar a frequencia ou encerrar uma recorrencia, use os campos recorrencia_tipo e recorrencia_fim APENAS em lancamentos NAO recorrentes que estejam sendo convertidos.
+
+RECORRENCIA E PARCELAMENTO:
+- Para tornar um lancamento unico em recorrente, envie:
+  - recorrente: true
+  - recorrencia_tipo: semanal, quinzenal, mensal (padrao), trimestral ou anual
+  - recorrencia_inicio: YYYY-MM-DD (data de inicio, aceita retroativas. Se vazio, usa data_vencimento)
+  - recorrencia_fim: YYYY-MM-DD (data fim, vazio = indefinido)
+- Recorrente e parcelado sao MUTUAMENTE EXCLUSIVOS.
+
+Parametros:
+- empresa_id (obrigatorio)
+- user_id (obrigatorio — UUID do usuario para controle de permissoes)
+- id OU search (um dos dois e obrigatorio)
+- editar_cadeia (opcional — true para editar toda a cadeia recorrente pendente)
+- descricao, valor, tipo, status, data_vencimento, data_pagamento (opcionais)
+- categoria_nome, cliente_nome, fornecedor_nome, conta_bancaria_nome, forma_pagamento_nome, projeto_nome (opcionais — NOME para resolucao automatica)
+- recorrente, recorrencia_tipo, recorrencia_inicio, recorrencia_fim (opcionais — para controle de recorrencia)
+
+⚠️ NAO envie campos _id (categoria_id, cliente_id, etc). Use SEMPRE os campos _nome para resolucao automatica.
+
+Sempre usar a empresa_id ativa. Nunca inventar dados.
+
+CONTROLE DE ACESSO: Sempre envie o user_id para que o sistema valide as permissoes do usuario antes de executar a acao.`,
     category: "Financeiro",
     params: [
       { name: "empresa_id", type: "string", required: true, description: "UUID da empresa" },
-      { name: "user_id", type: "string", required: true, description: "UUID do usuário" },
-      { name: "search", type: "string", required: true, description: "Descrição do lançamento para busca" },
-      { name: "alteracoes", type: "string", required: true, description: "JSON string com os campos a alterar. Ex: {\"categoria_nome\":\"Marketing\"}" },
+      { name: "user_id", type: "string", required: true, description: "UUID do usuário (controle de permissões)" },
+      { name: "id", type: "string", required: false, description: "UUID do lançamento (opcional se usar search)" },
+      { name: "search", type: "string", required: false, description: "Descrição do lançamento para busca automática" },
+      { name: "editar_cadeia", type: "string", required: false, description: "true para editar toda a cadeia recorrente pendente" },
+      { name: "descricao", type: "string", required: false, description: "Nova descrição" },
+      { name: "valor", type: "string", required: false, description: "Novo valor (ex: 500.00)" },
+      { name: "tipo", type: "string", required: false, description: "receita ou despesa" },
+      { name: "status", type: "string", required: false, description: "pendente, pago ou recebido" },
+      { name: "data_vencimento", type: "string", required: false, description: "YYYY-MM-DD" },
+      { name: "data_pagamento", type: "string", required: false, description: "YYYY-MM-DD" },
+      { name: "recorrente", type: "string", required: false, description: "true ou false" },
+      { name: "recorrencia_tipo", type: "string", required: false, description: "semanal, quinzenal, mensal, trimestral ou anual" },
+      { name: "recorrencia_inicio", type: "string", required: false, description: "YYYY-MM-DD" },
+      { name: "recorrencia_fim", type: "string", required: false, description: "YYYY-MM-DD" },
+      { name: "categoria_nome", type: "string", required: false, description: "NOME da categoria (resolve UUID automaticamente)" },
+      { name: "cliente_nome", type: "string", required: false, description: "NOME do cliente" },
+      { name: "fornecedor_nome", type: "string", required: false, description: "NOME do fornecedor" },
+      { name: "conta_bancaria_nome", type: "string", required: false, description: "NOME da conta bancária" },
+      { name: "forma_pagamento_nome", type: "string", required: false, description: "DESCRIÇÃO da forma de pagamento" },
+      { name: "projeto_nome", type: "string", required: false, description: "NOME do projeto" },
     ],
-    body: { action: "editar-lancamento", empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}", user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}", search: "{{ $fromAI('search', 'Descrição do lançamento para busca') }}", alteracoes: "{{ $fromAI('alteracoes', 'JSON string com campos a alterar. Ex: {\"categoria_nome\":\"Prestação de Serviços\"}') }}" },
+    body: {
+      action: "editar-lancamento",
+      empresa_id: "{{ $fromAI('empresa_id', 'UUID da empresa') }}",
+      user_id: "{{ $fromAI('user_id', 'UUID do usuário') }}",
+      id: "{{ $fromAI('id', 'UUID do lançamento. Deixe vazio se usar search', 'string', '') }}",
+      search: "{{ $fromAI('search', 'Descrição do lançamento para busca. Deixe vazio se usar ID', 'string', '') }}",
+      editar_cadeia: "{{ $fromAI('editar_cadeia', 'true para editar cadeia recorrente', 'string', '') }}",
+      descricao: "{{ $fromAI('descricao', 'Nova descrição. Deixe vazio se não mudar', 'string', '') }}",
+      valor: "{{ $fromAI('valor', 'Novo valor. Deixe vazio se não mudar', 'string', '') }}",
+      tipo: "{{ $fromAI('tipo', 'receita ou despesa. Deixe vazio se não mudar', 'string', '') }}",
+      status: "{{ $fromAI('status', 'pendente, pago ou recebido. Deixe vazio se não mudar', 'string', '') }}",
+      data_vencimento: "{{ $fromAI('data_vencimento', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}",
+      data_pagamento: "{{ $fromAI('data_pagamento', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}",
+      recorrente: "{{ $fromAI('recorrente', 'true ou false. Deixe vazio se não mudar', 'string', '') }}",
+      recorrencia_tipo: "{{ $fromAI('recorrencia_tipo', 'semanal, quinzenal, mensal, trimestral ou anual. Deixe vazio se não mudar', 'string', '') }}",
+      recorrencia_inicio: "{{ $fromAI('recorrencia_inicio', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}",
+      recorrencia_fim: "{{ $fromAI('recorrencia_fim', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}",
+      categoria_nome: "{{ $fromAI('categoria_nome', 'NOME da categoria. Deixe vazio se não mudar', 'string', '') }}",
+      cliente_nome: "{{ $fromAI('cliente_nome', 'NOME do cliente. Deixe vazio se não mudar', 'string', '') }}",
+      fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'NOME do fornecedor. Deixe vazio se não mudar', 'string', '') }}",
+      conta_bancaria_nome: "{{ $fromAI('conta_bancaria_nome', 'NOME da conta bancária. Deixe vazio se não mudar', 'string', '') }}",
+      forma_pagamento_nome: "{{ $fromAI('forma_pagamento_nome', 'DESCRIÇÃO da forma de pagamento. Deixe vazio se não mudar', 'string', '') }}",
+      projeto_nome: "{{ $fromAI('projeto_nome', 'NOME do projeto. Deixe vazio se não mudar', 'string', '') }}",
+    },
   },
   // ─── EXCLUIR ───
   {
