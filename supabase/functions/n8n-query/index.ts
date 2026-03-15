@@ -1959,7 +1959,7 @@ Deno.serve(async (req) => {
         // When editing by name (search), allow descricao edits even on recorrentes
         const editingByName = !sanitize(body.id);
         const blockedInRecorrente = editingByName ? ["tipo"] : ["descricao", "tipo"];
-        const fields = ["descricao", "tipo", "status", "data_vencimento", "data_pagamento", "categoria_id", "cliente_id", "fornecedor_id", "conta_bancaria_id", "forma_pagamento_id", "projeto_id"];
+        const fields = ["descricao", "tipo", "status", "data_vencimento", "data_pagamento", "categoria_id", "cliente_id", "fornecedor_id", "conta_bancaria_id", "forma_pagamento_id", "projeto_id", "cartao_credito_id", "origem", "recorrencia_tipo", "recorrencia_fim"];
 
         const updateData: any = {};
         
