@@ -425,6 +425,8 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
 ⚠️ ROTEAMENTO DE INTENÇÃO (OBRIGATÓRIO):
 - Se o usuário pedir para ALTERAR/MUDAR/ATUALIZAR um fornecedor, NÃO use esta ferramenta.
 - Use "editar_fornecedor" diretamente com o campo "search" (nome do fornecedor).
+- Se o usuário pedir para EXCLUIR um fornecedor, NÃO use esta ferramenta.
+- Use "excluir_fornecedor" diretamente com o campo "search" (nome do fornecedor).
 - Se o usuário pedir para ALTERAR o FORNECEDOR de um LANÇAMENTO, NÃO use esta ferramenta.
 - Use "editar_lancamento" e informe fornecedor_nome (ex: "Nome do Fornecedor") + search do lançamento.
 
