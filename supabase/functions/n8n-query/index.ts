@@ -1963,31 +1963,35 @@ Deno.serve(async (req) => {
           table: string, nameField: string, nameValue: string, extraInsert: Record<string, any> = {}
         ): Promise<string | null> => {
           if (!nameValue) return null;
-          // Search existing by name (ilike for partial match)
-          const { data: existing } = await supabase
-            .from(table)
-            .select("id, " + nameField)
-            .eq("empresa_id", empresa_id)
-            .ilike(nameField, `%${nameValue.trim()}%`)
-            .limit(5);
-          if (existing && existing.length === 1) return existing[0].id;
-          if (existing && existing.length > 1) {
-            // Try exact match
-            const exact = existing.find((r: any) => r[nameField]?.toLowerCase() === nameValue.trim().toLowerCase());
-            if (exact) return exact.id;
-            // Multiple ambiguous results — return null and let caller handle
+          try {
+            // Search existing by name (ilike for partial match)
+            const { data: existing } = await supabase
+              .from(table)
+              .select("id, " + nameField)
+              .eq("empresa_id", empresa_id)
+              .ilike(nameField, `%${nameValue.trim()}%`)
+              .limit(5);
+            if (existing && existing.length === 1) return existing[0].id;
+            if (existing && existing.length > 1) {
+              const exact = existing.find((r: any) => r[nameField]?.toLowerCase() === nameValue.trim().toLowerCase());
+              if (exact) return exact.id;
+              return null; // ambiguous
+            }
+            // Not found — auto-create
+            const insertPayload: any = { empresa_id, [nameField]: normalizeText(nameValue.trim(), "nome"), ...extraInsert };
+            console.log(`🔧 [n8n-query] Auto-criando ${table}:`, JSON.stringify(insertPayload));
+            const { data: created, error: createErr } = await supabase.from(table).insert(insertPayload).select("id").single();
+            if (createErr) {
+              console.log(`⚠️ [n8n-query] Erro ao auto-criar ${table}: ${createErr.message}`);
+              return null;
+            }
+            registros_criados_edit[table] = { id: created?.id, [nameField]: nameValue.trim(), auto_criado: true };
+            console.log(`✅ [n8n-query] Auto-criado ${table}: "${nameValue.trim()}" → ${created?.id}`);
+            return created?.id || null;
+          } catch (err: any) {
+            console.log(`❌ [n8n-query] Exceção em resolveOrCreateEdit(${table}): ${err.message}`);
             return null;
           }
-          // Not found — auto-create
-          const insertPayload: any = { empresa_id, [nameField]: normalizeText(nameValue.trim(), "nome"), ...extraInsert };
-          const { data: created, error: createErr } = await supabase.from(table).insert(insertPayload).select("id").single();
-          if (createErr) {
-            console.log(`⚠️ [n8n-query] Erro ao auto-criar ${table}: ${createErr.message}`);
-            return null;
-          }
-          registros_criados_edit[table] = { id: created?.id, [nameField]: nameValue.trim(), auto_criado: true };
-          console.log(`✅ [n8n-query] Auto-criado ${table}: "${nameValue.trim()}" → ${created?.id}`);
-          return created?.id || null;
         };
 
         const fkResolution: { field: string; nameFields: string[]; table: string; searchColumn: string; extraInsert?: Record<string, any> }[] = [
@@ -2000,26 +2004,29 @@ Deno.serve(async (req) => {
         ];
 
         for (const fk of fkResolution) {
-          let rawVal = sanitize(body[fk.field]);
-          // If FK field not provided or not a UUID, check alternative name fields
-          if (!rawVal || !uuidRegex.test(rawVal)) {
-            const nameVal = rawVal || fk.nameFields.map(nf => sanitize(body[nf])).find(v => v);
-            if (nameVal && !uuidRegex.test(nameVal)) {
-              const normalizedName = normalizeText(nameVal, "nome") || nameVal;
-              // Try to resolve or auto-create
-              const resolvedId = await resolveOrCreateEdit(fk.table, fk.searchColumn, normalizedName, fk.extraInsert || {});
-              if (resolvedId) {
-                body[fk.field] = resolvedId;
-              } else {
-                // Check if it was ambiguous (multiple results)
-                const { data: checkMultiple } = await supabase.from(fk.table).select("id, " + fk.searchColumn).eq("empresa_id", empresa_id).ilike(fk.searchColumn, `%${nameVal}%`).limit(5);
-                if (checkMultiple && checkMultiple.length > 1) {
-                  return new Response(JSON.stringify({ error: `Múltiplos registros encontrados em ${fk.table}`, message: "Especifique melhor ou use o ID.", registros: checkMultiple }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          try {
+            let rawVal = sanitize(body[fk.field]);
+            if (!rawVal || !uuidRegex.test(rawVal)) {
+              const nameVal = rawVal || fk.nameFields.map(nf => sanitize(body[nf])).find(v => v);
+              if (nameVal && !uuidRegex.test(nameVal)) {
+                const normalizedName = normalizeText(nameVal, "nome") || nameVal;
+                console.log(`🔍 [n8n-query] Resolvendo FK ${fk.field}: "${normalizedName}"`);
+                const resolvedId = await resolveOrCreateEdit(fk.table, fk.searchColumn, normalizedName, fk.extraInsert || {});
+                if (resolvedId) {
+                  body[fk.field] = resolvedId;
+                  console.log(`✅ [n8n-query] FK ${fk.field} resolvido: ${resolvedId}`);
+                } else {
+                  // Check if it was ambiguous (multiple results)
+                  const { data: checkMultiple } = await supabase.from(fk.table).select("id, " + fk.searchColumn).eq("empresa_id", empresa_id).ilike(fk.searchColumn, `%${nameVal}%`).limit(5);
+                  if (checkMultiple && checkMultiple.length > 1) {
+                    return new Response(JSON.stringify({ error: `Múltiplos registros encontrados em ${fk.table}`, message: "Especifique melhor ou use o ID.", registros: checkMultiple }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+                  }
+                  console.log(`⚠️ [n8n-query] FK ${fk.field} não resolvido para "${nameVal}"`);
                 }
-                // Could not create — skip this FK silently
-                console.log(`⚠️ [n8n-query] Não foi possível resolver/criar ${fk.table} para "${nameVal}"`);
               }
             }
+          } catch (fkErr: any) {
+            console.log(`❌ [n8n-query] Exceção no FK loop (${fk.field}): ${fkErr.message}`);
           }
         }
 
