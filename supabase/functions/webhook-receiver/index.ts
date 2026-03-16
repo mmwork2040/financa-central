@@ -149,7 +149,10 @@ function parseKiwify(body: any): SaleData | null {
   const product = body?.Product || body?.product || {};
   const rawStatus = String(order?.status || order?.order_status || body?.order_status || "paid").toLowerCase();
   const valorBruto = Number(order?.total || order?.charges?.amount || body?.commission?.charge_amount || 0);
-  const taxa = Number(order?.platform_fee || body?.commission?.commission_amount || 0);
+  const taxa = Number(order?.platform_fee || 0);
+  // Kiwify: commission_amount is what the user (affiliate) receives
+  const userCommission = Number(body?.commission?.commission_amount || 0);
+  const valorComissao = userCommission > 0 ? userCommission : (valorBruto - taxa);
 
   return {
     plataforma: "kiwify",
@@ -158,6 +161,7 @@ function parseKiwify(body: any): SaleData | null {
     valor_bruto: valorBruto,
     taxa,
     valor_liquido: valorBruto - taxa,
+    valor_comissao: valorComissao,
     cliente: customer?.full_name || customer?.name || customer?.email || null,
     produto: product?.name || product?.product_name || null,
     data_venda: normalizeDate(order?.created_at || order?.approved_date || body?.created_at),
