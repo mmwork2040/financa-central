@@ -31,6 +31,7 @@ const mapRows = (vendas: any[]) =>
     valor_bruto: formatCurrency(v.valor_bruto),
     taxa: formatCurrency(v.taxa),
     valor_liquido: formatCurrency(v.valor_liquido),
+    valor_comissao: formatCurrency(v.valor_comissao || v.valor_liquido),
     status: v.status || "-",
     plataforma: v.plataforma || "-",
     observacoes: v.observacoes || "-",
