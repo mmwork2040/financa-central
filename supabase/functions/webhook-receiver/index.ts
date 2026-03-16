@@ -569,10 +569,11 @@ Deno.serve(async (req) => {
           // Only update bank balance immediately for estornos (refunds/chargebacks)
           // For approved sales with dias_recebimento, balance is updated later by process-digital-receipts
           if (contaBancariaId && (isEstorno || lancamentoStatus !== "pendente")) {
+            const valorContabil = saleData.valor_comissao > 0 ? saleData.valor_comissao : saleData.valor_liquido;
             const rpcTipo = isEstorno ? "despesa" : "receita";
             const { error: saldoError } = await supabase.rpc("update_saldo_conta", {
               _conta_id: contaBancariaId,
-              _valor: saleData.valor_liquido,
+              _valor: valorContabil,
               _tipo: rpcTipo,
             });
 
@@ -586,8 +587,8 @@ Deno.serve(async (req) => {
 
               if (contaAtual) {
                 const novoSaldo = isEstorno
-                  ? contaAtual.saldo_atual - saleData.valor_liquido
-                  : contaAtual.saldo_atual + saleData.valor_liquido;
+                  ? contaAtual.saldo_atual - valorContabil
+                  : contaAtual.saldo_atual + valorContabil;
                 await supabase
                   .from("contas_bancarias")
                   .update({ saldo_atual: novoSaldo })
