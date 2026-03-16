@@ -192,13 +192,17 @@ function parseHubla(body: any): SaleData | null {
 
   // Handle subscription cancellation events
   if (event === "subscription_cancellation") {
+    const hVb = Number(data?.price || data?.amount || 0);
+    const hTx = Number(data?.fee || data?.platform_fee || 0);
+    const hCom = Number(data?.commission || data?.seller_net || 0);
     return {
       plataforma: "hubla",
       evento: event,
       status: "cancelada",
-      valor_bruto: Number(data?.price || data?.amount || 0),
-      taxa: Number(data?.fee || data?.platform_fee || 0),
-      valor_liquido: Number(data?.price || data?.amount || 0) - Number(data?.fee || data?.platform_fee || 0),
+      valor_bruto: hVb,
+      taxa: hTx,
+      valor_liquido: hVb - hTx,
+      valor_comissao: hCom > 0 ? hCom : (hVb - hTx),
       cliente: customer?.name || customer?.email || null,
       produto: product?.name || null,
       data_venda: normalizeDate(data?.created_at || data?.date),
