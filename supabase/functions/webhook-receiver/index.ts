@@ -258,7 +258,10 @@ function parseMonetizze(body: any): SaleData | null {
     evento?.tipo_evento || evento?.venda?.status || body?.status || "2"
   );
   const valorBruto = Number(evento?.venda?.valor || body?.valor || 0);
-  const taxa = Number(evento?.venda?.comissao || body?.comissao || 0);
+  const taxa = Number(evento?.venda?.taxa || body?.taxa || 0);
+  // Monetizze: comissao is what the user/affiliate receives
+  const comissaoUsuario = Number(evento?.venda?.comissao || body?.comissao || 0);
+  const valorComissao = comissaoUsuario > 0 ? comissaoUsuario : (valorBruto - taxa);
 
   return {
     plataforma: "monetizze",
@@ -267,6 +270,7 @@ function parseMonetizze(body: any): SaleData | null {
     valor_bruto: valorBruto,
     taxa,
     valor_liquido: valorBruto - taxa,
+    valor_comissao: valorComissao,
     cliente: comprador?.nome || comprador?.email || null,
     produto: produto?.nome || produto?.name || null,
     data_venda: normalizeDate(evento?.venda?.data || body?.data_venda),
