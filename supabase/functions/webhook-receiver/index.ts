@@ -111,6 +111,8 @@ function parseEduzz(body: any): SaleData | null {
   const rawStatus = String(body?.trans_status || body?.sale_status || body?.status || "3");
   const valorBruto = Number(body?.trans_value || body?.sale_amount_win || body?.amount || 0);
   const taxa = Number(body?.trans_fee || body?.fee || 0);
+  // Eduzz: sale_amount_win is already the user's net amount
+  const valorComissao = Number(body?.sale_amount_win || (valorBruto - taxa));
 
   return {
     plataforma: "eduzz",
@@ -119,6 +121,7 @@ function parseEduzz(body: any): SaleData | null {
     valor_bruto: valorBruto,
     taxa,
     valor_liquido: valorBruto - taxa,
+    valor_comissao: valorComissao,
     cliente: body?.cus_name || body?.client_name || body?.cus_email || null,
     produto: body?.product_name || body?.pro_name || null,
     data_venda: normalizeDate(body?.trans_createdate || body?.sale_date),
