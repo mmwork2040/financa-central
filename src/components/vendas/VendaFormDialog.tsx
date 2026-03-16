@@ -84,6 +84,7 @@ const VendaFormDialog: React.FC<VendaFormDialogProps> = ({
   const [novoClienteEndereco, setNovoClienteEndereco] = useState("");
 
   const valorLiquido = valorBruto - taxa;
+  const valorComissao = valorLiquido; // For manual sales, commission = net value
 
   useEffect(() => {
     if (open) {
@@ -233,6 +234,7 @@ const VendaFormDialog: React.FC<VendaFormDialogProps> = ({
         valor_bruto: valorBruto,
         taxa,
         valor_liquido: valorBruto - taxa,
+        valor_comissao: valorBruto - taxa,
         data_venda: dataVenda.toISOString(),
         status,
         plataforma: "manual",

@@ -565,9 +565,12 @@ const VendasDigitais = () => {
                   </div>
                   <div className="text-right shrink-0 flex flex-col items-end gap-1">
                     <p className="text-xs text-muted-foreground">Bruto: {formatCurrency(venda.valor_bruto)}</p>
-                    {venda.taxa > 0 && <p className="text-[10px] text-muted-foreground">Comissão: {formatCurrency(venda.taxa)}</p>}
+                    {venda.taxa > 0 && <p className="text-[10px] text-muted-foreground">Taxa: {formatCurrency(venda.taxa)}</p>}
+                    {venda.valor_comissao > 0 && venda.valor_comissao !== venda.valor_liquido && (
+                      <p className="text-xs font-semibold text-primary">Comissão: {formatCurrency(venda.valor_comissao)}</p>
+                    )}
                     <p className={cn("text-sm font-bold", venda.status === "reembolsada" || venda.status === "chargeback" ? "text-destructive" : "text-green-600")}>
-                      Líquido: {(venda.status === "reembolsada" || venda.status === "chargeback") ? "-" : ""}{formatCurrency(venda.valor_liquido)}
+                      {venda.valor_comissao > 0 ? "Recebido" : "Líquido"}: {(venda.status === "reembolsada" || venda.status === "chargeback") ? "-" : ""}{formatCurrency(venda.valor_comissao > 0 ? venda.valor_comissao : venda.valor_liquido)}
                     </p>
                     <Badge className={cn("text-[10px]", statusColors[venda.status] || "")}>{venda.status}</Badge>
                     {invoiceStatusBadge(venda)}
@@ -661,7 +664,10 @@ const VendasDigitais = () => {
                 <div><span className="text-muted-foreground">Status:</span> <Badge className={cn("text-[10px]", statusColors[detailVenda.status] || "")}>{detailVenda.status}</Badge></div>
                 <div><span className="text-muted-foreground">Valor Bruto:</span> <strong>{formatCurrency(detailVenda.valor_bruto)}</strong></div>
                 <div><span className="text-muted-foreground">Taxa:</span> <strong>{formatCurrency(detailVenda.taxa)}</strong></div>
-                <div><span className="text-muted-foreground">Valor Líquido:</span> <strong className="text-green-600">{formatCurrency(detailVenda.valor_liquido)}</strong></div>
+                <div><span className="text-muted-foreground">Valor Líquido:</span> <strong>{formatCurrency(detailVenda.valor_liquido)}</strong></div>
+                {detailVenda.valor_comissao > 0 && (
+                  <div><span className="text-muted-foreground">Minha Comissão:</span> <strong className="text-primary">{formatCurrency(detailVenda.valor_comissao)}</strong></div>
+                )}
                 <div><span className="text-muted-foreground">Origem:</span> <strong>{detailVenda.origem || "integracao"}</strong></div>
               </div>
               <hr />

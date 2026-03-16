@@ -12,6 +12,7 @@ interface SaleData {
   valor_bruto: number;
   taxa: number;
   valor_liquido: number;
+  valor_comissao: number;
   cliente: string | null;
   produto: string | null;
   data_venda: string;
@@ -60,15 +61,28 @@ function parseHotmart(body: any): SaleData | null {
     purchase?.transaction?.status?.toLowerCase?.() || "approved";
 
   const valorBruto = Number(purchase?.price?.value || purchase?.original_offer_price?.value || purchase?.full_price?.value || purchase?.price || 0);
-  const taxa = Number(purchase?.commission?.value || purchase?.fee?.value || 0);
+  const fee = Number(purchase?.fee?.value || 0);
+  const commission = Number(purchase?.commission?.value || 0);
+  const commissionAs = (body?.data?.commission_as || body?.data?.purchase?.commission_as || "").toUpperCase();
+
+  // Determine user's actual received amount (commission)
+  let valorComissao: number;
+  if (commissionAs === "AFFILIATE" || commissionAs === "CO_PRODUCER") {
+    // Affiliate/co-producer: commission.value IS what the user receives
+    valorComissao = commission;
+  } else {
+    // Producer: receives full price minus platform fee
+    valorComissao = valorBruto - fee;
+  }
 
   return {
     plataforma: "hotmart",
     evento: event,
     status: statusMap[rawStatus] || "pendente",
     valor_bruto: valorBruto,
-    taxa,
-    valor_liquido: valorBruto - taxa,
+    taxa: fee,
+    valor_liquido: valorBruto - fee,
+    valor_comissao: valorComissao,
     cliente: buyer?.name || buyer?.email || null,
     produto: product?.name || null,
     data_venda: normalizeDate(purchase?.approved_date || purchase?.order_date),
@@ -97,6 +111,8 @@ function parseEduzz(body: any): SaleData | null {
   const rawStatus = String(body?.trans_status || body?.sale_status || body?.status || "3");
   const valorBruto = Number(body?.trans_value || body?.sale_amount_win || body?.amount || 0);
   const taxa = Number(body?.trans_fee || body?.fee || 0);
+  // Eduzz: sale_amount_win is already the user's net amount
+  const valorComissao = Number(body?.sale_amount_win || (valorBruto - taxa));
 
   return {
     plataforma: "eduzz",
@@ -105,6 +121,7 @@ function parseEduzz(body: any): SaleData | null {
     valor_bruto: valorBruto,
     taxa,
     valor_liquido: valorBruto - taxa,
+    valor_comissao: valorComissao,
     cliente: body?.cus_name || body?.client_name || body?.cus_email || null,
     produto: body?.product_name || body?.pro_name || null,
     data_venda: normalizeDate(body?.trans_createdate || body?.sale_date),
@@ -132,7 +149,10 @@ function parseKiwify(body: any): SaleData | null {
   const product = body?.Product || body?.product || {};
   const rawStatus = String(order?.status || order?.order_status || body?.order_status || "paid").toLowerCase();
   const valorBruto = Number(order?.total || order?.charges?.amount || body?.commission?.charge_amount || 0);
-  const taxa = Number(order?.platform_fee || body?.commission?.commission_amount || 0);
+  const taxa = Number(order?.platform_fee || 0);
+  // Kiwify: commission_amount is what the user (affiliate) receives
+  const userCommission = Number(body?.commission?.commission_amount || 0);
+  const valorComissao = userCommission > 0 ? userCommission : (valorBruto - taxa);
 
   return {
     plataforma: "kiwify",
@@ -141,6 +161,7 @@ function parseKiwify(body: any): SaleData | null {
     valor_bruto: valorBruto,
     taxa,
     valor_liquido: valorBruto - taxa,
+    valor_comissao: valorComissao,
     cliente: customer?.full_name || customer?.name || customer?.email || null,
     produto: product?.name || product?.product_name || null,
     data_venda: normalizeDate(order?.created_at || order?.approved_date || body?.created_at),
@@ -171,13 +192,17 @@ function parseHubla(body: any): SaleData | null {
 
   // Handle subscription cancellation events
   if (event === "subscription_cancellation") {
+    const hVb = Number(data?.price || data?.amount || 0);
+    const hTx = Number(data?.fee || data?.platform_fee || 0);
+    const hCom = Number(data?.commission || data?.seller_net || 0);
     return {
       plataforma: "hubla",
       evento: event,
       status: "cancelada",
-      valor_bruto: Number(data?.price || data?.amount || 0),
-      taxa: Number(data?.fee || data?.platform_fee || 0),
-      valor_liquido: Number(data?.price || data?.amount || 0) - Number(data?.fee || data?.platform_fee || 0),
+      valor_bruto: hVb,
+      taxa: hTx,
+      valor_liquido: hVb - hTx,
+      valor_comissao: hCom > 0 ? hCom : (hVb - hTx),
       cliente: customer?.name || customer?.email || null,
       produto: product?.name || null,
       data_venda: normalizeDate(data?.created_at || data?.date),
@@ -190,6 +215,7 @@ function parseHubla(body: any): SaleData | null {
 
   const valorBruto = Number(data?.price || data?.amount || data?.value || 0);
   const taxa = Number(data?.fee || data?.platform_fee || 0);
+  const hublaComissao = Number(data?.commission || data?.seller_net || 0);
 
   return {
     plataforma: "hubla",
@@ -198,6 +224,7 @@ function parseHubla(body: any): SaleData | null {
     valor_bruto: valorBruto,
     taxa,
     valor_liquido: valorBruto - taxa,
+    valor_comissao: hublaComissao > 0 ? hublaComissao : (valorBruto - taxa),
     cliente: customer?.name || customer?.email || null,
     produto: product?.name || null,
     data_venda: normalizeDate(data?.created_at || data?.approved_at || data?.date),
@@ -231,7 +258,10 @@ function parseMonetizze(body: any): SaleData | null {
     evento?.tipo_evento || evento?.venda?.status || body?.status || "2"
   );
   const valorBruto = Number(evento?.venda?.valor || body?.valor || 0);
-  const taxa = Number(evento?.venda?.comissao || body?.comissao || 0);
+  const taxa = Number(evento?.venda?.taxa || body?.taxa || 0);
+  // Monetizze: comissao is what the user/affiliate receives
+  const comissaoUsuario = Number(evento?.venda?.comissao || body?.comissao || 0);
+  const valorComissao = comissaoUsuario > 0 ? comissaoUsuario : (valorBruto - taxa);
 
   return {
     plataforma: "monetizze",
@@ -240,6 +270,7 @@ function parseMonetizze(body: any): SaleData | null {
     valor_bruto: valorBruto,
     taxa,
     valor_liquido: valorBruto - taxa,
+    valor_comissao: valorComissao,
     cliente: comprador?.nome || comprador?.email || null,
     produto: produto?.nome || produto?.name || null,
     data_venda: normalizeDate(evento?.venda?.data || body?.data_venda),
@@ -430,6 +461,7 @@ Deno.serve(async (req) => {
           valor_bruto: saleData.valor_bruto,
           taxa: saleData.taxa,
           valor_liquido: saleData.valor_liquido,
+          valor_comissao: saleData.valor_comissao,
           cliente: saleData.cliente,
           produto: saleData.produto,
           status: saleData.status,
@@ -510,7 +542,7 @@ Deno.serve(async (req) => {
             empresa_id: empresaId,
             descricao: `${prefixo} - ${saleData.produto || "Venda digital"}${saleData.cliente ? ` (${saleData.cliente})` : ""}`,
             tipo: tipoLancamento,
-            valor: saleData.valor_liquido,
+            valor: saleData.valor_comissao > 0 ? saleData.valor_comissao : saleData.valor_liquido,
             data_vencimento: dataVencimento,
             data_pagamento: dataPagamento,
             status: lancamentoStatus,
@@ -537,10 +569,11 @@ Deno.serve(async (req) => {
           // Only update bank balance immediately for estornos (refunds/chargebacks)
           // For approved sales with dias_recebimento, balance is updated later by process-digital-receipts
           if (contaBancariaId && (isEstorno || lancamentoStatus !== "pendente")) {
+            const valorContabil = saleData.valor_comissao > 0 ? saleData.valor_comissao : saleData.valor_liquido;
             const rpcTipo = isEstorno ? "despesa" : "receita";
             const { error: saldoError } = await supabase.rpc("update_saldo_conta", {
               _conta_id: contaBancariaId,
-              _valor: saleData.valor_liquido,
+              _valor: valorContabil,
               _tipo: rpcTipo,
             });
 
@@ -554,8 +587,8 @@ Deno.serve(async (req) => {
 
               if (contaAtual) {
                 const novoSaldo = isEstorno
-                  ? contaAtual.saldo_atual - saleData.valor_liquido
-                  : contaAtual.saldo_atual + saleData.valor_liquido;
+                  ? contaAtual.saldo_atual - valorContabil
+                  : contaAtual.saldo_atual + valorContabil;
                 await supabase
                   .from("contas_bancarias")
                   .update({ saldo_atual: novoSaldo })
