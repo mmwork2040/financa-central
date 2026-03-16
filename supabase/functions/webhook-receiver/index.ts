@@ -215,6 +215,7 @@ function parseHubla(body: any): SaleData | null {
 
   const valorBruto = Number(data?.price || data?.amount || data?.value || 0);
   const taxa = Number(data?.fee || data?.platform_fee || 0);
+  const hublaComissao = Number(data?.commission || data?.seller_net || 0);
 
   return {
     plataforma: "hubla",
@@ -223,6 +224,7 @@ function parseHubla(body: any): SaleData | null {
     valor_bruto: valorBruto,
     taxa,
     valor_liquido: valorBruto - taxa,
+    valor_comissao: hublaComissao > 0 ? hublaComissao : (valorBruto - taxa),
     cliente: customer?.name || customer?.email || null,
     produto: product?.name || null,
     data_venda: normalizeDate(data?.created_at || data?.approved_at || data?.date),
