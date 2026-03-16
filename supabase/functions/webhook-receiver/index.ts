@@ -12,6 +12,7 @@ interface SaleData {
   valor_bruto: number;
   taxa: number;
   valor_liquido: number;
+  valor_comissao: number;
   cliente: string | null;
   produto: string | null;
   data_venda: string;
