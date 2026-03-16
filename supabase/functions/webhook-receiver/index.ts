@@ -542,7 +542,7 @@ Deno.serve(async (req) => {
             empresa_id: empresaId,
             descricao: `${prefixo} - ${saleData.produto || "Venda digital"}${saleData.cliente ? ` (${saleData.cliente})` : ""}`,
             tipo: tipoLancamento,
-            valor: saleData.valor_liquido,
+            valor: saleData.valor_comissao > 0 ? saleData.valor_comissao : saleData.valor_liquido,
             data_vencimento: dataVencimento,
             data_pagamento: dataPagamento,
             status: lancamentoStatus,
