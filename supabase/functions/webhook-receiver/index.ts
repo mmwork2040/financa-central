@@ -461,6 +461,7 @@ Deno.serve(async (req) => {
           valor_bruto: saleData.valor_bruto,
           taxa: saleData.taxa,
           valor_liquido: saleData.valor_liquido,
+          valor_comissao: saleData.valor_comissao,
           cliente: saleData.cliente,
           produto: saleData.produto,
           status: saleData.status,
