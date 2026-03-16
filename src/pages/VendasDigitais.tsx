@@ -664,7 +664,10 @@ const VendasDigitais = () => {
                 <div><span className="text-muted-foreground">Status:</span> <Badge className={cn("text-[10px]", statusColors[detailVenda.status] || "")}>{detailVenda.status}</Badge></div>
                 <div><span className="text-muted-foreground">Valor Bruto:</span> <strong>{formatCurrency(detailVenda.valor_bruto)}</strong></div>
                 <div><span className="text-muted-foreground">Taxa:</span> <strong>{formatCurrency(detailVenda.taxa)}</strong></div>
-                <div><span className="text-muted-foreground">Valor Líquido:</span> <strong className="text-green-600">{formatCurrency(detailVenda.valor_liquido)}</strong></div>
+                <div><span className="text-muted-foreground">Valor Líquido:</span> <strong>{formatCurrency(detailVenda.valor_liquido)}</strong></div>
+                {detailVenda.valor_comissao > 0 && (
+                  <div><span className="text-muted-foreground">Minha Comissão:</span> <strong className="text-primary">{formatCurrency(detailVenda.valor_comissao)}</strong></div>
+                )}
                 <div><span className="text-muted-foreground">Origem:</span> <strong>{detailVenda.origem || "integracao"}</strong></div>
               </div>
               <hr />
