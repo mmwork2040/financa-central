@@ -1637,6 +1637,7 @@ export type Database = {
           status: string
           taxa: number
           valor_bruto: number
+          valor_comissao: number
           valor_liquido: number
         }
         Insert: {
@@ -1664,6 +1665,7 @@ export type Database = {
           status?: string
           taxa?: number
           valor_bruto?: number
+          valor_comissao?: number
           valor_liquido?: number
         }
         Update: {
@@ -1691,6 +1693,7 @@ export type Database = {
           status?: string
           taxa?: number
           valor_bruto?: number
+          valor_comissao?: number
           valor_liquido?: number
         }
         Relationships: [
