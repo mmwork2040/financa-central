@@ -14,6 +14,7 @@ const headers = {
   valor_bruto: "Valor Bruto",
   taxa: "Taxa",
   valor_liquido: "Valor Líquido",
+  valor_comissao: "Minha Comissão",
   status: "Status",
   plataforma: "Plataforma",
   observacoes: "Observações",
