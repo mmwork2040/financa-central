@@ -63,17 +63,8 @@ function parseHotmart(body: any): SaleData | null {
   const valorBruto = Number(purchase?.price?.value || purchase?.original_offer_price?.value || purchase?.full_price?.value || purchase?.price || 0);
   const fee = Number(purchase?.fee?.value || 0);
   const commission = Number(purchase?.commission?.value || 0);
-  const commissionAs = (body?.data?.commission_as || body?.data?.purchase?.commission_as || "").toUpperCase();
-
-  // Determine user's actual received amount (commission)
-  let valorComissao: number;
-  if (commissionAs === "AFFILIATE" || commissionAs === "CO_PRODUCER") {
-    // Affiliate/co-producer: commission.value IS what the user receives
-    valorComissao = commission;
-  } else {
-    // Producer: receives full price minus platform fee
-    valorComissao = valorBruto - fee;
-  }
+  // Always: valor_comissao = valor_bruto - taxa (receita líquida do CNPJ)
+  const valorComissao = valorBruto - fee;
 
   return {
     plataforma: "hotmart",
