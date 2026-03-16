@@ -1,57 +1,55 @@
 
 
-## Scroll Animations for Landing Page Sections
+## Plano: Contabilizar apenas a comissão recebida nas vendas de integrações
 
-### Overview
-Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
+### Problema Atual
 
-### Approach
-Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
+O `webhook-receiver` trata o **valor bruto** (`price.value`) como a receita principal e subtrai a taxa da plataforma. Isso está incorreto para afiliados/co-produtores — o sistema deveria contabilizar apenas o **valor que o usuário efetivamente recebe** (sua comissão), não o valor total da venda.
 
-### Implementation Details
+Exemplo Hotmart:
+- Venda de R$ 297,00 → Comissão do afiliado: R$ 89,10
+- Atualmente registra R$ 297,00 como receita
+- Deveria registrar R$ 89,10 como receita contábil
 
-**1. Create `src/hooks/useScrollReveal.ts`**
-- A custom hook that returns a `ref` callback
-- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
-- Adds a CSS class (e.g., `revealed`) when the element is visible
-- Fires once per element (unobserves after reveal)
+### Mudanças Necessárias
 
-**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
-- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
-- Accepts optional `delay` (stagger support) and `className`
-- Starts with opacity-0 and a small transform offset
-- On intersection, transitions to opacity-1 and transform-none
-- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
+#### 1. Banco de Dados — Nova coluna na `vendas_digitais`
 
-**3. Update `src/pages/LandingPage.tsx`**
-Wrap each section's content with `<ScrollReveal>`:
+Adicionar campo `valor_comissao` (numeric, default 0) para armazenar o valor que o usuário efetivamente recebe (comissão). O campo `valor_bruto` continua armazenando o valor total da venda para referência.
 
-| Section | Animation |
-|---------|-----------|
-| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
-| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
-| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
-| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
-| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
-| Social Proof | Scale for stat cards |
-| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
-| Footer | Simple fade-up |
+#### 2. Edge Function `webhook-receiver` — Ajustar parsers
 
-**4. Add base CSS to `src/index.css`**
-```css
-.scroll-reveal {
-  opacity: 0;
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-.scroll-reveal.revealed {
-  opacity: 1;
-  transform: none !important;
-}
-```
+Atualizar cada parser de plataforma para extrair corretamente o valor de comissão do usuário:
 
-### Key Decisions
-- No new dependencies -- uses native `IntersectionObserver`
-- CSS transitions (not JS-driven animations) for performance
-- Each animation fires only once (no re-hide on scroll up) for a polished feel
-- Stagger delays on card grids (50-100ms increments) for a cascading effect
+- **Hotmart**: Usar `purchase.commission.value` como o valor recebido pelo usuário (comissão). Se `commission_as === "PRODUCER"`, valor recebido = `price - fee`. Se `AFFILIATE`, valor recebido = `commission.value`.
+- **Kiwify**: Usar `commission.commission_amount` como comissão do usuário quando disponível.
+- **Eduzz**: Usar `trans_value` ou `sale_amount_win` como valor recebido (já é o líquido do usuário).
+- **Monetizze**: Usar `comissao` como valor recebido pelo afiliado.
+- **Hubla**: Lógica similar baseada nos campos de comissão.
+
+Adicionar campo `valor_comissao` ao `SaleData` interface.
+
+O **lançamento financeiro** criado automaticamente passará a usar `valor_comissao` (ou `valor_liquido` se comissão = 0) em vez do `valor_liquido` antigo.
+
+#### 3. Frontend — Exibir comissão na tela de Vendas
+
+Mostrar o campo `valor_comissao` na tabela de vendas digitais e no formulário, diferenciando "Valor da Venda" (bruto) de "Minha Comissão" (o que de fato entra no caixa).
+
+#### 4. Lógica contábil
+
+- O lançamento criado pelo webhook usará `valor_comissao` como valor
+- A reconciliação e relatórios usarão o valor da comissão
+- O `
+
+_to` da venda no banco continua com o `valor_liquido` original para histórico
+
+### Arquivos Impactados
+
+| Arquivo | Alteração |
+|---|---|
+| Migration SQL | Adicionar coluna `valor_comissao` em `vendas_digitais` |
+| `supabase/functions/webhook-receiver/index.ts` | Atualizar parsers e usar comissão no lançamento |
+| `src/pages/VendasDigitais.tsx` | Exibir coluna "Minha Comissão" |
+| `src/components/vendas/VendaFormDialog.tsx` | Campo de comissão no formulário manual |
+| `src/integrations/supabase/types.ts` | Auto-atualizado |
 
