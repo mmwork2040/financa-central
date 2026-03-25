@@ -466,6 +466,8 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
             cliente_documento: row.cliente_documento || null,
             cliente_email: row.cliente_email || null,
             cliente_telefone: row.cliente_telefone || null,
+            cliente_endereco: row.cliente_endereco || null,
+            observacoes: row.observacoes || null,
             valor_bruto: valor,
             valor_liquido: valor,
             taxa: 0,
