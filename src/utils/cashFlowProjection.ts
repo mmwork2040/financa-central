@@ -20,7 +20,7 @@ interface MonthFlow {
  * Calculates the monthly cash flow for a given month index (0 = current month, 1 = next, etc.)
  * considering both real pending transactions and virtual recurring projections.
  */
-function calcularFluxoMensal(
+export function calcularFluxoMensal(
   monthDate: Date,
   lancamentosFuturos: Lancamento[],
   recorrentes: Lancamento[]

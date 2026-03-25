@@ -5,7 +5,7 @@ import { formatCurrency } from "@/utils/format";
 import { useValuesVisibility, maskValue } from "@/contexts/ValuesVisibilityContext";
 import { Landmark, TrendingUp, Calendar } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { format } from "date-fns";
+import { format, addMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import { simularFluxoCaixa, calcularMesesDeCaixa } from "@/utils/cashFlowProjection";
 
