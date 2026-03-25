@@ -236,6 +236,10 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
     mes_emissao: ["mes emissao nf", "mês emissão nf", "mes emissao", "mês emissão", "mes_emissao_nf", "mes_emissao", "competencia", "competência", "month"],
     status_nf: ["status nf", "status_nf", "status nota", "status nota fiscal", "situacao nf", "situação nf"],
     observacoes: ["observacoes", "observações", "obs", "notas", "notes", "comentarios", "comentários", "comments"],
+    endereco: ["endereco", "endereço", "address", "logradouro", "rua", "street"],
+    cidade: ["cidade", "city", "municipio", "município"],
+    estado: ["estado", "state", "uf"],
+    cep: ["cep", "zip", "zip_code", "codigo_postal", "código postal", "postal"],
   };
 
   const [detectedMapping, setDetectedMapping] = useState<Record<string, string>>({});
