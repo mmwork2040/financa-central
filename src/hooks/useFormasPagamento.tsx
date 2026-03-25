@@ -99,8 +99,8 @@ export const useFormasPagamento = () => {
       filteredFormasPagamento.forEach(forma => {
         const row = [
           forma.descricao,
-          new Date(forma.created_at).toLocaleDateString(),
-          new Date(forma.updated_at).toLocaleDateString()
+          new Date(forma.created_at).toLocaleDateString("pt-BR"),
+          new Date(forma.updated_at).toLocaleDateString("pt-BR")
         ].map(value => `"${value}"`).join(",");
         csvContent += row + "\n";
       });
