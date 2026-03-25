@@ -37,6 +37,7 @@ import {
   UserCircle,
   HelpCircle,
   UserCog,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
