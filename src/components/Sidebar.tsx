@@ -37,6 +37,7 @@ import {
   UserCircle,
   HelpCircle,
   UserCog,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSolicitacoesSaida } from "@/hooks/useSolicitacoesSaida";
@@ -182,6 +183,7 @@ export const Sidebar = () => {
     { name: "Lançamentos", icon: Files, path: "/transactions" },
     { name: "Importar", icon: FileUp, path: "/importar-documentos" },
     { name: "Vendas", icon: ShoppingCart, path: "/vendas-digitais", businessOnly: true },
+    { name: "Notas Fiscais", icon: FileText, path: "/notas-fiscais", businessOnly: true },
     { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true },
     { name: "Projetos", icon: Briefcase, path: "/projetos", businessOnly: true },
   ];

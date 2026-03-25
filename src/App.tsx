@@ -45,6 +45,7 @@ import TermosConfig from "./pages/TermosConfig";
 import Suporte from "./pages/Suporte";
 import ImportarDocumentos from "./pages/ImportarDocumentos";
 import PerfisAcesso from "./pages/PerfisAcesso";
+import NotasFiscais from "./pages/NotasFiscais";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,7 @@ const App = () => {
                 <Route path="/settings/termos" element={<AppLayout><TermosConfig /></AppLayout>} />
                 <Route path="/suporte" element={<AppLayout><Suporte /></AppLayout>} />
                 <Route path="/perfis-acesso" element={<ProtectedRoute path="/perfis-acesso"><AppLayout><PerfisAcesso /></AppLayout></ProtectedRoute>} />
+                <Route path="/notas-fiscais" element={<AppLayout><NotasFiscais /></AppLayout>} />
                 <Route path="/vendas-digitais" element={<AppLayout><VendasDigitais /></AppLayout>} />
                 <Route path="/importar-documentos" element={<AppLayout><ImportarDocumentos /></AppLayout>} />
                 <Route path="/anuncios" element={<ProtectedRoute path="/anuncios"><AppLayout><AnunciosDigitais /></AppLayout></ProtectedRoute>} />
