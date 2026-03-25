@@ -201,6 +201,12 @@ const NotasFiscais = () => {
           )}
         </CardContent>
       </Card>
+
+      <EmitirNotaManualDialog
+        open={emitirOpen}
+        onOpenChange={setEmitirOpen}
+        onSuccess={fetchVendas}
+      />
     </div>
   );
 };
