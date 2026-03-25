@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FileText, Search, ExternalLink, CheckCircle2, XCircle, Clock, AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { FileText, Search, ExternalLink, CheckCircle2, XCircle, Clock, AlertTriangle, Loader2, RefreshCw, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useIsMobile } from "@/hooks/use-mobile";
 import PageHeader from "@/components/common/PageHeader";
+import EmitirNotaManualDialog from "@/components/notas-fiscais/EmitirNotaManualDialog";
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   ISSUED: { label: "Emitida", icon: CheckCircle2, variant: "default" },
@@ -28,6 +29,7 @@ const NotasFiscais = () => {
   const [vendas, setVendas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [emitirOpen, setEmitirOpen] = useState(false);
 
   const fetchVendas = async () => {
     if (!empresaId) return;
@@ -116,7 +118,7 @@ const NotasFiscais = () => {
         </Card>
       </div>
 
-      {/* Search + Refresh */}
+      {/* Search + Actions */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -127,6 +129,9 @@ const NotasFiscais = () => {
             className="pl-9"
           />
         </div>
+        <Button onClick={() => setEmitirOpen(true)} className="gap-1.5">
+          <Plus className="h-4 w-4" /> {!isMobile && "Emitir Nota"}
+        </Button>
         <Button variant="outline" size="icon" onClick={fetchVendas} disabled={loading}>
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
         </Button>
@@ -196,6 +201,12 @@ const NotasFiscais = () => {
           )}
         </CardContent>
       </Card>
+
+      <EmitirNotaManualDialog
+        open={emitirOpen}
+        onOpenChange={setEmitirOpen}
+        onSuccess={fetchVendas}
+      />
     </div>
   );
 };
