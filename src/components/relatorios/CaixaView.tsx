@@ -7,7 +7,7 @@ import { Landmark, TrendingUp, Calendar } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { simularFluxoCaixa } from "@/utils/cashFlowProjection";
+import { simularFluxoCaixa, calcularMesesDeCaixa } from "@/utils/cashFlowProjection";
 
 const CaixaView = () => {
   const { visible } = useValuesVisibility();
