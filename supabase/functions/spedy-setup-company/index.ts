@@ -147,19 +147,37 @@ serve(async (req) => {
           data.errors.some((e: any) => typeof e.message === "string" && e.message.includes("CNPJ já possui"));
         if (isDuplicate) {
           console.log("CNPJ already exists in Spedy, searching for existing company...");
-          const searchRes = await fetch(`${spedyConfig.api_url}/companies?federalTaxNumber=${cnpj}`, {
+          // Try listing companies and filtering by CNPJ
+          const searchRes = await fetch(`${spedyConfig.api_url}/companies`, {
             method: "GET",
             headers: { "Content-Type": "application/json", "X-Api-Key": spedyConfig.api_key },
           });
           const searchData = await searchRes.json();
-          const found = Array.isArray(searchData) ? searchData[0] : searchData?.data?.[0];
+          console.log("Spedy companies search response status:", searchRes.status, "type:", typeof searchData, "isArray:", Array.isArray(searchData));
+          
+          // Try to find matching company in various response formats
+          let found: any = null;
+          const items = Array.isArray(searchData) ? searchData 
+            : Array.isArray(searchData?.data) ? searchData.data 
+            : Array.isArray(searchData?.companies) ? searchData.companies 
+            : [];
+          
+          found = items.find((c: any) => {
+            const fedTax = (c.federalTaxNumber || c.cnpj || "").replace(/\D/g, "");
+            return fedTax === cnpj;
+          });
+
           if (found?.id) {
             spedyCompanyId = found.id;
             console.log("Found existing Spedy company:", spedyCompanyId);
           } else {
-            console.error("Could not find existing Spedy company for CNPJ:", cnpj);
-            return new Response(JSON.stringify({ error: "CNPJ já cadastrado na Spedy mas não foi possível vincular automaticamente. Contate o suporte." }), {
-              status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            console.error("Could not find existing Spedy company. Items count:", items.length, "CNPJ:", cnpj);
+            // If we can't find it, just skip Spedy setup but don't block the flow
+            return new Response(JSON.stringify({ 
+              success: true, 
+              warning: "CNPJ já cadastrado na Spedy. Vincule manualmente pelo painel de configurações." 
+            }), {
+              status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }
         } else {
