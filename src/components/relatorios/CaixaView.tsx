@@ -43,6 +43,27 @@ const CaixaView = () => {
           .eq("recorrente", true)
           .is("total_parcelas", null);
 
+        // Saldo Investido
+        const { data: investimentosPagos } = await supabase
+          .from('lancamentos').select('valor')
+          .eq('tipo', 'investimento').in('status', ['pago', 'recebido']);
+        const totalInvestido = investimentosPagos?.reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+
+        const { data: resgatesInvestimento } = await supabase
+          .from('lancamentos').select('valor')
+          .eq('tipo', 'receita').eq('origem', 'resgate_investimento').in('status', ['pago', 'recebido']);
+        const totalResgatado = resgatesInvestimento?.reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+
+        const { data: reajustesInvestimento } = await supabase
+          .from('lancamentos').select('valor')
+          .eq('origem', 'reajuste_investimento').in('status', ['pago', 'recebido']);
+        const totalReajustes = reajustesInvestimento?.reduce((sum, l) => sum + (l.valor || 0), 0) || 0;
+
+        const saldoInvestido = totalInvestido - totalResgatado + totalReajustes;
+
+        // Caixa total = saldo bancário + saldo investido
+        const caixaTotal = totalCaixa + saldoInvestido;
+
         // Simulate cash flow for chart
         const result = simularFluxoCaixa(
           totalCaixa,
@@ -51,19 +72,18 @@ const CaixaView = () => {
           12
         );
 
-        // Calculate "Meses de Caixa" correctly:
-        // (Caixa Atual + Receitas a Receber) / Custo Médio Mensal
+        // Calculate "Meses de Caixa":
+        // (Caixa Atual + Investido + Receitas a Receber) / Custo Médio Mensal
         const allFuturos = (lancFuturos || []) as any[];
         const receitasPendentes = allFuturos
           .filter((l: any) => l.tipo === "receita")
           .reduce((sum: number, l: any) => sum + (l.valor || 0), 0);
         
-        // Custo médio mensal = despesas pendentes do próximo mês (projeção)
         const nextMonth = addMonths(hoje, 1);
         const nextMonthFlow = calcularFluxoMensal(nextMonth, allFuturos, (recorrentes || []) as any[]);
         const custoMedioMensal = nextMonthFlow.despesas;
 
-        setMesesDeCaixa(calcularMesesDeCaixa(totalCaixa, receitasPendentes, custoMedioMensal));
+        setMesesDeCaixa(calcularMesesDeCaixa(caixaTotal, receitasPendentes, custoMedioMensal));
         setProjectionData(result.projectionData.slice(0, 4));
       } catch (err) {
         console.error("Erro ao carregar dados de caixa:", err);
