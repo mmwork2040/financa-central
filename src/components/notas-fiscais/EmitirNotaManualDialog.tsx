@@ -281,7 +281,11 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
 
     setUploading(true);
     try {
-      const text = await file.text();
+      let text = await file.text();
+      
+      // Remove BOM characters (UTF-8, UTF-16 LE/BE)
+      text = text.replace(/^\uFEFF/, "").replace(/^\uFFFE/, "").replace(/^\xEF\xBB\xBF/, "");
+      
       const lines = text.split(/\r?\n/).filter(l => l.trim());
       if (lines.length < 2) {
         toast.error("Planilha vazia ou sem dados");
@@ -292,7 +296,16 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
       const separator = detectBestSeparator(text);
       const sepRegex = new RegExp(separator === "|" ? "\\|" : (separator === "\t" ? "\t" : separator));
       
-      const headers = lines[0].split(sepRegex).map(h => h.trim().replace(/^["']|["']$/g, ""));
+      // Clean headers: remove BOM, quotes, extra whitespace, normalize
+      const rawHeaders = lines[0].split(sepRegex).map(h => 
+        h.trim()
+          .replace(/^["']|["']$/g, "")
+          .replace(/^\uFEFF/, "")
+          .trim()
+      );
+
+      console.log("[NF Import] Separador detectado:", JSON.stringify(separator));
+      console.log("[NF Import] Headers encontrados:", rawHeaders);
 
       // Auto-detect column mapping
       const mapping: Record<string, number> = {};
@@ -300,7 +313,8 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
       const usedIndices = new Set<number>();
 
       // First pass: exact matches (score 100)
-      headers.forEach((h, idx) => {
+      rawHeaders.forEach((h, idx) => {
+        if (!h) return;
         const match = findBestMatch(h);
         if (match && match.score === 100 && !mapping[match.field]) {
           mapping[match.field] = idx;
@@ -310,8 +324,8 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
       });
 
       // Second pass: partial matches for unmapped fields
-      headers.forEach((h, idx) => {
-        if (usedIndices.has(idx)) return;
+      rawHeaders.forEach((h, idx) => {
+        if (usedIndices.has(idx) || !h) return;
         const match = findBestMatch(h);
         if (match && !mapping[match.field]) {
           mapping[match.field] = idx;
@@ -319,6 +333,17 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
           usedIndices.add(idx);
         }
       });
+
+      console.log("[NF Import] Mapeamento detectado:", mapping);
+
+      // If no mapping found, show headers to help user
+      if (Object.keys(mapping).length === 0) {
+        toast.error(`Nenhuma coluna reconhecida. Colunas encontradas: ${rawHeaders.filter(h => h).join(", ")}`);
+        setDetectedMapping({});
+        setSpreadsheetRows([]);
+        setUploading(false);
+        return;
+      }
 
       setDetectedMapping(mappingLabels);
 
@@ -342,7 +367,8 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
         };
 
         // Skip completely empty rows
-        if (!row.cliente_nome && !row.produto && !row.valor) continue;
+        const hasAnyValue = Object.values(row).some(v => v && v.trim());
+        if (!hasAnyValue) continue;
 
         rows.push(row);
       }
@@ -352,9 +378,15 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
 
       const mappedFields = Object.keys(mapping);
       const total = Object.keys(COLUMN_ALIASES).length;
-      toast.success(`${rows.length} linha(s) carregada(s) · ${mappedFields.length}/${total} campos detectados`);
-    } catch {
-      toast.error("Erro ao processar planilha");
+      
+      if (rows.length === 0) {
+        toast.warning(`Colunas detectadas mas nenhuma linha com dados. Verifique o conteúdo do arquivo.`);
+      } else {
+        toast.success(`${rows.length} linha(s) carregada(s) · ${mappedFields.length}/${total} campos detectados`);
+      }
+    } catch (err) {
+      console.error("[NF Import] Erro:", err);
+      toast.error("Erro ao processar planilha. Verifique o formato do arquivo.");
     } finally {
       setUploading(false);
     }
