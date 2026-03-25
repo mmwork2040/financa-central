@@ -29,6 +29,7 @@ const NotasFiscais = () => {
   const [vendas, setVendas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [emitirOpen, setEmitirOpen] = useState(false);
 
   const fetchVendas = async () => {
     if (!empresaId) return;
