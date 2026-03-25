@@ -20,7 +20,7 @@ interface MonthFlow {
  * Calculates the monthly cash flow for a given month index (0 = current month, 1 = next, etc.)
  * considering both real pending transactions and virtual recurring projections.
  */
-function calcularFluxoMensal(
+export function calcularFluxoMensal(
   monthDate: Date,
   lancamentosFuturos: Lancamento[],
   recorrentes: Lancamento[]
@@ -73,6 +73,20 @@ function calcularFluxoMensal(
   }
 
   return { receitas, despesas };
+}
+
+/**
+ * Calculates "Meses de Caixa" using the formula:
+ * (Caixa Atual + Receitas a Receber) / Custo Médio Mensal
+ */
+export function calcularMesesDeCaixa(
+  caixaAtual: number,
+  receitasPendentes: number,
+  custoMedioMensal: number
+): number {
+  if (custoMedioMensal <= 0) return 12; // no expenses = infinite runway, cap at 12
+  const meses = (caixaAtual + receitasPendentes) / custoMedioMensal;
+  return Math.max(0, Math.floor(meses));
 }
 
 /**

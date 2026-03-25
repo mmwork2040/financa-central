@@ -5,9 +5,9 @@ import { formatCurrency } from "@/utils/format";
 import { useValuesVisibility, maskValue } from "@/contexts/ValuesVisibilityContext";
 import { Landmark, TrendingUp, Calendar } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { format } from "date-fns";
+import { format, addMonths } from "date-fns";
 import { cn } from "@/lib/utils";
-import { simularFluxoCaixa } from "@/utils/cashFlowProjection";
+import { simularFluxoCaixa, calcularMesesDeCaixa, calcularFluxoMensal } from "@/utils/cashFlowProjection";
 
 const CaixaView = () => {
   const { visible } = useValuesVisibility();
@@ -43,7 +43,7 @@ const CaixaView = () => {
           .eq("recorrente", true)
           .is("total_parcelas", null);
 
-        // Simulate cash flow for next 3 months (chart) and get runway
+        // Simulate cash flow for chart
         const result = simularFluxoCaixa(
           totalCaixa,
           (lancFuturos || []) as any,
@@ -51,8 +51,19 @@ const CaixaView = () => {
           12
         );
 
-        setMesesDeCaixa(result.mesesDeCaixa);
-        // Use first 4 entries (current + 3 months) for chart
+        // Calculate "Meses de Caixa" correctly:
+        // (Caixa Atual + Receitas a Receber) / Custo Médio Mensal
+        const allFuturos = (lancFuturos || []) as any[];
+        const receitasPendentes = allFuturos
+          .filter((l: any) => l.tipo === "receita")
+          .reduce((sum: number, l: any) => sum + (l.valor || 0), 0);
+        
+        // Custo médio mensal = despesas pendentes do próximo mês (projeção)
+        const nextMonth = addMonths(hoje, 1);
+        const nextMonthFlow = calcularFluxoMensal(nextMonth, allFuturos, (recorrentes || []) as any[]);
+        const custoMedioMensal = nextMonthFlow.despesas;
+
+        setMesesDeCaixa(calcularMesesDeCaixa(totalCaixa, receitasPendentes, custoMedioMensal));
         setProjectionData(result.projectionData.slice(0, 4));
       } catch (err) {
         console.error("Erro ao carregar dados de caixa:", err);
