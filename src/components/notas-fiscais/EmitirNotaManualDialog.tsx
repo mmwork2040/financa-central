@@ -78,14 +78,20 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
     if (!clienteSearch.trim() || !empresaId) return;
     setLoadingClientes(true);
     try {
+      const term = clienteSearch.trim();
       const { data, error } = await supabase
         .from("clientes")
         .select("id, nome, cpf_cnpj, email, telefone, endereco")
         .eq("empresa_id", empresaId)
-        .ilike("nome", `%${clienteSearch.trim()}%`)
+        .or(`nome.ilike.%${term}%,cpf_cnpj.ilike.%${term}%,email.ilike.%${term}%,telefone.ilike.%${term}%`)
+        .eq("ativo", true)
+        .order("nome")
         .limit(20);
       if (error) throw error;
       setClientes(data || []);
+      if ((data || []).length === 0) {
+        toast.info("Nenhum cliente encontrado na base da empresa");
+      }
     } catch {
       toast.error("Erro ao buscar clientes");
     } finally {
