@@ -583,11 +583,11 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
             <Card>
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                  <FileSpreadsheet className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <div className="text-sm text-muted-foreground">
-                    <p className="font-medium text-foreground mb-1">Formato da planilha (CSV)</p>
-                    <p>Colunas esperadas: <strong>cliente</strong>, <strong>documento</strong> (CPF/CNPJ), <strong>email</strong>, <strong>telefone</strong>, <strong>produto</strong>, <strong>valor</strong>, <strong>data</strong></p>
-                    <p className="mt-1">Separe por vírgula, ponto-e-vírgula ou tab.</p>
+                    <p className="font-medium text-foreground mb-1">Importação Inteligente</p>
+                    <p>O sistema detecta automaticamente as colunas da sua planilha. Aceita CSV, XLS e XLSX com qualquer separador.</p>
+                    <p className="mt-1 text-xs">Campos reconhecidos: cliente, CPF/CNPJ, email, telefone, produto, valor, data</p>
                   </div>
                 </div>
               </CardContent>
@@ -599,17 +599,40 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
                 className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
               >
                 {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {uploading ? "Processando..." : "Enviar planilha (.csv)"}
+                {uploading ? "Analisando planilha..." : "Enviar planilha"}
               </Label>
               <input
                 id="spreadsheet-upload"
                 type="file"
-                accept=".csv,.xlsx,.xls"
+                accept=".csv,.xlsx,.xls,.tsv,.txt"
                 className="hidden"
                 onChange={handleSpreadsheetUpload}
                 disabled={uploading}
               />
             </div>
+
+            {/* Detected mapping badges */}
+            {Object.keys(detectedMapping).length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {Object.entries(detectedMapping).map(([field, originalHeader]) => {
+                  const labels: Record<string, string> = {
+                    cliente_nome: "Cliente",
+                    cliente_documento: "CPF/CNPJ",
+                    cliente_email: "Email",
+                    cliente_telefone: "Telefone",
+                    produto: "Produto",
+                    valor: "Valor",
+                    data_venda: "Data",
+                  };
+                  return (
+                    <Badge key={field} variant="secondary" className="text-[10px] gap-1">
+                      ✓ {labels[field] || field}
+                      <span className="text-muted-foreground">← {originalHeader}</span>
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
 
             {spreadsheetRows.length > 0 && (
               <>
@@ -622,26 +645,34 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
                         <TableHead>Documento</TableHead>
                         <TableHead>Produto</TableHead>
                         <TableHead className="text-right">Valor</TableHead>
+                        <TableHead>Data</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {spreadsheetRows.map((row, idx) => (
-                        <TableRow key={idx}>
+                        <TableRow key={idx} className={(!row.cliente_nome || !row.valor) ? "opacity-50" : ""}>
                           <TableCell>
                             <Checkbox
                               checked={selectedSpreadsheetRows.has(idx)}
                               onCheckedChange={() => toggleSpreadsheetRow(idx)}
                             />
                           </TableCell>
-                          <TableCell className="text-xs truncate max-w-[120px]">{row.cliente_nome || "—"}</TableCell>
+                          <TableCell className="text-xs truncate max-w-[120px]">{row.cliente_nome || <span className="text-destructive">—</span>}</TableCell>
                           <TableCell className="text-xs">{row.cliente_documento || "—"}</TableCell>
                           <TableCell className="text-xs truncate max-w-[120px]">{row.produto || "—"}</TableCell>
-                          <TableCell className="text-xs text-right">{row.valor || "—"}</TableCell>
+                          <TableCell className="text-xs text-right">{row.valor || <span className="text-destructive">—</span>}</TableCell>
+                          <TableCell className="text-xs">{row.data_venda || "—"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
+                {spreadsheetRows.some(r => !r.cliente_nome || !r.valor) && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Linhas sem cliente ou valor serão ignoradas na emissão
+                  </p>
+                )}
                 <Button onClick={emitFromSpreadsheet} disabled={emitting || selectedSpreadsheetRows.size === 0} className="w-full">
                   {emitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileText className="h-4 w-4 mr-2" />}
                   Emitir {selectedSpreadsheetRows.size} nota(s)
