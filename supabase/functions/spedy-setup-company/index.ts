@@ -142,12 +142,35 @@ serve(async (req) => {
       });
       const data = await res.json();
       if (!res.ok) {
-        console.error("Spedy create company error:", data);
-        return new Response(JSON.stringify({ error: "Erro ao criar empresa na Spedy", details: data }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        // If CNPJ already exists in Spedy, try to find and link it
+        const isDuplicate = Array.isArray(data?.errors) &&
+          data.errors.some((e: any) => typeof e.message === "string" && e.message.includes("CNPJ já possui"));
+        if (isDuplicate) {
+          console.log("CNPJ already exists in Spedy, searching for existing company...");
+          const searchRes = await fetch(`${spedyConfig.api_url}/companies?federalTaxNumber=${cnpj}`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json", "X-Api-Key": spedyConfig.api_key },
+          });
+          const searchData = await searchRes.json();
+          const found = Array.isArray(searchData) ? searchData[0] : searchData?.data?.[0];
+          if (found?.id) {
+            spedyCompanyId = found.id;
+            console.log("Found existing Spedy company:", spedyCompanyId);
+          } else {
+            console.error("Could not find existing Spedy company for CNPJ:", cnpj);
+            return new Response(JSON.stringify({ error: "CNPJ já cadastrado na Spedy mas não foi possível vincular automaticamente. Contate o suporte." }), {
+              status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        } else {
+          console.error("Spedy create company error:", data);
+          return new Response(JSON.stringify({ error: "Erro ao criar empresa na Spedy", details: data }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } else {
+        spedyCompanyId = data.id;
       }
-      spedyCompanyId = data.id;
       // Save spedy_company_id
       await supabase.from("empresas").update({ spedy_company_id: spedyCompanyId }).eq("id", empresa_id);
     }
