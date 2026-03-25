@@ -76,6 +76,20 @@ function calcularFluxoMensal(
 }
 
 /**
+ * Calculates "Meses de Caixa" using the formula:
+ * (Caixa Atual + Receitas a Receber) / Custo Médio Mensal
+ */
+export function calcularMesesDeCaixa(
+  caixaAtual: number,
+  receitasPendentes: number,
+  custoMedioMensal: number
+): number {
+  if (custoMedioMensal <= 0) return 12; // no expenses = infinite runway, cap at 12
+  const meses = (caixaAtual + receitasPendentes) / custoMedioMensal;
+  return Math.max(0, Math.floor(meses));
+}
+
+/**
  * Simulates cash flow month by month and returns how many months the cash stays positive.
  * Also returns projection data for charting.
  */
