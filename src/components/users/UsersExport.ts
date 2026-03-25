@@ -51,7 +51,7 @@ export const exportToPDF = (users: User[], getPermissaoLabel: (permissao: string
       nome: u.nome,
       email: u.email,
       permissao: getPermissaoLabel(u.permissao),
-      created_at: new Date(u.created_at).toLocaleDateString(),
+      created_at: new Date(u.created_at).toLocaleDateString("pt-BR"),
     })),
     badgeColumns: {
       permissao: {

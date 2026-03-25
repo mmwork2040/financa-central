@@ -256,7 +256,7 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                 <TableCell>
                   <AssinaturaBadge user={user} isSuperAdmin={isSuperAdmin} onRefresh={onRefresh} />
                 </TableCell>
-                <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(user.created_at).toLocaleDateString("pt-BR")}</TableCell>
                 <TableCell>
                   <div className="flex justify-center space-x-1">
                     {canModify && (

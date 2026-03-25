@@ -373,7 +373,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                   )}
                   <TableCell>
                     <div className="leading-tight">
-                      <span>{new Date(lancamento.created_at).toLocaleDateString()}</span>
+                      <span>{new Date(lancamento.created_at).toLocaleDateString("pt-BR")}</span>
                       <span className="block text-[10px] text-muted-foreground">{new Date(lancamento.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </TableCell>

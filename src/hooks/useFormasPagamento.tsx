@@ -131,8 +131,8 @@ export const useFormasPagamento = () => {
       ],
       rows: filteredFormasPagamento.map(f => ({
         descricao: f.descricao,
-        created_at: new Date(f.created_at).toLocaleDateString(),
-        updated_at: new Date(f.updated_at).toLocaleDateString(),
+        created_at: new Date(f.created_at).toLocaleDateString("pt-BR"),
+        updated_at: new Date(f.updated_at).toLocaleDateString("pt-BR"),
       })),
     });
   };

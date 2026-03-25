@@ -27,7 +27,7 @@ export const exportToCSV = <T extends Record<string, any>>(
           // Handle special formatting for dates, nulls, etc.
           const value = item[key];
           if (value === null || value === undefined) return '""';
-          if (value instanceof Date) return `"${value.toLocaleDateString()}"`;
+          if (value instanceof Date) return `"${value.toLocaleDateString("pt-BR")}"`;
           // Escape quotes and wrap in quotes to handle commas in values
           return `"${String(value).replace(/"/g, '""')}"`;
         })
