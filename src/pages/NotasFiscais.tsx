@@ -84,7 +84,6 @@ const NotasFiscais = () => {
     <div className="space-y-4">
       <PageHeader
         title="Notas Fiscais"
-        subtitle="Acompanhe as notas fiscais emitidas para suas vendas"
         icon={FileText}
       />
 
