@@ -118,7 +118,7 @@ const NotasFiscais = () => {
         </Card>
       </div>
 
-      {/* Search + Refresh */}
+      {/* Search + Actions */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -129,6 +129,9 @@ const NotasFiscais = () => {
             className="pl-9"
           />
         </div>
+        <Button onClick={() => setEmitirOpen(true)} className="gap-1.5">
+          <Plus className="h-4 w-4" /> {!isMobile && "Emitir Nota"}
+        </Button>
         <Button variant="outline" size="icon" onClick={fetchVendas} disabled={loading}>
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
         </Button>
