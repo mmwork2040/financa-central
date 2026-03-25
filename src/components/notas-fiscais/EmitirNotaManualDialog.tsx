@@ -278,6 +278,61 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
   };
 
   // Spreadsheet upload
+  const parseFileToHeadersAndRows = async (file: File): Promise<{ headers: string[]; dataRows: string[][] }> => {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    
+    // Try XLSX/XLS binary parsing first for xlsx/xls, or as fallback
+    const tryXlsx = async (): Promise<{ headers: string[]; dataRows: string[][] } | null> => {
+      try {
+        const buffer = await file.arrayBuffer();
+        const wb = XLSX.read(buffer, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, defval: "" });
+        if (!jsonData || jsonData.length < 2) return null;
+        const headers = (jsonData[0] as any[]).map((h: any) => String(h ?? "").trim());
+        const dataRows = jsonData.slice(1).map((row: any[]) => row.map((c: any) => String(c ?? "").trim()));
+        return { headers, dataRows };
+      } catch {
+        return null;
+      }
+    };
+
+    // Try CSV/TSV text parsing
+    const tryCsv = async (): Promise<{ headers: string[]; dataRows: string[][] } | null> => {
+      try {
+        let text = await file.text();
+        text = text.replace(/^\uFEFF/, "").replace(/^\uFFFE/, "").replace(/^\xEF\xBB\xBF/, "");
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length < 2) return null;
+        const separator = detectBestSeparator(text);
+        const sepRegex = new RegExp(separator === "|" ? "\\|" : (separator === "\t" ? "\t" : separator));
+        const headers = lines[0].split(sepRegex).map(h => h.trim().replace(/^["']|["']$/g, "").replace(/^\uFEFF/, "").trim());
+        const dataRows = lines.slice(1).map(line => 
+          line.split(sepRegex).map(c => c.trim().replace(/^["']|["']$/g, ""))
+        );
+        return { headers, dataRows };
+      } catch {
+        return null;
+      }
+    };
+
+    // For xlsx/xls try binary first; for csv/tsv try text first then binary fallback
+    if (ext === "xlsx" || ext === "xls") {
+      const result = await tryXlsx();
+      if (result) return result;
+      const csvResult = await tryCsv();
+      if (csvResult) return csvResult;
+    } else {
+      // For csv/txt/tsv: try binary first (some .csv files are actually xlsx)
+      const xlsxResult = await tryXlsx();
+      if (xlsxResult && xlsxResult.headers.some(h => h.length > 0)) return xlsxResult;
+      const csvResult = await tryCsv();
+      if (csvResult) return csvResult;
+    }
+
+    throw new Error("Não foi possível ler o arquivo");
+  };
+
   const handleSpreadsheetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -290,30 +345,8 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
 
     setUploading(true);
     try {
-      let text = await file.text();
-      
-      // Remove BOM characters (UTF-8, UTF-16 LE/BE)
-      text = text.replace(/^\uFEFF/, "").replace(/^\uFFFE/, "").replace(/^\xEF\xBB\xBF/, "");
-      
-      const lines = text.split(/\r?\n/).filter(l => l.trim());
-      if (lines.length < 2) {
-        toast.error("Planilha vazia ou sem dados");
-        setUploading(false);
-        return;
-      }
+      const { headers: rawHeaders, dataRows } = await parseFileToHeadersAndRows(file);
 
-      const separator = detectBestSeparator(text);
-      const sepRegex = new RegExp(separator === "|" ? "\\|" : (separator === "\t" ? "\t" : separator));
-      
-      // Clean headers: remove BOM, quotes, extra whitespace, normalize
-      const rawHeaders = lines[0].split(sepRegex).map(h => 
-        h.trim()
-          .replace(/^["']|["']$/g, "")
-          .replace(/^\uFEFF/, "")
-          .trim()
-      );
-
-      console.log("[NF Import] Separador detectado:", JSON.stringify(separator));
       console.log("[NF Import] Headers encontrados:", rawHeaders);
 
       // Auto-detect column mapping
@@ -345,7 +378,6 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
 
       console.log("[NF Import] Mapeamento detectado:", mapping);
 
-      // If no mapping found, show headers to help user
       if (Object.keys(mapping).length === 0) {
         toast.error(`Nenhuma coluna reconhecida. Colunas encontradas: ${rawHeaders.filter(h => h).join(", ")}`);
         setDetectedMapping({});
@@ -357,9 +389,7 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
       setDetectedMapping(mappingLabels);
 
       const rows: any[] = [];
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(sepRegex).map(c => c.trim().replace(/^["']|["']$/g, ""));
-        
+      for (const cols of dataRows) {
         const getValue = (field: string) => {
           const idx = mapping[field];
           return idx !== undefined ? (cols[idx] || "") : "";
@@ -370,12 +400,14 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
           cliente_documento: getValue("cliente_documento"),
           cliente_email: getValue("cliente_email"),
           cliente_telefone: getValue("cliente_telefone"),
+          cliente_endereco: [getValue("endereco"), getValue("cidade"), getValue("estado"), getValue("cep")].filter(v => v && v !== "-").join(", ") || "",
           produto: getValue("produto"),
           valor: getValue("valor"),
           data_venda: getValue("data_venda"),
+          forma_pagamento: getValue("forma_pagamento"),
+          observacoes: getValue("observacoes"),
         };
 
-        // Skip completely empty rows
         const hasAnyValue = Object.values(row).some(v => v && v.trim());
         if (!hasAnyValue) continue;
 
