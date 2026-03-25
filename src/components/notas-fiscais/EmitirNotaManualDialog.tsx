@@ -216,57 +216,137 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
     }
   };
 
+  // Column alias mapping for smart detection
+  const COLUMN_ALIASES: Record<string, string[]> = {
+    cliente_nome: ["cliente", "nome", "customer", "nome do cliente", "nome_cliente", "razao social", "razão social", "razao_social", "comprador", "buyer", "nome completo", "name", "destinatario", "destinatário"],
+    cliente_documento: ["cpf", "cnpj", "cpf_cnpj", "documento", "cpf/cnpj", "document", "doc", "cpf cnpj", "numero documento", "número documento", "nro documento", "tax_id", "federal_tax_number"],
+    cliente_email: ["email", "e-mail", "e_mail", "mail", "correo", "email_cliente", "email cliente"],
+    cliente_telefone: ["telefone", "phone", "tel", "celular", "fone", "whatsapp", "contato", "telefone_cliente"],
+    produto: ["produto", "descricao", "descrição", "product", "item", "servico", "serviço", "nome_produto", "nome produto", "descricao_produto", "mercadoria", "service", "description", "desc"],
+    valor: ["valor", "value", "preco", "preço", "amount", "valor_bruto", "valor bruto", "total", "price", "valor_total", "valor total", "vlr", "val", "montante", "valor unitario", "valor unitário", "valor_unitario"],
+    data_venda: ["data", "date", "data_venda", "data venda", "data da venda", "dt_venda", "dt venda", "data emissao", "data emissão", "data_emissao", "created_at", "created", "purchase_date", "sale_date", "dt"],
+  };
+
+  const [detectedMapping, setDetectedMapping] = useState<Record<string, string>>({});
+
+  const detectBestSeparator = (text: string): string => {
+    const firstLine = text.split("\n")[0] || "";
+    const separators = [";", ",", "\t", "|"];
+    let best = ",";
+    let maxCount = 0;
+    for (const sep of separators) {
+      const count = (firstLine.match(new RegExp(sep === "|" ? "\\|" : sep, "g")) || []).length;
+      if (count > maxCount) {
+        maxCount = count;
+        best = sep;
+      }
+    }
+    return best;
+  };
+
+  const findBestMatch = (header: string): { field: string; score: number } | null => {
+    const normalized = header.toLowerCase().trim()
+      .replace(/[_\-\.]/g, " ")
+      .replace(/\s+/g, " ")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    for (const [field, aliases] of Object.entries(COLUMN_ALIASES)) {
+      for (const alias of aliases) {
+        const normalizedAlias = alias.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (normalized === normalizedAlias) return { field, score: 100 };
+        if (normalized.includes(normalizedAlias) || normalizedAlias.includes(normalized)) {
+          return { field, score: 80 };
+        }
+      }
+    }
+    return null;
+  };
+
   // Spreadsheet upload
   const handleSpreadsheetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const validTypes = [
-      "text/csv",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "application/vnd.ms-excel",
-    ];
     const ext = file.name.split(".").pop()?.toLowerCase();
-    if (!validTypes.includes(file.type) && !["csv", "xlsx", "xls"].includes(ext || "")) {
-      toast.error("Formato não suportado. Envie CSV ou XLSX.");
+    if (!["csv", "xlsx", "xls", "tsv", "txt"].includes(ext || "")) {
+      toast.error("Formato não suportado. Envie CSV, XLSX ou XLS.");
       return;
     }
 
     setUploading(true);
     try {
       const text = await file.text();
-      const lines = text.split("\n").filter(l => l.trim());
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
       if (lines.length < 2) {
         toast.error("Planilha vazia ou sem dados");
         setUploading(false);
         return;
       }
 
-      const headers = lines[0].split(/[,;\t]/).map(h => h.trim().toLowerCase().replace(/"/g, ""));
+      const separator = detectBestSeparator(text);
+      const sepRegex = new RegExp(separator === "|" ? "\\|" : (separator === "\t" ? "\t" : separator));
+      
+      const headers = lines[0].split(sepRegex).map(h => h.trim().replace(/^["']|["']$/g, ""));
+
+      // Auto-detect column mapping
+      const mapping: Record<string, number> = {};
+      const mappingLabels: Record<string, string> = {};
+      const usedIndices = new Set<number>();
+
+      // First pass: exact matches (score 100)
+      headers.forEach((h, idx) => {
+        const match = findBestMatch(h);
+        if (match && match.score === 100 && !mapping[match.field]) {
+          mapping[match.field] = idx;
+          mappingLabels[match.field] = h;
+          usedIndices.add(idx);
+        }
+      });
+
+      // Second pass: partial matches for unmapped fields
+      headers.forEach((h, idx) => {
+        if (usedIndices.has(idx)) return;
+        const match = findBestMatch(h);
+        if (match && !mapping[match.field]) {
+          mapping[match.field] = idx;
+          mappingLabels[match.field] = h;
+          usedIndices.add(idx);
+        }
+      });
+
+      setDetectedMapping(mappingLabels);
+
       const rows: any[] = [];
-
       for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(/[,;\t]/).map(c => c.trim().replace(/"/g, ""));
-        const row: Record<string, string> = {};
-        headers.forEach((h, idx) => {
-          row[h] = cols[idx] || "";
-        });
+        const cols = lines[i].split(sepRegex).map(c => c.trim().replace(/^["']|["']$/g, ""));
+        
+        const getValue = (field: string) => {
+          const idx = mapping[field];
+          return idx !== undefined ? (cols[idx] || "") : "";
+        };
 
-        // Try to map common column names
-        rows.push({
-          cliente_nome: row["cliente"] || row["nome"] || row["customer"] || row["nome do cliente"] || "",
-          cliente_documento: row["cpf"] || row["cnpj"] || row["cpf_cnpj"] || row["documento"] || row["cpf/cnpj"] || "",
-          cliente_email: row["email"] || row["e-mail"] || "",
-          cliente_telefone: row["telefone"] || row["phone"] || row["tel"] || "",
-          produto: row["produto"] || row["descricao"] || row["descrição"] || row["product"] || row["item"] || "",
-          valor: row["valor"] || row["value"] || row["preco"] || row["preço"] || row["amount"] || row["valor_bruto"] || "",
-          data_venda: row["data"] || row["date"] || row["data_venda"] || "",
-        });
+        const row = {
+          cliente_nome: getValue("cliente_nome"),
+          cliente_documento: getValue("cliente_documento"),
+          cliente_email: getValue("cliente_email"),
+          cliente_telefone: getValue("cliente_telefone"),
+          produto: getValue("produto"),
+          valor: getValue("valor"),
+          data_venda: getValue("data_venda"),
+        };
+
+        // Skip completely empty rows
+        if (!row.cliente_nome && !row.produto && !row.valor) continue;
+
+        rows.push(row);
       }
 
       setSpreadsheetRows(rows);
       setSelectedSpreadsheetRows(new Set(rows.map((_, i) => i)));
-      toast.success(`${rows.length} linha(s) carregada(s)`);
+
+      const mappedFields = Object.keys(mapping);
+      const total = Object.keys(COLUMN_ALIASES).length;
+      toast.success(`${rows.length} linha(s) carregada(s) · ${mappedFields.length}/${total} campos detectados`);
     } catch {
       toast.error("Erro ao processar planilha");
     } finally {
@@ -503,11 +583,11 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
             <Card>
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                  <FileSpreadsheet className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <div className="text-sm text-muted-foreground">
-                    <p className="font-medium text-foreground mb-1">Formato da planilha (CSV)</p>
-                    <p>Colunas esperadas: <strong>cliente</strong>, <strong>documento</strong> (CPF/CNPJ), <strong>email</strong>, <strong>telefone</strong>, <strong>produto</strong>, <strong>valor</strong>, <strong>data</strong></p>
-                    <p className="mt-1">Separe por vírgula, ponto-e-vírgula ou tab.</p>
+                    <p className="font-medium text-foreground mb-1">Importação Inteligente</p>
+                    <p>O sistema detecta automaticamente as colunas da sua planilha. Aceita CSV, XLS e XLSX com qualquer separador.</p>
+                    <p className="mt-1 text-xs">Campos reconhecidos: cliente, CPF/CNPJ, email, telefone, produto, valor, data</p>
                   </div>
                 </div>
               </CardContent>
@@ -519,17 +599,40 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
                 className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
               >
                 {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {uploading ? "Processando..." : "Enviar planilha (.csv)"}
+                {uploading ? "Analisando planilha..." : "Enviar planilha"}
               </Label>
               <input
                 id="spreadsheet-upload"
                 type="file"
-                accept=".csv,.xlsx,.xls"
+                accept=".csv,.xlsx,.xls,.tsv,.txt"
                 className="hidden"
                 onChange={handleSpreadsheetUpload}
                 disabled={uploading}
               />
             </div>
+
+            {/* Detected mapping badges */}
+            {Object.keys(detectedMapping).length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {Object.entries(detectedMapping).map(([field, originalHeader]) => {
+                  const labels: Record<string, string> = {
+                    cliente_nome: "Cliente",
+                    cliente_documento: "CPF/CNPJ",
+                    cliente_email: "Email",
+                    cliente_telefone: "Telefone",
+                    produto: "Produto",
+                    valor: "Valor",
+                    data_venda: "Data",
+                  };
+                  return (
+                    <Badge key={field} variant="secondary" className="text-[10px] gap-1">
+                      ✓ {labels[field] || field}
+                      <span className="text-muted-foreground">← {originalHeader}</span>
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
 
             {spreadsheetRows.length > 0 && (
               <>
@@ -542,26 +645,34 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
                         <TableHead>Documento</TableHead>
                         <TableHead>Produto</TableHead>
                         <TableHead className="text-right">Valor</TableHead>
+                        <TableHead>Data</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {spreadsheetRows.map((row, idx) => (
-                        <TableRow key={idx}>
+                        <TableRow key={idx} className={(!row.cliente_nome || !row.valor) ? "opacity-50" : ""}>
                           <TableCell>
                             <Checkbox
                               checked={selectedSpreadsheetRows.has(idx)}
                               onCheckedChange={() => toggleSpreadsheetRow(idx)}
                             />
                           </TableCell>
-                          <TableCell className="text-xs truncate max-w-[120px]">{row.cliente_nome || "—"}</TableCell>
+                          <TableCell className="text-xs truncate max-w-[120px]">{row.cliente_nome || <span className="text-destructive">—</span>}</TableCell>
                           <TableCell className="text-xs">{row.cliente_documento || "—"}</TableCell>
                           <TableCell className="text-xs truncate max-w-[120px]">{row.produto || "—"}</TableCell>
-                          <TableCell className="text-xs text-right">{row.valor || "—"}</TableCell>
+                          <TableCell className="text-xs text-right">{row.valor || <span className="text-destructive">—</span>}</TableCell>
+                          <TableCell className="text-xs">{row.data_venda || "—"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
+                {spreadsheetRows.some(r => !r.cliente_nome || !r.valor) && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Linhas sem cliente ou valor serão ignoradas na emissão
+                  </p>
+                )}
                 <Button onClick={emitFromSpreadsheet} disabled={emitting || selectedSpreadsheetRows.size === 0} className="w-full">
                   {emitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileText className="h-4 w-4 mr-2" />}
                   Emitir {selectedSpreadsheetRows.size} nota(s)
