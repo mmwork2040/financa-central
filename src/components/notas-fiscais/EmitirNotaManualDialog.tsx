@@ -229,8 +229,12 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
     cliente_email: ["email", "e-mail", "e_mail", "mail", "correo", "email_cliente", "email cliente"],
     cliente_telefone: ["telefone", "phone", "tel", "celular", "fone", "whatsapp", "contato", "telefone_cliente"],
     produto: ["produto", "descricao", "descrição", "product", "item", "servico", "serviço", "nome_produto", "nome produto", "descricao_produto", "mercadoria", "service", "description", "desc"],
-    valor: ["valor", "value", "preco", "preço", "amount", "valor_bruto", "valor bruto", "total", "price", "valor_total", "valor total", "vlr", "val", "montante", "valor unitario", "valor unitário", "valor_unitario"],
-    data_venda: ["data", "date", "data_venda", "data venda", "data da venda", "dt_venda", "dt venda", "data emissao", "data emissão", "data_emissao", "created_at", "created", "purchase_date", "sale_date", "dt"],
+    valor: ["valor", "value", "preco", "preço", "amount", "valor_bruto", "valor bruto", "total", "price", "valor_total", "valor total", "vlr", "val", "montante", "valor unitario", "valor unitário", "valor_unitario", "valor (r$)", "valor r$"],
+    data_venda: ["data", "date", "data_venda", "data venda", "data da venda", "dt_venda", "dt venda", "data emissao", "data emissão", "data_emissao", "created_at", "created", "purchase_date", "sale_date", "dt", "data compra", "data_compra"],
+    forma_pagamento: ["forma pagamento", "forma_pagamento", "forma de pagamento", "payment method", "metodo pagamento", "método pagamento", "meio pagamento", "meio de pagamento", "payment"],
+    mes_emissao: ["mes emissao nf", "mês emissão nf", "mes emissao", "mês emissão", "mes_emissao_nf", "mes_emissao", "competencia", "competência", "month"],
+    status_nf: ["status nf", "status_nf", "status nota", "status nota fiscal", "situacao nf", "situação nf"],
+    observacoes: ["observacoes", "observações", "obs", "notas", "notes", "comentarios", "comentários", "comments"],
   };
 
   const [detectedMapping, setDetectedMapping] = useState<Record<string, string>>({});
