@@ -14,7 +14,7 @@ export const exportToCSV = (users: User[], getPermissaoLabel: (permissao: string
         user.nome,
         user.email,
         permissao,
-        new Date(user.created_at).toLocaleDateString()
+        new Date(user.created_at).toLocaleDateString("pt-BR")
       ].map(value => `"${value}"`).join(",");
       
       csvContent += row + "\n";
@@ -51,7 +51,7 @@ export const exportToPDF = (users: User[], getPermissaoLabel: (permissao: string
       nome: u.nome,
       email: u.email,
       permissao: getPermissaoLabel(u.permissao),
-      created_at: new Date(u.created_at).toLocaleDateString(),
+      created_at: new Date(u.created_at).toLocaleDateString("pt-BR"),
     })),
     badgeColumns: {
       permissao: {

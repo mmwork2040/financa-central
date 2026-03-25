@@ -210,8 +210,8 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Registro: {new Date(l.created_at).toLocaleDateString()} {new Date(l.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          {' · '}Venc: {new Date(l.data_vencimento).toLocaleDateString()}
+                          Registro: {new Date(l.created_at).toLocaleDateString("pt-BR")} {new Date(l.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {' · '}Venc: {new Date(l.data_vencimento).toLocaleDateString("pt-BR")}
                         {l.categoria?.nome ? ` · ${l.categoria.nome}` : ''}
                         {(l as any).forma_pagamento?.descricao ? ` · ${(l as any).forma_pagamento.descricao}` : ''}
                         </p>
@@ -373,7 +373,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                   )}
                   <TableCell>
                     <div className="leading-tight">
-                      <span>{new Date(lancamento.created_at).toLocaleDateString()}</span>
+                      <span>{new Date(lancamento.created_at).toLocaleDateString("pt-BR")}</span>
                       <span className="block text-[10px] text-muted-foreground">{new Date(lancamento.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </TableCell>

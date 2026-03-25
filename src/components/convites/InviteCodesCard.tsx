@@ -370,7 +370,7 @@ const InviteCodeItem = ({ code, onCopy, onDelete, perfis }: { code: InviteCode; 
         <p className="text-xs text-muted-foreground pl-1">
           Usado por <span className="font-medium text-foreground">{code.redeemed_by_name}</span>
           {code.redeemed_by_email && <span> ({code.redeemed_by_email})</span>}
-          {code.redeemed_at && <span> em {new Date(code.redeemed_at).toLocaleDateString()}</span>}
+          {code.redeemed_at && <span> em {new Date(code.redeemed_at).toLocaleDateString("pt-BR")}</span>}
         </p>
       )}
     </div>
