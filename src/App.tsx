@@ -45,6 +45,7 @@ import TermosConfig from "./pages/TermosConfig";
 import Suporte from "./pages/Suporte";
 import ImportarDocumentos from "./pages/ImportarDocumentos";
 import PerfisAcesso from "./pages/PerfisAcesso";
+import NotasFiscais from "./pages/NotasFiscais";
 
 const queryClient = new QueryClient();
 
