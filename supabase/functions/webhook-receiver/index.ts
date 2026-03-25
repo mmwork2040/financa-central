@@ -61,10 +61,11 @@ function parseHotmart(body: any): SaleData | null {
     purchase?.transaction?.status?.toLowerCase?.() || "approved";
 
   const valorBruto = Number(purchase?.price?.value || purchase?.original_offer_price?.value || purchase?.full_price?.value || purchase?.price || 0);
-  const fee = Number(purchase?.fee?.value || 0);
-  const commission = Number(purchase?.commission?.value || 0);
-  // Always: valor_comissao = valor_bruto - taxa (receita líquida do CNPJ)
-  const valorComissao = valorBruto - fee;
+  const commissionRaw = Number(purchase?.commission?.value || 0);
+  // Hotmart nem sempre envia fee; quando commission existe, fee = bruto - commission
+  const fee = commissionRaw > 0 ? (valorBruto - commissionRaw) : Number(purchase?.fee?.value || 0);
+  // Receita líquida do CNPJ = commission (quando disponível) ou bruto - fee
+  const valorComissao = commissionRaw > 0 ? commissionRaw : (valorBruto - fee);
 
   return {
     plataforma: "hotmart",
