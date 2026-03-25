@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FileText, Search, ExternalLink, CheckCircle2, XCircle, Clock, AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { FileText, Search, ExternalLink, CheckCircle2, XCircle, Clock, AlertTriangle, Loader2, RefreshCw, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useIsMobile } from "@/hooks/use-mobile";
 import PageHeader from "@/components/common/PageHeader";
+import EmitirNotaManualDialog from "@/components/notas-fiscais/EmitirNotaManualDialog";
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   ISSUED: { label: "Emitida", icon: CheckCircle2, variant: "default" },
