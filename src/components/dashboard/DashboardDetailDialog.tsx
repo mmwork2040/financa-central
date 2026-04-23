@@ -5,6 +5,7 @@ import { useValuesVisibility, maskValue } from "@/contexts/ValuesVisibilityConte
 import { ArrowUpRight, ArrowDownRight, Wallet, AlertTriangle, Clock, Calendar, Landmark, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { isPending } from "@/utils/lancamentoStatus";
 
 export type DashboardDialogType = 'saldo' | 'receitas' | 'despesas' | 'receita-pendente' | 'contas-pagar' | 'meses-caixa' | null;
 
@@ -205,7 +206,7 @@ const DespesasContent = ({ lancamentosMes, visible, executado, previsto }: { lan
 
 /* ─── Receita Pendente ─── */
 const ReceitaPendenteContent = ({ lancamentosMes, visible }: { lancamentosMes: any[]; visible: boolean }) => {
-  const pendentes = lancamentosMes.filter((l: any) => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto') && l.origem !== 'transferencia');
+  const pendentes = lancamentosMes.filter((l: any) => l.tipo === 'receita' && isPending(l.status) && l.origem !== 'transferencia');
   const total = pendentes.reduce((s: number, l: any) => s + (l.valor || 0), 0);
   return (
     <div className="space-y-3">
@@ -238,7 +239,7 @@ const ReceitaPendenteContent = ({ lancamentosMes, visible }: { lancamentosMes: a
 
 /* ─── Contas a Pagar ─── */
 const ContasPagarContent = ({ lancamentosMes, visible, hoje }: { lancamentosMes: any[]; visible: boolean; hoje: Date }) => {
-  const pendentes = lancamentosMes.filter((l: any) => l.tipo === 'despesa' && (l.status === 'pendente' || l.status === 'aberto') && l.origem !== 'transferencia');
+  const pendentes = lancamentosMes.filter((l: any) => l.tipo === 'despesa' && isPending(l.status) && l.origem !== 'transferencia');
   const total = pendentes.reduce((s: number, l: any) => s + (l.valor || 0), 0);
   const emAtraso = pendentes.filter((l: any) => new Date(l.data_vencimento) < hoje);
   return (

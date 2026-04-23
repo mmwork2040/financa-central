@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { isPending, isExecuted } from "@/utils/lancamentoStatus";
 
 export interface RelatorioData {
   dataReceitas: {name: string; value: number}[];
@@ -85,11 +86,11 @@ export const useRelatoriosData = (periodo: string, customStart?: Date, customEnd
       lancamentos.forEach(l => {
         const valor = Number(l.valor) || 0;
         if (l.tipo === 'receita') {
-          if (l.status === 'pago' || l.status === 'recebido') recExec += valor;
-          else if (l.status === 'pendente') recPrev += valor;
+          if (isExecuted(l.status)) recExec += valor;
+          else if (isPending(l.status)) recPrev += valor;
         } else {
-          if (l.status === 'pago' || l.status === 'recebido') despExec += valor;
-          else if (l.status === 'pendente') despPrev += valor;
+          if (isExecuted(l.status)) despExec += valor;
+          else if (isPending(l.status)) despPrev += valor;
         }
       });
 
@@ -170,14 +171,14 @@ export const useRelatoriosData = (periodo: string, customStart?: Date, customEnd
       if (!mesKey) return;
       if (!meses[mesKey]) meses[mesKey] = { receitas: 0, despesas: 0, receitasPrevistas: 0, despesasPrevistas: 0 };
       const valor = Number(l.valor) || 0;
-      const executado = l.status === 'pago' || l.status === 'recebido';
+      const executado = isExecuted(l.status);
 
       if (l.tipo === 'receita') {
         if (executado) meses[mesKey].receitas += valor;
-        else if (l.status === 'pendente') meses[mesKey].receitasPrevistas += valor;
+        else if (isPending(l.status)) meses[mesKey].receitasPrevistas += valor;
       } else {
         if (executado) meses[mesKey].despesas += valor;
-        else if (l.status === 'pendente') meses[mesKey].despesasPrevistas += valor;
+        else if (isPending(l.status)) meses[mesKey].despesasPrevistas += valor;
       }
     });
 
