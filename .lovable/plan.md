@@ -1,57 +1,52 @@
 
 
-## Scroll Animations for Landing Page Sections
+## Plano: Manter lançamentos vencidos como pendentes nos cálculos
 
-### Overview
-Add scroll-triggered reveal animations to each section ("dobra") of the landing page so elements animate in as the user scrolls down, creating a dynamic and engaging experience.
+### Problema
+Quando um lançamento ultrapassa a data de vencimento, a Edge Function `check-overdue-lancamentos` muda o status de `pendente` → `vencido`. Como os filtros do Dashboard, Resumo, Relatórios e projeções verificam apenas `status === 'pendente'` (ou `'aberto'`), o item desaparece dos totais de "Receitas/Despesas Previstas", "Contas a Pagar", projeções de fluxo de caixa e indicadores de saúde — fazendo parecer que sumiu do sistema.
 
-### Approach
-Create a reusable `useScrollReveal` hook using the native `IntersectionObserver` API (no extra dependencies needed). Then wrap each section's content with an animation container that fades/slides in when it enters the viewport.
+### Solução
+Tratar `vencido` (e `atrasado`) como um sub-estado de "pendente" em todos os cálculos. O status continua sendo gravado para destacar visualmente o atraso (badge vermelho, notificações), mas passa a ser **incluído** em qualquer agregação de pendências. Só sai do cálculo quando o usuário marca como pago/recebido, cancela/ignora ou exclui.
 
-### Implementation Details
+### Arquivos a alterar
 
-**1. Create `src/hooks/useScrollReveal.ts`**
-- A custom hook that returns a `ref` callback
-- Uses `IntersectionObserver` with a threshold (~0.15) to detect when elements enter the viewport
-- Adds a CSS class (e.g., `revealed`) when the element is visible
-- Fires once per element (unobserves after reveal)
+1. **`src/components/lancamentos/LancamentosSummary.tsx`**
+   - Trocar `l.status === "pendente"` por `["pendente","aberto","vencido","atrasado"].includes(l.status)` nos cards "Receitas Previstas" e "Despesas Previstas" (valor + contagem).
 
-**2. Create a `ScrollReveal` wrapper component (`src/components/common/ScrollReveal.tsx`)**
-- Accepts `direction` prop: `"up"` (default), `"left"`, `"right"`, `"scale"`
-- Accepts optional `delay` (stagger support) and `className`
-- Starts with opacity-0 and a small transform offset
-- On intersection, transitions to opacity-1 and transform-none
-- Uses CSS transitions (not keyframe animations) for smooth, GPU-accelerated reveals
+2. **`src/hooks/useDashboardData.tsx`**
+   - Substituir todas as ocorrências de `(l.status === 'pendente' || l.status === 'aberto')` por um helper `isPendingLike(status)` que também aceita `'vencido'` e `'atrasado'`. Aplica-se a:
+     - `receitasPrevistas` / `despesasPrevistas`
+     - `proximasContas` e `emAtraso`
+     - `receitasPendList`
+     - As duas queries Supabase `.in('status', ['pendente','aberto'])` → adicionar `'vencido'` e `'atrasado'`
+     - `compromissosFuturos` e `receitasPendentesHealth`
 
-**3. Update `src/pages/LandingPage.tsx`**
-Wrap each section's content with `<ScrollReveal>`:
+3. **`src/hooks/useRelatoriosData.tsx`**
+   - Nos blocos de `recPrev`/`despPrev` e nos agregados mensais (`receitasPrevistas`/`despesasPrevistas`), aceitar também `vencido`/`atrasado`.
 
-| Section | Animation |
-|---------|-----------|
-| Hero (Seção 1) | Fade-up for text, fade-right for phone mockup |
-| Conexão com a Dor (Seção 2) | Fade-up for heading/text, scale for icon cards, staggered fade-up for stats |
-| Como Funciona (Seção 3) | Alternating left/right for each timeline step |
-| Funcionalidades (Seção 4) | Alternating left/right for each feature grid |
-| Para Quem É (Seção 5) | Staggered fade-up for each persona card |
-| Social Proof | Scale for stat cards |
-| Planos e Preços (Seção 6) | Staggered fade-up for pricing cards |
-| Footer | Simple fade-up |
+4. **`src/components/dashboard/DashboardDetailDialog.tsx`**
+   - Atualizar os filtros de `ReceitaPendenteContent` e `ContasPagarContent` para incluir `vencido`/`atrasado` na lista de pendentes (o cálculo de `emAtraso` continua usando a data, sem mudança).
 
-**4. Add base CSS to `src/index.css`**
-```css
-.scroll-reveal {
-  opacity: 0;
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-.scroll-reveal.revealed {
-  opacity: 1;
-  transform: none !important;
-}
-```
+5. **`src/components/dashboard/DashboardTrendLineChart.tsx`**
+   - Expandir `isPendente` para incluir `vencido`/`atrasado`, garantindo que apareçam nas projeções.
 
-### Key Decisions
-- No new dependencies -- uses native `IntersectionObserver`
-- CSS transitions (not JS-driven animations) for performance
-- Each animation fires only once (no re-hide on scroll up) for a polished feel
-- Stagger delays on card grids (50-100ms increments) for a cascading effect
+6. **`src/utils/cashFlowProjection.ts`**
+   - O arquivo recebe `lancamentosFuturos` como parâmetro; ajustar o consumidor (`useDashboardData`) para também buscar `vencido`/`atrasado` (já coberto no item 2). Sem mudança de assinatura.
+
+7. **`supabase/functions/check-overdue-lancamentos/index.ts`**
+   - Manter o comportamento atual (marcar como `vencido` + criar notificação), pois é útil para destaque visual. Apenas garantir que a query continue identificando os já marcados como `vencido` para não duplicar notificações: alterar o filtro `.in("status", ["pendente","aberto"])` mantendo-se igual (vencido só é setado uma vez por item) — **nenhuma mudança necessária aqui** após confirmação.
+
+### Observações técnicas
+- Será criado um helper compartilhado `src/utils/lancamentoStatus.ts` exportando:
+  ```ts
+  export const PENDING_STATUSES = ['pendente','aberto','vencido','atrasado'] as const;
+  export const isPending = (s?: string) => PENDING_STATUSES.includes((s ?? '') as any);
+  export const EXECUTED_STATUSES = ['pago','recebido'] as const;
+  export const isExecuted = (s?: string) => EXECUTED_STATUSES.includes((s ?? '') as any);
+  ```
+- Todos os arquivos acima passarão a importar e usar `isPending`/`isExecuted` — eliminando duplicação e prevenindo regressões futuras.
+- Status de exclusão lógica (`cancelado`, `ignorado`) continuam fora dos pendentes, conforme solicitado.
+
+### Resultado esperado
+Despesas/receitas que passaram da data de vencimento continuam aparecendo em "Despesas Previstas", "Contas a Pagar", "Em Atraso", projeções de fluxo de caixa e indicadores de saúde — até que o usuário as marque como pagas, ignore ou exclua. O badge "vencido" continua sendo exibido na tabela como alerta visual.
 
