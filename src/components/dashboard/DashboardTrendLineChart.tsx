@@ -7,6 +7,7 @@ import { formatCurrency } from "@/utils/formatters";
 import { TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, startOfMonth, endOfMonth } from "date-fns";
+import { isPending, isExecuted } from "@/utils/lancamentoStatus";
 
 type Periodo = "trimestral" | "semestral" | "anual";
 const MESES_MAP: Record<Periodo, number> = { trimestral: 3, semestral: 6, anual: 12 };
@@ -52,8 +53,8 @@ export const DashboardTrendLineChart = () => {
           if (!map[key]) return;
 
           const isFuturo = key > mesAtual;
-          const isPago = l.status === "pago" || l.status === "recebido";
-          const isPendente = l.status === "pendente" || l.status === "aberto";
+          const isPago = isExecuted(l.status);
+          const isPendente = isPending(l.status);
 
           // Passado: só pagos. Futuro: pagos + pendentes. Mês atual: ambos.
           if (!isFuturo && !isPago && key !== mesAtual) return;

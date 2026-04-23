@@ -5,6 +5,7 @@ import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 import SummaryCard from "@/components/dashboard/SummaryCard";
 import { CheckCircle2, Clock, Landmark } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isPending, isExecuted } from "@/utils/lancamentoStatus";
 
 export const LancamentosSummary = () => {
   const { lancamentos } = useLancamentosContext();
@@ -28,7 +29,7 @@ export const LancamentosSummary = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
   const receitasExecutadas = lancamentos
-    .filter(l => l.tipo === "receita" && (l.status === "pago" || l.status === "recebido"))
+    .filter(l => l.tipo === "receita" && isExecuted(l.status))
     .reduce((sum, item) => sum + item.valor, 0);
 
   const despesasExecutadas = lancamentos
@@ -36,17 +37,17 @@ export const LancamentosSummary = () => {
     .reduce((sum, item) => sum + item.valor, 0);
 
   const receitasPrevistas = lancamentos
-    .filter(l => l.tipo === "receita" && l.status === "pendente")
+    .filter(l => l.tipo === "receita" && isPending(l.status))
     .reduce((sum, item) => sum + item.valor, 0);
 
   const despesasPrevistas = lancamentos
-    .filter(l => l.tipo === "despesa" && l.status === "pendente")
+    .filter(l => l.tipo === "despesa" && isPending(l.status))
     .reduce((sum, item) => sum + item.valor, 0);
 
-  const countExecReceitas = lancamentos.filter(l => l.tipo === "receita" && (l.status === "pago" || l.status === "recebido")).length;
+  const countExecReceitas = lancamentos.filter(l => l.tipo === "receita" && isExecuted(l.status)).length;
   const countExecDespesas = lancamentos.filter(l => l.tipo === "despesa" && l.status === "pago").length;
-  const countPrevReceitas = lancamentos.filter(l => l.tipo === "receita" && l.status === "pendente").length;
-  const countPrevDespesas = lancamentos.filter(l => l.tipo === "despesa" && l.status === "pendente").length;
+  const countPrevReceitas = lancamentos.filter(l => l.tipo === "receita" && isPending(l.status)).length;
+  const countPrevDespesas = lancamentos.filter(l => l.tipo === "despesa" && isPending(l.status)).length;
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5">

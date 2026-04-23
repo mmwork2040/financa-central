@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMonthFilter } from "@/contexts/MonthFilterContext";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 import { simularFluxoCaixa } from "@/utils/cashFlowProjection";
+import { PENDING_STATUSES, isPending, isExecuted } from "@/utils/lancamentoStatus";
 
 interface DashboardSummary {
   totalReceitas: number;
@@ -162,20 +163,20 @@ export const useDashboardData = () => {
 
       // Executed (paid/received)
       const receitasExecutadas = lancamentosSemTransf
-        .filter(l => l.tipo === 'receita' && (l.status === 'pago' || l.status === 'recebido'))
+        .filter(l => l.tipo === 'receita' && isExecuted(l.status))
         .reduce((sum, l) => sum + (l.valor || 0), 0);
         
       const despesasExecutadas = lancamentosSemTransf
         .filter(l => l.tipo === 'despesa' && l.status === 'pago')
         .reduce((sum, l) => sum + (l.valor || 0), 0);
 
-      // Predicted (pending)
+      // Predicted (pending) — inclui vencido/atrasado para que continuem aparecendo
       const receitasPrevistas = lancamentosSemTransf
-        .filter(l => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto'))
+        .filter(l => l.tipo === 'receita' && isPending(l.status))
         .reduce((sum, l) => sum + (l.valor || 0), 0);
 
       const despesasPrevistas = lancamentosSemTransf
-        .filter(l => l.tipo === 'despesa' && (l.status === 'pendente' || l.status === 'aberto'))
+        .filter(l => l.tipo === 'despesa' && isPending(l.status))
         .reduce((sum, l) => sum + (l.valor || 0), 0);
       
       const totalReceitas = receitasExecutadas;
@@ -185,12 +186,12 @@ export const useDashboardData = () => {
 
       // Contas a Pagar: todas as despesas pendentes do mês selecionado (exceto transferências)
       const proximasContas = lancamentosSemTransf.filter(l => {
-        return l.tipo === 'despesa' && (l.status === 'pendente' || l.status === 'aberto');
+        return l.tipo === 'despesa' && isPending(l.status);
       });
       
       const emAtraso = lancamentosSemTransf.filter(l => {
         const dv = new Date(l.data_vencimento);
-        return dv < hoje && (l.status === 'pendente' || l.status === 'aberto');
+        return dv < hoje && isPending(l.status);
       }).length;
 
       setContasProximas(proximasContas.map(l => ({
@@ -204,7 +205,7 @@ export const useDashboardData = () => {
 
       // Receitas Pendentes list (exceto transferências)
       const receitasPendList = lancamentosSemTransf.filter(l => {
-        return l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto');
+        return l.tipo === 'receita' && isPending(l.status);
       });
 
       setReceitasPendentes(receitasPendList.map(l => ({
@@ -230,7 +231,7 @@ export const useDashboardData = () => {
       const { data: pendentesAteMonthEnd } = await supabase
         .from('lancamentos')
         .select('id, descricao, tipo, valor, status, origem, data_vencimento')
-        .in('status', ['pendente', 'aberto'])
+        .in('status', PENDING_STATUSES as unknown as string[])
         .lte('data_vencimento', monthEnd);
 
       const pendSemTransf = pendentesAteMonthEnd?.filter(l => (l as any).origem !== 'transferencia' && l.tipo !== 'investimento') || [];
@@ -256,7 +257,7 @@ export const useDashboardData = () => {
       const { data: lancFuturos } = await supabase
         .from('lancamentos')
         .select('tipo, valor, data_vencimento, status, descricao, recorrente, total_parcelas, recorrencia_fim')
-        .in('status', ['pendente', 'aberto'])
+        .in('status', PENDING_STATUSES as unknown as string[])
         .neq('tipo', 'investimento')
         .gte('data_vencimento', format(hoje, 'yyyy-MM-dd'));
 
@@ -354,17 +355,17 @@ export const useDashboardData = () => {
 
       // Refined Health Indicator
       const compromissosFuturos = lancamentosSemTransf
-        .filter(l => l.tipo === 'despesa' && (l.status === 'pendente' || l.status === 'aberto'))
+        .filter(l => l.tipo === 'despesa' && isPending(l.status))
         .reduce((sum, l) => sum + (l.valor || 0), 0);
 
       const receitasPendentesHealth = lancamentosSemTransf
-        .filter(l => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'aberto'))
+        .filter(l => l.tipo === 'receita' && isPending(l.status))
         .reduce((sum, l) => sum + (l.valor || 0), 0);
 
       const tresMesesAtrasHealth = new Date(hoje);
       tresMesesAtrasHealth.setMonth(tresMesesAtrasHealth.getMonth() - 3);
       const receitasRecentes = lancamentosSemTransf
-        .filter(l => l.tipo === 'receita' && (l.status === 'pago' || l.status === 'recebido') && new Date(l.data_vencimento) >= tresMesesAtrasHealth)
+        .filter(l => l.tipo === 'receita' && isExecuted(l.status) && new Date(l.data_vencimento) >= tresMesesAtrasHealth)
         .reduce((sum, l) => sum + (l.valor || 0), 0);
       const mediaReceitaMensal = receitasRecentes / 3;
 
