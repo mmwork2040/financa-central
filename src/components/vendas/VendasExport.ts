@@ -50,7 +50,7 @@ export const exportVendas = (vendas: any[], formato: "csv" | "pdf", empresa?: Em
     const canceladas = vendas.filter((v) => v.status === "cancelada" || v.status === "reembolsada").length;
 
     generateStyledPDF({
-      title: "Relatório de Vendas Digitais",
+      title: "Relatório de Vendas",
       empresa,
       summaryCards: [
         { label: "Total Bruto", value: formatCurrency(totalBruto), color: "#16a34a" },

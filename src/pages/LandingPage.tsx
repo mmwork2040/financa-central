@@ -96,7 +96,7 @@ const LandingPage = () => {
                   Nº1 EM GESTÃO FINANCEIRA COM IA
                 </Badge>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
-                  O controle financeiro do seu negócio digital a uma{" "}
+                  O controle financeiro do seu negócio a uma{" "}
                   <span className="text-primary relative">
                     mensagem de distância
                     <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
