@@ -111,7 +111,7 @@ const LandingPage = () => {
                   </span>
                 </h1>
                 <p className="text-lg text-muted-foreground max-w-lg mx-auto md:mx-0 leading-relaxed">
-                  Conheça sua nova plataforma de gestão financeira focada em empresas do digital, acelerada por
+                  Conheça sua nova plataforma de gestão financeira para o seu negócio, acelerada por
                   inteligência artificial.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start pt-2">
@@ -1002,7 +1002,7 @@ const LandingPage = () => {
               <PricingCard
                 emoji="🟢"
                 title="Plano Start"
-                description="Para quem está dando os primeiros passos no digital e quer estruturar a base do jeito certo, sem misturar as contas."
+                description="Para quem está dando os primeiros passos no negócio e quer estruturar a base do jeito certo, sem misturar as contas."
                 monthlyPrice={79}
                 annualPrice={49}
                 billingPeriod={billingPeriod}
