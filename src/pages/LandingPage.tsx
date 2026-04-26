@@ -1002,7 +1002,7 @@ const LandingPage = () => {
               <PricingCard
                 emoji="🟢"
                 title="Plano Start"
-                description="Para quem está dando os primeiros passos no digital e quer estruturar a base do jeito certo, sem misturar as contas."
+                description="Para quem está dando os primeiros passos no negócio e quer estruturar a base do jeito certo, sem misturar as contas."
                 monthlyPrice={79}
                 annualPrice={49}
                 billingPeriod={billingPeriod}
