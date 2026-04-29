@@ -160,13 +160,13 @@ const PerfisAcesso = () => {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl w-[calc(100vw-1rem)] sm:w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>{editId ? "Editar Perfil de Acesso" : "Novo Perfil de Acesso"}</DialogTitle>
-            <DialogDescription>Configure o nome e as permissões deste perfil</DialogDescription>
+            <DialogTitle className="text-base sm:text-lg pr-6">{editId ? "Editar Perfil de Acesso" : "Novo Perfil de Acesso"}</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">Configure o nome e as permissões deste perfil</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label className="text-xs">Nome</Label>
                 <Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Gerente" />
@@ -177,8 +177,35 @@ const PerfisAcesso = () => {
               </div>
             </div>
 
-            <div className="rounded-md border overflow-x-auto">
-              <table className="w-full table-auto min-w-[400px]">
+            {/* Mobile: lista compacta */}
+            <div className="sm:hidden space-y-2">
+              {SCREENS.map(screen => {
+                const perm = perms.find(p => p.tela === screen.value)!;
+                return (
+                  <div key={screen.value} className="rounded-md border p-3">
+                    <div className="text-sm font-medium mb-2">{screen.name}</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <label className="flex items-center gap-2 text-xs">
+                        <Checkbox checked={perm.pode_incluir} onCheckedChange={v => togglePerm(screen.value, "pode_incluir", !!v)} />
+                        Incluir
+                      </label>
+                      <label className="flex items-center gap-2 text-xs">
+                        <Checkbox checked={perm.pode_alterar} onCheckedChange={v => togglePerm(screen.value, "pode_alterar", !!v)} />
+                        Alterar
+                      </label>
+                      <label className="flex items-center gap-2 text-xs">
+                        <Checkbox checked={perm.pode_excluir} onCheckedChange={v => togglePerm(screen.value, "pode_excluir", !!v)} />
+                        Excluir
+                      </label>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop: tabela */}
+            <div className="hidden sm:block rounded-md border overflow-x-auto">
+              <table className="w-full table-auto">
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="px-3 py-2 text-left text-xs">Tela</th>
@@ -209,9 +236,9 @@ const PerfisAcesso = () => {
               </table>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving}>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">Cancelar</Button>
+            <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
               {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
               {editId ? "Salvar" : "Criar"}
             </Button>
