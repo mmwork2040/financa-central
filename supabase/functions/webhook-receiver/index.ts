@@ -20,7 +20,11 @@ interface SaleData {
   cliente_email: string | null;
   cliente_telefone: string | null;
   cliente_documento: string | null;
+  transaction_id: string | null;
 }
+
+const ESTORNO_STATUSES = new Set(["reembolsada", "chargeback", "cancelada", "expirada", "disputa"]);
+const APROVADA_STATUSES = new Set(["aprovada"]);
 
 function normalizeDate(value: any): string {
   if (!value) return new Date().toISOString();
