@@ -47,9 +47,24 @@ function parseHotmart(body: any): SaleData | null {
   const purchase = body?.data?.purchase || body?.data || {};
   const buyer = body?.data?.buyer || {};
   const product = body?.data?.product || {};
-  const event = body?.event || body?.hottok ? "purchase_event" : "unknown";
+  const event = String(body?.event || body?.data?.event || "PURCHASE_APPROVED").toUpperCase();
 
-  const statusMap: Record<string, string> = {
+  // Mapa por EVENTO (prioritário) — Hotmart envia eventos distintos para reembolsos
+  const eventStatusMap: Record<string, string> = {
+    PURCHASE_APPROVED: "aprovada",
+    PURCHASE_COMPLETE: "aprovada",
+    PURCHASE_REFUNDED: "reembolsada",
+    PURCHASE_CHARGEBACK: "chargeback",
+    PURCHASE_PROTEST: "disputa",
+    PURCHASE_CANCELED: "cancelada",
+    PURCHASE_EXPIRED: "expirada",
+    PURCHASE_DELAYED: "pendente",
+    PURCHASE_BILLET_PRINTED: "pendente",
+    PURCHASE_OUT_OF_SHOPPING_CART: "pendente",
+  };
+
+  // Fallback por status interno (caso evento desconhecido)
+  const purchaseStatusMap: Record<string, string> = {
     approved: "aprovada",
     completed: "aprovada",
     refunded: "reembolsada",
@@ -59,22 +74,27 @@ function parseHotmart(body: any): SaleData | null {
     waiting_payment: "pendente",
     dispute: "disputa",
     chargedback: "chargeback",
+    protest: "disputa",
   };
 
-  const rawStatus = purchase?.status?.toLowerCase?.() || 
-    purchase?.transaction?.status?.toLowerCase?.() || "approved";
+  let status = eventStatusMap[event];
+  if (!status) {
+    const rawStatus = (purchase?.status?.toLowerCase?.() || purchase?.transaction?.status?.toLowerCase?.() || "approved");
+    status = purchaseStatusMap[rawStatus] || "pendente";
+  }
 
   const valorBruto = Number(purchase?.price?.value || purchase?.original_offer_price?.value || purchase?.full_price?.value || purchase?.price || 0);
   const commissionRaw = Number(purchase?.commission?.value || 0);
-  // Hotmart nem sempre envia fee; quando commission existe, fee = bruto - commission
   const fee = commissionRaw > 0 ? (valorBruto - commissionRaw) : Number(purchase?.fee?.value || 0);
-  // Receita líquida do CNPJ = commission (quando disponível) ou bruto - fee
   const valorComissao = commissionRaw > 0 ? commissionRaw : (valorBruto - fee);
+
+  // Hotmart fornece transaction code que identifica unicamente a compra
+  const transactionId = purchase?.transaction || purchase?.transaction_id || body?.data?.purchase?.transaction || null;
 
   return {
     plataforma: "hotmart",
     evento: event,
-    status: statusMap[rawStatus] || "pendente",
+    status,
     valor_bruto: valorBruto,
     taxa: fee,
     valor_liquido: valorBruto - fee,
@@ -86,6 +106,7 @@ function parseHotmart(body: any): SaleData | null {
     cliente_email: buyer?.email || null,
     cliente_telefone: buyer?.phone || buyer?.cel_phone || null,
     cliente_documento: buyer?.document || buyer?.cpf || null,
+    transaction_id: transactionId ? String(transactionId) : null,
   };
 }
 
