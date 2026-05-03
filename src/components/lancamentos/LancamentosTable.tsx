@@ -471,7 +471,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                           </div>
                         ) : (
                           <>
-                            {canAlterar && lancamento.status === "pendente" && (
+                            {canAlterar && isPending(lancamento.status) && (
                               <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
                                 <Button variant="ghost" size="sm" onClick={() => handleUpdateStatus(lancamento.id!, lancamento.tipo === "receita" ? "recebido" : "pago")} className="h-8 w-8 p-0 text-primary" title="Confirmar pagamento/recebimento">
                                   <Check className="h-4 w-4" />
