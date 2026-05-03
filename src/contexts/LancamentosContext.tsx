@@ -599,6 +599,19 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           : "O lançamento foi excluído com sucesso."
       );
       setOpenDeleteModal(false);
+
+      // Validação extra: se a exclusão foi de uma ocorrência única dentro de uma
+      // série recorrente em aberto (sem total_parcelas), reexecuta a geração para
+      // preencher buracos e garantir que os meses futuros continuem visíveis.
+      if (
+        scope === "single" &&
+        lancamento?.recorrente &&
+        !lancamento?.total_parcelas &&
+        lancamento?.recorrencia_grupo_id
+      ) {
+        supabase.functions.invoke("generate-recurring").catch(() => {});
+      }
+
       await fetchLancamentos();
     } catch (error: any) {
       toast.error(error.message || "Erro ao excluir lançamento");
