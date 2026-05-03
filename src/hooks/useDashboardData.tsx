@@ -143,12 +143,16 @@ export const useDashboardData = () => {
       
       setLancamentosRecentes(typedLancamentos);
 
-      // Fetch transactions for the selected month
+      // Fetch transactions for the selected month — inclui itens vencidos no mês
+      // OU executados (pago/recebido) com data_pagamento no mês, para que baixas
+      // realizadas em mês diferente do vencimento ainda sejam contabilizadas.
       const { data: todosLancamentos, error: todosError } = await supabase
         .from('lancamentos')
         .select('*, categoria:categoria_id(nome)')
-        .gte('data_vencimento', monthStart)
-        .lte('data_vencimento', monthEnd);
+        .or(
+          `and(data_vencimento.gte.${monthStart},data_vencimento.lte.${monthEnd}),` +
+          `and(status.in.(pago,recebido),data_pagamento.gte.${monthStart},data_pagamento.lte.${monthEnd})`
+        );
         
       if (todosError) throw todosError;
 
