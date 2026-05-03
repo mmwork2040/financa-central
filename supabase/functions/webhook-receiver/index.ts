@@ -146,6 +146,7 @@ function parseEduzz(body: any): SaleData | null {
     cliente_email: body?.cus_email || null,
     cliente_telefone: body?.cus_tel || body?.cus_cel || null,
     cliente_documento: body?.cus_taxnumber || null,
+    transaction_id: body?.trans_cod ? String(body.trans_cod) : (body?.sale_id ? String(body.sale_id) : null),
   };
 }
 
