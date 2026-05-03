@@ -299,6 +299,7 @@ function parseMonetizze(body: any): SaleData | null {
     cliente_email: comprador?.email || null,
     cliente_telefone: comprador?.telefone || comprador?.celular || null,
     cliente_documento: comprador?.cpf || comprador?.cnpj || null,
+    transaction_id: evento?.venda?.codigo ? String(evento.venda.codigo) : (body?.codigo ? String(body.codigo) : null),
   };
 }
 
