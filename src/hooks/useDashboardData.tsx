@@ -151,7 +151,7 @@ export const useDashboardData = () => {
         .select('*, categoria:categoria_id(nome)')
         .or(
           `and(data_vencimento.gte.${monthStart},data_vencimento.lte.${monthEnd}),` +
-          `and(status.in.(pago,recebido),data_pagamento.gte.${monthStart},data_pagamento.lte.${monthEnd})`
+          `and(data_pagamento.gte.${monthStart},data_pagamento.lte.${monthEnd})`
         );
         
       if (todosError) throw todosError;
