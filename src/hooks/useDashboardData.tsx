@@ -254,12 +254,13 @@ export const useDashboardData = () => {
       const caixaPrevisto = caixaAtual + receitasPendentesAcumuladas - despesasPendentesAcumuladas;
 
       // 3. Meses de caixa (runway) — simulação mês a mês com recorrências
+      // Inclui itens já vencidos ainda pendentes para que continuem aparecendo
+      // nas projeções até serem pagos/recebidos.
       const { data: lancFuturos } = await supabase
         .from('lancamentos')
         .select('tipo, valor, data_vencimento, status, descricao, recorrente, total_parcelas, recorrencia_fim')
         .in('status', PENDING_STATUSES as unknown as string[])
-        .neq('tipo', 'investimento')
-        .gte('data_vencimento', format(hoje, 'yyyy-MM-dd'));
+        .neq('tipo', 'investimento');
 
       const { data: recorrentes } = await supabase
         .from('lancamentos')
