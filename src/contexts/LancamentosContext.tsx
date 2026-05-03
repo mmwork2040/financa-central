@@ -119,7 +119,7 @@ interface LancamentosContextType {
   handleSelectChange: (field: string, value: string) => void;
   handleFilterInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFilterSelectChange: (field: string, value: string | null) => void;
-  handleDelete: () => Promise<void>;
+  handleDelete: (scope?: "single" | "future") => Promise<void>;
   handleEdit: (lancamento: Lancamento) => void;
   handleSave: () => Promise<void>;
   handleStatus: (id: string, status: "pendente" | "pago" | "recebido" | "cancelado") => Promise<void>;
