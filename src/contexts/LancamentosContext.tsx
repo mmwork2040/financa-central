@@ -779,12 +779,14 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           // PARCELADO: divide valor total em N parcelas independentes
           const valorParcela = Math.round((dataToSave.valor / totalParcelas) * 100) / 100;
           const baseDate = new Date(dataToSave.data_vencimento);
+          const grupoParcelasId = crypto.randomUUID();
           const parcelas = Array.from({ length: totalParcelas }, (_, i) => ({
             ...dataToSave,
             valor: valorParcela,
             parcela_atual: i + 1,
             total_parcelas: totalParcelas,
             recorrente: false,
+            recorrencia_grupo_id: grupoParcelasId,
             data_vencimento: format(addMonths(baseDate, i), "yyyy-MM-dd"),
             descricao: `${dataToSave.descricao} (${i + 1}/${totalParcelas})`,
             empresa_id: empresaId,
