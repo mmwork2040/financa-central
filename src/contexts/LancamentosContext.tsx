@@ -248,7 +248,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       // Garante que receitas/despesas baixadas em mês diferente do vencimento ainda apareçam na listagem.
       query = query.or(
         `and(data_vencimento.gte.${monthStart},data_vencimento.lte.${monthEnd}),` +
-        `and(status.in.(pago,recebido),data_pagamento.gte.${monthStart},data_pagamento.lte.${monthEnd})`
+        `and(data_pagamento.gte.${monthStart},data_pagamento.lte.${monthEnd})`
       );
 
       if (filtros.tipo) {
