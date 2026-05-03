@@ -682,11 +682,9 @@ Deno.serve(async (req) => {
         platform,
         evento: saleData?.evento,
         status: saleData?.status,
+        action,
         venda_id: vendaId,
         lancamento_id: lancamentoId,
-        message: vendaId
-          ? "Venda registrada com sucesso"
-          : "Webhook recebido e registrado nos logs",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
