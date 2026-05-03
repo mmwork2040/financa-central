@@ -164,14 +164,20 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
   }, [lancamentos]);
 
   const bulkBar = (canAlterar || canExcluir) && (
-    <BulkActionsBar
-      selectedCount={selectedIds.size}
-      totalValue={selectedTotal}
-      onBulkPay={handleBulkPay}
-      onBulkDelete={handleBulkDelete}
-      onClearSelection={() => setSelectedIds(new Set())}
-      loading={bulkLoading}
-    />
+    <>
+      <BulkActionsBar
+        selectedCount={selectedIds.size}
+        totalValue={selectedTotal}
+        onBulkPay={handleBulkPay}
+        onBulkDelete={handleBulkDelete}
+        onClearSelection={() => setSelectedIds(new Set())}
+        loading={bulkLoading}
+      />
+      <SelectionSummaryPopup
+        selected={selectedLancamentos}
+        onClear={() => setSelectedIds(new Set())}
+      />
+    </>
   );
 
   if (isMobile) {
