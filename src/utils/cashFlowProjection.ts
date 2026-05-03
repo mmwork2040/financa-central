@@ -116,7 +116,9 @@ export function simularFluxoCaixa(
 
   for (let i = 1; i <= mesesProjecao; i++) {
     const monthDate = addMonths(hoje, i);
-    const flow = calcularFluxoMensal(monthDate, lancamentosFuturos, recorrentes);
+    // No primeiro mês projetado, carrega itens vencidos ainda pendentes para
+    // que apareçam como obrigação a quitar nas próximas projeções.
+    const flow = calcularFluxoMensal(monthDate, lancamentosFuturos, recorrentes, i === 1);
 
     runningCaixa = runningCaixa + flow.receitas - flow.despesas;
     projectionData.push({ name: monthNames[monthDate.getMonth()], caixa: runningCaixa });
