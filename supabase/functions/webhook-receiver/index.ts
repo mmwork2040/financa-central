@@ -187,6 +187,7 @@ function parseKiwify(body: any): SaleData | null {
     cliente_email: customer?.email || null,
     cliente_telefone: customer?.mobile || customer?.phone || null,
     cliente_documento: customer?.cpf || customer?.document || null,
+    transaction_id: order?.id ? String(order.id) : (body?.order_id ? String(body.order_id) : (order?.reference ? String(order.reference) : null)),
   };
 }
 
