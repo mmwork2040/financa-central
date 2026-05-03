@@ -17,6 +17,7 @@ import SupportDeleteDialog from "@/components/common/SupportDeleteDialog";
 import { useSolicitacoesSuporte } from "@/hooks/useSolicitacoesSuporte";
 import { BulkActionsBar } from "./BulkActionsBar";
 import { SelectionSummaryPopup } from "./SelectionSummaryPopup";
+import { isPending } from "@/utils/lancamentoStatus";
 import { toast } from "sonner";
 
 export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?: any[] } = {}) => {
