@@ -388,244 +388,273 @@ Deno.serve(async (req) => {
     let vendaId: string | null = null;
     let lancamentoId: string | null = null;
     let clienteId: string | null = null;
+    let action: "created" | "refunded" | "duplicate" | "updated" | "ignored" = "ignored";
+
+    // Helpers ─────────────────────────────────────────
+    const findContaPrincipal = async (): Promise<string | null> => {
+      const { data: contaPrincipal } = await supabase
+        .from("contas_bancarias").select("id").eq("empresa_id", empresaId).eq("principal", true).maybeSingle();
+      if (contaPrincipal) return contaPrincipal.id;
+      const { data: todasContas } = await supabase
+        .from("contas_bancarias").select("id").eq("empresa_id", empresaId);
+      if (todasContas && todasContas.length === 1) return todasContas[0].id;
+      return null;
+    };
+
+    const ajustarSaldo = async (contaId: string, valor: number, tipo: "receita" | "despesa") => {
+      const { error: saldoError } = await supabase.rpc("update_saldo_conta", {
+        _conta_id: contaId, _valor: valor, _tipo: tipo,
+      });
+      if (saldoError) {
+        const { data: contaAtual } = await supabase
+          .from("contas_bancarias").select("saldo_atual").eq("id", contaId).single();
+        if (contaAtual) {
+          const novoSaldo = tipo === "despesa"
+            ? Number(contaAtual.saldo_atual) - valor
+            : Number(contaAtual.saldo_atual) + valor;
+          await supabase.from("contas_bancarias").update({ saldo_atual: novoSaldo }).eq("id", contaId);
+        }
+      }
+    };
 
     if (saleData && saleData.valor_bruto > 0) {
-      // Check for duplicate sale before inserting
-      const { data: existingVenda } = await supabase
-        .from("vendas_digitais")
-        .select("id")
-        .eq("empresa_id", empresaId)
-        .eq("plataforma", saleData.plataforma)
-        .eq("valor_liquido", saleData.valor_liquido)
-        .eq("data_venda", saleData.data_venda)
-        .eq("produto", saleData.produto || "")
-        .eq("cliente", saleData.cliente || "")
-        .maybeSingle();
+      // 1. BUSCAR VENDA EXISTENTE — primeiro por transaction_id (forte), depois por heurística (fallback legado)
+      let existingVenda: any = null;
+      if (saleData.transaction_id) {
+        const { data } = await supabase
+          .from("vendas_digitais")
+          .select("id, status, lancamento_id, valor_comissao, valor_liquido")
+          .eq("empresa_id", empresaId)
+          .eq("plataforma", saleData.plataforma)
+          .eq("transaction_id", saleData.transaction_id)
+          .maybeSingle();
+        existingVenda = data;
+      }
+      if (!existingVenda) {
+        const { data } = await supabase
+          .from("vendas_digitais")
+          .select("id, status, lancamento_id, valor_comissao, valor_liquido")
+          .eq("empresa_id", empresaId)
+          .eq("plataforma", saleData.plataforma)
+          .eq("valor_liquido", saleData.valor_liquido)
+          .eq("data_venda", saleData.data_venda)
+          .eq("produto", saleData.produto || "")
+          .eq("cliente", saleData.cliente || "")
+          .maybeSingle();
+        existingVenda = data;
+      }
 
-      if (existingVenda) {
-        // Log duplicate and return success (idempotent)
-        if (logsEnabled) {
+      const isEstorno = ESTORNO_STATUSES.has(saleData.status);
+      const isApproved = APROVADA_STATUSES.has(saleData.status);
+
+      // 2. EVENTO DE ESTORNO/CANCELAMENTO
+      if (existingVenda && isEstorno) {
+        // Se já estava estornada com mesmo status — duplicata
+        if (existingVenda.status === saleData.status) {
+          action = "duplicate";
           await supabase.from("logs_integracoes").insert({
-            empresa_id: empresaId,
-            plataforma: platform,
-            evento: saleData.evento || "duplicate_ignored",
-            status: "duplicate",
-            payload: {
-              source: "webhook_receiver",
-              message: "Webhook duplicado ignorado",
-              existing_venda_id: existingVenda.id,
-              sale_data: saleData,
-            },
+            empresa_id: empresaId, plataforma: platform,
+            evento: saleData.evento, status: "duplicate",
+            payload: { source: "webhook_receiver", message: "Estorno já processado", existing_venda_id: existingVenda.id, sale_data: saleData },
           });
-        }
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            platform,
-            evento: saleData.evento,
-            status: saleData.status,
-            venda_id: existingVenda.id,
-            duplicate: true,
-            message: "Venda já registrada anteriormente (duplicata ignorada)",
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Auto-register client if sufficient data exists
-      if (saleData.cliente) {
-        const clienteName = saleData.cliente;
-        // Extract email if present (format: "Name" or "email@domain.com")
-        const isEmail = clienteName.includes("@");
-        const nome = isEmail ? clienteName.split("@")[0] : clienteName;
-        const email = isEmail ? clienteName : null;
-
-        // Check if client already exists for this empresa
-        const { data: existingCliente } = await supabase
-          .from("clientes")
-          .select("id")
-          .eq("empresa_id", empresaId)
-          .or(`nome.eq.${clienteName}${email ? `,email.eq.${email}` : ""}`)
-          .maybeSingle();
-
-        if (existingCliente) {
-          clienteId = existingCliente.id;
+          vendaId = existingVenda.id;
         } else {
-          const { data: newCliente, error: clienteError } = await supabase
-            .from("clientes")
-            .insert({
-              empresa_id: empresaId,
-              nome: nome,
-              email: email,
-              ativo: true,
-              origem: "integracao",
-            })
-            .select("id")
-            .single();
+          // Aplicar estorno: atualizar status, criar despesa, reverter saldo
+          vendaId = existingVenda.id;
+          action = "refunded";
 
-          if (clienteError) {
-            console.error("Erro ao cadastrar cliente:", clienteError);
+          await supabase.from("vendas_digitais")
+            .update({ status: saleData.status })
+            .eq("id", vendaId);
+
+          const valorEstorno = Number(existingVenda.valor_comissao) > 0
+            ? Number(existingVenda.valor_comissao)
+            : Number(existingVenda.valor_liquido);
+
+          const contaId = await findContaPrincipal();
+          const hoje = new Date().toISOString().split("T")[0];
+          const isChargeback = saleData.status === "chargeback";
+          const prefixo = isChargeback ? "⚠️ CHARGEBACK" : (saleData.status === "reembolsada" ? "REEMBOLSO" : "ESTORNO");
+
+          // Verifica lançamento original
+          let lancOriginal: any = null;
+          if (existingVenda.lancamento_id) {
+            const { data } = await supabase.from("lancamentos")
+              .select("id, status, valor, conta_bancaria_id")
+              .eq("id", existingVenda.lancamento_id).maybeSingle();
+            lancOriginal = data;
+          }
+
+          if (lancOriginal && lancOriginal.status === "pendente") {
+            // Receita ainda não foi recebida — apenas cancela o lançamento, sem mexer no saldo
+            await supabase.from("lancamentos")
+              .update({ status: "cancelado", descricao: `${prefixo} - cancelado antes do recebimento` })
+              .eq("id", lancOriginal.id);
           } else {
-            clienteId = newCliente.id;
-            console.log("Cliente cadastrado automaticamente:", clienteId);
-          }
-        }
-      }
+            // Receita já recebida ou sem lançamento vinculado: criar despesa de estorno
+            const { data: estornoLanc } = await supabase
+              .from("lancamentos")
+              .insert({
+                empresa_id: empresaId,
+                descricao: `${prefixo} - ${saleData.produto || "Venda digital"}${saleData.cliente ? ` (${saleData.cliente})` : ""}`,
+                tipo: "despesa",
+                valor: valorEstorno,
+                data_vencimento: hoje,
+                data_pagamento: hoje,
+                status: "pago",
+                origem: "integracao",
+                ...(contaId ? { conta_bancaria_id: contaId } : {}),
+              })
+              .select("id").single();
+            if (estornoLanc) lancamentoId = estornoLanc.id;
 
-      // Insert venda_digital (lancamento_id will be updated after lancamento is created)
-      const { data: venda, error: vendaError } = await supabase
-        .from("vendas_digitais")
-        .insert({
-          empresa_id: empresaId,
-          plataforma: saleData.plataforma,
-          data_venda: saleData.data_venda,
-          valor_bruto: saleData.valor_bruto,
-          taxa: saleData.taxa,
-          valor_liquido: saleData.valor_liquido,
-          valor_comissao: saleData.valor_comissao,
-          cliente: saleData.cliente,
-          produto: saleData.produto,
-          status: saleData.status,
-          data_prevista_recebimento: saleData.data_prevista_recebimento,
-          cliente_email: saleData.cliente_email,
-          cliente_telefone: saleData.cliente_telefone,
-          cliente_documento: saleData.cliente_documento,
-          origem: "integracao",
-        })
-        .select("id")
-        .single();
-
-      if (vendaError) {
-        console.error("Erro ao inserir venda:", vendaError);
-      } else {
-        vendaId = venda.id;
-      }
-
-      // Create lancamento automatically if approved or refunded
-      if (saleData.status === "aprovada" || saleData.status === "reembolsada" || saleData.status === "chargeback") {
-        const dataVenda = String(saleData.data_venda).split("T")[0] || new Date().toISOString().split("T")[0];
-
-        // Get dias_recebimento from integration config (default 30)
-        const diasRecebimento = integration.dias_recebimento ?? 30;
-
-        // Find principal bank account (or single account) for the empresa
-        let contaBancariaId: string | null = null;
-        const { data: contaPrincipal } = await supabase
-          .from("contas_bancarias")
-          .select("id")
-          .eq("empresa_id", empresaId)
-          .eq("principal", true)
-          .maybeSingle();
-
-        if (contaPrincipal) {
-          contaBancariaId = contaPrincipal.id;
-        } else {
-          const { data: todasContas } = await supabase
-            .from("contas_bancarias")
-            .select("id")
-            .eq("empresa_id", empresaId);
-          if (todasContas && todasContas.length === 1) {
-            contaBancariaId = todasContas[0].id;
-          }
-        }
-
-        const isEstorno = saleData.status === "reembolsada" || saleData.status === "chargeback";
-        const isChargeback = saleData.status === "chargeback";
-        const tipoLancamento = isEstorno ? "despesa" : "receita";
-        const prefixo = isChargeback
-          ? "⚠️ CHARGEBACK"
-          : saleData.status === "reembolsada"
-            ? "REEMBOLSO"
-            : saleData.plataforma.charAt(0).toUpperCase() + saleData.plataforma.slice(1);
-
-        // For approved sales with dias_recebimento > 0: create as pending with future vencimento
-        // For refunds/chargebacks: create as paid immediately
-        const isApproved = saleData.status === "aprovada";
-        let lancamentoStatus: string;
-        let dataVencimento: string;
-        let dataPagamento: string | null;
-
-        if (isApproved && diasRecebimento > 0) {
-          const vencDate = new Date(saleData.data_venda);
-          vencDate.setDate(vencDate.getDate() + diasRecebimento);
-          dataVencimento = vencDate.toISOString().split("T")[0];
-          dataPagamento = null;
-          lancamentoStatus = "pendente";
-        } else {
-          dataVencimento = dataVenda;
-          dataPagamento = dataVenda;
-          lancamentoStatus = isEstorno ? "pago" : "recebido";
-        }
-
-        const { data: lancamento, error: lancError } = await supabase
-          .from("lancamentos")
-          .insert({
-            empresa_id: empresaId,
-            descricao: `${prefixo} - ${saleData.produto || "Venda digital"}${saleData.cliente ? ` (${saleData.cliente})` : ""}`,
-            tipo: tipoLancamento,
-            valor: saleData.valor_comissao > 0 ? saleData.valor_comissao : saleData.valor_liquido,
-            data_vencimento: dataVencimento,
-            data_pagamento: dataPagamento,
-            status: lancamentoStatus,
-            origem: "integracao",
-            ...(clienteId ? { cliente_id: clienteId } : {}),
-            ...(contaBancariaId ? { conta_bancaria_id: contaBancariaId } : {}),
-          })
-          .select("id")
-          .single();
-
-        if (lancError) {
-          console.error("Erro ao inserir lançamento:", lancError);
-        } else {
-          lancamentoId = lancamento.id;
-
-          // Link lancamento_id back to the venda
-          if (vendaId) {
-            await supabase
-              .from("vendas_digitais")
-              .update({ lancamento_id: lancamentoId })
-              .eq("id", vendaId);
-          }
-
-          // Only update bank balance immediately for estornos (refunds/chargebacks)
-          // For approved sales with dias_recebimento, balance is updated later by process-digital-receipts
-          if (contaBancariaId && (isEstorno || lancamentoStatus !== "pendente")) {
-            const valorContabil = saleData.valor_comissao > 0 ? saleData.valor_comissao : saleData.valor_liquido;
-            const rpcTipo = isEstorno ? "despesa" : "receita";
-            const { error: saldoError } = await supabase.rpc("update_saldo_conta", {
-              _conta_id: contaBancariaId,
-              _valor: valorContabil,
-              _tipo: rpcTipo,
-            });
-
-            if (saldoError) {
-              console.warn("RPC update_saldo_conta não encontrada, atualizando diretamente:", saldoError.message);
-              const { data: contaAtual } = await supabase
-                .from("contas_bancarias")
-                .select("saldo_atual")
-                .eq("id", contaBancariaId)
-                .single();
-
-              if (contaAtual) {
-                const novoSaldo = isEstorno
-                  ? contaAtual.saldo_atual - valorContabil
-                  : contaAtual.saldo_atual + valorContabil;
-                await supabase
-                  .from("contas_bancarias")
-                  .update({ saldo_atual: novoSaldo })
-                  .eq("id", contaBancariaId);
-              }
+            // Reverter saldo apenas se a receita original já tinha sido baixada
+            if (contaId && lancOriginal && lancOriginal.status === "recebido") {
+              await ajustarSaldo(contaId, valorEstorno, "despesa");
+            } else if (contaId && !lancOriginal) {
+              // Caso legado: sem lançamento original, assumir que receita foi reconhecida → reverter
+              await ajustarSaldo(contaId, valorEstorno, "despesa");
             }
           }
         }
 
-        // Update venda_digital status for refund/chargeback
-        if (isEstorno && vendaId) {
-          await supabase
-            .from("vendas_digitais")
-            .update({ status: saleData.status })
-            .eq("id", vendaId);
+        // SEMPRE logar eventos de estorno (crítico), mesmo com logs_enabled=false
+        await supabase.from("logs_integracoes").insert({
+          empresa_id: empresaId, plataforma: platform,
+          evento: saleData.evento, status: action === "duplicate" ? "duplicate" : "refunded",
+          payload: { source: "webhook_receiver", critical: true, sale_data: saleData, venda_id: vendaId, lancamento_id: lancamentoId, raw_body: body },
+        });
+      }
+      // 3. EVENTO REPETIDO DE APROVAÇÃO (já existe e mesmo status)
+      else if (existingVenda) {
+        action = "duplicate";
+        vendaId = existingVenda.id;
+        if (logsEnabled) {
+          await supabase.from("logs_integracoes").insert({
+            empresa_id: empresaId, plataforma: platform,
+            evento: saleData.evento || "duplicate_ignored", status: "duplicate",
+            payload: { source: "webhook_receiver", message: "Webhook duplicado ignorado", existing_venda_id: existingVenda.id, sale_data: saleData },
+          });
+        }
+      }
+      // 4. NOVA VENDA
+      else {
+        action = "created";
+
+        // Auto-cadastro de cliente
+        if (saleData.cliente) {
+          const clienteName = saleData.cliente;
+          const isEmail = clienteName.includes("@");
+          const nome = isEmail ? clienteName.split("@")[0] : clienteName;
+          const email = isEmail ? clienteName : null;
+
+          const { data: existingCliente } = await supabase
+            .from("clientes").select("id").eq("empresa_id", empresaId)
+            .or(`nome.eq.${clienteName}${email ? `,email.eq.${email}` : ""}`)
+            .maybeSingle();
+
+          if (existingCliente) clienteId = existingCliente.id;
+          else {
+            const { data: newCliente } = await supabase.from("clientes").insert({
+              empresa_id: empresaId, nome, email, ativo: true, origem: "integracao",
+            }).select("id").single();
+            if (newCliente) clienteId = newCliente.id;
+          }
+        }
+
+        const { data: venda, error: vendaError } = await supabase
+          .from("vendas_digitais")
+          .insert({
+            empresa_id: empresaId,
+            plataforma: saleData.plataforma,
+            data_venda: saleData.data_venda,
+            valor_bruto: saleData.valor_bruto,
+            taxa: saleData.taxa,
+            valor_liquido: saleData.valor_liquido,
+            valor_comissao: saleData.valor_comissao,
+            cliente: saleData.cliente,
+            produto: saleData.produto,
+            status: saleData.status,
+            data_prevista_recebimento: saleData.data_prevista_recebimento,
+            cliente_email: saleData.cliente_email,
+            cliente_telefone: saleData.cliente_telefone,
+            cliente_documento: saleData.cliente_documento,
+            origem: "integracao",
+            transaction_id: saleData.transaction_id,
+            ...(clienteId ? { cliente_id: clienteId } : {}),
+          })
+          .select("id").single();
+
+        if (vendaError) {
+          console.error("Erro ao inserir venda:", vendaError);
+        } else {
+          vendaId = venda.id;
+
+          // Criar lançamento somente para vendas aprovadas novas
+          if (isApproved) {
+            const dataVenda = String(saleData.data_venda).split("T")[0] || new Date().toISOString().split("T")[0];
+            const diasRecebimento = integration.dias_recebimento ?? 30;
+            const contaId = await findContaPrincipal();
+
+            let lancamentoStatus: string;
+            let dataVencimento: string;
+            let dataPagamento: string | null;
+
+            if (diasRecebimento > 0) {
+              const vencDate = new Date(saleData.data_venda);
+              vencDate.setDate(vencDate.getDate() + diasRecebimento);
+              dataVencimento = vencDate.toISOString().split("T")[0];
+              dataPagamento = null;
+              lancamentoStatus = "pendente";
+            } else {
+              dataVencimento = dataVenda;
+              dataPagamento = dataVenda;
+              lancamentoStatus = "recebido";
+            }
+
+            const prefixo = saleData.plataforma.charAt(0).toUpperCase() + saleData.plataforma.slice(1);
+            const { data: lancamento } = await supabase.from("lancamentos").insert({
+              empresa_id: empresaId,
+              descricao: `${prefixo} - ${saleData.produto || "Venda digital"}${saleData.cliente ? ` (${saleData.cliente})` : ""}`,
+              tipo: "receita",
+              valor: saleData.valor_comissao > 0 ? saleData.valor_comissao : saleData.valor_liquido,
+              data_vencimento: dataVencimento,
+              data_pagamento: dataPagamento,
+              status: lancamentoStatus,
+              origem: "integracao",
+              ...(clienteId ? { cliente_id: clienteId } : {}),
+              ...(contaId ? { conta_bancaria_id: contaId } : {}),
+            }).select("id").single();
+
+            if (lancamento) {
+              lancamentoId = lancamento.id;
+              await supabase.from("vendas_digitais").update({ lancamento_id: lancamentoId }).eq("id", vendaId);
+
+              if (contaId && lancamentoStatus === "recebido") {
+                const valorContabil = saleData.valor_comissao > 0 ? saleData.valor_comissao : saleData.valor_liquido;
+                await ajustarSaldo(contaId, valorContabil, "receita");
+              }
+            }
+          }
+          // Estorno como primeiro evento (sem venda original) — caso raro
+          else if (isEstorno) {
+            const contaId = await findContaPrincipal();
+            const hoje = new Date().toISOString().split("T")[0];
+            const valorEstorno = saleData.valor_comissao > 0 ? saleData.valor_comissao : saleData.valor_liquido;
+            const prefixo = saleData.status === "chargeback" ? "⚠️ CHARGEBACK" : "REEMBOLSO";
+            const { data: lanc } = await supabase.from("lancamentos").insert({
+              empresa_id: empresaId,
+              descricao: `${prefixo} - ${saleData.produto || "Venda digital"}${saleData.cliente ? ` (${saleData.cliente})` : ""}`,
+              tipo: "despesa",
+              valor: valorEstorno,
+              data_vencimento: hoje, data_pagamento: hoje, status: "pago", origem: "integracao",
+              ...(contaId ? { conta_bancaria_id: contaId } : {}),
+            }).select("id").single();
+            if (lanc) {
+              lancamentoId = lanc.id;
+              if (contaId) await ajustarSaldo(contaId, valorEstorno, "despesa");
+            }
+          }
         }
       }
     }
