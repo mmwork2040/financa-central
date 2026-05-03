@@ -16,6 +16,7 @@ import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 import SupportDeleteDialog from "@/components/common/SupportDeleteDialog";
 import { useSolicitacoesSuporte } from "@/hooks/useSolicitacoesSuporte";
 import { BulkActionsBar } from "./BulkActionsBar";
+import { SelectionSummaryPopup } from "./SelectionSummaryPopup";
 import { toast } from "sonner";
 
 export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?: any[] } = {}) => {
