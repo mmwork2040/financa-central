@@ -111,17 +111,17 @@ Deno.serve(async (req) => {
       // Sort by date ascending
       chainLancs.sort((a: any, b: any) => a.data_vencimento.localeCompare(b.data_vencimento));
 
-      // Check if the most recent is cancelled — if so, stop
+      const oldest = chainLancs[0];
       const mostRecent = chainLancs[chainLancs.length - 1];
-      if (mostRecent.status === "cancelado") continue;
 
-      // Check recorrencia_fim
-      const recFim = mostRecent.recorrencia_fim;
+      // recorrencia_fim define o limite superior (se existir em qualquer item da cadeia)
+      const recFim = chainLancs.reduce((acc: string | null, l: any) =>
+        l.recorrencia_fim && (!acc || l.recorrencia_fim > acc) ? l.recorrencia_fim : acc, null);
       if (recFim && recFim < hojeStr) continue;
 
-      // Use recorrencia_grupo_id from chain or generate one for legacy
-      const grupoId = mostRecent.recorrencia_grupo_id;
-      const template = mostRecent;
+      // Template: usa o mais antigo como referência (estável; não muda com cancelamentos)
+      const template = oldest;
+      const grupoId = mostRecent.recorrencia_grupo_id || oldest.recorrencia_grupo_id;
 
       // If legacy chain without grupo_id, assign one to all members
       if (!grupoId && chainKey.startsWith("legacy:")) {
@@ -134,7 +134,6 @@ Deno.serve(async (req) => {
             .update({ recorrencia_grupo_id: newGrupoId } as any)
             .in("id", batch);
         }
-        // Update in-memory
         for (const l of chainLancs) {
           l.recorrencia_grupo_id = newGrupoId;
         }
@@ -142,24 +141,19 @@ Deno.serve(async (req) => {
 
       const effectiveGrupoId = grupoId || chainLancs[0].recorrencia_grupo_id;
 
-      // Find the latest date in the chain
-      const latestDateStr = mostRecent.data_vencimento;
-      let currentDate = new Date(latestDateStr);
+      // Conjunto de datas existentes (para detectar buracos em qualquer ponto)
+      const existingDates = new Set(chainLancs.map((l: any) => l.data_vencimento));
 
-      // Loop generating until 12 months ahead
+      // Itera do template (data inicial) até 12 meses à frente, preenchendo buracos
+      let currentDate = new Date(template.data_vencimento);
       for (let i = 0; i < 365; i++) {
         const nextDate = calcNextDate(currentDate, template.recorrencia_tipo);
         const nextDateStr = nextDate.toISOString().split("T")[0];
 
-        // Stop if beyond 12 months
         if (nextDateStr > limiteStr) break;
-
-        // Stop if beyond recorrencia_fim
         if (recFim && nextDateStr > recFim) break;
 
-        // Check if this date already exists in the chain
-        const alreadyInChain = chainLancs.some((l: any) => l.data_vencimento === nextDateStr);
-        if (alreadyInChain) {
+        if (existingDates.has(nextDateStr)) {
           currentDate = nextDate;
           continue;
         }
@@ -184,12 +178,11 @@ Deno.serve(async (req) => {
         const { data: existing } = await dupQuery.limit(1);
 
         if (existing && existing.length > 0) {
-          chainLancs.push(existing[0]);
+          existingDates.add(nextDateStr);
           currentDate = nextDate;
           continue;
         }
 
-        // Insert new occurrence
         const { data: inserted, error: insertError } = await supabase
           .from("lancamentos")
           .insert({
@@ -207,14 +200,14 @@ Deno.serve(async (req) => {
             projeto_id: template.projeto_id,
             recorrente: true,
             recorrencia_tipo: template.recorrencia_tipo,
-            recorrencia_fim: template.recorrencia_fim,
+            recorrencia_fim: recFim,
             recorrencia_grupo_id: effectiveGrupoId,
           })
           .select("*");
 
         if (!insertError && inserted) {
           created++;
-          chainLancs.push(inserted[0]);
+          existingDates.add(nextDateStr);
         }
 
         currentDate = nextDate;
