@@ -1078,14 +1078,18 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (lancamento && lancamento.recorrente && !lancamento.total_parcelas && status === "cancelado") {
         try {
           const today = new Date().toISOString().split("T")[0];
-          await supabase
+          let q: any = supabase
             .from("lancamentos")
             .update({ status: "cancelado" })
-            .eq("descricao", lancamento.descricao)
-            .eq("valor", lancamento.valor)
             .eq("recorrente", true)
             .eq("status", "pendente")
             .gt("data_vencimento", today);
+          if (lancamento.recorrencia_grupo_id) {
+            q = q.eq("recorrencia_grupo_id", lancamento.recorrencia_grupo_id);
+          } else {
+            q = q.eq("descricao", lancamento.descricao).eq("valor", lancamento.valor);
+          }
+          await q;
         } catch (err) {
           console.warn("Erro ao cancelar recorrências futuras:", err);
         }
