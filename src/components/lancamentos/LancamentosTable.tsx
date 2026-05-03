@@ -16,6 +16,7 @@ import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 import SupportDeleteDialog from "@/components/common/SupportDeleteDialog";
 import { useSolicitacoesSuporte } from "@/hooks/useSolicitacoesSuporte";
 import { BulkActionsBar } from "./BulkActionsBar";
+import { SelectionSummaryPopup } from "./SelectionSummaryPopup";
 import { toast } from "sonner";
 
 export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?: any[] } = {}) => {
@@ -163,14 +164,20 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
   }, [lancamentos]);
 
   const bulkBar = (canAlterar || canExcluir) && (
-    <BulkActionsBar
-      selectedCount={selectedIds.size}
-      totalValue={selectedTotal}
-      onBulkPay={handleBulkPay}
-      onBulkDelete={handleBulkDelete}
-      onClearSelection={() => setSelectedIds(new Set())}
-      loading={bulkLoading}
-    />
+    <>
+      <BulkActionsBar
+        selectedCount={selectedIds.size}
+        totalValue={selectedTotal}
+        onBulkPay={handleBulkPay}
+        onBulkDelete={handleBulkDelete}
+        onClearSelection={() => setSelectedIds(new Set())}
+        loading={bulkLoading}
+      />
+      <SelectionSummaryPopup
+        selected={selectedLancamentos}
+        onClear={() => setSelectedIds(new Set())}
+      />
+    </>
   );
 
   if (isMobile) {
