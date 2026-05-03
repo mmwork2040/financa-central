@@ -366,7 +366,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
           </TableHeader>
           <TableBody>
             {paginatedItems.map((lancamento) => {
-              const isSelectable = lancamento.status === "pendente" && !lancamento.id?.startsWith("virtual-");
+              const isSelectable = isPending(lancamento.status) && !lancamento.id?.startsWith("virtual-");
               return (
                 <TableRow key={lancamento.id} className={hasPendingRequest("lancamentos", lancamento.id!) ? "bg-destructive/5 border-l-4 border-l-destructive" : ""}>
                   {(canAlterar || canExcluir) && (
