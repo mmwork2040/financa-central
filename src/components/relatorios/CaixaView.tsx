@@ -29,12 +29,11 @@ const CaixaView = () => {
         const totalCaixa = contas?.reduce((sum, c) => sum + (c.saldo_atual || 0), 0) || 0;
         setCaixaAtual(totalCaixa);
 
-        // Fetch future pending transactions
+        // Fetch pending transactions (inclui vencidos para que continuem aparecendo)
         const { data: lancFuturos } = await supabase
           .from("lancamentos")
           .select("tipo, valor, data_vencimento, status, descricao, recorrente, total_parcelas, recorrencia_fim")
-          .in("status", ["pendente", "aberto"])
-          .gte("data_vencimento", format(hoje, "yyyy-MM-dd"));
+          .in("status", ["pendente", "aberto", "vencido", "atrasado"]);
 
         // Fetch active recurring without fixed installments
         const { data: recorrentes } = await supabase

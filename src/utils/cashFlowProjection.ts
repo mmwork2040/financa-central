@@ -23,7 +23,8 @@ interface MonthFlow {
 export function calcularFluxoMensal(
   monthDate: Date,
   lancamentosFuturos: Lancamento[],
-  recorrentes: Lancamento[]
+  recorrentes: Lancamento[],
+  includeOverdue: boolean = false
 ): MonthFlow {
   const mStart = startOfMonth(monthDate);
   const mEnd = endOfMonth(monthDate);
@@ -31,13 +32,17 @@ export function calcularFluxoMensal(
   const mEndStr = format(mEnd, "yyyy-MM-dd");
 
   // 1. Real pending transactions in this month
+  // Quando includeOverdue=true, itens vencidos (data < início do mês) ainda pendentes
+  // são carregados para este mês — assim continuam visíveis nas projeções até serem pagos.
   let receitas = 0;
   let despesas = 0;
   const descInMonth = new Set<string>();
 
   for (const l of lancamentosFuturos) {
     if (l.tipo === "investimento") continue;
-    if (l.data_vencimento >= mStartStr && l.data_vencimento <= mEndStr) {
+    const inMonth = l.data_vencimento >= mStartStr && l.data_vencimento <= mEndStr;
+    const overdueCarry = includeOverdue && l.data_vencimento < mStartStr;
+    if (inMonth || overdueCarry) {
       descInMonth.add(l.descricao.toLowerCase());
       if (l.tipo === "receita") {
         receitas += l.valor || 0;
@@ -111,7 +116,9 @@ export function simularFluxoCaixa(
 
   for (let i = 1; i <= mesesProjecao; i++) {
     const monthDate = addMonths(hoje, i);
-    const flow = calcularFluxoMensal(monthDate, lancamentosFuturos, recorrentes);
+    // No primeiro mês projetado, carrega itens vencidos ainda pendentes para
+    // que apareçam como obrigação a quitar nas próximas projeções.
+    const flow = calcularFluxoMensal(monthDate, lancamentosFuturos, recorrentes, i === 1);
 
     runningCaixa = runningCaixa + flow.receitas - flow.despesas;
     projectionData.push({ name: monthNames[monthDate.getMonth()], caixa: runningCaixa });
