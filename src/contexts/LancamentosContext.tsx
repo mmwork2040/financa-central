@@ -487,7 +487,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setOpenDeleteModal(true);
   };
   
-  const handleDelete = async () => {
+  const handleDelete = async (scope: "single" | "future" = "single") => {
     if (!selectedId) return;
     
     try {
@@ -521,11 +521,50 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
       }
 
-      // Remove pending support requests for this record
+      // Determinar IDs a excluir conforme escopo
+      let idsToDelete: string[] = [selectedId];
+      if (scope === "future" && lancamento?.recorrencia_grupo_id) {
+        const { data: futuros } = await supabase
+          .from("lancamentos")
+          .select("id, conta_bancaria_id, status, tipo, valor, descricao, origem, data_vencimento")
+          .eq("recorrencia_grupo_id", lancamento.recorrencia_grupo_id)
+          .gte("data_vencimento", lancamento.data_vencimento);
+        if (futuros && futuros.length) {
+          idsToDelete = futuros.map((f: any) => f.id);
+          // Estornar saldo de futuros que já foram pagos/recebidos (exceto o atual já tratado)
+          for (const f of futuros as any[]) {
+            if (f.id === selectedId) continue;
+            if (f.conta_bancaria_id && ["pago", "recebido"].includes(f.status)) {
+              const isCredit = f.tipo === "receita" || f.origem === "resgate_investimento" || f.origem === "rentabilidade_investimento" || f.origem === "reajuste_investimento";
+              const delta = isCredit ? -f.valor : f.valor;
+              const { data: contaAtual } = await supabase
+                .from("contas_bancarias").select("saldo_atual").eq("id", f.conta_bancaria_id).single();
+              if (contaAtual) {
+                const saldoAnterior = Number(contaAtual.saldo_atual);
+                const saldoPosterior = saldoAnterior + delta;
+                await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
+                  .eq("id", f.conta_bancaria_id);
+                await logMovimentacao({
+                  conta_bancaria_id: f.conta_bancaria_id,
+                  empresa_id: empresaId || null,
+                  tipo: "ajuste",
+                  descricao: `Estorno (exclusão em série): ${f.descricao}`,
+                  valor: delta,
+                  saldo_anterior: saldoAnterior,
+                  saldo_posterior: saldoPosterior,
+                  lancamento_id: f.id,
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // Remove pending support requests for these records
       await supabase
         .from('solicitacoes_suporte')
         .delete()
-        .eq('registro_id', selectedId)
+        .in('registro_id', idsToDelete)
         .eq('tabela', 'lancamentos')
         .eq('status', 'pendente');
 
@@ -533,15 +572,32 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       await (supabase as any)
         .from('vendas_digitais')
         .update({ lancamento_id: null })
-        .eq('lancamento_id', selectedId);
+        .in('lancamento_id', idsToDelete);
 
-      const { error } = await supabase.from("lancamentos").delete().eq("id", selectedId);
+      // Se é recorrência aberta (sem total_parcelas) e excluiu "future", definir recorrencia_fim no anterior
+      // para impedir nova geração automática
+      if (scope === "future" && lancamento?.recorrencia_grupo_id && lancamento?.recorrente) {
+        const fimDate = new Date(lancamento.data_vencimento);
+        fimDate.setDate(fimDate.getDate() - 1);
+        const fimStr = fimDate.toISOString().split("T")[0];
+        await (supabase as any)
+          .from("lancamentos")
+          .update({ recorrencia_fim: fimStr })
+          .eq("recorrencia_grupo_id", lancamento.recorrencia_grupo_id)
+          .lt("data_vencimento", lancamento.data_vencimento);
+      }
+
+      const { error } = await supabase.from("lancamentos").delete().in("id", idsToDelete);
 
       if (error) {
         throw error;
       }
 
-      toast.success("O lançamento foi excluído com sucesso.");
+      toast.success(
+        idsToDelete.length > 1
+          ? `${idsToDelete.length} lançamentos excluídos com sucesso.`
+          : "O lançamento foi excluído com sucesso."
+      );
       setOpenDeleteModal(false);
       await fetchLancamentos();
     } catch (error: any) {
