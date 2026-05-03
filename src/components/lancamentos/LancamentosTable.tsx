@@ -62,7 +62,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
 
   // Only real (non-virtual) pending items can be selected
   const selectableItems = lancamentos.filter(
-    (l) => l.status === "pendente" && !l.id?.startsWith("virtual-")
+    (l) => isPending(l.status) && !l.id?.startsWith("virtual-")
   );
 
   const toggleSelect = useCallback((id: string) => {
