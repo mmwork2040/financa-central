@@ -229,6 +229,7 @@ function parseHubla(body: any): SaleData | null {
       cliente_email: customer?.email || null,
       cliente_telefone: customer?.phone || customer?.mobile || null,
       cliente_documento: customer?.document || customer?.cpf || null,
+      transaction_id: data?.id ? String(data.id) : (data?.subscription_id ? String(data.subscription_id) : null),
     };
   }
 
