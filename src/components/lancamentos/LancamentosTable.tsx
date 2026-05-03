@@ -414,7 +414,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                       </span>
                       {(lancamento.status === 'pago' || lancamento.status === 'recebido') ? (
                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${lancamento.tipo === "receita" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>✓ Executado</span>
-                      ) : lancamento.status === 'pendente' ? (
+                      ) : isPending(lancamento.status) ? (
                         <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-700 cursor-help">🕐 Previsto</span>
                         </TooltipTrigger><TooltipContent><p>Data prevista: {new Date(lancamento.data_vencimento).toLocaleDateString('pt-BR')}</p></TooltipContent></Tooltip></TooltipProvider>
