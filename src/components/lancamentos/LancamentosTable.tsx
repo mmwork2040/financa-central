@@ -187,7 +187,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
         {bulkBar}
         <div className="glass-surface rounded-2xl p-3 space-y-3">
           {paginatedItems.map((l) => {
-            const isSelectable = l.status === "pendente" && !l.id?.startsWith("virtual-");
+            const isSelectable = isPending(l.status) && !l.id?.startsWith("virtual-");
             return (
               <Card key={l.id} className={hasPendingRequest("lancamentos", l.id!) ? "border-l-4 border-l-destructive bg-destructive/5" : ""}>
                 <CardContent className="p-4">
