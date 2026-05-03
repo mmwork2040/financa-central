@@ -89,7 +89,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
     setBulkLoading(true);
     try {
       for (const l of selectedLancamentos) {
-        if (l.status !== "pendente") continue;
+        if (!isPending(l.status)) continue;
 
         // Adjust bank account balance if linked
         if (l.conta_bancaria_id) {
