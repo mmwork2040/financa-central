@@ -17,6 +17,7 @@ import SupportDeleteDialog from "@/components/common/SupportDeleteDialog";
 import { useSolicitacoesSuporte } from "@/hooks/useSolicitacoesSuporte";
 import { BulkActionsBar } from "./BulkActionsBar";
 import { SelectionSummaryPopup } from "./SelectionSummaryPopup";
+import { isPending } from "@/utils/lancamentoStatus";
 import { toast } from "sonner";
 
 export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?: any[] } = {}) => {
@@ -61,7 +62,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
 
   // Only real (non-virtual) pending items can be selected
   const selectableItems = lancamentos.filter(
-    (l) => l.status === "pendente" && !l.id?.startsWith("virtual-")
+    (l) => isPending(l.status) && !l.id?.startsWith("virtual-")
   );
 
   const toggleSelect = useCallback((id: string) => {
@@ -88,7 +89,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
     setBulkLoading(true);
     try {
       for (const l of selectedLancamentos) {
-        if (l.status !== "pendente") continue;
+        if (!isPending(l.status)) continue;
 
         // Adjust bank account balance if linked
         if (l.conta_bancaria_id) {
@@ -186,7 +187,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
         {bulkBar}
         <div className="glass-surface rounded-2xl p-3 space-y-3">
           {paginatedItems.map((l) => {
-            const isSelectable = l.status === "pendente" && !l.id?.startsWith("virtual-");
+            const isSelectable = isPending(l.status) && !l.id?.startsWith("virtual-");
             return (
               <Card key={l.id} className={hasPendingRequest("lancamentos", l.id!) ? "border-l-4 border-l-destructive bg-destructive/5" : ""}>
                 <CardContent className="p-4">
@@ -282,7 +283,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                             </div>
                           ) : (
                             <>
-                              {canAlterar && l.status === "pendente" && (
+                              {canAlterar && isPending(l.status) && (
                                 <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-7 w-7 text-primary"
                                     onClick={() => handleUpdateStatus(l.id!, l.tipo === "receita" ? "recebido" : "pago")} title="Confirmar pagamento/recebimento">
@@ -365,7 +366,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
           </TableHeader>
           <TableBody>
             {paginatedItems.map((lancamento) => {
-              const isSelectable = lancamento.status === "pendente" && !lancamento.id?.startsWith("virtual-");
+              const isSelectable = isPending(lancamento.status) && !lancamento.id?.startsWith("virtual-");
               return (
                 <TableRow key={lancamento.id} className={hasPendingRequest("lancamentos", lancamento.id!) ? "bg-destructive/5 border-l-4 border-l-destructive" : ""}>
                   {(canAlterar || canExcluir) && (
@@ -413,7 +414,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                       </span>
                       {(lancamento.status === 'pago' || lancamento.status === 'recebido') ? (
                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${lancamento.tipo === "receita" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>✓ Executado</span>
-                      ) : lancamento.status === 'pendente' ? (
+                      ) : isPending(lancamento.status) ? (
                         <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-700 cursor-help">🕐 Previsto</span>
                         </TooltipTrigger><TooltipContent><p>Data prevista: {new Date(lancamento.data_vencimento).toLocaleDateString('pt-BR')}</p></TooltipContent></Tooltip></TooltipProvider>
@@ -470,7 +471,7 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                           </div>
                         ) : (
                           <>
-                            {canAlterar && lancamento.status === "pendente" && (
+                            {canAlterar && isPending(lancamento.status) && (
                               <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
                                 <Button variant="ghost" size="sm" onClick={() => handleUpdateStatus(lancamento.id!, lancamento.tipo === "receita" ? "recebido" : "pago")} className="h-8 w-8 p-0 text-primary" title="Confirmar pagamento/recebimento">
                                   <Check className="h-4 w-4" />
