@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
 
       // 2. Fallback: search by phone
       if (!perfil && phone) {
-        const phoneVariants = [phone, `+${phone}`, phone.replace(/^55/, "")];
+        const phoneVariants = generatePhoneVariants(phone);
         for (const variant of phoneVariants) {
           let q = supabase
             .from("perfis")
