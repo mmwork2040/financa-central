@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
             }));
           }
 
-          return new Response(JSON.stringify({
+          const response = {
             found: true,
             user_id: perfil.id,
             nome: perfil.nome,
@@ -162,7 +162,29 @@ Deno.serve(async (req) => {
             telefone: perfil.evolution_webhook_url || null,
             empresa_id: perfil.empresa_id,
             empresas: empresasList,
-          }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          };
+
+          // Log success for identify
+          await supabase.from("logs_integracoes").insert({
+            empresa_id: perfil.empresa_id!,
+            plataforma: "n8n-handler",
+            evento: "identify",
+            status: "sucesso",
+            payload: { request: body, response }
+          }).catch(() => {});
+
+          return new Response(JSON.stringify(response), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Log failure for identify
+      if (empresaId) {
+        await supabase.from("logs_integracoes").insert({
+          empresa_id: empresaId,
+          plataforma: "n8n-handler",
+          evento: "identify",
+          status: "erro",
+          payload: { request: body, response: { found: false }, message: "Usuário não encontrado" }
+        }).catch(() => {});
       }
 
       return new Response(JSON.stringify({ found: false }), {
