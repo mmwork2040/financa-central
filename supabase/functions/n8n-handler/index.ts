@@ -828,6 +828,11 @@ DADOS: ${userContext + (lancamentosContext ? `\n\nLANÇAMENTOS DO MÊS:\n${lanca
         conta_bancaria_id,
         forma_pagamento_id,
         projeto_id: empty(body.projeto_id) ? null : body.projeto_id,
+        recorrente: String(body.recorrente).toLowerCase() === "true",
+        recorrencia_tipo: empty(body.recorrencia_tipo) ? null : String(body.recorrencia_tipo).toLowerCase(),
+        recorrencia_inicio: empty(body.recorrencia_inicio) ? null : body.recorrencia_inicio,
+        recorrencia_fim: empty(body.recorrencia_fim) ? null : body.recorrencia_fim,
+        total_parcelas: empty(body.total_parcelas) ? null : parseInt(String(body.total_parcelas), 10),
       };
 
       const { data: lanc, error: errLanc } = await supabase.from("lancamentos").insert(payload).select("*").single();
