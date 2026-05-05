@@ -1310,6 +1310,11 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     label: "Editar Lançamento",
     description: "Altera dados de um lançamento pendente. Obrigatório informar cliente (receita) ou fornecedor (despesa) ao alterar tipo ou dados básicos.",
     toolDescription: `Altera dados de um lancamento financeiro existente. Use SEMPRE esta ferramenta quando o usuario pedir para alterar, renomear, mudar ou atualizar um lancamento. NAO use a ferramenta "lancamentos" para buscar antes — esta ferramenta ja faz a busca internamente.
+    
+⚠️ OBRIGATORIEDADE DE ENTIDADES:
+- Se o lançamento for (ou passar a ser) uma RECEITA: cliente_nome é OBRIGATÓRIO.
+- Se o lançamento for (ou passar a ser) uma DESPESA: fornecedor_nome é OBRIGATÓRIO.
+- Falha ao enviar a entidade correta resultará em erro 400.
 
 RESOLUCAO POR DESCRICAO (BUSCA AUTOMATICA):
 - Se o ID nao for informado, envie o campo "search" com a descricao (ou parte) do lancamento.
