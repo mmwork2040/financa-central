@@ -19,8 +19,16 @@ Deno.serve(async (req) => {
     let rawBody: any = {};
     const bodyText = await req.text();
     if (bodyText && bodyText.trim()) {
-      try { rawBody = JSON.parse(bodyText); } catch (_) { rawBody = {}; }
+      try { 
+        rawBody = JSON.parse(bodyText); 
+      } catch (_) { 
+        console.warn("⚠️ [n8n-query] Falha ao fazer parse do body:", bodyText);
+        rawBody = {}; 
+      }
+    } else if (req.method !== "GET" && req.method !== "OPTIONS") {
+      console.warn("⚠️ [n8n-query] Body vazio recebido para método:", req.method);
     }
+    
     // Se o n8n enviar o body como string JSON escapada, fazer parse novamente
     if (typeof rawBody === "string") {
       try { rawBody = JSON.parse(rawBody); } catch (_) { /* mantém como está */ }
@@ -43,6 +51,18 @@ Deno.serve(async (req) => {
     // Se veio com json_montado como wrapper
     if (rawBody && typeof rawBody === "object" && rawBody.json_montado && !rawBody.action) {
       rawBody = rawBody.json_montado;
+    }
+    
+    // Fallback para URL Search Params se o body ainda estiver vazio ou for incompleto
+    const reqUrl = new URL(req.url);
+    if (!rawBody.action && reqUrl.searchParams.has("action")) {
+      rawBody.action = reqUrl.searchParams.get("action");
+    }
+    if (!rawBody.empresa_id && reqUrl.searchParams.has("empresa_id")) {
+      rawBody.empresa_id = reqUrl.searchParams.get("empresa_id");
+    }
+    if (!rawBody.user_id && reqUrl.searchParams.has("user_id")) {
+      rawBody.user_id = reqUrl.searchParams.get("user_id");
     }
     // Helper: limpar valores que são placeholders literais do n8n (ex: "{empresa_id}", "", undefined)
     const sanitize = (val: any): any => {
