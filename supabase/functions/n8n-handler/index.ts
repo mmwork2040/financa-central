@@ -243,6 +243,17 @@ Deno.serve(async (req) => {
       }
 
       if (!perfil) {
+        // Log failure for identify-by-email
+        if (empresaId) {
+          await supabase.from("logs_integracoes").insert({
+            empresa_id: empresaId,
+            plataforma: "n8n-handler",
+            evento: "identify-by-email",
+            status: "erro",
+            payload: { request: body, response: { found: false }, message: "Usuário não encontrado" }
+          }).catch(() => {});
+        }
+
         return new Response(JSON.stringify({ found: false }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -277,7 +288,7 @@ Deno.serve(async (req) => {
         }));
       }
 
-      return new Response(JSON.stringify({
+      const response = {
         found: true,
         user_id: perfil.id,
         nome: perfil.nome,
@@ -286,7 +297,18 @@ Deno.serve(async (req) => {
         telegram_id: perfil.telegram_id || telegramId || null,
         empresa_id: perfil.empresa_id,
         empresas: emailEmpresasList,
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      };
+
+      // Log success for identify-by-email
+      await supabase.from("logs_integracoes").insert({
+        empresa_id: perfil.empresa_id!,
+        plataforma: "n8n-handler",
+        evento: "identify-by-email",
+        status: "sucesso",
+        payload: { request: body, response }
+      }).catch(() => {});
+
+      return new Response(JSON.stringify(response), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // ─── Action: chat ───
