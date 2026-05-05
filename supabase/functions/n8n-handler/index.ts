@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
           evento: "identify",
           status: "erro",
           payload: { request: body, response: { found: false }, message: "Usuário não encontrado" }
-        }).catch(() => {});
+        });
       }
 
       return new Response(JSON.stringify({ found: false }), {
