@@ -423,6 +423,120 @@ mcpServer.tool({
   },
 });
 
+// ─── Tool: Criar Lançamento ───
+mcpServer.tool({
+  name: "criar_lancamento",
+  description: "Cria um lançamento financeiro (receita ou despesa). Resolve categoria, fornecedor, cliente, conta bancária e forma de pagamento por nome (busca case-insensitive). Cria categoria/fornecedor/cliente automaticamente se não existir. Use quando o usuário quiser registrar uma despesa, receita ou pagamento.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      empresa_id: { type: "string", description: "UUID da empresa" },
+      tipo: { type: "string", description: "Tipo: 'receita' ou 'despesa'" },
+      descricao: { type: "string", description: "Descrição do lançamento" },
+      valor: { type: "string", description: "Valor (aceita string ou número, ex: '27.76' ou '27,76')" },
+      data_vencimento: { type: "string", description: "Data de vencimento (YYYY-MM-DD)" },
+      data_pagamento: { type: "string", description: "Data do pagamento/recebimento (YYYY-MM-DD). Se informada, status vira 'pago' ou 'recebido' automaticamente." },
+      categoria: { type: "string", description: "Nome da categoria (será resolvida ou criada)" },
+      fornecedor: { type: "string", description: "Nome do fornecedor (apenas para despesa, será resolvido ou criado)" },
+      cliente: { type: "string", description: "Nome do cliente (apenas para receita, será resolvido ou criado)" },
+      conta_bancaria: { type: "string", description: "Nome da conta bancária. Se omitido, usa a conta principal." },
+      forma_pagamento: { type: "string", description: "Descrição da forma de pagamento (ex: Pix, Dinheiro, Cartão)" },
+    },
+    required: ["empresa_id", "tipo", "valor", "data_vencimento"],
+  },
+  handler: async (input: any) => {
+    const supabase = getSupabase();
+    const empresa_id = input.empresa_id;
+    const tipo = String(input.tipo || "").toLowerCase();
+    if (tipo !== "receita" && tipo !== "despesa") {
+      throw new Error("tipo deve ser 'receita' ou 'despesa'");
+    }
+    // Parse valor flexível
+    const valorStr = String(input.valor).replace(/[^\d.,-]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".");
+    const valor = parseFloat(valorStr);
+    if (isNaN(valor) || valor <= 0) throw new Error("valor inválido");
+
+    // Helper: resolve por nome (case-insensitive) ou cria
+    async function resolveOrCreate(table: string, nameField: string, name: string, extra: Record<string, any> = {}) {
+      if (!name) return null;
+      const { data: found } = await supabase.from(table).select("id").eq("empresa_id", empresa_id).ilike(nameField, name.trim()).maybeSingle();
+      if (found) return found.id;
+      const insertData: any = { empresa_id, [nameField]: name.trim(), ...extra };
+      const { data: created, error } = await supabase.from(table).insert(insertData).select("id").single();
+      if (error) throw new Error(`Erro ao criar ${table}: ${error.message}`);
+      return created.id;
+    }
+
+    // Categoria
+    let categoria_id: string | null = null;
+    if (input.categoria) {
+      const { data: foundCat } = await supabase.from("categorias").select("id").eq("empresa_id", empresa_id).eq("tipo", tipo).ilike("nome", input.categoria.trim()).maybeSingle();
+      if (foundCat) categoria_id = foundCat.id;
+      else {
+        const { data: createdCat, error } = await supabase.from("categorias").insert({ empresa_id, nome: input.categoria.trim(), tipo }).select("id").single();
+        if (error) throw new Error(`Erro ao criar categoria: ${error.message}`);
+        categoria_id = createdCat.id;
+      }
+    }
+
+    // Fornecedor / Cliente
+    let fornecedor_id: string | null = null;
+    let cliente_id: string | null = null;
+    if (tipo === "despesa" && input.fornecedor) {
+      fornecedor_id = await resolveOrCreate("fornecedores", "nome", input.fornecedor);
+    }
+    if (tipo === "receita" && input.cliente) {
+      cliente_id = await resolveOrCreate("clientes", "nome", input.cliente);
+    }
+
+    // Conta bancária
+    let conta_bancaria_id: string | null = null;
+    if (input.conta_bancaria) {
+      const { data: c } = await supabase.from("contas_bancarias").select("id").eq("empresa_id", empresa_id).ilike("nome", input.conta_bancaria.trim()).maybeSingle();
+      if (c) conta_bancaria_id = c.id;
+    }
+    if (!conta_bancaria_id) {
+      const { data: principal } = await supabase.from("contas_bancarias").select("id").eq("empresa_id", empresa_id).eq("conta_principal", true).maybeSingle();
+      if (principal) conta_bancaria_id = principal.id;
+    }
+
+    // Forma de pagamento
+    let forma_pagamento_id: string | null = null;
+    if (input.forma_pagamento) {
+      const { data: fp } = await supabase.from("formas_pagamento").select("id").eq("empresa_id", empresa_id).ilike("descricao", input.forma_pagamento.trim()).maybeSingle();
+      if (fp) forma_pagamento_id = fp.id;
+      else {
+        const { data: createdFp, error } = await supabase.from("formas_pagamento").insert({ empresa_id, descricao: input.forma_pagamento.trim() }).select("id").single();
+        if (!error && createdFp) forma_pagamento_id = createdFp.id;
+      }
+    }
+
+    // Status automático
+    const data_pagamento = input.data_pagamento || null;
+    const status = data_pagamento ? (tipo === "receita" ? "recebido" : "pago") : "pendente";
+
+    const payload: any = {
+      empresa_id,
+      tipo,
+      descricao: input.descricao || null,
+      valor,
+      data_vencimento: input.data_vencimento,
+      data_pagamento,
+      status,
+      categoria_id,
+      fornecedor_id,
+      cliente_id,
+      conta_bancaria_id,
+      forma_pagamento_id,
+    };
+
+    const { data: lanc, error } = await supabase.from("lancamentos").insert(payload).select("*").single();
+    if (error) throw new Error(`Erro ao criar lançamento: ${error.message}`);
+
+    return { content: [{ type: "text", text: JSON.stringify({ ok: true, lancamento: lanc }) }] };
+  },
+});
+
 // ─── HTTP Transport ───
 const transport = new StreamableHttpTransport();
 
