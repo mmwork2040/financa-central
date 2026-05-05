@@ -729,6 +729,23 @@ DADOS: ${fullContext}`;
       });
     }
 
+    // ─── LOG SUCCESS ───
+    if (empresaId) {
+      const duration = Date.now() - new Date(requestTimestamp).getTime();
+      await supabase.from("logs_integracoes").insert({
+        empresa_id: empresaId,
+        plataforma: "n8n-handler",
+        evento: action,
+        status: "sucesso",
+        payload: { 
+          action, 
+          body, 
+          duration_ms: duration,
+          timestamp: new Date().toISOString()
+        }
+      }).catch(() => {});
+    }
+
     return new Response(JSON.stringify({ 
       error: "Unknown action. Available actions: identify, identify-by-email, chat, get-financial-summary, save-message" 
     }), {
@@ -737,6 +754,28 @@ DADOS: ${fullContext}`;
 
   } catch (error: any) {
     console.error("n8n-handler error:", error);
+    
+    // Attempt to log error
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const sbLog = createClient(supabaseUrl, serviceRoleKey);
+      
+      const eid = reqUrl.searchParams.get("empresa_id") || "00000000-0000-0000-0000-000000000000";
+      
+      await sbLog.from("logs_integracoes").insert({
+        empresa_id: eid,
+        plataforma: "n8n-handler",
+        evento: reqUrl.searchParams.get("action") || "unknown",
+        status: "erro",
+        payload: { 
+          error: error.message, 
+          stack: error.stack?.substring(0, 500),
+          action: reqUrl.searchParams.get("action")
+        }
+      });
+    } catch (_) { /* ignore */ }
+
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
