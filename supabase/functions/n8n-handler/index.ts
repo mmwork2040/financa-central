@@ -717,6 +717,137 @@ DADOS: ${userContext + (lancamentosContext ? `\n\nLANÇAMENTOS DO MÊS:\n${lanca
     }
 
     // ─── LOG SUCCESS ───
+    // ─── Action: criar-lancamento ───
+    if (action === "criar-lancamento" || action === "criar_lancamento" || body?.action === "criar-lancamento") {
+      action = "criar-lancamento";
+      const eid = body.empresa_id || empresaId;
+      if (!eid) {
+        return new Response(JSON.stringify({ error: "empresa_id é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const tipo = String(body.tipo || "").toLowerCase();
+      if (tipo !== "receita" && tipo !== "despesa") {
+        return new Response(JSON.stringify({ error: "tipo deve ser 'receita' ou 'despesa'" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      // Parse valor flexível (aceita "1.900,00", "1900.00", 1900)
+      const valorRaw = String(body.valor ?? "").trim();
+      let valorStr = valorRaw.replace(/[^\d.,-]/g, "");
+      if (valorStr.includes(",")) {
+        valorStr = valorStr.replace(/\./g, "").replace(",", ".");
+      }
+      const valor = parseFloat(valorStr);
+      if (isNaN(valor) || valor <= 0) {
+        return new Response(JSON.stringify({ error: `valor inválido: '${valorRaw}'` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (!body.data_vencimento) {
+        return new Response(JSON.stringify({ error: "data_vencimento é obrigatório (YYYY-MM-DD)" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const empty = (v: any) => v === undefined || v === null || String(v).trim() === "" || String(v).toLowerCase() === "vazio";
+
+      // Resolver Categoria
+      let categoria_id: string | null = empty(body.categoria_id) ? null : body.categoria_id;
+      if (!categoria_id && !empty(body.categoria_nome)) {
+        const nome = String(body.categoria_nome).trim();
+        const { data: foundCat } = await supabase.from("categorias").select("id").eq("empresa_id", eid).eq("tipo", tipo).ilike("nome", nome).maybeSingle();
+        if (foundCat) categoria_id = foundCat.id;
+        else {
+          const { data: createdCat, error: errCat } = await supabase.from("categorias").insert({ empresa_id: eid, nome, tipo }).select("id").single();
+          if (errCat) throw new Error(`Erro ao criar categoria: ${errCat.message}`);
+          categoria_id = createdCat.id;
+        }
+      }
+
+      // Resolver Forma de Pagamento
+      let forma_pagamento_id: string | null = empty(body.forma_pagamento_id) ? null : body.forma_pagamento_id;
+      if (!forma_pagamento_id && !empty(body.forma_pagamento_nome)) {
+        const desc = String(body.forma_pagamento_nome).trim();
+        const { data: fp } = await supabase.from("formas_pagamento").select("id").eq("empresa_id", eid).ilike("descricao", desc).maybeSingle();
+        if (fp) forma_pagamento_id = fp.id;
+        else {
+          const { data: createdFp } = await supabase.from("formas_pagamento").insert({ empresa_id: eid, descricao: desc }).select("id").single();
+          if (createdFp) forma_pagamento_id = createdFp.id;
+        }
+      }
+
+      // Resolver Conta Bancária
+      let conta_bancaria_id: string | null = empty(body.conta_bancaria_id) ? null : body.conta_bancaria_id;
+      if (!conta_bancaria_id && !empty(body.conta_bancaria_nome)) {
+        const nomeCb = String(body.conta_bancaria_nome).trim();
+        const { data: cb } = await supabase.from("contas_bancarias").select("id").eq("empresa_id", eid).ilike("nome", nomeCb).maybeSingle();
+        if (cb) conta_bancaria_id = cb.id;
+      }
+      if (!conta_bancaria_id) {
+        const { data: principal } = await supabase.from("contas_bancarias").select("id").eq("empresa_id", eid).eq("conta_principal", true).maybeSingle();
+        if (principal) conta_bancaria_id = principal.id;
+      }
+
+      // Resolver Cliente / Fornecedor
+      let cliente_id: string | null = empty(body.cliente_id) ? null : body.cliente_id;
+      let fornecedor_id: string | null = empty(body.fornecedor_id) ? null : body.fornecedor_id;
+      if (tipo === "receita" && !cliente_id && !empty(body.cliente_nome)) {
+        const nomeCli = String(body.cliente_nome).trim();
+        const { data: cli } = await supabase.from("clientes").select("id").eq("empresa_id", eid).ilike("nome", nomeCli).maybeSingle();
+        if (cli) cliente_id = cli.id;
+        else {
+          const insertCli: any = { empresa_id: eid, nome: nomeCli };
+          if (!empty(body.cliente_cpf_cnpj)) insertCli.cpf_cnpj = String(body.cliente_cpf_cnpj).replace(/\D/g, "");
+          const { data: created } = await supabase.from("clientes").insert(insertCli).select("id").single();
+          if (created) cliente_id = created.id;
+        }
+      }
+      if (tipo === "despesa" && !fornecedor_id && !empty(body.fornecedor_nome)) {
+        const nomeF = String(body.fornecedor_nome).trim();
+        const { data: f } = await supabase.from("fornecedores").select("id").eq("empresa_id", eid).ilike("nome", nomeF).maybeSingle();
+        if (f) fornecedor_id = f.id;
+        else {
+          const insertF: any = { empresa_id: eid, nome: nomeF };
+          if (!empty(body.fornecedor_cpf_cnpj)) insertF.cpf_cnpj = String(body.fornecedor_cpf_cnpj).replace(/\D/g, "");
+          const { data: created } = await supabase.from("fornecedores").insert(insertF).select("id").single();
+          if (created) fornecedor_id = created.id;
+        }
+      }
+
+      // Status automático
+      const data_pagamento = empty(body.data_pagamento) ? null : body.data_pagamento;
+      let status = empty(body.status) ? null : String(body.status).toLowerCase();
+      if (!status) {
+        status = data_pagamento ? (tipo === "receita" ? "recebido" : "pago") : "pendente";
+      }
+
+      const payload: any = {
+        empresa_id: eid,
+        tipo,
+        descricao: empty(body.descricao) ? null : body.descricao,
+        valor,
+        data_vencimento: body.data_vencimento,
+        data_pagamento,
+        status,
+        categoria_id,
+        fornecedor_id,
+        cliente_id,
+        conta_bancaria_id,
+        forma_pagamento_id,
+        projeto_id: empty(body.projeto_id) ? null : body.projeto_id,
+      };
+
+      const { data: lanc, error: errLanc } = await supabase.from("lancamentos").insert(payload).select("*").single();
+      if (errLanc) throw new Error(`Erro ao criar lançamento: ${errLanc.message}`);
+
+      if (eid) {
+        await supabase.from("logs_integracoes").insert({
+          empresa_id: eid,
+          plataforma: "n8n-handler",
+          evento: "criar-lancamento",
+          status: "sucesso",
+          payload: { lancamento_id: lanc.id, tipo, valor, descricao: lanc.descricao }
+        });
+      }
+
+      return new Response(JSON.stringify({ ok: true, lancamento: lanc }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
     if (empresaId) {
       const duration = Date.now() - new Date(requestTimestamp).getTime();
       await supabase.from("logs_integracoes").insert({
@@ -734,7 +865,7 @@ DADOS: ${userContext + (lancamentosContext ? `\n\nLANÇAMENTOS DO MÊS:\n${lanca
     }
 
     return new Response(JSON.stringify({ 
-      error: "Unknown action. Available actions: identify, identify-by-email, chat, get-financial-summary, save-message" 
+      error: "Unknown action. Available actions: identify, identify-by-email, chat, get-financial-summary, save-message, criar-lancamento" 
     }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
