@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
 
     const reqUrl = new URL(req.url);
     let empresaId = reqUrl.searchParams.get("empresa_id") || "";
-    const action = reqUrl.searchParams.get("action") || "";
+    let action = reqUrl.searchParams.get("action") || "";
 
     const requestTimestamp = new Date().toISOString();
     
