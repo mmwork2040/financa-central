@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
           evento: action || "auth",
           status: "erro",
           payload: { error: "Acesso negado: credencial inválida", action }
-        }).catch(() => {});
+        });
       }
 
       return new Response(JSON.stringify({ error: "Não autorizado. Envie a api-key correta no header Authorization ou api-key." }), {
