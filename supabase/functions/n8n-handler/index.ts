@@ -38,6 +38,53 @@ Deno.serve(async (req) => {
 
     const body = req.method !== "GET" ? await req.json() : {};
 
+    // ─── Helper: gera variações de número de telefone para busca ───
+    // Ex.: input "5531982964066" gera:
+    // ["5531982964066", "553182964066", "31982964066", "3182964066", "982964066", "82964066"]
+    const generatePhoneVariants = (raw: string): string[] => {
+      const digits = (raw || "").replace(/\D/g, "");
+      if (!digits) return [];
+      const variants = new Set<string>();
+      variants.add(digits);
+
+      // Sem código do país (55)
+      let local = digits;
+      if (digits.startsWith("55") && digits.length >= 12) {
+        local = digits.slice(2);
+        variants.add(local);
+      }
+
+      // local agora deve ter formato DDD + número (10 ou 11 dígitos)
+      if (local.length === 11 || local.length === 10) {
+        const ddd = local.slice(0, 2);
+        let numero = local.slice(2);
+
+        // Adiciona com DDD (com e sem 9)
+        if (numero.length === 9 && numero.startsWith("9")) {
+          // 11 dígitos com 9 — também variação sem o 9
+          variants.add(ddd + numero); // 11
+          variants.add(ddd + numero.slice(1)); // 10 (sem 9)
+        } else if (numero.length === 8) {
+          variants.add(ddd + numero); // 10
+          variants.add(ddd + "9" + numero); // 11 (com 9)
+        }
+
+        // Versões com 55
+        const base11 = numero.length === 9 ? ddd + numero : (numero.length === 8 ? ddd + "9" + numero : ddd + numero);
+        const base10 = numero.length === 9 && numero.startsWith("9") ? ddd + numero.slice(1) : (numero.length === 8 ? ddd + numero : ddd + numero);
+        variants.add("55" + base11);
+        variants.add("55" + base10);
+
+        // Sem DDD
+        variants.add(numero);
+        if (numero.length === 9 && numero.startsWith("9")) variants.add(numero.slice(1));
+        if (numero.length === 8) variants.add("9" + numero);
+      }
+
+      // Remove vazios e ordena por tamanho desc (busca mais específica primeiro)
+      return Array.from(variants).filter(Boolean).sort((a, b) => b.length - a.length);
+    };
+
     // ─── Helper: resolve empresa_id from email if not provided ───
     const resolveEmpresaId = async (email?: string): Promise<string | null> => {
       if (empresaId) return empresaId;
@@ -67,7 +114,7 @@ Deno.serve(async (req) => {
       }
 
       const phoneClean = phone.replace(/\D/g, "");
-      const phoneVariants = [phoneClean, `+${phoneClean}`, phoneClean.replace(/^55/, "")];
+      const phoneVariants = generatePhoneVariants(phoneClean);
 
       // If empresa_id provided, search within it; otherwise search all
       for (const variant of phoneVariants) {
@@ -152,7 +199,7 @@ Deno.serve(async (req) => {
 
       // 2. Fallback: search by phone
       if (!perfil && phone) {
-        const phoneVariants = [phone, `+${phone}`, phone.replace(/^55/, "")];
+        const phoneVariants = generatePhoneVariants(phone);
         for (const variant of phoneVariants) {
           let q = supabase
             .from("perfis")
