@@ -650,7 +650,7 @@ DADOS: ${userContext + (lancamentosContext ? `\n\nLANÇAMENTOS DO MÊS:\n${lanca
         evento: "chat",
         status: "sucesso",
         payload: { request: { userId, messageLength: message.length }, response }
-      }).catch(() => {});
+      });
 
       return new Response(JSON.stringify(response), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
