@@ -1308,7 +1308,7 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-lancamento",
     toolName: "editar_lancamento",
     label: "Editar Lançamento",
-    description: "Altera dados de um lançamento pendente. Busca por descrição quando ID não informado. Suporta edição em cadeia recorrente e criação automática de categorias/entidades inexistentes.",
+    description: "Altera dados de um lançamento pendente. Obrigatório informar cliente (receita) ou fornecedor (despesa) ao alterar tipo ou dados básicos.",
     toolDescription: `Altera dados de um lancamento financeiro existente. Use SEMPRE esta ferramenta quando o usuario pedir para alterar, renomear, mudar ou atualizar um lancamento. NAO use a ferramenta "lancamentos" para buscar antes — esta ferramenta ja faz a busca internamente.
 
 RESOLUCAO POR DESCRICAO (BUSCA AUTOMATICA):
@@ -1318,9 +1318,9 @@ RESOLUCAO POR DESCRICAO (BUSCA AUTOMATICA):
 - NAO e necessario listar lancamentos antes. Basta enviar o search com o nome/descricao.
 
 RESOLUCAO AUTOMATICA DE NOMES (SEM NECESSIDADE DE BUSCAR IDs):
+- Para alterar cliente: envie cliente_nome com o NOME do cliente (OBRIGATÓRIO se o lançamento for ou passar a ser RECEITA).
+- Para alterar fornecedor: envie fornecedor_nome com o NOME do fornecedor (OBRIGATÓRIO se o lançamento for ou passar a ser DESPESA).
 - Para alterar categoria: envie categoria_nome com o NOME da categoria (ex: "Prestacao de Servicos"). O sistema resolve o UUID automaticamente.
-- Para alterar cliente: envie cliente_nome com o NOME do cliente.
-- Para alterar fornecedor: envie fornecedor_nome com o NOME do fornecedor.
 - Para alterar conta bancaria: envie conta_bancaria_nome com o NOME da conta.
 - Para alterar forma de pagamento: envie forma_pagamento_nome com a DESCRICAO da forma de pagamento.
 - Para alterar projeto: envie projeto_nome com o NOME do projeto.
