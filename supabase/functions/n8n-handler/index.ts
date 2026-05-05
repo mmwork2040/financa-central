@@ -14,8 +14,15 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    const reqUrl = new URL(req.url);
+    let empresaId = reqUrl.searchParams.get("empresa_id") || "";
+    const action = reqUrl.searchParams.get("action") || "";
+
+    const requestTimestamp = new Date().toISOString();
+    
     // ─── AUTHENTICATION ───
-    // Accept service role key OR custom N8N_API_KEY
     const n8nApiKey = Deno.env.get("N8N_API_KEY") || "";
     const authHeader = req.headers.get("Authorization");
     const apikeyHeader = req.headers.get("apikey") || req.headers.get("api-key");
@@ -25,16 +32,22 @@ Deno.serve(async (req) => {
 
     if (!isAuthorized) {
       console.log("🚫 [n8n-handler] Acesso negado: credencial inválida");
+      
+      // Log failure if possible
+      if (empresaId) {
+        await supabase.from("logs_integracoes").insert({
+          empresa_id: empresaId,
+          plataforma: "n8n-handler",
+          evento: action || "auth",
+          status: "erro",
+          payload: { error: "Acesso negado: credencial inválida", action }
+        }).catch(() => {});
+      }
+
       return new Response(JSON.stringify({ error: "Não autorizado. Envie a api-key correta no header Authorization ou api-key." }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-    const reqUrl = new URL(req.url);
-    let empresaId = reqUrl.searchParams.get("empresa_id") || "";
-    const action = reqUrl.searchParams.get("action") || "";
 
     const body = req.method !== "GET" ? await req.json() : {};
 
