@@ -614,8 +614,13 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "criar-lancamento",
     toolName: "criar_lancamento",
     label: "Criar Lançamento",
-    description: "Cria um lançamento financeiro completo — resolve dependências automaticamente por nome. Suporta recorrência e parcelamento.",
+    description: "Cria um lançamento financeiro. OBRIGATÓRIO informar cliente (receita) ou fornecedor (despesa).",
     toolDescription: `Cria um novo lançamento financeiro no sistema com resolução automática de dependências.
+
+⚠️ OBRIGATORIEDADE DE ENTIDADES:
+- Se o lançamento for RECEITA: cliente_nome é OBRIGATÓRIO.
+- Se o lançamento for DESPESA: fornecedor_nome é OBRIGATÓRIO.
+- O não envio da entidade correta impedirá a criação do lançamento.
 
 CAMPOS OBRIGATÓRIOS:
 - empresa_id, user_id, descricao, valor (número puro, ex: 1900.00), tipo (receita ou despesa), data_vencimento (YYYY-MM-DD)
