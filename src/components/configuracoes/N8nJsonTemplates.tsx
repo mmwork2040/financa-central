@@ -1318,9 +1318,9 @@ RESOLUCAO POR DESCRICAO (BUSCA AUTOMATICA):
 - NAO e necessario listar lancamentos antes. Basta enviar o search com o nome/descricao.
 
 RESOLUCAO AUTOMATICA DE NOMES (SEM NECESSIDADE DE BUSCAR IDs):
+- Para alterar cliente: envie cliente_nome com o NOME do cliente (OBRIGATÓRIO se o lançamento for ou passar a ser RECEITA).
+- Para alterar fornecedor: envie fornecedor_nome com o NOME do fornecedor (OBRIGATÓRIO se o lançamento for ou passar a ser DESPESA).
 - Para alterar categoria: envie categoria_nome com o NOME da categoria (ex: "Prestacao de Servicos"). O sistema resolve o UUID automaticamente.
-- Para alterar cliente: envie cliente_nome com o NOME do cliente.
-- Para alterar fornecedor: envie fornecedor_nome com o NOME do fornecedor.
 - Para alterar conta bancaria: envie conta_bancaria_nome com o NOME da conta.
 - Para alterar forma de pagamento: envie forma_pagamento_nome com a DESCRICAO da forma de pagamento.
 - Para alterar projeto: envie projeto_nome com o NOME do projeto.
