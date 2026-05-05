@@ -33,7 +33,6 @@ Deno.serve(async (req) => {
     if (!isAuthorized) {
       console.log("🚫 [n8n-handler] Acesso negado: credencial inválida");
       
-      // Log failure if possible
       if (empresaId) {
         await supabase.from("logs_integracoes").insert({
           empresa_id: empresaId,
@@ -52,72 +51,44 @@ Deno.serve(async (req) => {
     const body = req.method !== "GET" ? await req.json() : {};
 
     // ─── Helper: gera variações de número de telefone para busca ───
-    // Ex.: input "5531982964066" gera:
-    // ["5531982964066", "553182964066", "31982964066", "3182964066", "982964066", "82964066"]
     const generatePhoneVariants = (raw: string): string[] => {
       const digits = (raw || "").replace(/\D/g, "");
       if (!digits) return [];
       const variants = new Set<string>();
       variants.add(digits);
 
-      // Sem código do país (55)
       let local = digits;
       if (digits.startsWith("55") && digits.length >= 12) {
         local = digits.slice(2);
         variants.add(local);
       }
 
-      // local agora deve ter formato DDD + número (10 ou 11 dígitos)
       if (local.length === 11 || local.length === 10) {
         const ddd = local.slice(0, 2);
         let numero = local.slice(2);
 
-        // Adiciona com DDD (com e sem 9)
         if (numero.length === 9 && numero.startsWith("9")) {
-          // 11 dígitos com 9 — também variação sem o 9
-          variants.add(ddd + numero); // 11
-          variants.add(ddd + numero.slice(1)); // 10 (sem 9)
+          variants.add(ddd + numero);
+          variants.add(ddd + numero.slice(1));
         } else if (numero.length === 8) {
-          variants.add(ddd + numero); // 10
-          variants.add(ddd + "9" + numero); // 11 (com 9)
+          variants.add(ddd + numero);
+          variants.add(ddd + "9" + numero);
         }
 
-        // Versões com 55
         const base11 = numero.length === 9 ? ddd + numero : (numero.length === 8 ? ddd + "9" + numero : ddd + numero);
         const base10 = numero.length === 9 && numero.startsWith("9") ? ddd + numero.slice(1) : (numero.length === 8 ? ddd + numero : ddd + numero);
         variants.add("55" + base11);
         variants.add("55" + base10);
 
-        // Sem DDD
         variants.add(numero);
         if (numero.length === 9 && numero.startsWith("9")) variants.add(numero.slice(1));
         if (numero.length === 8) variants.add("9" + numero);
       }
 
-      // Remove vazios e ordena por tamanho desc (busca mais específica primeiro)
       return Array.from(variants).filter(Boolean).sort((a, b) => b.length - a.length);
     };
 
-    // ─── Helper: resolve empresa_id from email if not provided ───
-    const resolveEmpresaId = async (email?: string): Promise<string | null> => {
-      if (empresaId) return empresaId;
-      if (!email) return null;
-
-      const { data: perfil } = await supabase
-        .from("perfis")
-        .select("id, nome, email, empresa_id")
-        .ilike("email", email.trim().toLowerCase())
-        .not("empresa_id", "is", null)
-        .maybeSingle();
-
-      if (perfil?.empresa_id) {
-        empresaId = perfil.empresa_id;
-        return empresaId;
-      }
-      return null;
-    };
-
-    // ─── Action: identify — Identify user by phone number or email ───
+    // ─── Action: identify ───
     if (action === "identify") {
       const phone = body.phone || "";
       const email = body.email || "";
@@ -130,7 +101,6 @@ Deno.serve(async (req) => {
 
       let perfil: any = null;
 
-      // 1. Try to find by phone if provided
       if (phone) {
         const phoneClean = phone.replace(/\D/g, "");
         const phoneVariants = generatePhoneVariants(phoneClean);
@@ -142,19 +112,13 @@ Deno.serve(async (req) => {
             .ilike("evolution_webhook_url", `%${variant}%`)
             .not("empresa_id", "is", null);
 
-          if (empresaId) {
-            query = query.eq("empresa_id", empresaId);
-          }
+          if (empresaId) query = query.eq("empresa_id", empresaId);
 
           const { data } = await query.maybeSingle();
-          if (data) {
-            perfil = data;
-            break;
-          }
+          if (data) { perfil = data; break; }
         }
       }
 
-      // 2. Fallback to email if not found by phone
       if (!perfil && email) {
         let query = supabase
           .from("perfis")
@@ -162,20 +126,14 @@ Deno.serve(async (req) => {
           .ilike("email", email.trim().toLowerCase())
           .not("empresa_id", "is", null);
 
-        if (empresaId) {
-          query = query.eq("empresa_id", empresaId);
-        }
+        if (empresaId) query = query.eq("empresa_id", empresaId);
 
         const { data } = await query.maybeSingle();
-        if (data) {
-          perfil = data;
-        }
+        if (data) perfil = data;
       }
 
       if (perfil) {
           empresaId = perfil.empresa_id!;
-
-          // Fetch user's companies
           const { data: userRoles } = await supabase
             .from("user_roles")
             .select("empresa_id, role")
@@ -212,7 +170,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ─── Action: identify-by-email — Identify user by telegram_id, phone or email ───
+    // ─── Action: identify-by-email ───
     if (action === "identify-by-email") {
       const phone = (body.phone || "").replace(/\D/g, "");
       const telegramId = body.telegram_id || "";
@@ -226,7 +184,6 @@ Deno.serve(async (req) => {
 
       let perfil: any = null;
 
-      // 1. Try to find by telegram_id first
       if (!perfil && telegramId) {
         let q = supabase
           .from("perfis")
@@ -238,7 +195,6 @@ Deno.serve(async (req) => {
         if (data) perfil = data;
       }
 
-      // 2. Fallback: search by phone
       if (!perfil && phone) {
         const phoneVariants = generatePhoneVariants(phone);
         for (const variant of phoneVariants) {
@@ -253,7 +209,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // 3. Fallback: search by email
       if (!perfil && email) {
         let q = supabase
           .from("perfis")
@@ -271,7 +226,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // If user found but telegram_id not set, update it
       if (telegramId && !perfil.telegram_id) {
         await supabase
           .from("perfis")
@@ -281,7 +235,6 @@ Deno.serve(async (req) => {
 
       empresaId = perfil.empresa_id!;
 
-      // Check if user is super_admin
       const { data: emailUserRoles } = await supabase
         .from("user_roles")
         .select("empresa_id, role")
@@ -314,7 +267,7 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // ─── Action: chat — Send message and get AI response ───
+    // ─── Action: chat ───
     if (action === "chat") {
       const userId = body.user_id || "";
       const message = body.message || "";
@@ -325,7 +278,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Resolve empresa_id from user profile if not provided
       if (!empresaId) {
         const { data: userPerfil } = await supabase
           .from("perfis")
@@ -341,7 +293,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Get user name
       const { data: perfil } = await supabase
         .from("perfis")
         .select("nome")
@@ -350,7 +301,6 @@ Deno.serve(async (req) => {
 
       const userName = perfil?.nome || "Usuário";
 
-      // Get configured LLM
       const { data: empresa } = await supabase
         .from("empresas")
         .select("llm_padrao")
@@ -383,7 +333,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Fallback to Lovable AI
       if (!llmProvider) {
         const lovableKey = Deno.env.get("LOVABLE_API_KEY");
         if (lovableKey) {
@@ -398,7 +347,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Find or create conversation
       let { data: conversa } = await supabase
         .from("conversas_chat")
         .select("id")
@@ -424,14 +372,12 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Save user message
       await supabase.from("mensagens_chat").insert({
         conversa_id: conversa.id,
         remetente: "usuario",
         conteudo: message.trim(),
       });
 
-      // Load recent messages
       const { data: recentMsgs } = await supabase
         .from("mensagens_chat")
         .select("remetente, conteudo")
@@ -439,7 +385,6 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: true })
         .limit(10);
 
-      // Financial context
       const now = new Date();
       const mesAtual = now.toISOString().slice(0, 7);
       const inicioMes = `${mesAtual}-01`;
@@ -454,7 +399,6 @@ Deno.serve(async (req) => {
         .order("data_vencimento", { ascending: false })
         .limit(30);
 
-      // ─── Search lancamentos by keywords from user message ───
       const stopWords = ["o", "a", "os", "as", "de", "do", "da", "dos", "das", "em", "no", "na", "um", "uma",
         "para", "por", "com", "que", "me", "meu", "minha", "qual", "quais", "como", "onde",
         "tem", "tenho", "ter", "foi", "ser", "está", "são", "esse", "essa", "isso",
@@ -488,7 +432,6 @@ Deno.serve(async (req) => {
       const saldoContas = (contas || []).map((c: any) => `${c.nome}: R$${Number(c.saldo_atual).toFixed(2)}`).join("; ");
       const pendentes = (lancamentos || []).filter((l: any) => l.status === "pendente").length;
 
-      // Build searched results context
       let searchContext = "";
       if (searchedLancamentos.length > 0) {
         const searchResults = searchedLancamentos.map((l: any) => 
@@ -510,10 +453,6 @@ Deno.serve(async (req) => {
         saldoContas ? `Contas: ${saldoContas}` : "",
       ].filter(Boolean).join(" | ");
 
-      const fullContext = userContext + 
-        (lancamentosContext ? `\n\nLANÇAMENTOS DO MÊS:\n${lancamentosContext}` : "") +
-        searchContext;
-
       const systemPrompt = `Você é um assistente financeiro do FinançaCentral atendendo "${userName}".
 Responda em português brasileiro, de forma concisa (máx 300 chars, exceto relatórios: máx 500).
 Use SOMENTE os dados abaixo. Se não for sobre finanças, diga: "Só posso ajudar com assuntos financeiros."
@@ -526,7 +465,7 @@ CAPACIDADES DE EDIÇÃO:
 - Se encontrar MÚLTIPLOS lançamentos correspondentes (recorrentes), liste-os e pergunte se deseja alterar todos ou apenas um específico.
 - Se o usuário confirmar "todos" ou "sim", use múltiplas linhas de ação, uma para cada ID.
 
-DADOS: ${fullContext}`;
+DADOS: ${userContext + (lancamentosContext ? `\n\nLANÇAMENTOS DO MÊS:\n${lancamentosContext}` : "") + searchContext}`;
 
       const messages = [
         { role: "system", content: systemPrompt },
@@ -536,7 +475,6 @@ DADOS: ${fullContext}`;
         })),
       ];
 
-      // Call LLM (Lovable AI gateway format — OpenAI compatible)
       let llmUrl = "";
       let llmHeaders: Record<string, string> = {};
       let llmBody: any = {};
@@ -606,7 +544,6 @@ DADOS: ${fullContext}`;
 
       reply = reply || "Desculpe, não consegui processar.";
 
-      // ─── Process action commands from LLM response ───
       const actionRegex = /\[AÇÃO:ATUALIZAR_DESCRICAO\|ID:([a-f0-9-]+)\|NOVA_DESCRICAO:(.+?)\]/gi;
       let match;
       const updates: { id: string; newDesc: string }[] = [];
@@ -634,7 +571,6 @@ DADOS: ${fullContext}`;
           }
         }
 
-        // Clean action tags from reply
         reply = reply.replace(/\[AÇÃO:ATUALIZAR_DESCRICAO\|ID:[a-f0-9-]+\|NOVA_DESCRICAO:.+?\]/gi, "").trim();
         
         if (!reply) {
@@ -646,12 +582,10 @@ DADOS: ${fullContext}`;
         }
       }
 
-      // Enforce character limits
       if (reply.length > 800) {
         reply = reply.substring(0, 797) + "...";
       }
 
-      // Save AI response
       await supabase.from("mensagens_chat").insert({
         conversa_id: conversa.id,
         remetente: "sistema",
@@ -668,10 +602,8 @@ DADOS: ${fullContext}`;
       });
     }
 
-    // ─── Action: get-financial-summary — Get financial data for n8n ───
+    // ─── Action: get-financial-summary ───
     if (action === "get-financial-summary") {
-      const userId = body.user_id || "";
-
       const now = new Date();
       const mesAtual = now.toISOString().slice(0, 7);
       const inicioMes = `${mesAtual}-01`;
@@ -706,7 +638,7 @@ DADOS: ${fullContext}`;
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // ─── Action: save-message — Save a message from n8n to a conversation ───
+    // ─── Action: save-message ───
     if (action === "save-message") {
       const conversaId = body.conversa_id || "";
       const conteudo = body.conteudo || body.message || "";
@@ -755,23 +687,22 @@ DADOS: ${fullContext}`;
   } catch (error: any) {
     console.error("n8n-handler error:", error);
     
-    // Attempt to log error
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const sbLog = createClient(supabaseUrl, serviceRoleKey);
       
-      const eid = reqUrl.searchParams.get("empresa_id") || "00000000-0000-0000-0000-000000000000";
+      const eid = empresaId || "00000000-0000-0000-0000-000000000000";
       
       await sbLog.from("logs_integracoes").insert({
         empresa_id: eid,
         plataforma: "n8n-handler",
-        evento: reqUrl.searchParams.get("action") || "unknown",
+        evento: action || "unknown",
         status: "erro",
         payload: { 
           error: error.message, 
           stack: error.stack?.substring(0, 500),
-          action: reqUrl.searchParams.get("action")
+          action: action
         }
       });
     } catch (_) { /* ignore */ }
