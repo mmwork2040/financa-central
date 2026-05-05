@@ -306,7 +306,7 @@ Deno.serve(async (req) => {
         evento: "identify-by-email",
         status: "sucesso",
         payload: { request: body, response }
-      }).catch(() => {});
+        });
 
       return new Response(JSON.stringify(response), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
