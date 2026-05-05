@@ -192,7 +192,6 @@ Deno.serve(async (req) => {
             empresa_id: perfil.empresa_id,
             empresas: empresasList,
           }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
       }
 
       return new Response(JSON.stringify({ found: false }), {
