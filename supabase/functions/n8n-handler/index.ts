@@ -730,7 +730,7 @@ DADOS: ${userContext + (lancamentosContext ? `\n\nLANÇAMENTOS DO MÊS:\n${lanca
           duration_ms: duration,
           timestamp: new Date().toISOString()
         }
-      }).catch(() => {});
+      });
     }
 
     return new Response(JSON.stringify({ 
