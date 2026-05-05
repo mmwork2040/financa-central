@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
           evento: action || "auth",
           status: "erro",
           payload: { error: "Acesso negado: credencial inválida", action }
-        }).catch(() => {});
+        });
       }
 
       return new Response(JSON.stringify({ error: "Não autorizado. Envie a api-key correta no header Authorization ou api-key." }), {
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
             evento: "identify",
             status: "sucesso",
             payload: { request: body, response }
-          }).catch(() => {});
+          });
 
           return new Response(JSON.stringify(response), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
           evento: "identify",
           status: "erro",
           payload: { request: body, response: { found: false }, message: "Usuário não encontrado" }
-        }).catch(() => {});
+        });
       }
 
       return new Response(JSON.stringify({ found: false }), {
@@ -251,7 +251,7 @@ Deno.serve(async (req) => {
             evento: "identify-by-email",
             status: "erro",
             payload: { request: body, response: { found: false }, message: "Usuário não encontrado" }
-          }).catch(() => {});
+          });
         }
 
         return new Response(JSON.stringify({ found: false }), {
@@ -306,7 +306,7 @@ Deno.serve(async (req) => {
         evento: "identify-by-email",
         status: "sucesso",
         payload: { request: body, response }
-      }).catch(() => {});
+        });
 
       return new Response(JSON.stringify(response), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -650,7 +650,7 @@ DADOS: ${userContext + (lancamentosContext ? `\n\nLANÇAMENTOS DO MÊS:\n${lanca
         evento: "chat",
         status: "sucesso",
         payload: { request: { userId, messageLength: message.length }, response }
-      }).catch(() => {});
+      });
 
       return new Response(JSON.stringify(response), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -730,7 +730,7 @@ DADOS: ${userContext + (lancamentosContext ? `\n\nLANÇAMENTOS DO MÊS:\n${lanca
           duration_ms: duration,
           timestamp: new Date().toISOString()
         }
-      }).catch(() => {});
+      });
     }
 
     return new Response(JSON.stringify({ 
