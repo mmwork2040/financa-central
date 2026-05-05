@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
       }
 
       const phoneClean = phone.replace(/\D/g, "");
-      const phoneVariants = [phoneClean, `+${phoneClean}`, phoneClean.replace(/^55/, "")];
+      const phoneVariants = generatePhoneVariants(phoneClean);
 
       // If empresa_id provided, search within it; otherwise search all
       for (const variant of phoneVariants) {
