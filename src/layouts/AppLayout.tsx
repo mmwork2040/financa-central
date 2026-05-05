@@ -15,6 +15,7 @@ import { MonthFilterProvider } from "@/contexts/MonthFilterContext";
 import MonthCarousel from "@/components/common/MonthCarousel";
 import { Button } from "@/components/ui/button";
 import { Clock, Activity } from "lucide-react";
+import { PhoneReminderModal } from "@/components/common/PhoneReminderModal";
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
@@ -98,6 +99,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </main>
         <MobileBottomNav />
         <FloatingChatButton />
+        <PhoneReminderModal />
         
       </div>
     </MonthFilterProvider>
