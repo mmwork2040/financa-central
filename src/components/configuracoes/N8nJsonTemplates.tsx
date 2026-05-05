@@ -614,7 +614,7 @@ Sempre usar a empresa_id ativa. Nunca misturar empresas. Nunca inventar dados.`,
     action: "criar-lancamento",
     toolName: "criar_lancamento",
     label: "Criar Lançamento",
-    description: "Cria um lançamento financeiro. OBRIGATÓRIO informar cliente (receita) ou fornecedor (despesa).",
+    description: "Cria um lançamento financeiro. Envie cliente_nome para receita ou fornecedor_nome para despesa; o outro campo deve ficar vazio ('').",
     toolDescription: `Cria um novo lançamento financeiro no sistema com resolução automática de dependências.
 
 ⚠️ OBRIGATORIEDADE DE ENTIDADES:
@@ -671,8 +671,8 @@ REGRAS:
       { name: "categoria_nome", type: "string", required: false, description: "Nome da categoria (busca ou cria)" },
       { name: "forma_pagamento_nome", type: "string", required: false, description: "Nome da forma de pagamento (busca ou cria)" },
       { name: "conta_bancaria_nome", type: "string", required: false, description: "SOMENTE nome do banco (ex: Santander). NÃO inclua agência/número" },
-      { name: "cliente_nome", type: "string", required: true, description: "Nome do cliente (OBRIGATÓRIO se receita)" },
-      { name: "fornecedor_nome", type: "string", required: true, description: "Nome do fornecedor (OBRIGATÓRIO se despesa)" },
+      { name: "cliente_nome", type: "string", required: false, description: "Nome do cliente (OBRIGATÓRIO se receita; em despesa envie '')" },
+      { name: "fornecedor_nome", type: "string", required: false, description: "Nome do fornecedor (OBRIGATÓRIO se despesa; em receita envie '')" },
       { name: "projeto_nome", type: "string", required: false, description: "Nome do projeto" },
       { name: "recorrente", type: "string", required: false, description: "Envie 'true' para recorrente, '' para único" },
       { name: "recorrencia_tipo", type: "string", required: false, description: "mensal, semanal, quinzenal, trimestral ou anual" },
@@ -1313,7 +1313,7 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-lancamento",
     toolName: "editar_lancamento",
     label: "Editar Lançamento",
-    description: "Altera dados de um lançamento pendente. Obrigatório informar cliente (receita) ou fornecedor (despesa) ao alterar tipo ou dados básicos.",
+    description: "Altera um lançamento pendente via id ou search. Envie cliente_nome para receita ou fornecedor_nome para despesa; o outro campo deve ficar vazio ('').",
     toolDescription: `Altera dados de um lancamento financeiro existente. Use SEMPRE esta ferramenta quando o usuario pedir para alterar, renomear, mudar ou atualizar um lancamento. NAO use a ferramenta "lancamentos" para buscar antes — esta ferramenta ja faz a busca internamente.
     
 ⚠️ OBRIGATORIEDADE DE ENTIDADES:
