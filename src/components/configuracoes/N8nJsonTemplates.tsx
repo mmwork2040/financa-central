@@ -624,8 +624,8 @@ DEPENDÊNCIAS (envie o _nome para cada — o sistema busca ou cria automaticamen
 - categoria_nome (ex: "Prestação de Serviços")
 - forma_pagamento_nome (ex: "PIX")
 - conta_bancaria_nome (somente nome do banco, ex: "Santander")
-- Se receita: cliente_nome
-- Se despesa: fornecedor_nome
+- Se receita: cliente_nome (OBRIGATÓRIO)
+- Se despesa: fornecedor_nome (OBRIGATÓRIO)
 - projeto_nome (opcional)
 
 DADOS ADICIONAIS DE CADASTRO (opcionais):
