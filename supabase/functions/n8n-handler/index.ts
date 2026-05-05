@@ -807,6 +807,22 @@ DADOS: ${userContext + (lancamentosContext ? `\n\nLANÇAMENTOS DO MÊS:\n${lanca
         }
       }
 
+      // Validação de campos obrigatórios
+      const faltando: string[] = [];
+      if (!categoria_id) faltando.push("categoria_nome ou categoria_id");
+      if (!forma_pagamento_id) faltando.push("forma_pagamento_nome ou forma_pagamento_id");
+      if (!conta_bancaria_id) faltando.push("conta_bancaria_nome ou conta_bancaria_id");
+      
+      if (tipo === "receita" && !cliente_id) faltando.push("cliente_nome ou cliente_id");
+      if (tipo === "despesa" && !fornecedor_id) faltando.push("fornecedor_nome ou fornecedor_id");
+
+      if (faltando.length > 0) {
+        return new Response(JSON.stringify({ 
+          error: "Campos obrigatórios não informados", 
+          message: `Para criar um lançamento do tipo '${tipo}', informe obrigatoriamente: ${faltando.join(", ")}` 
+        }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
       // Status automático
       const data_pagamento = empty(body.data_pagamento) ? null : body.data_pagamento;
       let status = empty(body.status) ? null : String(body.status).toLowerCase();

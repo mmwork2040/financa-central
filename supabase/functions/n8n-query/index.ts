@@ -1082,26 +1082,24 @@ Deno.serve(async (req) => {
           .single();
         const isPessoal = empresaInfo?.pessoal === true;
 
-        // Validação condicional: receita exige cliente, despesa exige fornecedor (exceto pessoal)
+        // Validação condicional: receita exige cliente, despesa exige fornecedor
         const camposObrigatorios: { campo: string; valor: string | null; label: string }[] = [
           { campo: "categoria_id", valor: categoria_id, label: "Categoria (envie categoria_id ou categoria_nome)" },
           { campo: "forma_pagamento_id", valor: forma_pagamento_id, label: "Forma de Pagamento (envie forma_pagamento_id ou forma_pagamento_nome)" },
           { campo: "conta_bancaria_id", valor: conta_bancaria_id, label: "Conta Bancária (envie conta_bancaria_id ou conta_bancaria_nome)" },
         ];
 
-        if (!isPessoal) {
-          if (tipo === "receita") {
-            camposObrigatorios.push({ campo: "cliente_id", valor: cliente_id, label: "Cliente (envie cliente_id ou cliente_nome)" });
-          } else {
-            camposObrigatorios.push({ campo: "fornecedor_id", valor: fornecedor_id, label: "Fornecedor (envie fornecedor_id ou fornecedor_nome)" });
-          }
+        if (tipo === "receita") {
+          camposObrigatorios.push({ campo: "cliente_id", valor: cliente_id, label: "Cliente (envie cliente_id ou cliente_nome)" });
+        } else {
+          camposObrigatorios.push({ campo: "fornecedor_id", valor: fornecedor_id, label: "Fornecedor (envie fornecedor_id ou fornecedor_nome)" });
         }
 
         const faltando = camposObrigatorios.filter(c => !c.valor).map(c => c.label);
         if (faltando.length > 0) {
           return new Response(JSON.stringify({ 
             error: "Campos obrigatórios não informados", 
-            message: `Para criar um lançamento do tipo '${tipo}', informe: ${faltando.join(", ")}. Você pode enviar o UUID (_id) ou o nome (_nome) — se o nome não existir, será cadastrado automaticamente.`,
+            message: `Para criar um lançamento do tipo '${tipo}', informe obrigatoriamente: ${faltando.join(", ")}. Você pode enviar o UUID (_id) ou o nome (_nome) — se o nome não existir, será cadastrado automaticamente.`,
             campos_faltando: faltando 
           }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }

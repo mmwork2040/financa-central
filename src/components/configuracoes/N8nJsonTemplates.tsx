@@ -624,8 +624,8 @@ DEPENDÊNCIAS (envie o _nome para cada — o sistema busca ou cria automaticamen
 - categoria_nome (ex: "Prestação de Serviços")
 - forma_pagamento_nome (ex: "PIX")
 - conta_bancaria_nome (somente nome do banco, ex: "Santander")
-- Se receita: cliente_nome
-- Se despesa: fornecedor_nome
+- Se receita: cliente_nome (OBRIGATÓRIO)
+- Se despesa: fornecedor_nome (OBRIGATÓRIO)
 - projeto_nome (opcional)
 
 DADOS ADICIONAIS DE CADASTRO (opcionais):
@@ -666,8 +666,8 @@ REGRAS:
       { name: "categoria_nome", type: "string", required: false, description: "Nome da categoria (busca ou cria)" },
       { name: "forma_pagamento_nome", type: "string", required: false, description: "Nome da forma de pagamento (busca ou cria)" },
       { name: "conta_bancaria_nome", type: "string", required: false, description: "SOMENTE nome do banco (ex: Santander). NÃO inclua agência/número" },
-      { name: "cliente_nome", type: "string", required: false, description: "Nome do cliente (obrigatório se receita)" },
-      { name: "fornecedor_nome", type: "string", required: false, description: "Nome do fornecedor (obrigatório se despesa)" },
+      { name: "cliente_nome", type: "string", required: true, description: "Nome do cliente (OBRIGATÓRIO se receita)" },
+      { name: "fornecedor_nome", type: "string", required: true, description: "Nome do fornecedor (OBRIGATÓRIO se despesa)" },
       { name: "projeto_nome", type: "string", required: false, description: "Nome do projeto" },
       { name: "recorrente", type: "string", required: false, description: "Envie 'true' para recorrente, '' para único" },
       { name: "recorrencia_tipo", type: "string", required: false, description: "mensal, semanal, quinzenal, trimestral ou anual" },
@@ -693,8 +693,8 @@ REGRAS:
       categoria_nome: "{{ $fromAI('categoria_nome', 'Nome da categoria. Vazio se não informado', 'string', '') }}",
       forma_pagamento_nome: "{{ $fromAI('forma_pagamento_nome', 'Nome da forma pgto. Vazio se não informado', 'string', '') }}",
       conta_bancaria_nome: "{{ $fromAI('conta_bancaria_nome', 'Nome do banco. Vazio se não informado', 'string', '') }}",
-      cliente_nome: "{{ $fromAI('cliente_nome', 'Nome do cliente. Vazio se despesa', 'string', '') }}",
-      fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'Nome do fornecedor. Vazio se receita', 'string', '') }}",
+      cliente_nome: "{{ $fromAI('cliente_nome', 'Nome do cliente (OBRIGATÓRIO se receita). Deixe vazio se despesa', 'string', '') }}",
+      fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'Nome do fornecedor (OBRIGATÓRIO se despesa). Deixe vazio se receita', 'string', '') }}",
       projeto_nome: "{{ $fromAI('projeto_nome', 'Nome do projeto. Vazio se não informado', 'string', '') }}",
       recorrente: "{{ $fromAI('recorrente', 'true para recorrente ou vazio', 'string', '') }}",
       recorrencia_tipo: "{{ $fromAI('recorrencia_tipo', 'mensal semanal quinzenal trimestral anual. Vazio se não recorrente', 'string', '') }}",
@@ -1377,8 +1377,8 @@ CONTROLE DE ACESSO: Sempre envie o user_id para que o sistema valide as permisso
       { name: "recorrencia_inicio", type: "string", required: false, description: "YYYY-MM-DD" },
       { name: "recorrencia_fim", type: "string", required: false, description: "YYYY-MM-DD" },
       { name: "categoria_nome", type: "string", required: false, description: "NOME da categoria (resolve UUID automaticamente)" },
-      { name: "cliente_nome", type: "string", required: false, description: "NOME do cliente" },
-      { name: "fornecedor_nome", type: "string", required: false, description: "NOME do fornecedor" },
+      { name: "cliente_nome", type: "string", required: false, description: "NOME do cliente (obrigatório se mudar para receita)" },
+      { name: "fornecedor_nome", type: "string", required: false, description: "NOME do fornecedor (obrigatório se mudar para despesa)" },
       { name: "conta_bancaria_nome", type: "string", required: false, description: "NOME da conta bancária" },
       { name: "forma_pagamento_nome", type: "string", required: false, description: "DESCRIÇÃO da forma de pagamento" },
       { name: "projeto_nome", type: "string", required: false, description: "NOME do projeto" },
@@ -1401,8 +1401,8 @@ CONTROLE DE ACESSO: Sempre envie o user_id para que o sistema valide as permisso
       recorrencia_inicio: "{{ $fromAI('recorrencia_inicio', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}",
       recorrencia_fim: "{{ $fromAI('recorrencia_fim', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}",
       categoria_nome: "{{ $fromAI('categoria_nome', 'NOME da categoria. Deixe vazio se não mudar', 'string', '') }}",
-      cliente_nome: "{{ $fromAI('cliente_nome', 'NOME do cliente. Deixe vazio se não mudar', 'string', '') }}",
-      fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'NOME do fornecedor. Deixe vazio se não mudar', 'string', '') }}",
+      cliente_nome: "{{ $fromAI('cliente_nome', 'NOME do cliente. Obrigatório se mudar para receita', 'string', '') }}",
+      fornecedor_nome: "{{ $fromAI('fornecedor_nome', 'NOME do fornecedor. Obrigatório se mudar para despesa', 'string', '') }}",
       conta_bancaria_nome: "{{ $fromAI('conta_bancaria_nome', 'NOME da conta bancária. Deixe vazio se não mudar', 'string', '') }}",
       forma_pagamento_nome: "{{ $fromAI('forma_pagamento_nome', 'DESCRIÇÃO da forma de pagamento. Deixe vazio se não mudar', 'string', '') }}",
       projeto_nome: "{{ $fromAI('projeto_nome', 'NOME do projeto. Deixe vazio se não mudar', 'string', '') }}",
