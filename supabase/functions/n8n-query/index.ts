@@ -53,6 +53,11 @@ Deno.serve(async (req) => {
       rawBody = rawBody.json_montado;
     }
     
+    // Garantir que rawBody seja um objeto mutável antes de qualquer atribuição
+    if (!rawBody || typeof rawBody !== "object" || Array.isArray(rawBody)) {
+      rawBody = {};
+    }
+    
     // Fallback para URL Search Params se o body ainda estiver vazio ou for incompleto
     const reqUrl = new URL(req.url);
     if (!rawBody.action && reqUrl.searchParams.has("action")) {
