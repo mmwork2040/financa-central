@@ -104,33 +104,62 @@ Deno.serve(async (req) => {
       return null;
     };
 
-    // ─── Action: identify — Identify user by phone number ───
+    // ─── Action: identify — Identify user by phone number or email ───
     if (action === "identify") {
       const phone = body.phone || "";
-      if (!phone) {
-        return new Response(JSON.stringify({ error: "phone is required" }), {
+      const email = body.email || "";
+
+      if (!phone && !email) {
+        return new Response(JSON.stringify({ error: "phone or email is required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      const phoneClean = phone.replace(/\D/g, "");
-      const phoneVariants = generatePhoneVariants(phoneClean);
+      let perfil: any = null;
 
-      // If empresa_id provided, search within it; otherwise search all
-      for (const variant of phoneVariants) {
+      // 1. Try to find by phone if provided
+      if (phone) {
+        const phoneClean = phone.replace(/\D/g, "");
+        const phoneVariants = generatePhoneVariants(phoneClean);
+
+        for (const variant of phoneVariants) {
+          let query = supabase
+            .from("perfis")
+            .select("id, nome, email, empresa_id, evolution_webhook_url")
+            .ilike("evolution_webhook_url", `%${variant}%`)
+            .not("empresa_id", "is", null);
+
+          if (empresaId) {
+            query = query.eq("empresa_id", empresaId);
+          }
+
+          const { data } = await query.maybeSingle();
+          if (data) {
+            perfil = data;
+            break;
+          }
+        }
+      }
+
+      // 2. Fallback to email if not found by phone
+      if (!perfil && email) {
         let query = supabase
           .from("perfis")
           .select("id, nome, email, empresa_id, evolution_webhook_url")
-          .ilike("evolution_webhook_url", `%${variant}%`)
+          .ilike("email", email.trim().toLowerCase())
           .not("empresa_id", "is", null);
 
         if (empresaId) {
           query = query.eq("empresa_id", empresaId);
         }
 
-        const { data: perfil } = await query.maybeSingle();
+        const { data } = await query.maybeSingle();
+        if (data) {
+          perfil = data;
+        }
+      }
 
-        if (perfil) {
+      if (perfil) {
           empresaId = perfil.empresa_id!;
 
           // Fetch user's companies
@@ -163,7 +192,6 @@ Deno.serve(async (req) => {
             empresa_id: perfil.empresa_id,
             empresas: empresasList,
           }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
       }
 
       return new Response(JSON.stringify({ found: false }), {
