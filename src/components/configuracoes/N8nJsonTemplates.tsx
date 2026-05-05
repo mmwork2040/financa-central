@@ -1308,7 +1308,7 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-lancamento",
     toolName: "editar_lancamento",
     label: "Editar Lançamento",
-    description: "Altera dados de um lançamento pendente. Busca por descrição quando ID não informado. Suporta edição em cadeia recorrente e criação automática de categorias/entidades inexistentes.",
+    description: "Altera dados de um lançamento pendente. Obrigatório informar cliente (receita) ou fornecedor (despesa) ao alterar tipo ou dados básicos.",
     toolDescription: `Altera dados de um lancamento financeiro existente. Use SEMPRE esta ferramenta quando o usuario pedir para alterar, renomear, mudar ou atualizar um lancamento. NAO use a ferramenta "lancamentos" para buscar antes — esta ferramenta ja faz a busca internamente.
 
 RESOLUCAO POR DESCRICAO (BUSCA AUTOMATICA):
