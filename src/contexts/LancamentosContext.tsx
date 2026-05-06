@@ -810,33 +810,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
           if (error) throw error;
 
-          // Atualizar saldo da conta se pago/recebido
-            const effectiveStatus = isSpecialInvestment ? "recebido" : formData.status;
-          if (data && data[0] && formData.conta_bancaria_id && ["pago", "recebido"].includes(effectiveStatus)) {
-            const delta = (isSpecialInvestment || formData.tipo === "receita") ? formData.valor : -formData.valor;
-            const { data: contaAtual } = await supabase
-              .from("contas_bancarias")
-              .select("saldo_atual")
-              .eq("id", formData.conta_bancaria_id)
-              .single();
-            if (contaAtual) {
-              const saldoAnterior = Number(contaAtual.saldo_atual);
-              const saldoPosterior = saldoAnterior + delta;
-              await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
-                .eq("id", formData.conta_bancaria_id);
-              await logMovimentacao({
-                conta_bancaria_id: formData.conta_bancaria_id,
-                empresa_id: empresaId || null,
-                tipo: formData.tipo === "receita" ? "receita" : "despesa",
-                descricao: formData.descricao,
-                valor: delta,
-                saldo_anterior: saldoAnterior,
-                saldo_posterior: saldoPosterior,
-                lancamento_id: data[0].id,
-              });
-            }
-          }
-
           // Se recorrente, chamar generate-recurring para criar ocorrências
           if (dataToSave.recorrente) {
             try {
@@ -907,64 +880,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           .from('vendas_digitais')
           .update({ status: vendaStatusMap[status] })
           .eq('lancamento_id', id);
-      }
-
-      // Atualizar saldo da conta quando muda para pago/recebido ou sai de pago/recebido
-      if (lancamento?.conta_bancaria_id) {
-        const wasPaid = ["pago", "recebido"].includes(oldStatus || "");
-        const isPaid = ["pago", "recebido"].includes(status);
-
-        if (!wasPaid && isPaid) {
-          // Entrando em pago/recebido: aplicar delta
-          const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento" || lancamento.origem === "reajuste_investimento";
-          const delta = isCredit ? lancamento.valor : -lancamento.valor;
-          const { data: contaAtual } = await supabase
-            .from("contas_bancarias")
-            .select("saldo_atual")
-            .eq("id", lancamento.conta_bancaria_id)
-            .single();
-          if (contaAtual) {
-            const saldoAnterior = Number(contaAtual.saldo_atual);
-            const saldoPosterior = saldoAnterior + delta;
-            await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
-              .eq("id", lancamento.conta_bancaria_id);
-            await logMovimentacao({
-              conta_bancaria_id: lancamento.conta_bancaria_id,
-              empresa_id: empresaId || null,
-              tipo: lancamento.tipo === "receita" ? "receita" : "despesa",
-              descricao: `Baixa: ${lancamento.descricao}`,
-              valor: delta,
-              saldo_anterior: saldoAnterior,
-              saldo_posterior: saldoPosterior,
-              lancamento_id: lancamento.id,
-            });
-          }
-        } else if (wasPaid && !isPaid) {
-          // Saindo de pago/recebido: reverter delta
-          const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento" || lancamento.origem === "reajuste_investimento";
-          const delta = isCredit ? -lancamento.valor : lancamento.valor;
-          const { data: contaAtual } = await supabase
-            .from("contas_bancarias")
-            .select("saldo_atual")
-            .eq("id", lancamento.conta_bancaria_id)
-            .single();
-          if (contaAtual) {
-            const saldoAnterior = Number(contaAtual.saldo_atual);
-            const saldoPosterior = saldoAnterior + delta;
-            await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
-              .eq("id", lancamento.conta_bancaria_id);
-            await logMovimentacao({
-              conta_bancaria_id: lancamento.conta_bancaria_id,
-              empresa_id: empresaId || null,
-              tipo: "ajuste",
-              descricao: `Estorno: ${lancamento.descricao}`,
-              valor: delta,
-              saldo_anterior: saldoAnterior,
-              saldo_posterior: saldoPosterior,
-              lancamento_id: lancamento.id,
-            });
-          }
-        }
       }
 
       // When cancelling a recurring transaction, cancel all future pending ones in the same chain
