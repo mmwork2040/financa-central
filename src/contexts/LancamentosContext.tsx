@@ -676,36 +676,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
 
       if (selectedId) {
-        // Fetch the old lancamento to revert balance if needed
-        const oldLancamento = lancamentos.find(l => l.id === selectedId);
-        
-        // Revert old balance impact if was paid/received
-        if (oldLancamento && oldLancamento.conta_bancaria_id && ["pago", "recebido"].includes(oldLancamento.status)) {
-          const oldIsCredit = oldLancamento.tipo === "receita" || oldLancamento.origem === "resgate_investimento" || oldLancamento.origem === "rentabilidade_investimento" || oldLancamento.origem === "reajuste_investimento";
-          const revertDelta = oldIsCredit ? -oldLancamento.valor : oldLancamento.valor;
-          const { data: contaOld } = await supabase
-            .from("contas_bancarias")
-            .select("saldo_atual")
-            .eq("id", oldLancamento.conta_bancaria_id)
-            .single();
-          if (contaOld) {
-            const saldoAnt = Number(contaOld.saldo_atual);
-            const saldoPos = saldoAnt + revertDelta;
-            await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPos } as any) as any)
-              .eq("id", oldLancamento.conta_bancaria_id);
-            await logMovimentacao({
-              conta_bancaria_id: oldLancamento.conta_bancaria_id,
-              empresa_id: empresaId || null,
-              tipo: "ajuste",
-              descricao: `Estorno (edição): ${oldLancamento.descricao}`,
-              valor: revertDelta,
-              saldo_anterior: saldoAnt,
-              saldo_posterior: saldoPos,
-              lancamento_id: oldLancamento.id,
-            });
-          }
-        }
-
         // Update existing lancamento
         const updatePayload = { ...dataToSave } as any;
         if (isResgate) {
@@ -731,35 +701,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
         if (error) {
           throw error;
-        }
-
-        // Apply new balance impact if now paid/received
-        const newStatus = updatePayload.status || dataToSave.status;
-        const newContaId = dataToSave.conta_bancaria_id;
-        if (newContaId && ["pago", "recebido"].includes(newStatus)) {
-          const newIsCredit = (isResgate || isRentabilidade || isReajuste || dataToSave.tipo === "receita");
-          const newDelta = newIsCredit ? dataToSave.valor : -dataToSave.valor;
-          const { data: contaNew } = await supabase
-            .from("contas_bancarias")
-            .select("saldo_atual")
-            .eq("id", newContaId)
-            .single();
-          if (contaNew) {
-            const saldoAnt = Number(contaNew.saldo_atual);
-            const saldoPos = saldoAnt + newDelta;
-            await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPos } as any) as any)
-              .eq("id", newContaId);
-            await logMovimentacao({
-              conta_bancaria_id: newContaId,
-              empresa_id: empresaId || null,
-              tipo: dataToSave.tipo === "receita" ? "receita" : "despesa",
-              descricao: `Edição: ${dataToSave.descricao}`,
-              valor: newDelta,
-              saldo_anterior: saldoAnt,
-              saldo_posterior: saldoPos,
-              lancamento_id: selectedId,
-            });
-          }
         }
 
         // Fire webhook for edit
