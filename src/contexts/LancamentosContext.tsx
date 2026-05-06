@@ -499,33 +499,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       // Find the lancamento to revert balance if needed
       const lancamento = lancamentos.find(l => l.id === selectedId);
 
-      // Revert bank account balance if the lancamento was paid/received
-      if (lancamento && lancamento.conta_bancaria_id && ["pago", "recebido"].includes(lancamento.status)) {
-        const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento" || lancamento.origem === "reajuste_investimento";
-        const delta = isCredit ? -lancamento.valor : lancamento.valor;
-        const { data: contaAtual } = await supabase
-          .from("contas_bancarias")
-          .select("saldo_atual")
-          .eq("id", lancamento.conta_bancaria_id)
-          .single();
-        if (contaAtual) {
-          const saldoAnterior = Number(contaAtual.saldo_atual);
-          const saldoPosterior = saldoAnterior + delta;
-          await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
-            .eq("id", lancamento.conta_bancaria_id);
-          await logMovimentacao({
-            conta_bancaria_id: lancamento.conta_bancaria_id,
-            empresa_id: empresaId || null,
-            tipo: "ajuste",
-            descricao: `Estorno (exclusão): ${lancamento.descricao}`,
-            valor: delta,
-            saldo_anterior: saldoAnterior,
-            saldo_posterior: saldoPosterior,
-            lancamento_id: lancamento.id,
-          });
-        }
-      }
-
       // Determinar IDs a excluir conforme escopo
       let idsToDelete: string[] = [selectedId];
       if (scope === "future" && lancamento?.recorrencia_grupo_id) {
@@ -536,32 +509,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           .gte("data_vencimento", lancamento.data_vencimento);
         if (futuros && futuros.length) {
           idsToDelete = futuros.map((f: any) => f.id);
-          // Estornar saldo de futuros que já foram pagos/recebidos (exceto o atual já tratado)
-          for (const f of futuros as any[]) {
-            if (f.id === selectedId) continue;
-            if (f.conta_bancaria_id && ["pago", "recebido"].includes(f.status)) {
-              const isCredit = f.tipo === "receita" || f.origem === "resgate_investimento" || f.origem === "rentabilidade_investimento" || f.origem === "reajuste_investimento";
-              const delta = isCredit ? -f.valor : f.valor;
-              const { data: contaAtual } = await supabase
-                .from("contas_bancarias").select("saldo_atual").eq("id", f.conta_bancaria_id).single();
-              if (contaAtual) {
-                const saldoAnterior = Number(contaAtual.saldo_atual);
-                const saldoPosterior = saldoAnterior + delta;
-                await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
-                  .eq("id", f.conta_bancaria_id);
-                await logMovimentacao({
-                  conta_bancaria_id: f.conta_bancaria_id,
-                  empresa_id: empresaId || null,
-                  tipo: "ajuste",
-                  descricao: `Estorno (exclusão em série): ${f.descricao}`,
-                  valor: delta,
-                  saldo_anterior: saldoAnterior,
-                  saldo_posterior: saldoPosterior,
-                  lancamento_id: f.id,
-                });
-              }
-            }
-          }
         }
       }
 
