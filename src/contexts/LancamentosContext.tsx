@@ -1,5 +1,4 @@
 // LancamentosContext — manages lancamentos state and CRUD
-import { logMovimentacao } from "@/utils/logMovimentacao";
 import React, {
   createContext,
   useState,
@@ -857,8 +856,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       // Buscar o lançamento atual para saber o valor e tipo
       const lancamento = lancamentos.find(l => l.id === id);
-      const oldStatus = lancamento?.status;
-
       const { error } = await supabase
         .from("lancamentos")
         .update({ status })
