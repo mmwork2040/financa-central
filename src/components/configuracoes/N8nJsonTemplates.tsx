@@ -1313,13 +1313,21 @@ Sempre usar a empresa_id ativa. Nunca inventar dados.`,
     action: "editar-lancamento",
     toolName: "editar_lancamento",
     label: "Editar Lançamento",
-    description: "Altera um lançamento pendente via id ou search. Envie cliente_nome para receita ou fornecedor_nome para despesa; o outro campo deve ficar vazio ('').",
+    description: "Edição parcial de lançamento pendente via id ou search. Envie apenas os campos que deseja alterar; todos os demais devem ficar vazios ('').",
     toolDescription: `Altera dados de um lancamento financeiro existente. Use SEMPRE esta ferramenta quando o usuario pedir para alterar, renomear, mudar ou atualizar um lancamento. NAO use a ferramenta "lancamentos" para buscar antes — esta ferramenta ja faz a busca internamente.
-    
-⚠️ OBRIGATORIEDADE DE ENTIDADES:
-- Se o lançamento for (ou passar a ser) uma RECEITA: cliente_nome é OBRIGATÓRIO.
-- Se o lançamento for (ou passar a ser) uma DESPESA: fornecedor_nome é OBRIGATÓRIO.
-- Falha ao enviar a entidade correta resultará em erro 400.
+
+⚠️ EDICAO PARCIAL (OBRIGATORIO):
+- Para editar um lançamento, envie APENAS:
+  1. id OU search para identificar o registro
+  2. somente os campos que devem mudar
+- Todo campo que NAO sera alterado deve ser enviado como "" (string vazia).
+- Nao invente valores para completar o body.
+
+ENTIDADES E RELACIONAMENTOS:
+- Se NAO for alterar cliente, fornecedor, categoria, conta bancaria, forma de pagamento ou projeto: deixe esses campos vazios.
+- Se for alterar para RECEITA e precisar trocar o vinculo principal, envie cliente_nome e deixe fornecedor_nome vazio.
+- Se for alterar para DESPESA e precisar trocar o vinculo principal, envie fornecedor_nome e deixe cliente_nome vazio.
+- Se NAO for trocar o tipo nem o vinculo principal do lançamento, cliente_nome e fornecedor_nome podem ficar vazios.
 
 RESOLUCAO POR DESCRICAO (BUSCA AUTOMATICA):
 - Se o ID nao for informado, envie o campo "search" com a descricao (ou parte) do lancamento.
@@ -1328,14 +1336,19 @@ RESOLUCAO POR DESCRICAO (BUSCA AUTOMATICA):
 - NAO e necessario listar lancamentos antes. Basta enviar o search com o nome/descricao.
 
 RESOLUCAO AUTOMATICA DE NOMES (SEM NECESSIDADE DE BUSCAR IDs):
-- Para alterar cliente: envie cliente_nome com o NOME do cliente (OBRIGATÓRIO se o lançamento for ou passar a ser RECEITA).
-- Para alterar fornecedor: envie fornecedor_nome com o NOME do fornecedor (OBRIGATÓRIO se o lançamento for ou passar a ser DESPESA).
+- Para alterar cliente: envie cliente_nome com o NOME do cliente.
+- Para alterar fornecedor: envie fornecedor_nome com o NOME do fornecedor.
 - Para alterar categoria: envie categoria_nome com o NOME da categoria (ex: "Prestacao de Servicos"). O sistema resolve o UUID automaticamente.
 - Para alterar conta bancaria: envie conta_bancaria_nome com o NOME da conta.
 - Para alterar forma de pagamento: envie forma_pagamento_nome com a DESCRICAO da forma de pagamento.
 - Para alterar projeto: envie projeto_nome com o NOME do projeto.
 - ⚠️ NAO use ferramentas de listagem (categorias, clientes, etc.) para obter IDs. Envie o NOME diretamente e o sistema resolve.
 - Se houver multiplas correspondencias, o sistema retorna a lista para escolha.
+
+ATALHOS ACEITOS PELO BACKEND:
+- Voce pode usar nova_descricao como alias para descricao.
+- Voce pode usar alteracoes com um JSON string contendo os campos que quer alterar.
+- Mesmo usando alteracoes, mantenha no body os campos principais de identificacao (id ou search, empresa_id e user_id).
 
 EDICAO EM CADEIA RECORRENTE:
 - Para editar TODOS os lancamentos pendentes de uma cadeia recorrente de uma so vez, envie editar_cadeia: true.
@@ -1360,8 +1373,9 @@ Parametros:
 - user_id (obrigatorio — UUID do usuario para controle de permissoes)
 - id OU search (um dos dois e obrigatorio)
 - editar_cadeia (opcional — true para editar toda a cadeia recorrente pendente)
-- descricao, valor, tipo, status, data_vencimento, data_pagamento (opcionais)
+- descricao, nova_descricao, valor, tipo, status, data_vencimento, data_pagamento (opcionais)
 - categoria_nome, cliente_nome, fornecedor_nome, conta_bancaria_nome, forma_pagamento_nome, projeto_nome (opcionais — NOME para resolucao automatica)
+- alteracoes (opcional — JSON string com edicao parcial)
 - recorrente, recorrencia_tipo, recorrencia_inicio, recorrencia_fim (opcionais — para controle de recorrencia)
 
 ⚠️ NAO envie campos _id (categoria_id, cliente_id, etc). Use SEMPRE os campos _nome para resolucao automatica.
@@ -1377,11 +1391,13 @@ CONTROLE DE ACESSO: Sempre envie o user_id para que o sistema valide as permisso
       { name: "search", type: "string", required: false, description: "Descrição do lançamento para busca automática" },
       { name: "editar_cadeia", type: "string", required: false, description: "true para editar toda a cadeia recorrente pendente" },
       { name: "descricao", type: "string", required: false, description: "Nova descrição" },
+      { name: "nova_descricao", type: "string", required: false, description: "Alias de descrição para renomear o lançamento" },
       { name: "valor", type: "string", required: false, description: "Novo valor (ex: 500.00)" },
       { name: "tipo", type: "string", required: false, description: "receita ou despesa" },
       { name: "status", type: "string", required: false, description: "pendente, pago ou recebido" },
       { name: "data_vencimento", type: "string", required: false, description: "YYYY-MM-DD" },
       { name: "data_pagamento", type: "string", required: false, description: "YYYY-MM-DD" },
+      { name: "alteracoes", type: "string", required: false, description: "JSON string com os campos que deseja alterar" },
       { name: "recorrente", type: "string", required: false, description: "true ou false" },
       { name: "recorrencia_tipo", type: "string", required: false, description: "semanal, quinzenal, mensal, trimestral ou anual" },
       { name: "recorrencia_inicio", type: "string", required: false, description: "YYYY-MM-DD" },
@@ -1401,11 +1417,13 @@ CONTROLE DE ACESSO: Sempre envie o user_id para que o sistema valide as permisso
       search: "{{ $fromAI('search', 'Descrição do lançamento para busca. Deixe vazio se usar ID', 'string', '') }}",
       editar_cadeia: "{{ $fromAI('editar_cadeia', 'true para editar cadeia recorrente', 'string', '') }}",
       descricao: "{{ $fromAI('descricao', 'Nova descrição. Deixe vazio se não mudar', 'string', '') }}",
+      nova_descricao: "{{ $fromAI('nova_descricao', 'Alias para nova descrição. Deixe vazio se não mudar', 'string', '') }}",
       valor: "{{ $fromAI('valor', 'Novo valor. Deixe vazio se não mudar', 'string', '') }}",
       tipo: "{{ $fromAI('tipo', 'receita ou despesa. Deixe vazio se não mudar', 'string', '') }}",
       status: "{{ $fromAI('status', 'pendente, pago ou recebido. Deixe vazio se não mudar', 'string', '') }}",
       data_vencimento: "{{ $fromAI('data_vencimento', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}",
       data_pagamento: "{{ $fromAI('data_pagamento', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}",
+      alteracoes: "{{ $fromAI('alteracoes', 'JSON string opcional com edição parcial. Ex: {\"valor\":\"150.00\",\"categoria_nome\":\"Mercado\"}', 'string', '') }}",
       recorrente: "{{ $fromAI('recorrente', 'true ou false. Deixe vazio se não mudar', 'string', '') }}",
       recorrencia_tipo: "{{ $fromAI('recorrencia_tipo', 'semanal, quinzenal, mensal, trimestral ou anual. Deixe vazio se não mudar', 'string', '') }}",
       recorrencia_inicio: "{{ $fromAI('recorrencia_inicio', 'YYYY-MM-DD. Deixe vazio se não mudar', 'string', '') }}",
