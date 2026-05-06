@@ -1,5 +1,4 @@
 // LancamentosContext — manages lancamentos state and CRUD
-import { logMovimentacao } from "@/utils/logMovimentacao";
 import React, {
   createContext,
   useState,
@@ -499,33 +498,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       // Find the lancamento to revert balance if needed
       const lancamento = lancamentos.find(l => l.id === selectedId);
 
-      // Revert bank account balance if the lancamento was paid/received
-      if (lancamento && lancamento.conta_bancaria_id && ["pago", "recebido"].includes(lancamento.status)) {
-        const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento" || lancamento.origem === "reajuste_investimento";
-        const delta = isCredit ? -lancamento.valor : lancamento.valor;
-        const { data: contaAtual } = await supabase
-          .from("contas_bancarias")
-          .select("saldo_atual")
-          .eq("id", lancamento.conta_bancaria_id)
-          .single();
-        if (contaAtual) {
-          const saldoAnterior = Number(contaAtual.saldo_atual);
-          const saldoPosterior = saldoAnterior + delta;
-          await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
-            .eq("id", lancamento.conta_bancaria_id);
-          await logMovimentacao({
-            conta_bancaria_id: lancamento.conta_bancaria_id,
-            empresa_id: empresaId || null,
-            tipo: "ajuste",
-            descricao: `Estorno (exclusão): ${lancamento.descricao}`,
-            valor: delta,
-            saldo_anterior: saldoAnterior,
-            saldo_posterior: saldoPosterior,
-            lancamento_id: lancamento.id,
-          });
-        }
-      }
-
       // Determinar IDs a excluir conforme escopo
       let idsToDelete: string[] = [selectedId];
       if (scope === "future" && lancamento?.recorrencia_grupo_id) {
@@ -536,32 +508,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           .gte("data_vencimento", lancamento.data_vencimento);
         if (futuros && futuros.length) {
           idsToDelete = futuros.map((f: any) => f.id);
-          // Estornar saldo de futuros que já foram pagos/recebidos (exceto o atual já tratado)
-          for (const f of futuros as any[]) {
-            if (f.id === selectedId) continue;
-            if (f.conta_bancaria_id && ["pago", "recebido"].includes(f.status)) {
-              const isCredit = f.tipo === "receita" || f.origem === "resgate_investimento" || f.origem === "rentabilidade_investimento" || f.origem === "reajuste_investimento";
-              const delta = isCredit ? -f.valor : f.valor;
-              const { data: contaAtual } = await supabase
-                .from("contas_bancarias").select("saldo_atual").eq("id", f.conta_bancaria_id).single();
-              if (contaAtual) {
-                const saldoAnterior = Number(contaAtual.saldo_atual);
-                const saldoPosterior = saldoAnterior + delta;
-                await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
-                  .eq("id", f.conta_bancaria_id);
-                await logMovimentacao({
-                  conta_bancaria_id: f.conta_bancaria_id,
-                  empresa_id: empresaId || null,
-                  tipo: "ajuste",
-                  descricao: `Estorno (exclusão em série): ${f.descricao}`,
-                  valor: delta,
-                  saldo_anterior: saldoAnterior,
-                  saldo_posterior: saldoPosterior,
-                  lancamento_id: f.id,
-                });
-              }
-            }
-          }
         }
       }
 
@@ -729,36 +675,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
 
       if (selectedId) {
-        // Fetch the old lancamento to revert balance if needed
-        const oldLancamento = lancamentos.find(l => l.id === selectedId);
-        
-        // Revert old balance impact if was paid/received
-        if (oldLancamento && oldLancamento.conta_bancaria_id && ["pago", "recebido"].includes(oldLancamento.status)) {
-          const oldIsCredit = oldLancamento.tipo === "receita" || oldLancamento.origem === "resgate_investimento" || oldLancamento.origem === "rentabilidade_investimento" || oldLancamento.origem === "reajuste_investimento";
-          const revertDelta = oldIsCredit ? -oldLancamento.valor : oldLancamento.valor;
-          const { data: contaOld } = await supabase
-            .from("contas_bancarias")
-            .select("saldo_atual")
-            .eq("id", oldLancamento.conta_bancaria_id)
-            .single();
-          if (contaOld) {
-            const saldoAnt = Number(contaOld.saldo_atual);
-            const saldoPos = saldoAnt + revertDelta;
-            await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPos } as any) as any)
-              .eq("id", oldLancamento.conta_bancaria_id);
-            await logMovimentacao({
-              conta_bancaria_id: oldLancamento.conta_bancaria_id,
-              empresa_id: empresaId || null,
-              tipo: "ajuste",
-              descricao: `Estorno (edição): ${oldLancamento.descricao}`,
-              valor: revertDelta,
-              saldo_anterior: saldoAnt,
-              saldo_posterior: saldoPos,
-              lancamento_id: oldLancamento.id,
-            });
-          }
-        }
-
         // Update existing lancamento
         const updatePayload = { ...dataToSave } as any;
         if (isResgate) {
@@ -784,35 +700,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
         if (error) {
           throw error;
-        }
-
-        // Apply new balance impact if now paid/received
-        const newStatus = updatePayload.status || dataToSave.status;
-        const newContaId = dataToSave.conta_bancaria_id;
-        if (newContaId && ["pago", "recebido"].includes(newStatus)) {
-          const newIsCredit = (isResgate || isRentabilidade || isReajuste || dataToSave.tipo === "receita");
-          const newDelta = newIsCredit ? dataToSave.valor : -dataToSave.valor;
-          const { data: contaNew } = await supabase
-            .from("contas_bancarias")
-            .select("saldo_atual")
-            .eq("id", newContaId)
-            .single();
-          if (contaNew) {
-            const saldoAnt = Number(contaNew.saldo_atual);
-            const saldoPos = saldoAnt + newDelta;
-            await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPos } as any) as any)
-              .eq("id", newContaId);
-            await logMovimentacao({
-              conta_bancaria_id: newContaId,
-              empresa_id: empresaId || null,
-              tipo: dataToSave.tipo === "receita" ? "receita" : "despesa",
-              descricao: `Edição: ${dataToSave.descricao}`,
-              valor: newDelta,
-              saldo_anterior: saldoAnt,
-              saldo_posterior: saldoPos,
-              lancamento_id: selectedId,
-            });
-          }
         }
 
         // Fire webhook for edit
@@ -922,33 +809,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
           if (error) throw error;
 
-          // Atualizar saldo da conta se pago/recebido
-            const effectiveStatus = isSpecialInvestment ? "recebido" : formData.status;
-          if (data && data[0] && formData.conta_bancaria_id && ["pago", "recebido"].includes(effectiveStatus)) {
-            const delta = (isSpecialInvestment || formData.tipo === "receita") ? formData.valor : -formData.valor;
-            const { data: contaAtual } = await supabase
-              .from("contas_bancarias")
-              .select("saldo_atual")
-              .eq("id", formData.conta_bancaria_id)
-              .single();
-            if (contaAtual) {
-              const saldoAnterior = Number(contaAtual.saldo_atual);
-              const saldoPosterior = saldoAnterior + delta;
-              await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
-                .eq("id", formData.conta_bancaria_id);
-              await logMovimentacao({
-                conta_bancaria_id: formData.conta_bancaria_id,
-                empresa_id: empresaId || null,
-                tipo: formData.tipo === "receita" ? "receita" : "despesa",
-                descricao: formData.descricao,
-                valor: delta,
-                saldo_anterior: saldoAnterior,
-                saldo_posterior: saldoPosterior,
-                lancamento_id: data[0].id,
-              });
-            }
-          }
-
           // Se recorrente, chamar generate-recurring para criar ocorrências
           if (dataToSave.recorrente) {
             try {
@@ -996,8 +856,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       // Buscar o lançamento atual para saber o valor e tipo
       const lancamento = lancamentos.find(l => l.id === id);
-      const oldStatus = lancamento?.status;
-
       const { error } = await supabase
         .from("lancamentos")
         .update({ status })
@@ -1019,64 +877,6 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           .from('vendas_digitais')
           .update({ status: vendaStatusMap[status] })
           .eq('lancamento_id', id);
-      }
-
-      // Atualizar saldo da conta quando muda para pago/recebido ou sai de pago/recebido
-      if (lancamento?.conta_bancaria_id) {
-        const wasPaid = ["pago", "recebido"].includes(oldStatus || "");
-        const isPaid = ["pago", "recebido"].includes(status);
-
-        if (!wasPaid && isPaid) {
-          // Entrando em pago/recebido: aplicar delta
-          const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento" || lancamento.origem === "reajuste_investimento";
-          const delta = isCredit ? lancamento.valor : -lancamento.valor;
-          const { data: contaAtual } = await supabase
-            .from("contas_bancarias")
-            .select("saldo_atual")
-            .eq("id", lancamento.conta_bancaria_id)
-            .single();
-          if (contaAtual) {
-            const saldoAnterior = Number(contaAtual.saldo_atual);
-            const saldoPosterior = saldoAnterior + delta;
-            await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
-              .eq("id", lancamento.conta_bancaria_id);
-            await logMovimentacao({
-              conta_bancaria_id: lancamento.conta_bancaria_id,
-              empresa_id: empresaId || null,
-              tipo: lancamento.tipo === "receita" ? "receita" : "despesa",
-              descricao: `Baixa: ${lancamento.descricao}`,
-              valor: delta,
-              saldo_anterior: saldoAnterior,
-              saldo_posterior: saldoPosterior,
-              lancamento_id: lancamento.id,
-            });
-          }
-        } else if (wasPaid && !isPaid) {
-          // Saindo de pago/recebido: reverter delta
-          const isCredit = lancamento.tipo === "receita" || lancamento.origem === "resgate_investimento" || lancamento.origem === "rentabilidade_investimento" || lancamento.origem === "reajuste_investimento";
-          const delta = isCredit ? -lancamento.valor : lancamento.valor;
-          const { data: contaAtual } = await supabase
-            .from("contas_bancarias")
-            .select("saldo_atual")
-            .eq("id", lancamento.conta_bancaria_id)
-            .single();
-          if (contaAtual) {
-            const saldoAnterior = Number(contaAtual.saldo_atual);
-            const saldoPosterior = saldoAnterior + delta;
-            await (supabase.from("contas_bancarias").update({ saldo_atual: saldoPosterior } as any) as any)
-              .eq("id", lancamento.conta_bancaria_id);
-            await logMovimentacao({
-              conta_bancaria_id: lancamento.conta_bancaria_id,
-              empresa_id: empresaId || null,
-              tipo: "ajuste",
-              descricao: `Estorno: ${lancamento.descricao}`,
-              valor: delta,
-              saldo_anterior: saldoAnterior,
-              saldo_posterior: saldoPosterior,
-              lancamento_id: lancamento.id,
-            });
-          }
-        }
       }
 
       // When cancelling a recurring transaction, cancel all future pending ones in the same chain
