@@ -32,6 +32,7 @@ const LogsIntegracoes = () => {
   const [loading, setLoading] = useState(true);
   const [clearing, setClearing] = useState(false);
   const [filtroPlataforma, setFiltroPlataforma] = useState("todas");
+  const [filtroEvento, setFiltroEvento] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [busca, setBusca] = useState("");
   const [logsEnabled, setLogsEnabled] = useState(true);
@@ -112,9 +113,11 @@ const LogsIntegracoes = () => {
   };
 
   const plataformas = [...new Set(logs.map(l => l.plataforma))];
+  const eventos = [...new Set(logs.map(l => l.evento))].sort();
 
   const filteredLogs = logs.filter(log => {
     if (filtroPlataforma !== "todas" && log.plataforma !== filtroPlataforma) return false;
+    if (filtroEvento !== "todos" && log.evento !== filtroEvento) return false;
     if (filtroStatus !== "todos") {
       if (filtroStatus === "success" && !isSuccess(log.status)) return false;
       if (filtroStatus === "error" && !isError(log.status)) return false;
@@ -261,6 +264,17 @@ const LogsIntegracoes = () => {
               <SelectItem value="todas">Todas</SelectItem>
               {plataformas.map(p => (
                 <SelectItem key={p} value={p}>{p}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filtroEvento} onValueChange={setFiltroEvento}>
+            <SelectTrigger className="w-[140px] sm:w-[180px]">
+              <SelectValue placeholder="Evento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos eventos</SelectItem>
+              {eventos.map(e => (
+                <SelectItem key={e} value={e}>{e}</SelectItem>
               ))}
             </SelectContent>
           </Select>
