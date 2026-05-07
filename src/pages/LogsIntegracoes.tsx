@@ -113,9 +113,11 @@ const LogsIntegracoes = () => {
   };
 
   const plataformas = [...new Set(logs.map(l => l.plataforma))];
+  const eventos = [...new Set(logs.map(l => l.evento))].sort();
 
   const filteredLogs = logs.filter(log => {
     if (filtroPlataforma !== "todas" && log.plataforma !== filtroPlataforma) return false;
+    if (filtroEvento !== "todos" && log.evento !== filtroEvento) return false;
     if (filtroStatus !== "todos") {
       if (filtroStatus === "success" && !isSuccess(log.status)) return false;
       if (filtroStatus === "error" && !isError(log.status)) return false;
