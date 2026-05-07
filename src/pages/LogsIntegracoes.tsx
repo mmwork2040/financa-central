@@ -365,14 +365,12 @@ const LogsIntegracoes = () => {
                     </TableCell>
                     <TableCell className="max-w-[300px]">
                       {log.payload ? (
-                        <details className="text-xs">
-                          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-                            {log.payload?.message || log.payload?.url || "Ver detalhes"}
-                          </summary>
-                          <pre className="mt-1 p-2 bg-muted rounded text-[10px] overflow-auto max-h-32 whitespace-pre-wrap">
+                        <div className="space-y-1">
+                          <p className="font-semibold text-[10px] text-muted-foreground uppercase">Payload / Resposta:</p>
+                          <pre className="p-2 bg-muted rounded text-[10px] overflow-auto max-h-48 whitespace-pre-wrap font-mono">
                             {JSON.stringify(log.payload, null, 2)}
                           </pre>
-                        </details>
+                        </div>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
