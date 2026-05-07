@@ -325,12 +325,14 @@ const LogsIntegracoes = () => {
                   {format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}
                 </p>
                 {log.payload && (
-                  <div className="text-xs mt-2">
-                    <p className="font-semibold text-muted-foreground mb-1">Payload/Resposta:</p>
-                    <pre className="p-2 bg-muted rounded text-[10px] overflow-auto max-h-48 whitespace-pre-wrap">
+                  <details className="text-xs mt-2">
+                    <summary className="cursor-pointer text-muted-foreground hover:text-foreground font-medium">
+                      Ver Payload / Resposta
+                    </summary>
+                    <pre className="mt-1 p-2 bg-muted rounded text-[10px] overflow-auto max-h-48 whitespace-pre-wrap font-mono">
                       {JSON.stringify(log.payload, null, 2)}
                     </pre>
-                  </div>
+                  </details>
                 )}
               </CardContent>
             </Card>
@@ -365,12 +367,14 @@ const LogsIntegracoes = () => {
                     </TableCell>
                     <TableCell className="max-w-[300px]">
                       {log.payload ? (
-                        <div className="space-y-1">
-                          <p className="font-semibold text-[10px] text-muted-foreground uppercase">Payload / Resposta:</p>
-                          <pre className="p-2 bg-muted rounded text-[10px] overflow-auto max-h-48 whitespace-pre-wrap font-mono">
+                        <details className="text-xs">
+                          <summary className="cursor-pointer text-muted-foreground hover:text-foreground font-medium">
+                            Ver Detalhes
+                          </summary>
+                          <pre className="mt-1 p-2 bg-muted rounded text-[10px] overflow-auto max-h-48 whitespace-pre-wrap font-mono">
                             {JSON.stringify(log.payload, null, 2)}
                           </pre>
-                        </div>
+                        </details>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
