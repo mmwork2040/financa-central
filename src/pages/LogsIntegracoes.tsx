@@ -267,6 +267,17 @@ const LogsIntegracoes = () => {
               ))}
             </SelectContent>
           </Select>
+          <Select value={filtroEvento} onValueChange={setFiltroEvento}>
+            <SelectTrigger className="w-[140px] sm:w-[180px]">
+              <SelectValue placeholder="Evento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos eventos</SelectItem>
+              {eventos.map(e => (
+                <SelectItem key={e} value={e}>{e}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={filtroStatus} onValueChange={setFiltroStatus}>
             <SelectTrigger className="w-[110px] sm:w-[130px]">
               <SelectValue placeholder="Status" />
