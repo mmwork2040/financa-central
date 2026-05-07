@@ -112,7 +112,7 @@ const LogsIntegracoes = () => {
     }
   };
 
-  const plataformas = [...new Set(logs.map(l => l.plataforma))];
+  const plataformas = [...new Set([...logs.map(l => l.plataforma), "webhook"])].sort();
   const eventos = [...new Set([...logs.map(l => l.evento), "Suporte Técnico"])].sort();
 
   const filteredLogs = logs.filter(log => {
