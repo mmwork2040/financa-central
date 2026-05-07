@@ -32,6 +32,7 @@ const LogsIntegracoes = () => {
   const [loading, setLoading] = useState(true);
   const [clearing, setClearing] = useState(false);
   const [filtroPlataforma, setFiltroPlataforma] = useState("todas");
+  const [filtroEvento, setFiltroEvento] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [busca, setBusca] = useState("");
   const [logsEnabled, setLogsEnabled] = useState(true);
