@@ -1,0 +1,14 @@
+# Contabiliza AI
+
+> Departamento financeiro inteligente para empresas: lançamentos, relatórios e gestão de caixa com auxílio de inteligência artificial.
+
+O Contabiliza AI é uma plataforma de gestão financeira que integra contas bancárias, vendas digitais, anúncios, notas fiscais e automações via n8n, com agente de IA por WhatsApp e Telegram.
+
+## Pages
+
+- [Início](/): Apresentação do produto e planos.
+- [Demo](/demo): Demonstração interativa da plataforma.
+- [Planos](/ver-planos): Planos e preços de assinatura.
+- [Cadastro](/register): Crie sua conta gratuita.
+- [Login](/login): Acesso à conta.
+- [Termos de Uso](/termos): Termos e condições da plataforma.
