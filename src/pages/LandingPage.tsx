@@ -30,7 +30,9 @@ import {
   Check,
   Camera,
   FileText,
+  Download,
 } from "lucide-react";
+import { generatePresentationPDF } from "@/utils/pdfGenerator";
 import PhoneMockup from "@/components/landing/PhoneMockup";
 import ChatBubble from "@/components/landing/ChatBubble";
 import HeroChatAnimation from "@/components/landing/HeroChatAnimation";
@@ -60,6 +62,10 @@ const LandingPage = () => {
             <span className="text-xl font-extrabold tracking-tight text-foreground">Contabiliza AI</span>
           </div>
           <div className="flex items-center gap-3">
+            <Button variant="ghost" className="hidden md:flex gap-2" onClick={generatePresentationPDF}>
+              <Download className="h-4 w-4" />
+              Baixar Apresentação
+            </Button>
             <Button variant="ghost" onClick={() => navigate("/login")}>
               Entrar
             </Button>
