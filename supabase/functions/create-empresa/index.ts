@@ -160,17 +160,27 @@ serve(async (req) => {
 
     // Validate CNPJ uniqueness
     if (cnpj && cnpj.trim()) {
-      const { data: existing } = await supabaseAdmin
-        .from("empresas")
-        .select("id, nome")
-        .ilike("cnpj", cnpj.trim())
-        .limit(1)
-        .single();
+      const normalizedCnpj = cnpj.trim().replace(/[^0-9]/g, '');
+      
+      if (normalizedCnpj) {
+        const { data: existing } = await supabaseAdmin
+          .from("empresas")
+          .select("id, nome, cnpj")
+          .filter("cnpj", "not.is", null)
+          .limit(100); // Fetch some to check manually since complex index query is tricky with postgrest
 
-      if (existing) {
-        return new Response(JSON.stringify({ error: `CNPJ já cadastrado por outra empresa: "${existing.nome}"` }), {
-          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        // Since postgrest doesn't support regexp_replace in filters easily, we can use a raw RPC or just check manually if the list is small,
+        // but better to use a dedicated RPC or just trust the DB unique constraint we just created.
+        // Let's use the DB constraint by attempting the insert and handling the error, 
+        // OR we can use a query that matches the index logic.
+        
+        const { data: checkData, error: checkError } = await supabaseAdmin.rpc('check_cnpj_exists', { _cnpj: normalizedCnpj });
+        
+        if (!checkError && checkData) {
+          return new Response(JSON.stringify({ error: `CNPJ já cadastrado por outra empresa.` }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
     }
 
