@@ -1046,6 +1046,28 @@ const ImportarDocumentos = () => {
           if (editingRef) updateItem(editingRef.fileIdx, editingRef.itemIdx, patch as Partial<ExtractedItem>);
         }}
       />
+
+      <AlertDialog open={!!revertRef} onOpenChange={(v) => { if (!v) setRevertRef(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desfazer edição?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todos os campos editados deste lançamento serão substituídos pelos valores originalmente extraídos pela IA. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (revertRef) revertItem(revertRef.fileIdx, revertRef.itemIdx);
+                setRevertRef(null);
+              }}
+            >
+              Sim, restaurar valores da IA
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
