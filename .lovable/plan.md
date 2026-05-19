@@ -1,85 +1,117 @@
-## Problema identificado
 
-A Hotmart envia webhooks separados quando um reembolso ocorre (eventos `PURCHASE_REFUNDED`, `PURCHASE_CHARGEBACK`, `PURCHASE_PROTEST`). Ao analisar o `webhook-receiver` e os dados da empresa **OSV LTDA** (`67abcbf5-...`), encontrei três falhas que fazem reembolsos serem ignorados:
+## Objetivo
 
-### Falha 1 — Dedupe engole o reembolso
-O bloco de dedupe compara (`plataforma`, `valor_liquido`, `data_venda`, `produto`, `cliente`). Quando o webhook de reembolso chega, ele bate com a venda aprovada original (mesmo cliente/produto/valor) e retorna `duplicate: true` **sem aplicar o estorno**. Resultado: nenhum lançamento de despesa de reembolso é criado e o saldo não é revertido.
-
-### Falha 2 — Status lido do campo errado
-`parseHotmart` lê apenas `purchase.status`. Em webhooks de reembolso a Hotmart marca o evento via `data.event` / `body.event` (ex.: `PURCHASE_REFUNDED`), e `purchase.status` pode permanecer ausente ou inconsistente, caindo no fallback `"approved"` → `"aprovada"`. Ou seja, mesmo sem dedupe, um reembolso poderia ser registrado como nova venda aprovada.
-
-### Falha 3 — Sem rastreio por transação
-Não armazenamos `transaction_id` da Hotmart. Sem essa chave não há como casar o evento de reembolso com a venda original; toda a reconciliação depende de heurística frágil.
-
-### Evidência
-- 2 vendas iguais de Roberto Lopes (R$ 1.097 e R$ 1.197) e 2 de Rosana Chaves continuam com `status='aprovada'` em `vendas_digitais` para a OSV LTDA.
-- `logs_integracoes` para Hotmart/OSV: 0 registros — não há log dos webhooks de reembolso (provavelmente `logs_enabled=false` ou os webhooks de reembolso nunca chegaram a ser processados como esperado).
+Melhorar a importação inteligente de documentos para que:
+1. **Super Admin** configure uma única chave de IA (global) e libere por tenant — todos os usuários da empresa liberada usam.
+2. A **leitura real** dos arquivos (PDF, imagem, Excel, CSV) funcione corretamente — hoje envia lixo binário para o LLM.
+3. A IA **sugira categorias** e o sistema **crie automaticamente** as que não existirem na empresa.
 
 ---
 
-## Plano de correção
+## 1. Configuração global da IA (Super Admin)
 
-### 1. Adicionar coluna `transaction_id` em `vendas_digitais`
-Migration: nova coluna `transaction_id text` + índice único `(empresa_id, plataforma, transaction_id)` quando não nulo. Permite reconciliar reembolsos com a venda original.
+**Nova tabela** `ai_global_config` (singleton):
+- `provider` (`openai` | `google_gemini` | `anthropic` | `deepseek` | `lovable_ai`)
+- `model`
+- `api_key_encrypted` (armazenado como secret server-side via `LLM_GLOBAL_API_KEY`, não na tabela)
+- `ativo` boolean
+- `updated_by`, `updated_at`
 
-### 2. Reescrever `parseHotmart` (e demais parsers) para priorizar o evento
-Mapeamento explícito por `event`:
-- `PURCHASE_APPROVED` / `PURCHASE_COMPLETE` → `aprovada`
-- `PURCHASE_REFUNDED` → `reembolsada`
-- `PURCHASE_CHARGEBACK` → `chargeback`
-- `PURCHASE_PROTEST` → `disputa`
-- `PURCHASE_CANCELED` → `cancelada`
-- `PURCHASE_EXPIRED` → `expirada`
-- `PURCHASE_DELAYED` / `PURCHASE_BILLET_PRINTED` → `pendente`
+**Nova tabela** `ai_global_access`:
+- `empresa_id` (FK), `liberado` boolean, `liberado_em`, `liberado_por`
+- RLS: leitura pela própria empresa; escrita apenas super_admin.
 
-Capturar `transaction_id` de `purchase.transaction` (e equivalente nas demais plataformas: Eduzz `trans_cod`, Kiwify `order_id`, Hubla `id`, Monetizze `venda.codigo`).
+**UI nova** em `src/pages/ConfigGlobalIA.tsx` (rota protegida `/admin/ia-global`, só super_admin):
+- Card 1: configurar provider + modelo + chave (a chave vai para Supabase secret via edge function `set-global-ai-key`, não trafega no banco).
+- Card 2: lista de empresas com toggle "Liberar acesso à IA global".
 
-### 3. Reformular fluxo no `webhook-receiver`
-Pseudo-código:
+**Item no Sidebar** (super admin only): "IA Global".
 
-```text
-parse → saleData (com transaction_id e status normalizado)
+---
 
-se transaction_id existir:
-  buscar venda por (empresa_id, plataforma, transaction_id)
-senão:
-  fallback heurístico atual (data+valor+produto+cliente)
+## 2. Leitura real dos documentos
 
-se venda encontrada:
-  se status novo == status atual → log "duplicate" e sai
-  se status novo é estorno (reembolsada/chargeback/cancelada-após-aprovada):
-    - atualizar vendas_digitais.status
-    - criar lançamento de DESPESA "REEMBOLSO"/"CHARGEBACK" com data_pagamento=hoje
-    - reverter saldo da conta bancária (se a venda original já foi recebida)
-    - se houver lançamento original ainda pendente, cancelá-lo
-senão (venda nova):
-  inserir vendas_digitais
-  se aprovada → criar lançamento de receita (lógica atual mantida)
-  se já vier reembolsada/chargeback (raro) → registrar como estorno direto
+Substituir o `readFileContent` do `ImportarDocumentos.tsx` por extração real, e enviar **anexo nativo** para o LLM em vez de string base64 truncada:
+
+| Tipo | Como extrair |
+|---|---|
+| PDF | `pdfjs-dist` no client extrai texto por página. Se < 50 chars, faz fallback renderizando página → PNG → envia como imagem para o modelo (visão). |
+| Imagem | Enviar como `image_url` (base64 inteiro, não truncado) ao endpoint vision do provider. |
+| XLSX/XLS | `xlsx` (SheetJS) no client converte para CSV/JSON. |
+| CSV/TXT | `file.text()` direto. |
+
+Edge function `process-document-import` passa a aceitar:
+```ts
+{
+  fileName,
+  textContent?: string,      // texto extraído
+  imageBase64?: string,      // se for imagem ou página renderizada
+  mimeType: string,
+  preferredLLM?: string      // opcional, default = config global
+}
 ```
 
-### 4. Garantir logging
-Forçar `logs_integracoes.insert` para **todo** evento de reembolso/chargeback independentemente de `logs_enabled` — eventos críticos sempre logados (com flag `evento_critico=true`). Isso evita perder rastro de estornos.
+Refatorar as funções `callOpenAI/callGemini/callAnthropic/callDeepSeek` para suportar **mensagens multimodais** (parts com `image_url` quando houver `imageBase64`).
 
-### 5. Janela de 30 dias e job de reconciliação
-Criar edge function `reconcile-hotmart-refunds` (executada via `pg_cron` 1x/dia) que:
-- Para cada venda Hotmart aprovada nos últimos 35 dias, consulta a API Hotmart (`/payments/api/v1/sales/history`) usando o token configurado em `integracoes`
-- Se a venda aparecer como `REFUNDED`/`CHARGEBACK` na API mas continuar `aprovada` no banco → aplica o estorno automaticamente
-- Cobre o caso de webhook perdido / falha de rede dentro da janela de 30 dias da Hotmart
+---
 
-### 6. UI (Vendas Digitais)
-- Mostrar badge laranja "Reembolsada" / vermelho "Chargeback" no status
-- Ação manual "Marcar como reembolsada" para casos extremos (com confirmação)
-- Botão "Reconciliar agora" (admin) chamando a função do passo 5
+## 3. Resolução de credenciais na edge function
 
-### 7. Backfill das 4 vendas afetadas da OSV LTDA
-Após deploy, rodar a função de reconciliação manualmente para o período de abril/2026 da OSV LTDA, ou disponibilizar o botão "Marcar como reembolsada" para o admin corrigir manualmente os 4 registros (Roberto x2, Rosana x2), gerando os lançamentos de estorno e revertendo saldo.
+Nova ordem de resolução em `process-document-import`:
+
+1. Verifica `ai_global_access` para a `empresa_id` do usuário.
+   - Se liberado e existe `ai_global_config` ativo → usa secret `LLM_GLOBAL_API_KEY` + provider/model global.
+2. Caso contrário → fallback ao comportamento atual (tabela `integracoes` da empresa).
+3. Se nada disponível → erro claro: "Solicite ao administrador a liberação da IA global ou configure uma integração de IA".
+
+---
+
+## 4. Auto-criação de categorias
+
+Após o usuário clicar "Importar selecionados" em `handleSaveSelected`:
+- Para cada item com `categoria_sugerida` preenchida:
+  - Busca em `categorias` da empresa por nome (case-insensitive).
+  - Se não existir, faz `insert` em `categorias` com `tipo` derivado de `tipo_sugerido` (receita/despesa).
+  - Usa o `id` resultante no `lancamentos.categoria_id`.
+- Respeita unique constraint existente (`empresa_id` + lower(nome)).
+- Mesmo tratamento para `fornecedor_cliente` → cria em `fornecedores` ou `clientes` conforme o tipo.
+
+Os campos `categoria_id`, `fornecedor_id`/`cliente_id` passam a ser salvos no `lancamentos`.
+
+---
+
+## 5. Prompt aprimorado
+
+Atualizar `SYSTEM_PROMPT` para:
+- Reforçar extração de **uma linha por item** em notas/cupons.
+- Pedir categoria genérica padronizada (lista sugerida: Alimentação, Transporte, Software, Marketing, Salários, etc).
+- Detectar CNPJ/CPF do fornecedor e colocar em `observacoes`.
 
 ---
 
 ## Arquivos afetados
-- `supabase/functions/webhook-receiver/index.ts` (parsers + fluxo de matching/estorno)
-- `supabase/functions/reconcile-hotmart-refunds/index.ts` (novo)
-- Migration: coluna `transaction_id` + índice único parcial
-- `src/pages/VendasDigitais.tsx` + `src/components/vendas/...` (badges + ação manual + botão reconciliar)
-- `supabase/config.toml` (cron schedule)
+
+**Novos:**
+- `supabase/migrations/*_global_ai.sql` — tabelas + RLS
+- `supabase/functions/set-global-ai-key/index.ts` — super admin grava secret
+- `src/pages/ConfigGlobalIA.tsx`
+- `src/hooks/useGlobalAI.ts`
+
+**Editados:**
+- `supabase/functions/process-document-import/index.ts` — multimodal + resolução global
+- `src/pages/ImportarDocumentos.tsx` — extração real (pdfjs, xlsx) e envio multimodal
+- `src/components/Sidebar.tsx` — link "IA Global" (super admin)
+- `src/App.tsx` — rota nova
+
+**Dependências:**
+- `pdfjs-dist`, `xlsx`
+
+---
+
+## Detalhes técnicos
+
+- A `api_key` global **nunca** vai para o banco — só vive como secret `LLM_GLOBAL_API_KEY` (gerenciada via tool `add_secret` quando o super admin salva).
+- `ai_global_config` armazena apenas metadata (provider/model/ativo).
+- Edge function lê a key com `Deno.env.get("LLM_GLOBAL_API_KEY")`.
+- Mantém compatibilidade: empresas sem acesso global continuam com `integracoes` próprias.
+- RLS estrita em `ai_global_config` e `ai_global_access`: só super_admin escreve.
