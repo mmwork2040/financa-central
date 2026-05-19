@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Loader2, UserPlus } from "lucide-react";
+import { extractEdgeError } from "@/lib/edgeFunctionError";
 
 const JoinCompanyCard = () => {
   const { user } = useAuth();
