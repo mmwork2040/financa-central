@@ -797,7 +797,11 @@ const ImportarDocumentos = () => {
                         </thead>
                         <tbody>
                           {file.items.map((item, itemIdx) => (
-                            <tr key={itemIdx} className={cn("border-b transition-colors", item.selected ? "bg-primary/5" : "opacity-50")}>
+                            <tr key={itemIdx} className={cn(
+                              "border-b transition-colors",
+                              item.selected ? "bg-primary/5" : "opacity-50",
+                              (item.possibleDuplicates?.length || 0) > 0 && "bg-amber-500/5"
+                            )}>
                               <td className="p-2">
                                 <Checkbox
                                   checked={item.selected}
@@ -805,7 +809,37 @@ const ImportarDocumentos = () => {
                                 />
                               </td>
                               <td className="p-2">
-                                <div className="font-medium">{item.descricao}</div>
+                                <div className="font-medium flex items-center gap-1.5 flex-wrap">
+                                  {item.descricao}
+                                  {(item.possibleDuplicates?.length || 0) > 0 && (
+                                    <TooltipProvider delayDuration={150}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-400 bg-amber-500/10 cursor-help">
+                                            <Copy className="h-3 w-3 mr-1" />
+                                            Possível duplicata ({item.possibleDuplicates!.length})
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-sm">
+                                          <p className="font-semibold mb-1 text-xs">Já existe(m) lançamento(s) semelhante(s):</p>
+                                          <ul className="space-y-1 text-xs">
+                                            {item.possibleDuplicates!.map(d => (
+                                              <li key={d.id} className="border-l-2 border-amber-400 pl-2">
+                                                <div className="font-medium">{d.descricao}</div>
+                                                <div className="text-muted-foreground">
+                                                  {d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                                                  {d.data_vencimento && ` • ${new Date(d.data_vencimento).toLocaleDateString("pt-BR")}`}
+                                                </div>
+                                                <div className="text-[10px] italic text-amber-700 dark:text-amber-400">{d.motivo}</div>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                          <p className="text-[10px] mt-2 text-muted-foreground">Marque a caixa apenas se confirmar que NÃO é o mesmo lançamento.</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                </div>
                                 {item.fornecedor_cliente && (
                                   <div className="text-xs text-muted-foreground">{item.fornecedor_cliente}</div>
                                 )}
