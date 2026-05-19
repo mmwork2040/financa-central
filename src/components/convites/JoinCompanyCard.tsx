@@ -24,7 +24,7 @@ const JoinCompanyCard = () => {
       const { data, error } = await supabase.functions.invoke("redeem-invite-code", {
         body: { code: code.trim() },
       });
-      if (error) throw error;
+      if (error) throw new Error(await extractEdgeError(error, "Erro ao entrar na empresa"));
       if (data?.error) throw new Error(data.error);
 
       toast.success(`Você entrou na empresa "${data.empresaNome}". Recarregando...`);
