@@ -81,6 +81,78 @@ const ImportarDocumentos = () => {
   const [selectedLLM, setSelectedLLM] = useState<string>("");
   const [loadingLLMs, setLoadingLLMs] = useState(true);
 
+  const existingLancamentosRef = useRef<Array<{ id: string; descricao: string; valor: number; data_vencimento: string | null; tipo: string }>>([]);
+
+  // Normaliza string para comparação (lowercase, sem acentos, sem pontuação)
+  const normalize = (s: string) =>
+    (s || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9 ]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const tokenOverlap = (a: string, b: string): number => {
+    const ta = new Set(normalize(a).split(" ").filter(t => t.length >= 3));
+    const tb = new Set(normalize(b).split(" ").filter(t => t.length >= 3));
+    if (ta.size === 0 || tb.size === 0) return 0;
+    let common = 0;
+    ta.forEach(t => { if (tb.has(t)) common++; });
+    return common / Math.min(ta.size, tb.size);
+  };
+
+  const findDuplicates = (item: ExtractedItem): DuplicateMatch[] => {
+    const results: DuplicateMatch[] = [];
+    const itemDate = item.data ? new Date(item.data).getTime() : null;
+    for (const l of existingLancamentosRef.current) {
+      const valorDelta = Math.abs(l.valor - item.valor);
+      const valorRel = item.valor > 0 ? valorDelta / item.valor : 1;
+      const sameValor = valorDelta < 0.01 || valorRel <= 0.01; // exato ou 1%
+      let dateDiffDays: number | null = null;
+      if (itemDate && l.data_vencimento) {
+        dateDiffDays = Math.abs((itemDate - new Date(l.data_vencimento).getTime()) / 86400000);
+      }
+      const closeDate = dateDiffDays !== null && dateDiffDays <= 15;
+      const descSim = tokenOverlap(item.descricao, l.descricao);
+      const sameDesc = descSim >= 0.6;
+
+      let motivo = "";
+      if (sameValor && closeDate) motivo = `Valor idêntico e data próxima (${Math.round(dateDiffDays!)}d)`;
+      else if (sameValor && sameDesc) motivo = "Valor e descrição muito semelhantes";
+      else if (sameDesc && closeDate) motivo = "Descrição semelhante e data próxima";
+      else if (sameValor && item.valor > 0) motivo = "Valor exato";
+      else if (descSim >= 0.8) motivo = "Descrição muito semelhante";
+
+      if (motivo) {
+        results.push({
+          id: l.id,
+          descricao: l.descricao,
+          valor: l.valor,
+          data_vencimento: l.data_vencimento,
+          tipo: l.tipo,
+          motivo,
+        });
+        if (results.length >= 3) break;
+      }
+    }
+    return results;
+  };
+
+  const loadExistingLancamentos = async () => {
+    if (!empresaId) return;
+    const since = new Date();
+    since.setDate(since.getDate() - 180);
+    const { data } = await supabase
+      .from("lancamentos")
+      .select("id, descricao, valor, data_vencimento, tipo")
+      .eq("empresa_id", empresaId)
+      .gte("data_vencimento", since.toISOString().split("T")[0])
+      .order("data_vencimento", { ascending: false })
+      .limit(1000);
+    existingLancamentosRef.current = (data || []) as any;
+  };
+
   // Load active LLMs (excluding lovable_ai)
   useEffect(() => {
     if (!empresaId) return;
