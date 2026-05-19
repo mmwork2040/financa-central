@@ -75,6 +75,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { extractEdgeError } from "@/lib/edgeFunctionError";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CreateEmpresaDialog } from "@/components/sidebar/CreateEmpresaDialog";
