@@ -6,12 +6,13 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical, Copy } from "lucide-react";
+import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical, Copy, Pencil } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { EditImportItemDialog, EntityOption } from "@/components/importacao/EditImportItemDialog";
 
 const ACCEPTED_TYPES = [
   "image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp",
@@ -48,8 +49,12 @@ type ExtractedItem = {
   tipo_sugerido: string;
   destino_sugerido: string;
   categoria_sugerida: string | null;
+  categoria_id?: string | null;
   fornecedor_cliente: string | null;
+  fornecedor_id?: string | null;
+  cliente_id?: string | null;
   forma_pagamento: string | null;
+  forma_pagamento_id?: string | null;
   observacoes: string | null;
   confianca: number;
   selected?: boolean;
@@ -80,6 +85,41 @@ const ImportarDocumentos = () => {
   const [activeLLMs, setActiveLLMs] = useState<ActiveLLM[]>([]);
   const [selectedLLM, setSelectedLLM] = useState<string>("");
   const [loadingLLMs, setLoadingLLMs] = useState(true);
+
+  // Cadastros existentes para edição
+  const [categorias, setCategorias] = useState<EntityOption[]>([]);
+  const [fornecedores, setFornecedores] = useState<EntityOption[]>([]);
+  const [clientes, setClientes] = useState<EntityOption[]>([]);
+  const [formasPagamento, setFormasPagamento] = useState<EntityOption[]>([]);
+
+  // Edit dialog
+  const [editingRef, setEditingRef] = useState<{ fileIdx: number; itemIdx: number } | null>(null);
+  const editingItem = editingRef ? files[editingRef.fileIdx]?.items[editingRef.itemIdx] : null;
+
+  useEffect(() => {
+    if (!empresaId) return;
+    (async () => {
+      const [cat, forn, cli, fp] = await Promise.all([
+        supabase.from("categorias").select("id, nome").eq("empresa_id", empresaId).order("nome"),
+        supabase.from("fornecedores").select("id, nome").eq("empresa_id", empresaId).eq("ativo", true).order("nome"),
+        supabase.from("clientes").select("id, nome").eq("empresa_id", empresaId).eq("ativo", true).order("nome"),
+        supabase.from("formas_pagamento").select("id, descricao").eq("empresa_id", empresaId).order("descricao"),
+      ]);
+      setCategorias((cat.data || []) as any);
+      setFornecedores((forn.data || []) as any);
+      setClientes((cli.data || []) as any);
+      setFormasPagamento(((fp.data || []) as any[]).map(f => ({ id: f.id, nome: f.descricao })));
+    })();
+  }, [empresaId]);
+
+  const updateItem = (fileIdx: number, itemIdx: number, patch: Partial<ExtractedItem>) => {
+    setFiles(prev => prev.map((f, fi) =>
+      fi === fileIdx ? {
+        ...f,
+        items: f.items.map((it, ii) => ii === itemIdx ? { ...it, ...patch } : it),
+      } : f
+    ));
+  };
 
   const existingLancamentosRef = useRef<Array<{ id: string; descricao: string; valor: number; data_vencimento: string | null; tipo: string }>>([]);
 
@@ -504,15 +544,35 @@ const ImportarDocumentos = () => {
             status: "pendente",
             origem: "importacao",
           };
-          if (item.categoria_sugerida) {
+          if (item.categoria_id && item.categoria_id !== "__new__") {
+            payload.categoria_id = item.categoria_id;
+          } else if (item.categoria_sugerida) {
             const catId = await findOrCreateCategoria(item.categoria_sugerida, tipo);
             if (catId) payload.categoria_id = catId;
           }
-          if (item.fornecedor_cliente) {
-            if (tipo === "receita") {
+          if (item.forma_pagamento_id && item.forma_pagamento_id !== "__new__") {
+            payload.forma_pagamento_id = item.forma_pagamento_id;
+          } else if (item.forma_pagamento) {
+            // cria forma de pagamento se não existir
+            const { data: existing } = await supabase
+              .from("formas_pagamento").select("id").eq("empresa_id", empresaId)
+              .ilike("descricao", item.forma_pagamento).maybeSingle();
+            if (existing?.id) payload.forma_pagamento_id = existing.id;
+            else {
+              const { data: created } = await supabase
+                .from("formas_pagamento").insert({ empresa_id: empresaId, descricao: item.forma_pagamento }).select("id").single();
+              if (created?.id) payload.forma_pagamento_id = created.id;
+            }
+          }
+          if (tipo === "receita") {
+            if (item.cliente_id && item.cliente_id !== "__new__") payload.cliente_id = item.cliente_id;
+            else if (item.fornecedor_cliente) {
               const cliId = await findOrCreateCliente(item.fornecedor_cliente);
               if (cliId) payload.cliente_id = cliId;
-            } else {
+            }
+          } else {
+            if (item.fornecedor_id && item.fornecedor_id !== "__new__") payload.fornecedor_id = item.fornecedor_id;
+            else if (item.fornecedor_cliente) {
               const fId = await findOrCreateFornecedor(item.fornecedor_cliente);
               if (fId) payload.fornecedor_id = fId;
             }
@@ -810,7 +870,14 @@ const ImportarDocumentos = () => {
                               </td>
                               <td className="p-2">
                                 <div className="font-medium flex items-center gap-1.5 flex-wrap">
-                                  {item.descricao}
+                                  <Button
+                                    variant="ghost" size="icon" className="h-6 w-6 -ml-1"
+                                    onClick={() => setEditingRef({ fileIdx, itemIdx })}
+                                    title="Editar lançamento"
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                  </Button>
+                                  <span>{item.descricao}</span>
                                   {(item.possibleDuplicates?.length || 0) > 0 && (
                                     <TooltipProvider delayDuration={150}>
                                       <Tooltip>
@@ -910,6 +977,33 @@ const ImportarDocumentos = () => {
           </CardContent>
         </Card>
       )}
+
+      <EditImportItemDialog
+        open={!!editingRef}
+        onOpenChange={(v) => { if (!v) setEditingRef(null); }}
+        item={editingItem ? {
+          descricao: editingItem.descricao,
+          valor: editingItem.valor,
+          data: editingItem.data,
+          tipo_sugerido: editingItem.tipo_sugerido,
+          destino_sugerido: editingItem.destino_sugerido,
+          categoria_sugerida: editingItem.categoria_sugerida,
+          categoria_id: editingItem.categoria_id ?? null,
+          fornecedor_cliente: editingItem.fornecedor_cliente,
+          fornecedor_id: editingItem.fornecedor_id ?? null,
+          cliente_id: editingItem.cliente_id ?? null,
+          forma_pagamento: editingItem.forma_pagamento,
+          forma_pagamento_id: editingItem.forma_pagamento_id ?? null,
+          observacoes: editingItem.observacoes,
+        } : null}
+        categorias={categorias}
+        fornecedores={fornecedores}
+        clientes={clientes}
+        formasPagamento={formasPagamento}
+        onSave={(patch) => {
+          if (editingRef) updateItem(editingRef.fileIdx, editingRef.itemIdx, patch as Partial<ExtractedItem>);
+        }}
+      />
     </div>
   );
 };
