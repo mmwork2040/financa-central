@@ -85,6 +85,7 @@ const App = () => {
                 <Route path="/vendas-digitais" element={<AppLayout><VendasDigitais /></AppLayout>} />
                 <Route path="/importar-documentos" element={<AppLayout><ImportarDocumentos /></AppLayout>} />
                 <Route path="/anuncios" element={<ProtectedRoute path="/anuncios"><AppLayout><AnunciosDigitais /></AppLayout></ProtectedRoute>} />
+                <Route path="/admin/ia-global" element={<AppLayout><ConfigGlobalIA /></AppLayout>} />
                 
                 {/* Permission-protected routes */}
                 <Route path="/users" element={<ProtectedRoute path="/users"><AppLayout><Users /></AppLayout></ProtectedRoute>} />
