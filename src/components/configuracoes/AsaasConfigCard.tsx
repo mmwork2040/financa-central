@@ -14,6 +14,7 @@ const AsaasConfigCard = () => {
   const [saving, setSaving] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [config, setConfig] = useState({
     id: "",
     api_key: "",
@@ -108,6 +109,36 @@ const AsaasConfigCard = () => {
       toast.success("Token do webhook regenerado. Atualize a URL no Asaas.");
     } catch (error: any) {
       toast.error(error.message || "Erro ao regenerar token.");
+    }
+  };
+  
+  const handleTest = async () => {
+    if (!config.api_key.trim()) {
+      toast.error("Informe a API Key para testar.");
+      return;
+    }
+    
+    setTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("test-asaas", {
+        body: { 
+          api_key: config.api_key.trim(),
+          ambiente: config.ambiente 
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(data.message || "Conexão com o Asaas validada com sucesso!");
+      } else {
+        toast.error(data?.message || "Erro ao validar conexão com o Asaas.");
+      }
+    } catch (error: any) {
+      console.error("Erro ao testar conexão:", error);
+      toast.error(error.message || "Erro ao testar conexão com o Asaas.");
+    } finally {
+      setTesting(false);
     }
   };
 
@@ -217,7 +248,21 @@ const AsaasConfigCard = () => {
           </p>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-3">
+          <Button 
+            variant="outline" 
+            onClick={handleTest} 
+            disabled={testing || !config.api_key.trim()}
+          >
+            {testing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Testando...
+              </>
+            ) : (
+              "Testar Conexão"
+            )}
+          </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? "Salvando..." : exists ? "Atualizar" : "Salvar Configuração"}
           </Button>
