@@ -139,9 +139,19 @@ const InviteCodesCard = () => {
   };
 
   const handleGenerate = async () => {
+    const role = getSelectedRole();
+    
+    // Validar se pelo menos uma permissão foi selecionada para perfil personalizado
+    if (selectedPerfilId === "custom") {
+      const activePerms = screenPermissions.filter(p => p.pode_incluir || p.pode_alterar || p.pode_excluir);
+      if (activePerms.length === 0) {
+        toast.error("Defina pelo menos uma permissão de acesso para o código.");
+        return;
+      }
+    }
+
     setGenerating(true);
     try {
-      const role = getSelectedRole();
       const body: any = {
         role,
         maxUses: parseInt(maxUses),

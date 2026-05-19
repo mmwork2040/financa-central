@@ -34,14 +34,23 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
     }
     setLoading(true);
     try {
+      // Normalizar CNPJ para remover caracteres especiais antes de enviar
+      const normalizedCnpj = empresa.cnpj.trim().replace(/[^0-9]/g, '');
+      
       const { data, error } = await supabase.functions.invoke("create-empresa", {
-        body: { nomeEmpresa: empresa.nome.trim(), cnpj: empresa.cnpj.trim() || null, email: empresa.email.trim() || null, telefone: empresa.telefone.trim() || null, endereco: empresa.endereco.trim() || null },
+        body: { 
+          nomeEmpresa: empresa.nome.trim(), 
+          cnpj: normalizedCnpj || null, 
+          email: empresa.email.trim() || null, 
+          telefone: empresa.telefone.trim() || null, 
+          endereco: empresa.endereco.trim() || null 
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success(`"${empresa.nome}" foi criada com sucesso.`);
       // If empresa has CNPJ, show fiscal config dialog
-      if (empresa.cnpj.trim() && data?.empresaId) {
+      if (normalizedCnpj && data?.empresaId) {
         setNewEmpresaId(data.empresaId);
         setFiscalDialogOpen(true);
       } else {

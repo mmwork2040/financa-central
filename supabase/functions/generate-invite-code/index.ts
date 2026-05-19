@@ -22,6 +22,16 @@ serve(async (req) => {
 
     const { role, maxUses, expiresInDays, permissoes, perfilAcessoId } = await req.json();
 
+    // Validar se pelo menos uma permissão foi selecionada se for perfil personalizado
+    if (!perfilAcessoId && role !== "admin") {
+      if (!permissoes || !Array.isArray(permissoes) || permissoes.length === 0) {
+        return new Response(JSON.stringify({ error: "Defina pelo menos uma permissão de acesso para o código." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
