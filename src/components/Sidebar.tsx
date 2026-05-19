@@ -237,7 +237,7 @@ export const Sidebar = () => {
       const { data, error } = await supabase.functions.invoke("redeem-invite-code", {
         body: { code: inviteCode.trim() },
       });
-      if (error) throw error;
+      if (error) throw new Error(await extractEdgeError(error, "Erro ao entrar na empresa"));
       if (data?.error) throw new Error(data.error);
 
       toast.success(`Bem-vindo! Você entrou na empresa "${data.empresaNome}".`);
