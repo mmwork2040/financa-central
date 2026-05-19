@@ -251,9 +251,9 @@ const ImportarDocumentos = () => {
           throw new Error("Arquivo não encontrado no input");
         }
 
-        const content = await readFileContent(fileObj);
+        const { textContent, imageBase64, mimeType } = await readFileContent(fileObj);
 
-        const body: any = { content, fileName: files[i].fileName };
+        const body: any = { fileName: files[i].fileName, textContent, imageBase64, mimeType };
         if (selectedLLM) {
           body.preferredLLM = selectedLLM;
         }
