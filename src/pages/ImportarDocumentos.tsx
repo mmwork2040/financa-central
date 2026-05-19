@@ -106,6 +106,25 @@ const ImportarDocumentos = () => {
   // Edit dialog
   const [editingRef, setEditingRef] = useState<{ fileIdx: number; itemIdx: number } | null>(null);
   const editingItem = editingRef ? files[editingRef.fileIdx]?.items[editingRef.itemIdx] : null;
+  const [revertRef, setRevertRef] = useState<{ fileIdx: number; itemIdx: number } | null>(null);
+
+  const EDIT_KEYS: (keyof ExtractedItem)[] = [
+    "descricao", "valor", "data", "tipo_sugerido", "destino_sugerido",
+    "categoria_sugerida", "categoria_id", "fornecedor_cliente", "fornecedor_id",
+    "cliente_id", "forma_pagamento", "forma_pagamento_id", "observacoes",
+  ];
+  const isEdited = (item: ExtractedItem) => {
+    if (!item.original) return false;
+    return EDIT_KEYS.some(k => (item as any)[k] !== (item.original as any)[k]);
+  };
+  const revertItem = (fileIdx: number, itemIdx: number) => {
+    const it = files[fileIdx]?.items[itemIdx];
+    if (!it?.original) return;
+    const patch: Partial<ExtractedItem> = {};
+    EDIT_KEYS.forEach(k => { (patch as any)[k] = (it.original as any)[k]; });
+    updateItem(fileIdx, itemIdx, patch);
+    toast.success("Lançamento revertido aos valores extraídos pela IA");
+  };
 
   useEffect(() => {
     if (!empresaId) return;
