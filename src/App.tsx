@@ -46,6 +46,7 @@ import Suporte from "./pages/Suporte";
 import ImportarDocumentos from "./pages/ImportarDocumentos";
 import PerfisAcesso from "./pages/PerfisAcesso";
 import NotasFiscais from "./pages/NotasFiscais";
+import ConfigGlobalIA from "./pages/ConfigGlobalIA";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,7 @@ const App = () => {
                 <Route path="/vendas-digitais" element={<AppLayout><VendasDigitais /></AppLayout>} />
                 <Route path="/importar-documentos" element={<AppLayout><ImportarDocumentos /></AppLayout>} />
                 <Route path="/anuncios" element={<ProtectedRoute path="/anuncios"><AppLayout><AnunciosDigitais /></AppLayout></ProtectedRoute>} />
+                <Route path="/admin/ia-global" element={<AppLayout><ConfigGlobalIA /></AppLayout>} />
                 
                 {/* Permission-protected routes */}
                 <Route path="/users" element={<ProtectedRoute path="/users"><AppLayout><Users /></AppLayout></ProtectedRoute>} />
