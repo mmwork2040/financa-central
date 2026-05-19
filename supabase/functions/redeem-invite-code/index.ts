@@ -49,15 +49,20 @@ serve(async (req) => {
 
     const userId = callerData.user.id;
 
+    console.log(`[redeem-invite-code] user=${userId} code=${code}`);
+
     // Find the invite code
     const { data: invite, error: inviteError } = await supabaseAdmin
       .from("invite_codes")
       .select("*")
       .eq("code", code.toUpperCase().trim())
       .eq("active", true)
-      .single();
+      .maybeSingle();
 
-    if (inviteError || !invite) {
+    if (inviteError) console.error("[redeem-invite-code] inviteError:", inviteError);
+
+    if (!invite) {
+      console.warn("[redeem-invite-code] invite not found or inactive");
       return new Response(JSON.stringify({ error: "Código de convite inválido ou expirado" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -66,6 +71,7 @@ serve(async (req) => {
 
     // Check expiration
     if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
+      console.warn("[redeem-invite-code] expired", invite.expires_at);
       return new Response(JSON.stringify({ error: "Código de convite expirado" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -74,6 +80,7 @@ serve(async (req) => {
 
     // Check max uses (0 = unlimited)
     if (invite.max_uses > 0 && invite.uses >= invite.max_uses) {
+      console.warn("[redeem-invite-code] max uses reached", invite.uses, invite.max_uses);
       return new Response(JSON.stringify({ error: "Código de convite já atingiu o limite de usos" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -89,6 +96,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (existingRole) {
+      console.warn("[redeem-invite-code] user already in empresa", invite.empresa_id);
       return new Response(JSON.stringify({ error: "Você já faz parte desta empresa" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
