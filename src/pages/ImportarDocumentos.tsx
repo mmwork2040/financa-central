@@ -334,6 +334,51 @@ const ImportarDocumentos = () => {
     if (!empresaId || selectedItems.length === 0) return;
     setSaving(true);
 
+    // Cache em memória de categorias/fornecedores/clientes para evitar duplicação
+    const catCache: Record<string, string> = {};
+    const fornCache: Record<string, string> = {};
+    const cliCache: Record<string, string> = {};
+
+    const findOrCreateCategoria = async (nome: string, tipo: string): Promise<string | null> => {
+      const key = `${nome.toLowerCase()}|${tipo}`;
+      if (catCache[key]) return catCache[key];
+      const { data: existing } = await supabase
+        .from("categorias").select("id").eq("empresa_id", empresaId)
+        .ilike("nome", nome).eq("tipo", tipo).maybeSingle();
+      if (existing?.id) { catCache[key] = existing.id; return existing.id; }
+      const { data: created, error } = await supabase
+        .from("categorias").insert({ empresa_id: empresaId, nome, tipo }).select("id").single();
+      if (error || !created) return null;
+      catCache[key] = created.id;
+      return created.id;
+    };
+
+    const findOrCreateFornecedor = async (nome: string): Promise<string | null> => {
+      const key = nome.toLowerCase();
+      if (fornCache[key]) return fornCache[key];
+      const { data: existing } = await supabase
+        .from("fornecedores").select("id").eq("empresa_id", empresaId).ilike("nome", nome).maybeSingle();
+      if (existing?.id) { fornCache[key] = existing.id; return existing.id; }
+      const { data: created, error } = await supabase
+        .from("fornecedores").insert({ empresa_id: empresaId, nome }).select("id").single();
+      if (error || !created) return null;
+      fornCache[key] = created.id;
+      return created.id;
+    };
+
+    const findOrCreateCliente = async (nome: string): Promise<string | null> => {
+      const key = nome.toLowerCase();
+      if (cliCache[key]) return cliCache[key];
+      const { data: existing } = await supabase
+        .from("clientes").select("id").eq("empresa_id", empresaId).ilike("nome", nome).maybeSingle();
+      if (existing?.id) { cliCache[key] = existing.id; return existing.id; }
+      const { data: created, error } = await supabase
+        .from("clientes").insert({ empresa_id: empresaId, nome, origem: "importacao" }).select("id").single();
+      if (error || !created) return null;
+      cliCache[key] = created.id;
+      return created.id;
+    };
+
     let successCount = 0;
     let errorCount = 0;
 
@@ -355,15 +400,30 @@ const ImportarDocumentos = () => {
           });
           if (error) throw error;
         } else {
-          const { error } = await supabase.from("lancamentos").insert({
+          const tipo = item.tipo_sugerido || "despesa";
+          const payload: any = {
             empresa_id: empresaId,
             descricao: item.descricao,
             valor: item.valor,
             data_vencimento: item.data || new Date().toISOString().split("T")[0],
-            tipo: item.tipo_sugerido || "despesa",
+            tipo,
             status: "pendente",
             origem: "importacao",
-          });
+          };
+          if (item.categoria_sugerida) {
+            const catId = await findOrCreateCategoria(item.categoria_sugerida, tipo);
+            if (catId) payload.categoria_id = catId;
+          }
+          if (item.fornecedor_cliente) {
+            if (tipo === "receita") {
+              const cliId = await findOrCreateCliente(item.fornecedor_cliente);
+              if (cliId) payload.cliente_id = cliId;
+            } else {
+              const fId = await findOrCreateFornecedor(item.fornecedor_cliente);
+              if (fId) payload.fornecedor_id = fId;
+            }
+          }
+          const { error } = await supabase.from("lancamentos").insert(payload);
           if (error) throw error;
         }
         successCount++;
