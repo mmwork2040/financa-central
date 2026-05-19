@@ -23,8 +23,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import InvitePermissionsConfig from "./InvitePermissionsConfig";
 import { usePerfisAcesso } from "@/hooks/usePerfisAcesso";
+
 
 interface InviteCode {
   id: string;
@@ -169,23 +176,20 @@ const InviteCodesCard = () => {
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
+    
+    // Bloqueia exclusão se o código já foi usado
+    if (deleteTarget.uses > 0 || deleteTarget.redeemed_by) {
+      toast.error("Este código de convite não pode ser excluído pois já foi utilizado por um usuário.");
+      setDeleteTarget(null);
+      return;
+    }
+
     setDeletingCode(true);
     try {
-      if (deleteTarget.redeemed_by && deleteTarget.empresa_id) {
-        const { error: roleError } = await supabase.from("user_roles").delete().eq("user_id", deleteTarget.redeemed_by).eq("empresa_id", deleteTarget.empresa_id);
-        if (roleError) throw roleError;
-        await (supabase as any).from("permissoes").delete().eq("perfis_id", deleteTarget.redeemed_by);
-        const { data: remainingRoles } = await supabase.from("user_roles").select("empresa_id").eq("user_id", deleteTarget.redeemed_by);
-        if (remainingRoles && remainingRoles.length > 0) {
-          await supabase.from("perfis").update({ empresa_id: remainingRoles[0].empresa_id }).eq("id", deleteTarget.redeemed_by);
-        } else {
-          await supabase.from("perfis").update({ empresa_id: null }).eq("id", deleteTarget.redeemed_by);
-        }
-      }
       const { error } = await (supabase as any).from("invite_codes").delete().eq("id", deleteTarget.id);
       if (error) throw error;
       setCodes(prev => prev.filter(c => c.id !== deleteTarget.id));
-      toast.success(deleteTarget.redeemed_by ? "Código removido. O acesso do usuário à empresa também foi revogado." : "Código removido");
+      toast.success("Código removido");
     } catch (error: any) {
       toast.error(error.message || "Erro ao remover");
     } finally {
@@ -287,9 +291,18 @@ const InviteCodesCard = () => {
           ) : codes.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Nenhum código gerado ainda.</p>
           ) : (
-            <div className="space-y-2">
-              {codes.map(code => <InviteCodeItem key={code.id} code={code} onCopy={handleCopy} onDelete={setDeleteTarget} perfis={perfis} />)}
-            </div>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="invite-list" className="border-none">
+                <AccordionTrigger className="hover:no-underline py-2">
+                  <span className="text-sm font-medium">Ver códigos gerados ({codes.length})</span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-2 pt-4">
+                    {codes.map(code => <InviteCodeItem key={code.id} code={code} onCopy={handleCopy} onDelete={setDeleteTarget} perfis={perfis} />)}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           )}
         </CardContent>
       </Card>
@@ -300,17 +313,21 @@ const InviteCodesCard = () => {
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
             <DialogDescription>
-              {deleteTarget?.redeemed_by
-                ? "Este código já foi resgatado. Excluí-lo também revogará o acesso do usuário à empresa. Deseja continuar?"
+              {deleteTarget?.uses > 0 || deleteTarget?.redeemed_by
+                ? "Este código já foi utilizado por um usuário e não pode ser excluído."
                 : "Deseja realmente excluir este código de convite?"}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deletingCode}>
-              {deletingCode && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-              Excluir
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              {deleteTarget?.uses > 0 || deleteTarget?.redeemed_by ? "Ok" : "Cancelar"}
             </Button>
+            {!(deleteTarget?.uses > 0 || deleteTarget?.redeemed_by) && (
+              <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deletingCode}>
+                {deletingCode && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+                Excluir
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -361,7 +378,14 @@ const InviteCodeItem = ({ code, onCopy, onDelete, perfis }: { code: InviteCode; 
           {isInactive && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
           {isExpired && <Badge variant="destructive" className="text-xs">Expirado</Badge>}
           {isUsedUp && !isInactive && <Badge variant="secondary" className="text-xs">Esgotado</Badge>}
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(code)}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-7 w-7 text-destructive" 
+            onClick={() => onDelete(code)}
+            disabled={code.uses > 0 || !!code.redeemed_by}
+            title={code.uses > 0 || !!code.redeemed_by ? "Códigos usados não podem ser excluídos" : "Excluir código"}
+          >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
