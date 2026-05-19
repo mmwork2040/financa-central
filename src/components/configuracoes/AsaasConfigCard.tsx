@@ -180,6 +180,20 @@ const AsaasConfigCard = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Ambiente</Label>
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={config.ambiente}
+              onChange={(e) => setConfig(prev => ({ ...prev, ambiente: e.target.value }))}
+            >
+              <option value="producao">Produção</option>
+              <option value="sandbox">Sandbox (Homologação)</option>
+            </select>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label>API Key do Asaas *</Label>
           <div className="relative">
