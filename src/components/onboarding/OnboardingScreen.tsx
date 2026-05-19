@@ -58,7 +58,7 @@ const OnboardingScreen = ({ userName }: OnboardingScreenProps) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("redeem-invite-code", { body: { code: inviteCode.trim() } });
-      if (error) throw error;
+      if (error) throw new Error(await extractEdgeError(error, "Erro ao usar o código de convite"));
       if (data?.error) throw new Error(data.error);
       toast.success(`Você entrou na empresa "${data.empresaNome}".`);
       setTimeout(() => window.location.reload(), 1000);
