@@ -200,28 +200,8 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
 
   return (
     <div className="space-y-6">
-      {!isWizard && (
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              Configuração Fiscal
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Dados necessários para emissão de notas fiscais (NF-e / NFS-e)
-            </p>
-          </div>
-          {fiscal.fiscal_configurado && fiscal.certificado_digital_url ? (
-            <Badge variant="outline" className="text-green-600 border-green-600">
-              <CheckCircle2 className="h-3 w-3 mr-1" /> Configurado
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="text-amber-600 border-amber-600">
-              <AlertTriangle className="h-3 w-3 mr-1" /> Pendente
-            </Badge>
-          )}
-        </div>
-      )}
+      {/* Removido o cabeçalho redundante quando dentro do Accordion */}
+
 
       {isWizard && (
         <div className="text-center space-y-2 pb-2">
