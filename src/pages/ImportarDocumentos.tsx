@@ -879,32 +879,10 @@ const ImportarDocumentos = () => {
                                   </Button>
                                   <span>{item.descricao}</span>
                                   {(item.possibleDuplicates?.length || 0) > 0 && (
-                                    <TooltipProvider delayDuration={150}>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-400 bg-amber-500/10 cursor-help">
-                                            <Copy className="h-3 w-3 mr-1" />
-                                            Possível duplicata ({item.possibleDuplicates!.length})
-                                          </Badge>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-sm">
-                                          <p className="font-semibold mb-1 text-xs">Já existe(m) lançamento(s) semelhante(s):</p>
-                                          <ul className="space-y-1 text-xs">
-                                            {item.possibleDuplicates!.map(d => (
-                                              <li key={d.id} className="border-l-2 border-amber-400 pl-2">
-                                                <div className="font-medium">{d.descricao}</div>
-                                                <div className="text-muted-foreground">
-                                                  {d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                                                  {d.data_vencimento && ` • ${new Date(d.data_vencimento).toLocaleDateString("pt-BR")}`}
-                                                </div>
-                                                <div className="text-[10px] italic text-amber-700 dark:text-amber-400">{d.motivo}</div>
-                                              </li>
-                                            ))}
-                                          </ul>
-                                          <p className="text-[10px] mt-2 text-muted-foreground">Marque a caixa apenas se confirmar que NÃO é o mesmo lançamento.</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                    <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-400 bg-amber-500/10">
+                                      <Copy className="h-3 w-3 mr-1" />
+                                      Possível duplicata ({item.possibleDuplicates!.length})
+                                    </Badge>
                                   )}
                                 </div>
                                 {item.fornecedor_cliente && (
@@ -918,6 +896,30 @@ const ImportarDocumentos = () => {
                                 )}
                                 {item.observacoes && (
                                   <div className="text-[10px] text-muted-foreground mt-0.5 italic">{item.observacoes}</div>
+                                )}
+                                {(item.possibleDuplicates?.length || 0) > 0 && (
+                                  <div className="mt-2 rounded-md border border-amber-400/40 bg-amber-500/5 p-2">
+                                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 mb-1.5">
+                                      <Copy className="h-3 w-3" />
+                                      Lançamento(s) já existente(s) semelhante(s) — confira antes de importar:
+                                    </div>
+                                    <ul className="space-y-1.5">
+                                      {item.possibleDuplicates!.map(d => (
+                                        <li key={d.id} className="text-[11px] border-l-2 border-amber-400 pl-2 bg-background/40 rounded-sm py-1 pr-2">
+                                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                                            <span className="font-medium">{d.descricao}</span>
+                                            <span className="font-mono flex items-center gap-2">
+                                              {d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                                              {d.data_vencimento && <span>• {new Date(d.data_vencimento).toLocaleDateString("pt-BR")}</span>}
+                                              <Badge variant="outline" className="text-[9px] py-0">{d.tipo}</Badge>
+                                            </span>
+                                          </div>
+                                          <div className="text-[10px] italic text-amber-700 dark:text-amber-400 mt-0.5">{d.motivo}</div>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                    <p className="text-[10px] mt-1.5 text-muted-foreground">Marque a caixa de seleção apenas se confirmar que NÃO é o mesmo lançamento.</p>
+                                  </div>
                                 )}
                               </td>
                               <td className="p-2 font-mono font-medium whitespace-nowrap">{formatCurrency(item.valor)}</td>
