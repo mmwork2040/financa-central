@@ -977,8 +977,6 @@ const ImportarDocumentos = () => {
           </CardContent>
         </Card>
       )}
-        </Card>
-      )}
 
       <EditImportItemDialog
         open={!!editingRef}
