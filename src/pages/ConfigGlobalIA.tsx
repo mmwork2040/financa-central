@@ -70,7 +70,7 @@ const ConfigGlobalIA = () => {
     }
     setSaving(true);
     try {
-      const { data: existing } = await supabase
+      const { data: existing } = await sb
         .from("ai_global_config")
         .select("id")
         .order("updated_at", { ascending: false })
