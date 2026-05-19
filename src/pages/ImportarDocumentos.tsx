@@ -870,7 +870,14 @@ const ImportarDocumentos = () => {
                               </td>
                               <td className="p-2">
                                 <div className="font-medium flex items-center gap-1.5 flex-wrap">
-                                  {item.descricao}
+                                  <Button
+                                    variant="ghost" size="icon" className="h-6 w-6 -ml-1"
+                                    onClick={() => setEditingRef({ fileIdx, itemIdx })}
+                                    title="Editar lançamento"
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                  </Button>
+                                  <span>{item.descricao}</span>
                                   {(item.possibleDuplicates?.length || 0) > 0 && (
                                     <TooltipProvider delayDuration={150}>
                                       <Tooltip>
