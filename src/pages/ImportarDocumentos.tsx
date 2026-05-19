@@ -350,13 +350,22 @@ const ImportarDocumentos = () => {
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
-        const items = (data?.data?.itens || []).map((item: any) => ({ ...item, selected: true }));
+        const rawItems = (data?.data?.itens || []) as ExtractedItem[];
+        const items: ExtractedItem[] = rawItems.map((item: ExtractedItem) => {
+          const dups = findDuplicates(item);
+          return { ...item, possibleDuplicates: dups, selected: dups.length === 0 };
+        });
         const modelLabel = data?.model || "desconhecido";
         const resumo = data?.resumo || data?.data?.resumo || null;
 
         setFiles(prev => prev.map((f, idx) =>
           idx === i ? { ...f, status: "done", items, modelUsed: modelLabel, resumo } : f
         ));
+
+        const dupCount = items.filter(it => (it.possibleDuplicates?.length || 0) > 0).length;
+        if (dupCount > 0) {
+          toast.warning(`${files[i].fileName}: ${dupCount} possível(eis) duplicata(s) — revise antes de importar`);
+        }
 
         if (items.length === 0) {
           toast.info(`${files[i].fileName}: nenhum dado relevante encontrado`);
