@@ -404,7 +404,8 @@ const ImportarDocumentos = () => {
         const rawItems = (data?.data?.itens || []) as ExtractedItem[];
         const items: ExtractedItem[] = rawItems.map((item: ExtractedItem) => {
           const dups = findDuplicates(item);
-          return { ...item, possibleDuplicates: dups, selected: dups.length === 0 };
+          const { selected: _s, possibleDuplicates: _p, original: _o, ...snapshot } = item as ExtractedItem;
+          return { ...item, possibleDuplicates: dups, selected: dups.length === 0, original: snapshot };
         });
         const modelLabel = data?.model || "desconhecido";
         const resumo = data?.resumo || data?.data?.resumo || null;
