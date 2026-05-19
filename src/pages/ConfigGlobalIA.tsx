@@ -24,6 +24,7 @@ type Empresa = { id: string; nome: string; email: string | null };
 
 const ConfigGlobalIA = () => {
   const { isSuperAdmin } = useAuth();
+  const sb = supabase as any;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [provider, setProvider] = useState("openai");
