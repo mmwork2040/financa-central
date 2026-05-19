@@ -908,6 +908,15 @@ const ImportarDocumentos = () => {
                                   >
                                     <Pencil className="h-3 w-3" />
                                   </Button>
+                                  {isEdited(item) && (
+                                    <Button
+                                      variant="ghost" size="icon" className="h-6 w-6 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+                                      onClick={() => setRevertRef({ fileIdx, itemIdx })}
+                                      title="Desfazer edição e voltar aos valores da IA"
+                                    >
+                                      <Undo2 className="h-3 w-3" />
+                                    </Button>
+                                  )}
                                   <span>{item.descricao}</span>
                                   {(item.possibleDuplicates?.length || 0) > 0 && (
                                     <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-400 bg-amber-500/10">
