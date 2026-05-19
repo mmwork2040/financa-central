@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical } from "lucide-react";
+import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical, Copy } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,6 +32,15 @@ const LLM_LABELS: Record<string, string> = {
   deepseek: "DeepSeek",
 };
 
+type DuplicateMatch = {
+  id: string;
+  descricao: string;
+  valor: number;
+  data_vencimento: string | null;
+  tipo: string;
+  motivo: string; // "valor + data próximos", "descrição semelhante", etc
+};
+
 type ExtractedItem = {
   descricao: string;
   valor: number;
@@ -44,6 +53,7 @@ type ExtractedItem = {
   observacoes: string | null;
   confianca: number;
   selected?: boolean;
+  possibleDuplicates?: DuplicateMatch[];
 };
 
 type FileResult = {
@@ -70,6 +80,78 @@ const ImportarDocumentos = () => {
   const [activeLLMs, setActiveLLMs] = useState<ActiveLLM[]>([]);
   const [selectedLLM, setSelectedLLM] = useState<string>("");
   const [loadingLLMs, setLoadingLLMs] = useState(true);
+
+  const existingLancamentosRef = useRef<Array<{ id: string; descricao: string; valor: number; data_vencimento: string | null; tipo: string }>>([]);
+
+  // Normaliza string para comparação (lowercase, sem acentos, sem pontuação)
+  const normalize = (s: string) =>
+    (s || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9 ]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const tokenOverlap = (a: string, b: string): number => {
+    const ta = new Set(normalize(a).split(" ").filter(t => t.length >= 3));
+    const tb = new Set(normalize(b).split(" ").filter(t => t.length >= 3));
+    if (ta.size === 0 || tb.size === 0) return 0;
+    let common = 0;
+    ta.forEach(t => { if (tb.has(t)) common++; });
+    return common / Math.min(ta.size, tb.size);
+  };
+
+  const findDuplicates = (item: ExtractedItem): DuplicateMatch[] => {
+    const results: DuplicateMatch[] = [];
+    const itemDate = item.data ? new Date(item.data).getTime() : null;
+    for (const l of existingLancamentosRef.current) {
+      const valorDelta = Math.abs(l.valor - item.valor);
+      const valorRel = item.valor > 0 ? valorDelta / item.valor : 1;
+      const sameValor = valorDelta < 0.01 || valorRel <= 0.01; // exato ou 1%
+      let dateDiffDays: number | null = null;
+      if (itemDate && l.data_vencimento) {
+        dateDiffDays = Math.abs((itemDate - new Date(l.data_vencimento).getTime()) / 86400000);
+      }
+      const closeDate = dateDiffDays !== null && dateDiffDays <= 15;
+      const descSim = tokenOverlap(item.descricao, l.descricao);
+      const sameDesc = descSim >= 0.6;
+
+      let motivo = "";
+      if (sameValor && closeDate) motivo = `Valor idêntico e data próxima (${Math.round(dateDiffDays!)}d)`;
+      else if (sameValor && sameDesc) motivo = "Valor e descrição muito semelhantes";
+      else if (sameDesc && closeDate) motivo = "Descrição semelhante e data próxima";
+      else if (sameValor && item.valor > 0) motivo = "Valor exato";
+      else if (descSim >= 0.8) motivo = "Descrição muito semelhante";
+
+      if (motivo) {
+        results.push({
+          id: l.id,
+          descricao: l.descricao,
+          valor: l.valor,
+          data_vencimento: l.data_vencimento,
+          tipo: l.tipo,
+          motivo,
+        });
+        if (results.length >= 3) break;
+      }
+    }
+    return results;
+  };
+
+  const loadExistingLancamentos = async () => {
+    if (!empresaId) return;
+    const since = new Date();
+    since.setDate(since.getDate() - 180);
+    const { data } = await supabase
+      .from("lancamentos")
+      .select("id, descricao, valor, data_vencimento, tipo")
+      .eq("empresa_id", empresaId)
+      .gte("data_vencimento", since.toISOString().split("T")[0])
+      .order("data_vencimento", { ascending: false })
+      .limit(1000);
+    existingLancamentosRef.current = (data || []) as any;
+  };
 
   // Load active LLMs (excluding lovable_ai)
   useEffect(() => {
@@ -231,6 +313,9 @@ const ImportarDocumentos = () => {
     setProcessing(true);
     const inputFiles = input?.files;
 
+    // Carrega lançamentos existentes (últimos 180 dias) para detecção de duplicatas
+    await loadExistingLancamentos();
+
     for (let i = 0; i < files.length; i++) {
       if (files[i].status !== "pending") continue;
 
@@ -265,13 +350,22 @@ const ImportarDocumentos = () => {
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
-        const items = (data?.data?.itens || []).map((item: any) => ({ ...item, selected: true }));
+        const rawItems = (data?.data?.itens || []) as ExtractedItem[];
+        const items: ExtractedItem[] = rawItems.map((item: ExtractedItem) => {
+          const dups = findDuplicates(item);
+          return { ...item, possibleDuplicates: dups, selected: dups.length === 0 };
+        });
         const modelLabel = data?.model || "desconhecido";
         const resumo = data?.resumo || data?.data?.resumo || null;
 
         setFiles(prev => prev.map((f, idx) =>
           idx === i ? { ...f, status: "done", items, modelUsed: modelLabel, resumo } : f
         ));
+
+        const dupCount = items.filter(it => (it.possibleDuplicates?.length || 0) > 0).length;
+        if (dupCount > 0) {
+          toast.warning(`${files[i].fileName}: ${dupCount} possível(eis) duplicata(s) — revise antes de importar`);
+        }
 
         if (items.length === 0) {
           toast.info(`${files[i].fileName}: nenhum dado relevante encontrado`);
@@ -703,7 +797,11 @@ const ImportarDocumentos = () => {
                         </thead>
                         <tbody>
                           {file.items.map((item, itemIdx) => (
-                            <tr key={itemIdx} className={cn("border-b transition-colors", item.selected ? "bg-primary/5" : "opacity-50")}>
+                            <tr key={itemIdx} className={cn(
+                              "border-b transition-colors",
+                              item.selected ? "bg-primary/5" : "opacity-50",
+                              (item.possibleDuplicates?.length || 0) > 0 && "bg-amber-500/5"
+                            )}>
                               <td className="p-2">
                                 <Checkbox
                                   checked={item.selected}
@@ -711,7 +809,37 @@ const ImportarDocumentos = () => {
                                 />
                               </td>
                               <td className="p-2">
-                                <div className="font-medium">{item.descricao}</div>
+                                <div className="font-medium flex items-center gap-1.5 flex-wrap">
+                                  {item.descricao}
+                                  {(item.possibleDuplicates?.length || 0) > 0 && (
+                                    <TooltipProvider delayDuration={150}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-400 bg-amber-500/10 cursor-help">
+                                            <Copy className="h-3 w-3 mr-1" />
+                                            Possível duplicata ({item.possibleDuplicates!.length})
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-sm">
+                                          <p className="font-semibold mb-1 text-xs">Já existe(m) lançamento(s) semelhante(s):</p>
+                                          <ul className="space-y-1 text-xs">
+                                            {item.possibleDuplicates!.map(d => (
+                                              <li key={d.id} className="border-l-2 border-amber-400 pl-2">
+                                                <div className="font-medium">{d.descricao}</div>
+                                                <div className="text-muted-foreground">
+                                                  {d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                                                  {d.data_vencimento && ` • ${new Date(d.data_vencimento).toLocaleDateString("pt-BR")}`}
+                                                </div>
+                                                <div className="text-[10px] italic text-amber-700 dark:text-amber-400">{d.motivo}</div>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                          <p className="text-[10px] mt-2 text-muted-foreground">Marque a caixa apenas se confirmar que NÃO é o mesmo lançamento.</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                </div>
                                 {item.fornecedor_cliente && (
                                   <div className="text-xs text-muted-foreground">{item.fornecedor_cliente}</div>
                                 )}
