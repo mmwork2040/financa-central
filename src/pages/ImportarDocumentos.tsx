@@ -32,6 +32,15 @@ const LLM_LABELS: Record<string, string> = {
   deepseek: "DeepSeek",
 };
 
+type DuplicateMatch = {
+  id: string;
+  descricao: string;
+  valor: number;
+  data_vencimento: string | null;
+  tipo: string;
+  motivo: string; // "valor + data próximos", "descrição semelhante", etc
+};
+
 type ExtractedItem = {
   descricao: string;
   valor: number;
@@ -44,6 +53,7 @@ type ExtractedItem = {
   observacoes: string | null;
   confianca: number;
   selected?: boolean;
+  possibleDuplicates?: DuplicateMatch[];
 };
 
 type FileResult = {
