@@ -69,6 +69,7 @@ type ExtractedItem = {
   confianca: number;
   selected?: boolean;
   possibleDuplicates?: DuplicateMatch[];
+  original?: Omit<ExtractedItem, "selected" | "possibleDuplicates" | "original">;
 };
 
 type FileResult = {
