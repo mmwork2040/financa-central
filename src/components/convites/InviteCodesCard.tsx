@@ -215,17 +215,12 @@ const InviteCodesCard = () => {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Ticket className="h-5 w-5" />
-            Códigos de Convite
-          </CardTitle>
-          <CardDescription>
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground">
             Gere códigos para convidar pessoas para esta empresa
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+          </p>
+        </div>
           {/* Formulário de geração */}
           <div className="space-y-4 rounded-lg border p-4 bg-muted/20">
             <div className="flex flex-wrap items-end gap-4">
@@ -314,8 +309,8 @@ const InviteCodesCard = () => {
               </AccordionItem>
             </Accordion>
           )}
-        </CardContent>
-      </Card>
+      </div>
+
 
       {/* Dialog de exclusão */}
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>

@@ -3,11 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Building2, Upload, Loader2, User, Trash2, MessageCircle } from "lucide-react";
+import { Building2, Upload, Loader2, User, Trash2, MessageCircle, Ticket, Settings2 } from "lucide-react";
 import InviteCodesCard from "@/components/convites/InviteCodesCard";
 
 import ConfiguracaoFiscal from "@/components/configuracoes/ConfiguracaoFiscal";
@@ -195,139 +196,173 @@ const ConfiguracoesEmpresa = () => {
         </Card>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Dados Gerais</CardTitle>
-            <CardDescription>Informações básicas da empresa</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome da Empresa *</Label>
-              <Input id="nome" value={empresa.nome} onChange={(e) => handleChange("nome", e.target.value)} disabled={!isAdmin} />
+      <Accordion type="multiple" className="space-y-4">
+        <AccordionItem value="dados-gerais" className="border rounded-lg bg-card text-card-foreground shadow-sm px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" />
+              <span className="text-lg font-semibold">Dados Gerais</span>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="cnpj">CNPJ</Label>
-              <Input id="cnpj" value={empresa.cnpj} onChange={(e) => {
-                const raw = e.target.value.replace(/\D/g, "").slice(0, 14);
-                handleChange("cnpj", documentInputMask(raw));
-              }} placeholder="00.000.000/0000-00" disabled={!isAdmin} />
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-6">
+            <div className="space-y-4 max-w-2xl">
+              <div className="space-y-2">
+                <Label htmlFor="nome">Nome da Empresa *</Label>
+                <Input id="nome" value={empresa.nome} onChange={(e) => handleChange("nome", e.target.value)} disabled={!isAdmin} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cnpj">CNPJ</Label>
+                <Input id="cnpj" value={empresa.cnpj} onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, "").slice(0, 14);
+                  handleChange("cnpj", documentInputMask(raw));
+                }} placeholder="00.000.000/0000-00" disabled={!isAdmin} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={empresa.email} onChange={(e) => handleChange("email", e.target.value)} disabled={!isAdmin} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input
+                  id="telefone"
+                  value={empresa.telefone}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "").slice(0, 11);
+                    handleChange("telefone", phoneInputMask(raw));
+                  }}
+                  placeholder="(00) 00000-0000"
+                  disabled={!isAdmin}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Endereço</Label>
+                <CepAddressFields
+                  address={address}
+                  onChange={(field, value) => setAddress(prev => ({ ...prev, [field]: value }))}
+                />
+              </div>
+              {isAdmin && (
+                <div className="flex justify-end pt-4">
+                  <Button onClick={handleSave} disabled={saving || !empresa.nome.trim()}>
+                    {saving ? "Salvando..." : "Salvar Dados Gerais"}
+                  </Button>
+                </div>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={empresa.email} onChange={(e) => handleChange("email", e.target.value)} disabled={!isAdmin} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="telefone">Telefone</Label>
-              <Input
-                id="telefone"
-                value={empresa.telefone}
-                onChange={(e) => {
-                  const raw = e.target.value.replace(/\D/g, "").slice(0, 11);
-                  handleChange("telefone", phoneInputMask(raw));
-                }}
-                placeholder="(00) 00000-0000"
-                disabled={!isAdmin}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Endereço</Label>
-              <CepAddressFields
-                address={address}
-                onChange={(field, value) => setAddress(prev => ({ ...prev, [field]: value }))}
-              />
-            </div>
-          </CardContent>
-        </Card>
+          </AccordionContent>
+        </AccordionItem>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Personalização</CardTitle>
-            <CardDescription>Logo e identidade visual</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
-              <Label>Logo da Empresa</Label>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="h-20 w-20 shrink-0 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden bg-muted">
-                  {empresa.logo_url ? (
-                    <img src={empresa.logo_url} alt="Logo" className="h-full w-full object-contain" />
-                  ) : (
-                    <Building2 className="h-8 w-8 text-muted-foreground/50" />
+        <AccordionItem value="personalizacao" className="border rounded-lg bg-card text-card-foreground shadow-sm px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <div className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-primary" />
+              <span className="text-lg font-semibold">Personalização</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-6">
+            <div className="space-y-6 max-w-2xl">
+              <div className="space-y-3">
+                <Label>Logo da Empresa</Label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="h-24 w-24 shrink-0 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden bg-muted">
+                    {empresa.logo_url ? (
+                      <img src={empresa.logo_url} alt="Logo" className="h-full w-full object-contain" />
+                    ) : (
+                      <Building2 className="h-10 w-10 text-muted-foreground/50" />
+                    )}
+                  </div>
+                  {isAdmin && (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Label htmlFor="logo-upload" className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+                          {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                          {uploadingLogo ? "Enviando..." : "Enviar Logo"}
+                        </Label>
+                        {empresa.logo_url && (
+                          <Button type="button" variant="outline" size="sm" onClick={handleRemoveLogo} className="gap-1.5 text-destructive hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" /> Remover
+                          </Button>
+                        )}
+                      </div>
+                      <input id="logo-upload" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
+                      <p className="text-xs text-muted-foreground">PNG, JPG, WebP ou SVG. Máx 2MB.</p>
+                    </div>
                   )}
                 </div>
-                {isAdmin && (
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Label htmlFor="logo-upload" className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
-                        {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                        {uploadingLogo ? "Enviando..." : "Enviar Logo"}
-                      </Label>
-                      {empresa.logo_url && (
-                        <Button type="button" variant="outline" size="sm" onClick={handleRemoveLogo} className="gap-1.5 text-destructive hover:text-destructive">
-                          <Trash2 className="h-3.5 w-3.5" /> Remover
-                        </Button>
-                      )}
-                    </div>
-                    <input id="logo-upload" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
-                    <p className="text-xs text-muted-foreground">PNG, JPG, WebP ou SVG. Máx 2MB.</p>
-                  </div>
-                )}
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {isAdmin && (
-        <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={saving || !empresa.nome.trim()}>
-            {saving ? "Salvando..." : "Salvar Configurações"}
-          </Button>
-        </div>
-      )}
+        {isAdmin && (
+          <AccordionItem value="links-chat" className="border rounded-lg bg-card text-card-foreground shadow-sm px-4">
+            <AccordionTrigger className="hover:no-underline py-4">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                <span className="text-lg font-semibold">Links de Chat</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 pb-6">
+              <div className="space-y-4 max-w-2xl">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Defina os links externos que serão abertos ao clicar no botão de chat nas páginas de lançamentos e vendas.
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="chat_lancamentos_url">Link do Chat - Lançamentos</Label>
+                  <Input
+                    id="chat_lancamentos_url"
+                    value={empresa.chat_lancamentos_url}
+                    onChange={(e) => handleChange("chat_lancamentos_url", e.target.value)}
+                    placeholder="https://t.me/seu_bot ou https://wa.me/..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="chat_vendas_url">Link do Chat - Vendas</Label>
+                  <Input
+                    id="chat_vendas_url"
+                    value={empresa.chat_vendas_url}
+                    onChange={(e) => handleChange("chat_vendas_url", e.target.value)}
+                    placeholder="https://t.me/seu_bot ou https://wa.me/..."
+                  />
+                </div>
+                <div className="flex justify-end pt-4">
+                  <Button onClick={handleSave} disabled={saving}>
+                    {saving ? "Salvando..." : "Salvar Links"}
+                  </Button>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
-      {isAdmin && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              Links de Chat
-            </CardTitle>
-            <CardDescription>Defina os links externos que serão abertos ao clicar no botão de chat nas páginas de lançamentos e vendas. Se vazio, o botão não será exibido.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="chat_lancamentos_url">Link do Chat - Lançamentos</Label>
-              <Input
-                id="chat_lancamentos_url"
-                value={empresa.chat_lancamentos_url}
-                onChange={(e) => handleChange("chat_lancamentos_url", e.target.value)}
-                placeholder="https://t.me/seu_bot ou https://wa.me/..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="chat_vendas_url">Link do Chat - Vendas</Label>
-              <Input
-                id="chat_vendas_url"
-                value={empresa.chat_vendas_url}
-                onChange={(e) => handleChange("chat_vendas_url", e.target.value)}
-                placeholder="https://t.me/seu_bot ou https://wa.me/..."
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {!isPessoal && (
+          <AccordionItem value="convites" className="border rounded-lg bg-card text-card-foreground shadow-sm px-4">
+            <AccordionTrigger className="hover:no-underline py-4">
+              <div className="flex items-center gap-2">
+                <Ticket className="h-5 w-5 text-primary" />
+                <span className="text-lg font-semibold">Códigos de Convite</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 pb-6">
+              <InviteCodesCard />
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
-      {!isPessoal && <InviteCodesCard />}
-
-      {!isPessoal && isAdmin && (
-        <Card>
-          <CardContent className="pt-6">
-            <ConfiguracaoFiscal empresaId={empresaId!} />
-          </CardContent>
-        </Card>
-      )}
+        {!isPessoal && isAdmin && (
+          <AccordionItem value="configuracao-fiscal" className="border rounded-lg bg-card text-card-foreground shadow-sm px-4">
+            <AccordionTrigger className="hover:no-underline py-4">
+              <div className="flex items-center gap-2">
+                <Settings2 className="h-5 w-5 text-primary" />
+                <span className="text-lg font-semibold">Configuração Fiscal</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 pb-6">
+              <ConfiguracaoFiscal empresaId={empresaId!} />
+            </AccordionContent>
+          </AccordionItem>
+        )}
+      </Accordion>
 
       
     </div>
