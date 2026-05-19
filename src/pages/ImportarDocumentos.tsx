@@ -105,35 +105,72 @@ const ImportarDocumentos = () => {
     return <FileText className="h-4 w-4" />;
   };
 
-  const readFileContent = async (file: File): Promise<string> => {
+  const readFileContent = async (file: File): Promise<{ textContent?: string; imageBase64?: string; mimeType: string }> => {
     const ext = file.name.split(".").pop()?.toLowerCase();
+    const mimeType = file.type || "application/octet-stream";
 
+    // Imagens: enviar como visão (base64 completo)
     if (file.type.startsWith("image/")) {
-      return new Promise((resolve, reject) => {
+      const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = (reader.result as string).split(",")[1];
-          resolve(`[Imagem ${file.name} em base64 - tipo: ${file.type}]\n\nConteúdo base64 da imagem (analise como imagem de cupom/nota fiscal):\n${base64.substring(0, 5000)}...\n\nNota: Esta é uma imagem de documento fiscal. Extraia os dados visíveis como valores, datas, itens, fornecedores, etc.`);
-        };
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
+      return { imageBase64: base64, mimeType };
     }
 
+    // CSV/TXT: texto direto
     if (file.type === "text/csv" || file.type === "text/plain" || ext === "csv" || ext === "txt") {
-      return file.text();
+      return { textContent: await file.text(), mimeType };
     }
 
-    if (file.type === "application/pdf") {
-      const text = await file.text();
-      return `[Documento PDF: ${file.name}]\n\nConteúdo extraído (pode conter caracteres especiais de PDF):\n${text.substring(0, 10000)}`;
+    // PDF: extrai texto com pdfjs; se vier muito pouco texto, renderiza 1a página como imagem
+    if (file.type === "application/pdf" || ext === "pdf") {
+      const pdfjs: any = await import("pdfjs-dist");
+      // worker via CDN para evitar bundling
+      pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+      let textContent = "";
+      const maxPages = Math.min(pdf.numPages, 10);
+      for (let p = 1; p <= maxPages; p++) {
+        const page = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        const pageText = content.items.map((it: any) => it.str).join(" ");
+        textContent += `\n--- Página ${p} ---\n${pageText}`;
+      }
+
+      if (textContent.replace(/\s/g, "").length < 50) {
+        // Fallback: renderiza primeira página como imagem para análise visual
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext("2d")!;
+        await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+        const dataUrl = canvas.toDataURL("image/png");
+        return { imageBase64: dataUrl.split(",")[1], mimeType: "image/png" };
+      }
+      return { textContent, mimeType: "application/pdf" };
     }
 
-    if (ext === "xls" || ext === "xlsx") {
-      return `[Planilha Excel: ${file.name}]\n\nNota: Arquivo Excel detectado. Extraia os dados tabulares visíveis.`;
+    // Excel: SheetJS converte para CSV
+    if (ext === "xls" || ext === "xlsx" || file.type.includes("spreadsheet") || file.type.includes("excel")) {
+      const XLSX: any = await import("xlsx");
+      const arrayBuffer = await file.arrayBuffer();
+      const wb = XLSX.read(arrayBuffer, { type: "array" });
+      let textContent = "";
+      wb.SheetNames.forEach((name: string) => {
+        const sheet = wb.Sheets[name];
+        const csv = XLSX.utils.sheet_to_csv(sheet);
+        textContent += `\n--- Planilha: ${name} ---\n${csv}`;
+      });
+      return { textContent, mimeType };
     }
 
-    return file.text();
+    return { textContent: await file.text(), mimeType };
   };
 
   const handleFilesSelected = (selectedFiles: FileList | null) => {
