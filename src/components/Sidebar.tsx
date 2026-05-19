@@ -215,6 +215,7 @@ export const Sidebar = () => {
     ...(isSuperAdmin ? [{ name: "Webhooks", icon: Webhook, path: "/settings/webhooks" }] : []),
     ...(isSuperAdmin ? [{ name: "n8n Templates", icon: Code2, path: "/settings/n8n-templates" }] : []),
     ...(isSuperAdmin ? [{ name: "Logs", icon: ScrollText, path: "/settings/logs" }] : []),
+    ...(isSuperAdmin ? [{ name: "IA Global", icon: Brain, path: "/admin/ia-global" }] : []),
   ];
   const configItems = isPessoal ? allConfigItems.filter(i => !(i as any).businessOnly) : allConfigItems;
 
