@@ -313,6 +313,9 @@ const ImportarDocumentos = () => {
     setProcessing(true);
     const inputFiles = input?.files;
 
+    // Carrega lançamentos existentes (últimos 180 dias) para detecção de duplicatas
+    await loadExistingLancamentos();
+
     for (let i = 0; i < files.length; i++) {
       if (files[i].status !== "pending") continue;
 
