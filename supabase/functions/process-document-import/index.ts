@@ -12,9 +12,10 @@ REGRAS DE EXTRAÇÃO:
 - Para CADA item/linha/transação encontrada retorne um objeto separado.
 - valor SEMPRE número puro (ex: 1900.00) — nunca string "R$ 1.900,00".
 - data no formato YYYY-MM-DD ou null.
-- tipo_sugerido: "receita" ou "despesa". DETECÇÃO INTELIGENTE:
-  • Use a DESCRIÇÃO da transação/PIX como principal pista (ex: "PIX RECEBIDO DE...", "TRANSFERÊNCIA RECEBIDA", "CRÉDITO" → receita; "PIX ENVIADO PARA...", "PAGAMENTO", "DÉBITO", "COMPRA" → despesa).
-  • Em extratos bancários, sinal do valor (+/-) ou colunas "Crédito/Débito" confirmam.
+- tipo_sugerido: "receita" ou "despesa". DETECÇÃO INTELIGENTE (ordem de prioridade):
+  • PRIORIDADE MÁXIMA — RÓTULOS EXPLÍCITOS: se o arquivo (planilha, extrato, CSV) tiver coluna ou rótulo "Entrada"/"Entradas"/"ENTRADA"/"Crédito"/"Recebimento" → receita. Se tiver "Saída"/"Saídas"/"SAÍDA"/"Débito"/"Pagamento" → despesa. Em planilhas com colunas SEPARADAS "Entrada" e "Saída", o tipo é definido pela COLUNA onde o valor está preenchido (ignore o sinal +/- e a descrição). Esses rótulos SOBREPÕEM qualquer heurística de descrição.
+  • Caso não haja rótulo explícito, use a DESCRIÇÃO da transação/PIX (ex: "PIX RECEBIDO DE...", "TRANSFERÊNCIA RECEBIDA", "CRÉDITO" → receita; "PIX ENVIADO PARA...", "PAGAMENTO", "DÉBITO", "COMPRA" → despesa).
+  • Em extratos bancários sem rótulos, sinal do valor (+/-) confirma.
   • Cupons fiscais e notas de compra são SEMPRE despesa (a menos que claramente venda emitida pela empresa).
   • Comprovantes PIX: identifique remetente e destinatário; se o dono do documento é o pagador → despesa, se é o recebedor → receita.
 - destino_sugerido: "lancamento" (padrão) ou "venda" (apenas se for venda em plataforma digital).
