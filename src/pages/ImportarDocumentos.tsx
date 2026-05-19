@@ -544,15 +544,35 @@ const ImportarDocumentos = () => {
             status: "pendente",
             origem: "importacao",
           };
-          if (item.categoria_sugerida) {
+          if (item.categoria_id && item.categoria_id !== "__new__") {
+            payload.categoria_id = item.categoria_id;
+          } else if (item.categoria_sugerida) {
             const catId = await findOrCreateCategoria(item.categoria_sugerida, tipo);
             if (catId) payload.categoria_id = catId;
           }
-          if (item.fornecedor_cliente) {
-            if (tipo === "receita") {
+          if (item.forma_pagamento_id && item.forma_pagamento_id !== "__new__") {
+            payload.forma_pagamento_id = item.forma_pagamento_id;
+          } else if (item.forma_pagamento) {
+            // cria forma de pagamento se não existir
+            const { data: existing } = await supabase
+              .from("formas_pagamento").select("id").eq("empresa_id", empresaId)
+              .ilike("descricao", item.forma_pagamento).maybeSingle();
+            if (existing?.id) payload.forma_pagamento_id = existing.id;
+            else {
+              const { data: created } = await supabase
+                .from("formas_pagamento").insert({ empresa_id: empresaId, descricao: item.forma_pagamento }).select("id").single();
+              if (created?.id) payload.forma_pagamento_id = created.id;
+            }
+          }
+          if (tipo === "receita") {
+            if (item.cliente_id && item.cliente_id !== "__new__") payload.cliente_id = item.cliente_id;
+            else if (item.fornecedor_cliente) {
               const cliId = await findOrCreateCliente(item.fornecedor_cliente);
               if (cliId) payload.cliente_id = cliId;
-            } else {
+            }
+          } else {
+            if (item.fornecedor_id && item.fornecedor_id !== "__new__") payload.fornecedor_id = item.fornecedor_id;
+            else if (item.fornecedor_cliente) {
               const fId = await findOrCreateFornecedor(item.fornecedor_cliente);
               if (fId) payload.fornecedor_id = fId;
             }
