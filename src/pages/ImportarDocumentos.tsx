@@ -86,6 +86,41 @@ const ImportarDocumentos = () => {
   const [selectedLLM, setSelectedLLM] = useState<string>("");
   const [loadingLLMs, setLoadingLLMs] = useState(true);
 
+  // Cadastros existentes para edição
+  const [categorias, setCategorias] = useState<EntityOption[]>([]);
+  const [fornecedores, setFornecedores] = useState<EntityOption[]>([]);
+  const [clientes, setClientes] = useState<EntityOption[]>([]);
+  const [formasPagamento, setFormasPagamento] = useState<EntityOption[]>([]);
+
+  // Edit dialog
+  const [editingRef, setEditingRef] = useState<{ fileIdx: number; itemIdx: number } | null>(null);
+  const editingItem = editingRef ? files[editingRef.fileIdx]?.items[editingRef.itemIdx] : null;
+
+  useEffect(() => {
+    if (!empresaId) return;
+    (async () => {
+      const [cat, forn, cli, fp] = await Promise.all([
+        supabase.from("categorias").select("id, nome").eq("empresa_id", empresaId).order("nome"),
+        supabase.from("fornecedores").select("id, nome").eq("empresa_id", empresaId).eq("ativo", true).order("nome"),
+        supabase.from("clientes").select("id, nome").eq("empresa_id", empresaId).eq("ativo", true).order("nome"),
+        supabase.from("formas_pagamento").select("id, descricao").eq("empresa_id", empresaId).order("descricao"),
+      ]);
+      setCategorias((cat.data || []) as any);
+      setFornecedores((forn.data || []) as any);
+      setClientes((cli.data || []) as any);
+      setFormasPagamento(((fp.data || []) as any[]).map(f => ({ id: f.id, nome: f.descricao })));
+    })();
+  }, [empresaId]);
+
+  const updateItem = (fileIdx: number, itemIdx: number, patch: Partial<ExtractedItem>) => {
+    setFiles(prev => prev.map((f, fi) =>
+      fi === fileIdx ? {
+        ...f,
+        items: f.items.map((it, ii) => ii === itemIdx ? { ...it, ...patch } : it),
+      } : f
+    ));
+  };
+
   const existingLancamentosRef = useRef<Array<{ id: string; descricao: string; valor: number; data_vencimento: string | null; tipo: string }>>([]);
 
   // Normaliza string para comparação (lowercase, sem acentos, sem pontuação)
