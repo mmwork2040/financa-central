@@ -309,8 +309,8 @@ const InviteCodesCard = () => {
               </AccordionItem>
             </Accordion>
           )}
-        </CardContent>
-      </Card>
+      </div>
+
 
       {/* Dialog de exclusão */}
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
