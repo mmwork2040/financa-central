@@ -6,7 +6,17 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical, Copy, Pencil } from "lucide-react";
+import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical, Copy, Pencil, Undo2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,6 +69,7 @@ type ExtractedItem = {
   confianca: number;
   selected?: boolean;
   possibleDuplicates?: DuplicateMatch[];
+  original?: Omit<ExtractedItem, "selected" | "possibleDuplicates" | "original">;
 };
 
 type FileResult = {
@@ -95,6 +106,25 @@ const ImportarDocumentos = () => {
   // Edit dialog
   const [editingRef, setEditingRef] = useState<{ fileIdx: number; itemIdx: number } | null>(null);
   const editingItem = editingRef ? files[editingRef.fileIdx]?.items[editingRef.itemIdx] : null;
+  const [revertRef, setRevertRef] = useState<{ fileIdx: number; itemIdx: number } | null>(null);
+
+  const EDIT_KEYS: (keyof ExtractedItem)[] = [
+    "descricao", "valor", "data", "tipo_sugerido", "destino_sugerido",
+    "categoria_sugerida", "categoria_id", "fornecedor_cliente", "fornecedor_id",
+    "cliente_id", "forma_pagamento", "forma_pagamento_id", "observacoes",
+  ];
+  const isEdited = (item: ExtractedItem) => {
+    if (!item.original) return false;
+    return EDIT_KEYS.some(k => (item as any)[k] !== (item.original as any)[k]);
+  };
+  const revertItem = (fileIdx: number, itemIdx: number) => {
+    const it = files[fileIdx]?.items[itemIdx];
+    if (!it?.original) return;
+    const patch: Partial<ExtractedItem> = {};
+    EDIT_KEYS.forEach(k => { (patch as any)[k] = (it.original as any)[k]; });
+    updateItem(fileIdx, itemIdx, patch);
+    toast.success("Lançamento revertido aos valores extraídos pela IA");
+  };
 
   useEffect(() => {
     if (!empresaId) return;
@@ -393,7 +423,8 @@ const ImportarDocumentos = () => {
         const rawItems = (data?.data?.itens || []) as ExtractedItem[];
         const items: ExtractedItem[] = rawItems.map((item: ExtractedItem) => {
           const dups = findDuplicates(item);
-          return { ...item, possibleDuplicates: dups, selected: dups.length === 0 };
+          const { selected: _s, possibleDuplicates: _p, original: _o, ...snapshot } = item as ExtractedItem;
+          return { ...item, possibleDuplicates: dups, selected: dups.length === 0, original: snapshot };
         });
         const modelLabel = data?.model || "desconhecido";
         const resumo = data?.resumo || data?.data?.resumo || null;
@@ -877,6 +908,15 @@ const ImportarDocumentos = () => {
                                   >
                                     <Pencil className="h-3 w-3" />
                                   </Button>
+                                  {isEdited(item) && (
+                                    <Button
+                                      variant="ghost" size="icon" className="h-6 w-6 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+                                      onClick={() => setRevertRef({ fileIdx, itemIdx })}
+                                      title="Desfazer edição e voltar aos valores da IA"
+                                    >
+                                      <Undo2 className="h-3 w-3" />
+                                    </Button>
+                                  )}
                                   <span>{item.descricao}</span>
                                   {(item.possibleDuplicates?.length || 0) > 0 && (
                                     <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-400 bg-amber-500/10">
@@ -1006,6 +1046,28 @@ const ImportarDocumentos = () => {
           if (editingRef) updateItem(editingRef.fileIdx, editingRef.itemIdx, patch as Partial<ExtractedItem>);
         }}
       />
+
+      <AlertDialog open={!!revertRef} onOpenChange={(v) => { if (!v) setRevertRef(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desfazer edição?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todos os campos editados deste lançamento serão substituídos pelos valores originalmente extraídos pela IA. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (revertRef) revertItem(revertRef.fileIdx, revertRef.itemIdx);
+                setRevertRef(null);
+              }}
+            >
+              Sim, restaurar valores da IA
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
