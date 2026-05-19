@@ -49,8 +49,12 @@ type ExtractedItem = {
   tipo_sugerido: string;
   destino_sugerido: string;
   categoria_sugerida: string | null;
+  categoria_id?: string | null;
   fornecedor_cliente: string | null;
+  fornecedor_id?: string | null;
+  cliente_id?: string | null;
   forma_pagamento: string | null;
+  forma_pagamento_id?: string | null;
   observacoes: string | null;
   confianca: number;
   selected?: boolean;
