@@ -14,6 +14,7 @@ const AsaasConfigCard = () => {
   const [saving, setSaving] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [config, setConfig] = useState({
     id: "",
     api_key: "",
@@ -110,6 +111,36 @@ const AsaasConfigCard = () => {
       toast.error(error.message || "Erro ao regenerar token.");
     }
   };
+  
+  const handleTest = async () => {
+    if (!config.api_key.trim()) {
+      toast.error("Informe a API Key para testar.");
+      return;
+    }
+    
+    setTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("test-asaas", {
+        body: { 
+          api_key: config.api_key.trim(),
+          ambiente: config.ambiente 
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(data.message || "Conexão com o Asaas validada com sucesso!");
+      } else {
+        toast.error(data?.message || "Erro ao validar conexão com o Asaas.");
+      }
+    } catch (error: any) {
+      console.error("Erro ao testar conexão:", error);
+      toast.error(error.message || "Erro ao testar conexão com o Asaas.");
+    } finally {
+      setTesting(false);
+    }
+  };
 
   const copyWebhookUrl = () => {
     navigator.clipboard.writeText(webhookUrl);
@@ -149,6 +180,20 @@ const AsaasConfigCard = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Ambiente</Label>
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={config.ambiente}
+              onChange={(e) => setConfig(prev => ({ ...prev, ambiente: e.target.value }))}
+            >
+              <option value="producao">Produção</option>
+              <option value="sandbox">Sandbox (Homologação)</option>
+            </select>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label>API Key do Asaas *</Label>
           <div className="relative">
@@ -217,7 +262,21 @@ const AsaasConfigCard = () => {
           </p>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-3">
+          <Button 
+            variant="outline" 
+            onClick={handleTest} 
+            disabled={testing || !config.api_key.trim()}
+          >
+            {testing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Testando...
+              </>
+            ) : (
+              "Testar Conexão"
+            )}
+          </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? "Salvando..." : exists ? "Atualizar" : "Salvar Configuração"}
           </Button>
