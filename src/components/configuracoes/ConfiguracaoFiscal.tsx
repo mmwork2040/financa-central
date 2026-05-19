@@ -199,7 +199,8 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-2">
+
       {/* Removido o cabeçalho redundante quando dentro do Accordion */}
 
 
