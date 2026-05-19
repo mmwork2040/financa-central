@@ -87,20 +87,51 @@ serve(async (req) => {
       });
     }
 
-    // Check if user already belongs to this empresa
-    const { data: existingRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("empresa_id", invite.empresa_id)
-      .maybeSingle();
+    // Check if user already belongs to this empresa or another with the same CNPJ
+    const { data: inviteEmpresa } = await supabaseAdmin
+      .from("empresas")
+      .select("id, cnpj")
+      .eq("id", invite.empresa_id)
+      .single();
 
-    if (existingRole) {
-      console.warn("[redeem-invite-code] user already in empresa", invite.empresa_id);
-      return new Response(JSON.stringify({ error: "Você já faz parte desta empresa" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const { data: userRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("empresa_id")
+      .eq("user_id", userId);
+
+    const userEmpresaIds = userRoles?.map((r: any) => r.empresa_id) || [];
+
+    if (userEmpresaIds.length > 0) {
+      // Check if user is in the exact empresa
+      if (userEmpresaIds.includes(invite.empresa_id)) {
+        console.warn("[redeem-invite-code] user already in this exact empresa", invite.empresa_id);
+        return new Response(JSON.stringify({ error: "Você já faz parte desta empresa" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check if user is in any empresa with the same CNPJ
+      if (inviteEmpresa?.cnpj) {
+        const normalizedInviteCnpj = inviteEmpresa.cnpj.replace(/[^0-9]/g, '');
+        const { data: userEmpresas } = await supabaseAdmin
+          .from("empresas")
+          .select("cnpj")
+          .in("id", userEmpresaIds)
+          .filter("cnpj", "not.is", null);
+
+        const hasSameCnpj = userEmpresas?.some((e: any) => 
+          e.cnpj.replace(/[^0-9]/g, '') === normalizedInviteCnpj
+        );
+
+        if (hasSameCnpj) {
+          console.warn("[redeem-invite-code] user already in an empresa with same CNPJ", normalizedInviteCnpj);
+          return new Response(JSON.stringify({ error: "Você já faz parte desta empresa (identificada pelo CNPJ)" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
     }
 
     // Add user_role for the new empresa
