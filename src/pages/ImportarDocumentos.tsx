@@ -977,6 +977,35 @@ const ImportarDocumentos = () => {
           </CardContent>
         </Card>
       )}
+        </Card>
+      )}
+
+      <EditImportItemDialog
+        open={!!editingRef}
+        onOpenChange={(v) => { if (!v) setEditingRef(null); }}
+        item={editingItem ? {
+          descricao: editingItem.descricao,
+          valor: editingItem.valor,
+          data: editingItem.data,
+          tipo_sugerido: editingItem.tipo_sugerido,
+          destino_sugerido: editingItem.destino_sugerido,
+          categoria_sugerida: editingItem.categoria_sugerida,
+          categoria_id: editingItem.categoria_id ?? null,
+          fornecedor_cliente: editingItem.fornecedor_cliente,
+          fornecedor_id: editingItem.fornecedor_id ?? null,
+          cliente_id: editingItem.cliente_id ?? null,
+          forma_pagamento: editingItem.forma_pagamento,
+          forma_pagamento_id: editingItem.forma_pagamento_id ?? null,
+          observacoes: editingItem.observacoes,
+        } : null}
+        categorias={categorias}
+        fornecedores={fornecedores}
+        clientes={clientes}
+        formasPagamento={formasPagamento}
+        onSave={(patch) => {
+          if (editingRef) updateItem(editingRef.fileIdx, editingRef.itemIdx, patch as Partial<ExtractedItem>);
+        }}
+      />
     </div>
   );
 };
