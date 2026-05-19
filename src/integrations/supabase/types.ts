@@ -1775,6 +1775,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_cnpj_exists: { Args: { _cnpj: string }; Returns: boolean }
       get_user_empresa_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
