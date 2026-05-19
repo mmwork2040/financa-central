@@ -3,11 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Building2, Upload, Loader2, User, Trash2, MessageCircle } from "lucide-react";
+import { Building2, Upload, Loader2, User, Trash2, MessageCircle, Ticket, Settings2 } from "lucide-react";
 import InviteCodesCard from "@/components/convites/InviteCodesCard";
 
 import ConfiguracaoFiscal from "@/components/configuracoes/ConfiguracaoFiscal";
