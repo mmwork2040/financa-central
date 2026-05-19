@@ -46,6 +46,7 @@ import Suporte from "./pages/Suporte";
 import ImportarDocumentos from "./pages/ImportarDocumentos";
 import PerfisAcesso from "./pages/PerfisAcesso";
 import NotasFiscais from "./pages/NotasFiscais";
+import ConfigGlobalIA from "./pages/ConfigGlobalIA";
 
 const queryClient = new QueryClient();
 
