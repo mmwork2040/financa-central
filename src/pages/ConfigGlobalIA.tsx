@@ -41,9 +41,9 @@ const ConfigGlobalIA = () => {
     const load = async () => {
       setLoading(true);
       const [{ data: cfg }, { data: emps }, { data: liberacoes }] = await Promise.all([
-        supabase.from("ai_global_config").select("*").eq("ativo", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+        sb.from("ai_global_config").select("*").eq("ativo", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("empresas").select("id, nome, email").order("nome"),
-        supabase.from("ai_global_access").select("empresa_id, liberado"),
+        sb.from("ai_global_access").select("empresa_id, liberado"),
       ]);
 
       if (cfg) {
@@ -85,10 +85,10 @@ const ConfigGlobalIA = () => {
       if (apiKey) payload.api_key = apiKey;
 
       if (existing) {
-        const { error } = await supabase.from("ai_global_config").update(payload).eq("id", existing.id);
+        const { error } = await sb.from("ai_global_config").update(payload).eq("id", existing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("ai_global_config").insert(payload);
+        const { error } = await sb.from("ai_global_config").insert(payload);
         if (error) throw error;
       }
       toast.success("Configuração de IA global salva");
@@ -103,7 +103,7 @@ const ConfigGlobalIA = () => {
 
   const toggleAccess = async (empresaId: string, value: boolean) => {
     setAccess(prev => ({ ...prev, [empresaId]: value }));
-    const { error } = await supabase.from("ai_global_access").upsert({
+    const { error } = await sb.from("ai_global_access").upsert({
       empresa_id: empresaId,
       liberado: value,
       liberado_em: value ? new Date().toISOString() : null,
