@@ -227,12 +227,12 @@ serve(async (req) => {
 
     const userEmpresaIdsAfter = userRolesAfter?.map((r: any) => r.empresa_id) || [];
 
-    if (userEmpresaIds.length > 0) {
+    if (userEmpresaIdsAfter.length > 0) {
       const { data: existingPersonal } = await supabaseAdmin
         .from("empresas")
         .select("id")
         .eq("pessoal", true)
-        .in("id", userEmpresaIds)
+        .in("id", userEmpresaIdsAfter)
         .maybeSingle();
 
       if (!existingPersonal) {
