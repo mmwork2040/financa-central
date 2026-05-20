@@ -106,11 +106,17 @@ export const EditImportItemDialog: React.FC<Props> = ({
 
           <div>
             <Label>Valor *</Label>
-            <Input
-              type="number" step="0.01" min={0}
-              value={form.valor}
-              onChange={(e) => update({ valor: parseFloat(e.target.value) || 0 })}
-            />
+            <div className="relative">
+              <Input
+                type="number" step="0.01" min={0}
+                value={form.valor}
+                onChange={(e) => update({ valor: parseFloat(e.target.value) || 0 })}
+                className="pr-10"
+              />
+              <div className="mt-1 text-[10px] text-muted-foreground font-medium">
+                {form.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </div>
+            </div>
           </div>
 
           <div>
