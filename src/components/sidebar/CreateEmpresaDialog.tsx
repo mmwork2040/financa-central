@@ -91,7 +91,7 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cnpj">CNPJ</Label>
+            <Label htmlFor="cnpj">CNPJ *</Label>
             <Input
               id="cnpj"
               placeholder="00.000.000/0000-00"
