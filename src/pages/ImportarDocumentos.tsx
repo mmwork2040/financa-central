@@ -301,6 +301,12 @@ const ImportarDocumentos = () => {
     fetchLLMs();
   }, [empresaId]);
 
+  const isNewEntity = (name: string | null, list: EntityOption[]) => {
+    if (!name) return false;
+    const normalized = normalize(name);
+    return !list.some(item => normalize(item.nome) === normalized);
+  };
+
   const formatCurrency = (val: number) => {
     if (!valuesVisible) return "R$ •••••";
     return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -1044,13 +1050,43 @@ const ImportarDocumentos = () => {
                                   )}
                                 </div>
                                 {item.fornecedor_cliente && (
-                                  <div className="text-xs text-muted-foreground">{item.fornecedor_cliente}</div>
+                                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                    {item.fornecedor_cliente}
+                                    {isNewEntity(item.fornecedor_cliente, item.tipo_sugerido === "receita" ? clientes : fornecedores) && (
+                                      <TooltipProvider delayDuration={200}>
+                                        <Tooltip>
+                                          <TooltipTrigger>
+                                            <Plus className="h-3 w-3 text-amber-600" />
+                                          </TooltipTrigger>
+                                          <TooltipContent className="text-[10px]">Novo cadastro detectado</TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                  </div>
                                 )}
                                 {item.categoria_sugerida && (
-                                  <Badge variant="outline" className="text-[10px] mt-0.5">{item.categoria_sugerida}</Badge>
+                                  <Badge 
+                                    variant="outline" 
+                                    className={cn(
+                                      "text-[10px] mt-0.5",
+                                      isNewEntity(item.categoria_sugerida, categorias) && "border-amber-400 text-amber-700 bg-amber-500/5"
+                                    )}
+                                  >
+                                    {isNewEntity(item.categoria_sugerida, categorias) && <Plus className="h-2 w-2 mr-1" />}
+                                    {item.categoria_sugerida}
+                                  </Badge>
                                 )}
                                 {item.forma_pagamento && (
-                                  <Badge variant="outline" className="text-[10px] mt-0.5 ml-1">{item.forma_pagamento}</Badge>
+                                  <Badge 
+                                    variant="outline" 
+                                    className={cn(
+                                      "text-[10px] mt-0.5 ml-1",
+                                      isNewEntity(item.forma_pagamento, formasPagamento) && "border-amber-400 text-amber-700 bg-amber-500/5"
+                                    )}
+                                  >
+                                    {isNewEntity(item.forma_pagamento, formasPagamento) && <Plus className="h-2 w-2 mr-1" />}
+                                    {item.forma_pagamento}
+                                  </Badge>
                                 )}
                                 {item.observacoes && (
                                   <div className="text-[10px] text-muted-foreground mt-0.5 italic">{item.observacoes}</div>
