@@ -134,6 +134,21 @@ export const useContasBancarias = () => {
         return;
       }
 
+      if (!formData.banco) {
+        toast.error("O banco é obrigatório");
+        return;
+      }
+
+      if (!formData.agencia) {
+        toast.error("A agência é obrigatória");
+        return;
+      }
+
+      if (!formData.conta) {
+        toast.error("O número da conta é obrigatório");
+        return;
+      }
+
       // Check if there's already a principal account (and it's not the current one being edited)
       if (formData.principal && !forcarPrincipal) {
         const contaPrincipal = contasBancarias.find(
