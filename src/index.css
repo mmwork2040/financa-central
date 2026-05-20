@@ -200,6 +200,15 @@
   .table-cell {
     @apply px-4 py-3 text-sm whitespace-nowrap;
   }
+
+  /* Scrollbar utilities */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 /* Chatwoot widget theme override */
