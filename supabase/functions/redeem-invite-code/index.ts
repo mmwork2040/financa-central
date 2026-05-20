@@ -220,12 +220,12 @@ serve(async (req) => {
       .eq("id", invite.id);
 
     // Auto-create personal empresa if user doesn't have one
-    const { data: userRoles } = await supabaseAdmin
+    const { data: userRolesAfter } = await supabaseAdmin
       .from("user_roles")
       .select("empresa_id")
       .eq("user_id", userId);
 
-    const userEmpresaIds = userRoles?.map((r: any) => r.empresa_id) || [];
+    const userEmpresaIdsAfter = userRolesAfter?.map((r: any) => r.empresa_id) || [];
 
     if (userEmpresaIds.length > 0) {
       const { data: existingPersonal } = await supabaseAdmin
