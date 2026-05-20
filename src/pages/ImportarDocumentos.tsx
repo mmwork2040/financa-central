@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical, Copy, Pencil, Undo2, History } from "lucide-react";
+import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical, Copy, Pencil, Undo2, History, Plus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -301,6 +301,12 @@ const ImportarDocumentos = () => {
     fetchLLMs();
   }, [empresaId]);
 
+  const isNewEntity = (name: string | null, list: EntityOption[]) => {
+    if (!name) return false;
+    const normalized = normalize(name);
+    return !list.some(item => normalize(item.nome) === normalized);
+  };
+
   const formatCurrency = (val: number) => {
     if (!valuesVisible) return "R$ •••••";
     return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -476,11 +482,25 @@ const ImportarDocumentos = () => {
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
-        const rawItems = (data?.data?.itens || []) as ExtractedItem[];
-        const items: ExtractedItem[] = rawItems.map((item: ExtractedItem) => {
-          const dups = findDuplicates(item);
-          const { selected: _s, possibleDuplicates: _p, original: _o, ...snapshot } = item as ExtractedItem;
-          return { ...item, possibleDuplicates: dups, selected: dups.length === 0, original: snapshot };
+        const rawItems = (data?.data?.itens || []) as any[];
+        const items: ExtractedItem[] = rawItems.map((item: any) => {
+          // Garantir que campos obrigatórios existam (AI às vezes usa nomes em inglês)
+          const normalized: ExtractedItem = {
+            descricao: item.descricao || item.description || item.name || "Sem descrição",
+            valor: parseFloat(item.valor || item.amount || item.value || 0),
+            data: item.data || item.date || null,
+            tipo_sugerido: item.tipo_sugerido || item.type || "despesa",
+            destino_sugerido: item.destino_sugerido || "lancamento",
+            categoria_sugerida: item.categoria_sugerida || item.category || null,
+            fornecedor_cliente: item.fornecedor_cliente || item.merchant || item.vendor || item.client || item.customer || null,
+            forma_pagamento: item.forma_pagamento || item.payment_method || null,
+            observacoes: item.observacoes || item.notes || item.observations || null,
+            confianca: item.confianca || item.confidence || 100,
+          };
+
+          const dups = findDuplicates(normalized);
+          const { selected: _s, possibleDuplicates: _p, original: _o, ...snapshot } = normalized;
+          return { ...normalized, possibleDuplicates: dups, selected: dups.length === 0, original: snapshot };
         });
         const modelLabel = data?.model || "desconhecido";
         const resumo = data?.resumo || data?.data?.resumo || null;
@@ -1030,13 +1050,43 @@ const ImportarDocumentos = () => {
                                   )}
                                 </div>
                                 {item.fornecedor_cliente && (
-                                  <div className="text-xs text-muted-foreground">{item.fornecedor_cliente}</div>
+                                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                    {item.fornecedor_cliente}
+                                    {isNewEntity(item.fornecedor_cliente, item.tipo_sugerido === "receita" ? clientes : fornecedores) && (
+                                      <TooltipProvider delayDuration={200}>
+                                        <Tooltip>
+                                          <TooltipTrigger>
+                                            <Plus className="h-3 w-3 text-amber-600" />
+                                          </TooltipTrigger>
+                                          <TooltipContent className="text-[10px]">Novo cadastro detectado</TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                  </div>
                                 )}
                                 {item.categoria_sugerida && (
-                                  <Badge variant="outline" className="text-[10px] mt-0.5">{item.categoria_sugerida}</Badge>
+                                  <Badge 
+                                    variant="outline" 
+                                    className={cn(
+                                      "text-[10px] mt-0.5",
+                                      isNewEntity(item.categoria_sugerida, categorias) && "border-amber-400 text-amber-700 bg-amber-500/5"
+                                    )}
+                                  >
+                                    {isNewEntity(item.categoria_sugerida, categorias) && <Plus className="h-2 w-2 mr-1" />}
+                                    {item.categoria_sugerida}
+                                  </Badge>
                                 )}
                                 {item.forma_pagamento && (
-                                  <Badge variant="outline" className="text-[10px] mt-0.5 ml-1">{item.forma_pagamento}</Badge>
+                                  <Badge 
+                                    variant="outline" 
+                                    className={cn(
+                                      "text-[10px] mt-0.5 ml-1",
+                                      isNewEntity(item.forma_pagamento, formasPagamento) && "border-amber-400 text-amber-700 bg-amber-500/5"
+                                    )}
+                                  >
+                                    {isNewEntity(item.forma_pagamento, formasPagamento) && <Plus className="h-2 w-2 mr-1" />}
+                                    {item.forma_pagamento}
+                                  </Badge>
                                 )}
                                 {item.observacoes && (
                                   <div className="text-[10px] text-muted-foreground mt-0.5 italic">{item.observacoes}</div>

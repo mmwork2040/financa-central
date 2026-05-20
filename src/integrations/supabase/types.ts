@@ -514,6 +514,45 @@ export type Database = {
           },
         ]
       }
+      importacoes_temporarias: {
+        Row: {
+          created_at: string
+          dados: Json
+          empresa_id: string
+          id: string
+          modelo_ia: string | null
+          nome_arquivo: string
+          resumo: string | null
+          status: string
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          dados: Json
+          empresa_id: string
+          id?: string
+          modelo_ia?: string | null
+          nome_arquivo: string
+          resumo?: string | null
+          status?: string
+          updated_at?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          dados?: Json
+          empresa_id?: string
+          id?: string
+          modelo_ia?: string | null
+          nome_arquivo?: string
+          resumo?: string | null
+          status?: string
+          updated_at?: string
+          usuario_id?: string
+        }
+        Relationships: []
+      }
       integracoes: {
         Row: {
           ambiente: string

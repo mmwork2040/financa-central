@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Save } from "lucide-react";
 
@@ -96,7 +97,11 @@ export const EditImportItemDialog: React.FC<Props> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <Label>Descrição *</Label>
-            <Input value={form.descricao} onChange={(e) => update({ descricao: e.target.value })} maxLength={255} />
+            <Input 
+              value={form.descricao || ""} 
+              onChange={(e) => update({ descricao: e.target.value })} 
+              maxLength={255} 
+            />
           </div>
 
           <div>
@@ -155,13 +160,20 @@ export const EditImportItemDialog: React.FC<Props> = ({
               </SelectContent>
             </Select>
             {(currentEntityId === NEW || !currentEntityId) && (
-              <Input
-                className="mt-2"
-                placeholder={`Nome do ${entityLabel.toLowerCase()}`}
-                value={form.fornecedor_cliente || ""}
-                onChange={(e) => update({ fornecedor_cliente: e.target.value })}
-                maxLength={150}
-              />
+              <div className="mt-2 space-y-1">
+                <div className="flex items-center gap-1.5 px-1">
+                  <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200">
+                    <Plus className="h-2.5 w-2.5 mr-1" /> Novo cadastro
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground">Este {entityLabel.toLowerCase()} será criado ao importar</span>
+                </div>
+                <Input
+                  placeholder={`Nome do ${entityLabel.toLowerCase()}`}
+                  value={form.fornecedor_cliente || ""}
+                  onChange={(e) => update({ fornecedor_cliente: e.target.value })}
+                  maxLength={150}
+                />
+              </div>
             )}
           </div>
 
@@ -184,13 +196,20 @@ export const EditImportItemDialog: React.FC<Props> = ({
               </SelectContent>
             </Select>
             {(form.categoria_id === NEW || !form.categoria_id) && (
-              <Input
-                className="mt-2"
-                placeholder="Nome da categoria"
-                value={form.categoria_sugerida || ""}
-                onChange={(e) => update({ categoria_sugerida: e.target.value })}
-                maxLength={80}
-              />
+              <div className="mt-2 space-y-1">
+                <div className="flex items-center gap-1.5 px-1">
+                  <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200">
+                    <Plus className="h-2.5 w-2.5 mr-1" /> Nova categoria
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground">Esta categoria será criada ao importar</span>
+                </div>
+                <Input
+                  placeholder="Nome da categoria"
+                  value={form.categoria_sugerida || ""}
+                  onChange={(e) => update({ categoria_sugerida: e.target.value })}
+                  maxLength={80}
+                />
+              </div>
             )}
           </div>
 
@@ -213,13 +232,20 @@ export const EditImportItemDialog: React.FC<Props> = ({
               </SelectContent>
             </Select>
             {(form.forma_pagamento_id === NEW || !form.forma_pagamento_id) && (
-              <Input
-                className="mt-2"
-                placeholder="Ex: PIX, Cartão, Boleto..."
-                value={form.forma_pagamento || ""}
-                onChange={(e) => update({ forma_pagamento: e.target.value })}
-                maxLength={50}
-              />
+              <div className="mt-2 space-y-1">
+                <div className="flex items-center gap-1.5 px-1">
+                  <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200">
+                    <Plus className="h-2.5 w-2.5 mr-1" /> Nova forma
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground">Será criada ao importar</span>
+                </div>
+                <Input
+                  placeholder="Ex: PIX, Cartão, Boleto..."
+                  value={form.forma_pagamento || ""}
+                  onChange={(e) => update({ forma_pagamento: e.target.value })}
+                  maxLength={50}
+                />
+              </div>
             )}
           </div>
 
