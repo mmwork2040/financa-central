@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -300,10 +300,20 @@ const ImportarDocumentos = () => {
     fetchLLMs();
   }, [empresaId]);
 
-  const isNewEntity = (name: string | null, list: EntityOption[]) => {
+  const normalizedCategorias = useMemo(() => categorias.map(c => ({ ...c, norm: normalize(c.nome) })), [categorias]);
+  const normalizedFornecedores = useMemo(() => fornecedores.map(f => ({ ...f, norm: normalize(f.nome) })), [fornecedores]);
+  const normalizedClientes = useMemo(() => clientes.map(c => ({ ...c, norm: normalize(c.nome) })), [clientes]);
+  const normalizedFormasPagamento = useMemo(() => formasPagamento.map(f => ({ ...f, norm: normalize(f.nome) })), [formasPagamento]);
+
+  const isNewEntity = (name: string | null, type: "categoria" | "fornecedor" | "cliente" | "forma_pagamento") => {
     if (!name) return false;
-    const normalized = normalize(name);
-    return !list.some(item => normalize(item.nome) === normalized);
+    const norm = normalize(name);
+    let list: any[] = [];
+    if (type === "categoria") list = normalizedCategorias;
+    else if (type === "fornecedor") list = normalizedFornecedores;
+    else if (type === "cliente") list = normalizedClientes;
+    else if (type === "forma_pagamento") list = normalizedFormasPagamento;
+    return !list.some(item => item.norm === norm);
   };
 
   const formatCurrency = (val: number) => {
@@ -1051,12 +1061,12 @@ const ImportarDocumentos = () => {
                                 {item.fornecedor_cliente && (
                                   <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                                     <span className={cn(
-                                      isNewEntity(item.fornecedor_cliente, item.tipo_sugerido === "receita" ? clientes : fornecedores) && 
+                                      isNewEntity(item.fornecedor_cliente, item.tipo_sugerido === "receita" ? "cliente" : "fornecedor") && 
                                       "px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-medium"
                                     )}>
                                       {item.fornecedor_cliente}
                                     </span>
-                                    {isNewEntity(item.fornecedor_cliente, item.tipo_sugerido === "receita" ? clientes : fornecedores) && (
+                                    {isNewEntity(item.fornecedor_cliente, item.tipo_sugerido === "receita" ? "cliente" : "fornecedor") && (
                                       <TooltipProvider delayDuration={200}>
                                         <Tooltip>
                                           <TooltipTrigger>
@@ -1075,10 +1085,10 @@ const ImportarDocumentos = () => {
                                     variant="outline" 
                                     className={cn(
                                       "text-[10px] mt-0.5",
-                                      isNewEntity(item.categoria_sugerida, categorias) && "border-amber-500/40 text-amber-700 bg-amber-500/10 font-semibold"
+                                      isNewEntity(item.categoria_sugerida, "categoria") && "border-amber-500/40 text-amber-700 bg-amber-500/10 font-semibold"
                                     )}
                                   >
-                                    {isNewEntity(item.categoria_sugerida, categorias) && <Plus className="h-2 w-2 mr-1" />}
+                                    {isNewEntity(item.categoria_sugerida, "categoria") && <Plus className="h-2 w-2 mr-1" />}
                                     {item.categoria_sugerida}
                                   </Badge>
                                 )}
@@ -1087,10 +1097,10 @@ const ImportarDocumentos = () => {
                                     variant="outline" 
                                     className={cn(
                                       "text-[10px] mt-0.5 ml-1",
-                                      isNewEntity(item.forma_pagamento, formasPagamento) && "border-amber-500/40 text-amber-700 bg-amber-500/10 font-semibold"
+                                      isNewEntity(item.forma_pagamento, "forma_pagamento") && "border-amber-500/40 text-amber-700 bg-amber-500/10 font-semibold"
                                     )}
                                   >
-                                    {isNewEntity(item.forma_pagamento, formasPagamento) && <Plus className="h-2 w-2 mr-1" />}
+                                    {isNewEntity(item.forma_pagamento, "forma_pagamento") && <Plus className="h-2 w-2 mr-1" />}
                                     {item.forma_pagamento}
                                   </Badge>
                                 )}
