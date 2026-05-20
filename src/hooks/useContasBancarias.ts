@@ -95,7 +95,36 @@ export const useContasBancarias = () => {
   };
 
   const handleCloseModal = () => { setOpenModal(false); };
-  const handleOpenDeleteModal = (id: string) => { setSelectedId(id); setOpenDeleteModal(true); };
+  const handleOpenDeleteModal = async (id: string) => {
+    try {
+      const conta = contasBancarias.find(c => c.id === id);
+      if (conta?.principal) {
+        toast.error("Não é permitido excluir a conta bancária definida como principal.");
+        return;
+      }
+
+      // Pre-check for transactions before opening the modal
+      const { count: lancamentosCount } = await supabase
+        .from('lancamentos')
+        .select('*', { count: 'exact', head: true })
+        .eq('conta_bancaria_id', id);
+
+      const { count: movimentacoesCount } = await supabase
+        .from('movimentacoes_conta')
+        .select('*', { count: 'exact', head: true })
+        .eq('conta_bancaria_id', id);
+
+      if ((lancamentosCount || 0) > 0 || (movimentacoesCount || 0) > 0) {
+        toast.error("Não é permitido excluir uma conta bancária que possua lançamentos ou movimentações vinculadas.");
+        return;
+      }
+
+      setSelectedId(id);
+      setOpenDeleteModal(true);
+    } catch (error: any) {
+      toast.error("Erro ao verificar restrições de exclusão.");
+    }
+  };
   const handleCloseDeleteModal = () => { setOpenDeleteModal(false); };
 
   const handleSave = async (forcarPrincipal?: boolean) => {
