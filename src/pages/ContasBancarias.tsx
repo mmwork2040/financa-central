@@ -29,6 +29,14 @@ const ContasBancariasContent = () => {
   const [openRecalcular, setOpenRecalcular] = useState(false);
   const [openHistorico, setOpenHistorico] = useState(false);
   const [openResgate, setOpenResgate] = useState(false);
+  const {
+    contasBancarias, loading, formData, openModal, openDeleteModal, selectedId, searchQuery,
+    showPrincipalConfirm, contaPrincipalExistente,
+    handleInputChange, handleOpenModal, handleCloseModal, handleOpenDeleteModal, handleCloseDeleteModal,
+    handleSave, handleDelete, handleExportCSV, handleExportPDF, handleSearchChange,
+    handleConfirmPrincipal, handleClosePrincipalConfirm,
+  } = useContasBancarias();
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -45,9 +53,16 @@ const ContasBancariasContent = () => {
 
   useEffect(() => {
     checkScroll();
-    window.addEventListener("resize", checkScroll);
-    return () => window.removeEventListener("resize", checkScroll);
-  }, [contasBancarias]);
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener("scroll", checkScroll);
+      window.addEventListener("resize", checkScroll);
+      return () => {
+        container.removeEventListener("scroll", checkScroll);
+        window.removeEventListener("resize", checkScroll);
+      };
+    }
+  }, [contasBancarias, loading]);
 
   const scroll = (direction: "left" | "right") => {
     const container = scrollContainerRef.current;
@@ -59,13 +74,6 @@ const ContasBancariasContent = () => {
       });
     }
   };
-  const {
-    contasBancarias, loading, formData, openModal, openDeleteModal, selectedId, searchQuery,
-    showPrincipalConfirm, contaPrincipalExistente,
-    handleInputChange, handleOpenModal, handleCloseModal, handleOpenDeleteModal, handleCloseDeleteModal,
-    handleSave, handleDelete, handleExportCSV, handleExportPDF, handleSearchChange,
-    handleConfirmPrincipal, handleClosePrincipalConfirm,
-  } = useContasBancarias();
 
   const contasParaDialog = contasBancarias.map(c => ({
     id: c.id, nome: c.nome, banco: c.banco, saldo_atual: c.saldo_atual || 0,
