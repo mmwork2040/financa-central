@@ -97,36 +97,61 @@ const ContasBancariasContent = () => {
           onExportCSV={handleExportCSV}
           onExportPDF={handleExportPDF}
         />
-        <div className="flex items-center gap-1.5 w-full overflow-x-auto pb-2 sm:pb-0 sm:overflow-x-visible sm:w-auto sm:justify-end no-scrollbar">
-          <Button variant="outline" size="sm" onClick={() => setOpenHistorico(true)} className="gap-1.5 text-xs whitespace-nowrap shrink-0">
-            <History className="h-3.5 w-3.5 shrink-0" />
-            <span>Histórico</span>
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setOpenExtrato(true)} className="gap-1.5 text-xs whitespace-nowrap shrink-0">
-            <FileText className="h-3.5 w-3.5 shrink-0" />
-            <span>Extrato</span>
-          </Button>
-          {canAlterar && (
-            <Button variant="outline" size="sm" onClick={() => setOpenRecalcular(true)} className="gap-1.5 text-xs whitespace-nowrap shrink-0">
-              <Calculator className="h-3.5 w-3.5 shrink-0" />
-              <span>Recalcular</span>
-            </Button>
+        <div className="relative flex items-center w-full sm:w-auto overflow-hidden">
+          {canScrollLeft && (
+            <button
+              onClick={() => scroll("left")}
+              className="absolute left-0 z-10 p-1 bg-background/80 backdrop-blur-sm border rounded-full shadow-sm sm:hidden"
+              aria-label="Rolar para esquerda"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
           )}
-          {canAlterar && contasBancarias.length >= 2 && (
-            <Button variant="outline" size="sm" onClick={() => setOpenTransferencia(true)} className="gap-1.5 text-xs whitespace-nowrap shrink-0">
-              <ArrowRightLeft className="h-3.5 w-3.5 shrink-0" />
-              <span>Transferir</span>
+
+          <div 
+            ref={scrollContainerRef}
+            className="flex items-center gap-1.5 w-full overflow-x-auto pb-2 sm:pb-0 sm:overflow-x-visible sm:w-auto sm:justify-end no-scrollbar"
+          >
+            <Button variant="outline" size="sm" onClick={() => setOpenHistorico(true)} className="gap-1.5 text-xs whitespace-nowrap shrink-0">
+              <History className="h-3.5 w-3.5 shrink-0" />
+              <span>Histórico</span>
             </Button>
-          )}
-          {canAlterar && contasBancarias.length >= 1 && (
-            <Button variant="outline" size="sm" onClick={() => setOpenResgate(true)} className="gap-1.5 text-xs whitespace-nowrap shrink-0">
-              <ArrowDownToLine className="h-3.5 w-3.5 shrink-0" />
-              <span>Resgatar</span>
+            <Button variant="outline" size="sm" onClick={() => setOpenExtrato(true)} className="gap-1.5 text-xs whitespace-nowrap shrink-0">
+              <FileText className="h-3.5 w-3.5 shrink-0" />
+              <span>Extrato</span>
             </Button>
+            {canAlterar && (
+              <Button variant="outline" size="sm" onClick={() => setOpenRecalcular(true)} className="gap-1.5 text-xs whitespace-nowrap shrink-0">
+                <Calculator className="h-3.5 w-3.5 shrink-0" />
+                <span>Recalcular</span>
+              </Button>
+            )}
+            {canAlterar && contasBancarias.length >= 2 && (
+              <Button variant="outline" size="sm" onClick={() => setOpenTransferencia(true)} className="gap-1.5 text-xs whitespace-nowrap shrink-0">
+                <ArrowRightLeft className="h-3.5 w-3.5 shrink-0" />
+                <span>Transferir</span>
+              </Button>
+            )}
+            {canAlterar && contasBancarias.length >= 1 && (
+              <Button variant="outline" size="sm" onClick={() => setOpenResgate(true)} className="gap-1.5 text-xs whitespace-nowrap shrink-0">
+                <ArrowDownToLine className="h-3.5 w-3.5 shrink-0" />
+                <span>Resgatar</span>
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground shrink-0 ml-auto sm:ml-0" title={visible ? "Ocultar valores" : "Exibir valores"}>
+              {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+          </div>
+
+          {canScrollRight && (
+            <button
+              onClick={() => scroll("right")}
+              className="absolute right-0 z-10 p-1 bg-background/80 backdrop-blur-sm border rounded-full shadow-sm sm:hidden"
+              aria-label="Rolar para direita"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           )}
-          <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground shrink-0 ml-auto sm:ml-0" title={visible ? "Ocultar valores" : "Exibir valores"}>
-            {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </Button>
         </div>
       </div>
       
