@@ -190,6 +190,29 @@ export const useContasBancarias = () => {
   const handleDelete = async () => {
     try {
       if (!selectedId) return;
+
+      const conta = contasBancarias.find(c => c.id === selectedId);
+      if (conta?.principal) {
+        toast.error("Não é permitido excluir a conta bancária definida como principal.");
+        return;
+      }
+
+      // Check if there are any transactions or movements for this account
+      const { count: lancamentosCount } = await supabase
+        .from('lancamentos')
+        .select('*', { count: 'exact', head: true })
+        .eq('conta_bancaria_id', selectedId);
+
+      const { count: movimentacoesCount } = await supabase
+        .from('movimentacoes_conta')
+        .select('*', { count: 'exact', head: true })
+        .eq('conta_bancaria_id', selectedId);
+
+      if ((lancamentosCount || 0) > 0 || (movimentacoesCount || 0) > 0) {
+        toast.error("Não é permitido excluir uma conta bancária que possua lançamentos ou movimentações vinculadas.");
+        return;
+      }
+
       const { error } = await supabase
         .from('contas_bancarias')
         .delete()
