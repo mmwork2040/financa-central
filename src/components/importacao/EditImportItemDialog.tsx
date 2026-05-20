@@ -56,14 +56,40 @@ export const EditImportItemDialog: React.FC<Props> = ({
     if (item) setForm({ ...item });
   }, [item]);
 
-  if (!form) return null;
-
-  const isReceita = form.tipo_sugerido === "receita";
+  const isReceita = form?.tipo_sugerido === "receita";
   const entityList = isReceita ? clientes : fornecedores;
   const entityLabel = isReceita ? "Cliente" : "Fornecedor";
-  const currentEntityId = isReceita ? form.cliente_id : form.fornecedor_id;
+  const currentEntityId = isReceita ? form?.cliente_id : form?.fornecedor_id;
 
   const update = (patch: Partial<EditableItem>) => setForm(prev => prev ? { ...prev, ...patch } : prev);
+
+  useEffect(() => {
+    if (!form) return;
+
+    if (form.fornecedor_cliente && (currentEntityId === NEW || !currentEntityId)) {
+      const normalizedName = normalize(form.fornecedor_cliente);
+      const match = entityList.find(e => normalize(e.nome) === normalizedName);
+      if (match) {
+        if (isReceita) update({ cliente_id: match.id, fornecedor_id: null, fornecedor_cliente: match.nome });
+        else update({ fornecedor_id: match.id, cliente_id: null, fornecedor_cliente: match.nome });
+      }
+    }
+
+    if (form.categoria_sugerida && (form.categoria_id === NEW || !form.categoria_id)) {
+      const normalizedCat = normalize(form.categoria_sugerida);
+      const match = categorias.find(c => normalize(c.nome) === normalizedCat);
+      if (match) update({ categoria_id: match.id, categoria_sugerida: match.nome });
+    }
+
+    if (form.forma_pagamento && (form.forma_pagamento_id === NEW || !form.forma_pagamento_id)) {
+      const normalizedForma = normalize(form.forma_pagamento);
+      const match = formasPagamento.find(f => normalize(f.nome) === normalizedForma);
+      if (match) update({ forma_pagamento_id: match.id, forma_pagamento: match.nome });
+    }
+  }, [form?.fornecedor_cliente, form?.categoria_sugerida, form?.forma_pagamento]);
+
+  if (!form) return null;
+
 
   const handleEntityChange = (val: string) => {
     if (val === NEW) {
@@ -87,32 +113,6 @@ export const EditImportItemDialog: React.FC<Props> = ({
     const found = formasPagamento.find(f => f.id === val);
     update({ forma_pagamento_id: val, forma_pagamento: found?.nome || form.forma_pagamento });
   };
-
-  useEffect(() => {
-    if (!form) return;
-
-    // Se o usuário digitou um nome, verifica se já existe (case-insensitive)
-    if (form.fornecedor_cliente && (currentEntityId === NEW || !currentEntityId)) {
-      const normalizedName = normalize(form.fornecedor_cliente);
-      const match = entityList.find(e => normalize(e.nome) === normalizedName);
-      if (match) {
-        if (isReceita) update({ cliente_id: match.id, fornecedor_id: null, fornecedor_cliente: match.nome });
-        else update({ fornecedor_id: match.id, cliente_id: null, fornecedor_cliente: match.nome });
-      }
-    }
-
-    if (form.categoria_sugerida && (form.categoria_id === NEW || !form.categoria_id)) {
-      const normalizedCat = normalize(form.categoria_sugerida);
-      const match = categorias.find(c => normalize(c.nome) === normalizedCat);
-      if (match) update({ categoria_id: match.id, categoria_sugerida: match.nome });
-    }
-
-    if (form.forma_pagamento && (form.forma_pagamento_id === NEW || !form.forma_pagamento_id)) {
-      const normalizedForma = normalize(form.forma_pagamento);
-      const match = formasPagamento.find(f => normalize(f.nome) === normalizedForma);
-      if (match) update({ forma_pagamento_id: match.id, forma_pagamento: match.nome });
-    }
-  }, [form?.fornecedor_cliente, form?.categoria_sugerida, form?.forma_pagamento]);
 
   const handleSubmit = () => {
     if (!form.descricao?.trim()) return;
