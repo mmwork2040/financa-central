@@ -56,14 +56,13 @@ export const EditImportItemDialog: React.FC<Props> = ({
     if (item) setForm({ ...item });
   }, [item]);
 
-  if (!form) return null;
-
-  const isReceita = form.tipo_sugerido === "receita";
+  const isReceita = form?.tipo_sugerido === "receita";
   const entityList = isReceita ? clientes : fornecedores;
   const entityLabel = isReceita ? "Cliente" : "Fornecedor";
-  const currentEntityId = isReceita ? form.cliente_id : form.fornecedor_id;
+  const currentEntityId = isReceita ? form?.cliente_id : form?.fornecedor_id;
 
   const update = (patch: Partial<EditableItem>) => setForm(prev => prev ? { ...prev, ...patch } : prev);
+
 
   const handleEntityChange = (val: string) => {
     if (val === NEW) {
