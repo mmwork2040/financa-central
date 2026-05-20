@@ -140,8 +140,55 @@ const ImportarDocumentos = () => {
     toast.success("Lançamento revertido aos valores extraídos pela IA");
   };
 
+  const fetchPendingImports = async () => {
+    if (!empresaId) return;
+    setLoadingPending(true);
+    const { data, error } = await supabase
+      .from("importacoes_temporarias")
+      .select("*")
+      .eq("empresa_id", empresaId)
+      .eq("status", "pendente")
+      .order("created_at", { ascending: false });
+    
+    if (!error && data) setPendingImports(data as PendingImport[]);
+    setLoadingPending(false);
+  };
+
+  const deletePendingImport = async (id: string) => {
+    const { error } = await supabase
+      .from("importacoes_temporarias")
+      .delete()
+      .eq("id", id);
+    
+    if (!error) {
+      setPendingImports(prev => prev.filter(p => p.id !== id));
+      toast.success("Importação removida");
+    } else {
+      toast.error("Erro ao remover importação");
+    }
+  };
+
+  const loadPendingImport = async (item: PendingImport) => {
+    // Carrega os dados salvos para o estado atual
+    const newFiles: FileResult[] = [{
+      fileName: item.nome_arquivo,
+      status: "done",
+      items: item.dados as ExtractedItem[],
+      modelUsed: item.modelo_ia || undefined,
+      resumo: item.resumo || undefined
+    }];
+    
+    setFiles(prev => [...prev, ...newFiles]);
+    setShowPending(false);
+    toast.success(`Carregado: ${item.nome_arquivo}`);
+    
+    // Opcional: remover da lista de pendentes ou marcar como processado ao carregar
+    // Aqui apenas carregamos para o usuário decidir o que fazer.
+  };
+
   useEffect(() => {
     if (!empresaId) return;
+    fetchPendingImports();
     (async () => {
       const [cat, forn, cli, fp] = await Promise.all([
         supabase.from("categorias").select("id, nome").eq("empresa_id", empresaId).order("nome"),
