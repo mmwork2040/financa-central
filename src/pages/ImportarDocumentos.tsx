@@ -752,6 +752,35 @@ const ImportarDocumentos = () => {
         </Card>
       )}
 
+      {/* Botão para mostrar pendentes */}
+      {!showPending && pendingImports.length > 0 && (
+        <Button 
+          variant="outline" 
+          className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5"
+          onClick={() => setShowPending(true)}
+        >
+          <History className="h-4 w-4" />
+          Ver {pendingImports.length} importações pendentes anteriores
+        </Button>
+      )}
+
+      {/* Lista de Pendentes */}
+      {showPending && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">Importações não finalizadas</h3>
+            <Button variant="ghost" size="sm" onClick={() => setShowPending(false)}>Ocultar</Button>
+          </div>
+          <ImportacoesPendentes 
+            items={pendingImports} 
+            loading={loadingPending}
+            onLoad={loadPendingImport}
+            onDelete={deletePendingImport}
+          />
+        </div>
+      )}
+
+
       {/* LLM Selection - show when at least 1 LLM is active */}
       {!loadingLLMs && activeLLMs.length >= 1 && (
         <Card>
