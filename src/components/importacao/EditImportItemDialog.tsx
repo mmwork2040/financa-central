@@ -39,6 +39,14 @@ interface Props {
 
 const NEW = "__new__";
 
+// Normaliza string para comparação case-insensitive
+const normalize = (s: string) =>
+  (s || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
 export const EditImportItemDialog: React.FC<Props> = ({
   open, onOpenChange, item, categorias, fornecedores, clientes, formasPagamento, onSave,
 }) => {
@@ -79,6 +87,32 @@ export const EditImportItemDialog: React.FC<Props> = ({
     const found = formasPagamento.find(f => f.id === val);
     update({ forma_pagamento_id: val, forma_pagamento: found?.nome || form.forma_pagamento });
   };
+
+  useEffect(() => {
+    if (!form) return;
+
+    // Se o usuário digitou um nome, verifica se já existe (case-insensitive)
+    if (form.fornecedor_cliente && (currentEntityId === NEW || !currentEntityId)) {
+      const normalizedName = normalize(form.fornecedor_cliente);
+      const match = entityList.find(e => normalize(e.nome) === normalizedName);
+      if (match) {
+        if (isReceita) update({ cliente_id: match.id, fornecedor_id: null, fornecedor_cliente: match.nome });
+        else update({ fornecedor_id: match.id, cliente_id: null, fornecedor_cliente: match.nome });
+      }
+    }
+
+    if (form.categoria_sugerida && (form.categoria_id === NEW || !form.categoria_id)) {
+      const normalizedCat = normalize(form.categoria_sugerida);
+      const match = categorias.find(c => normalize(c.nome) === normalizedCat);
+      if (match) update({ categoria_id: match.id, categoria_sugerida: match.nome });
+    }
+
+    if (form.forma_pagamento && (form.forma_pagamento_id === NEW || !form.forma_pagamento_id)) {
+      const normalizedForma = normalize(form.forma_pagamento);
+      const match = formasPagamento.find(f => normalize(f.nome) === normalizedForma);
+      if (match) update({ forma_pagamento_id: match.id, forma_pagamento: match.nome });
+    }
+  }, [form?.fornecedor_cliente, form?.categoria_sugerida, form?.forma_pagamento]);
 
   const handleSubmit = () => {
     if (!form.descricao?.trim()) return;
