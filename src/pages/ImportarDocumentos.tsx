@@ -144,19 +144,19 @@ const ImportarDocumentos = () => {
     if (!empresaId) return;
     setLoadingPending(true);
     const { data, error } = await supabase
-      .from("importacoes_temporarias")
+      .from("importacoes_temporarias" as any)
       .select("*")
       .eq("empresa_id", empresaId)
       .eq("status", "pendente")
       .order("created_at", { ascending: false });
     
-    if (!error && data) setPendingImports(data as PendingImport[]);
+    if (!error && data) setPendingImports(data as any as PendingImport[]);
     setLoadingPending(false);
   };
 
   const deletePendingImport = async (id: string) => {
     const { error } = await supabase
-      .from("importacoes_temporarias")
+      .from("importacoes_temporarias" as any)
       .delete()
       .eq("id", id);
     
@@ -166,6 +166,29 @@ const ImportarDocumentos = () => {
     } else {
       toast.error("Erro ao remover importação");
     }
+  };
+
+  const loadPendingImport = async (item: PendingImport) => {
+    const newFiles: FileResult[] = [{
+      fileName: item.nome_arquivo,
+      status: "done",
+      items: item.dados as any as ExtractedItem[],
+      modelUsed: item.modelo_ia || undefined,
+      resumo: item.resumo || undefined
+    }];
+    
+    setFiles(prev => [...prev, ...newFiles]);
+    setShowPending(false);
+    toast.success(`Carregado: ${item.nome_arquivo}`);
+  };
+
+  const updateItem = (fileIdx: number, itemIdx: number, patch: Partial<ExtractedItem>) => {
+    setFiles(prev => prev.map((f, fi) =>
+      fi === fileIdx ? {
+        ...f,
+        items: f.items.map((it, ii) => ii === itemIdx ? { ...it, ...patch } : it),
+      } : f
+    ));
   };
 
   const loadPendingImport = async (item: PendingImport) => {
