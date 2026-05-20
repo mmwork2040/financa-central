@@ -477,6 +477,20 @@ const ImportarDocumentos = () => {
           idx === i ? { ...f, status: "done", items, modelUsed: modelLabel, resumo } : f
         ));
 
+        // Salvar na tabela temporária
+        if (items.length > 0 && empresaId && user) {
+          await supabase.from("importacoes_temporarias" as any).insert({
+            empresa_id: empresaId,
+            usuario_id: user.id,
+            nome_arquivo: files[i].fileName,
+            dados: items as any,
+            resumo: resumo,
+            modelo_ia: modelLabel,
+            status: "pendente"
+          });
+          fetchPendingImports();
+        }
+
         const dupCount = items.filter(it => (it.possibleDuplicates?.length || 0) > 0).length;
         if (dupCount > 0) {
           toast.warning(`${files[i].fileName}: ${dupCount} possível(eis) duplicata(s) — revise antes de importar`);
