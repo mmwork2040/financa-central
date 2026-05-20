@@ -37,6 +37,11 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
       return;
     }
 
+    if (!form.cnpj.trim()) {
+      toast.error("CNPJ é obrigatório para criar uma nova empresa");
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-empresa", {
@@ -86,7 +91,7 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cnpj">CNPJ</Label>
+            <Label htmlFor="cnpj">CNPJ *</Label>
             <Input
               id="cnpj"
               placeholder="00.000.000/0000-00"
@@ -115,7 +120,7 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
               />
             </div>
           </div>
-          <Button onClick={handleSubmit} disabled={loading || !form.nomeEmpresa.trim()} className="w-full">
+          <Button onClick={handleSubmit} disabled={loading || !form.nomeEmpresa.trim() || !form.cnpj.trim()} className="w-full">
             {loading ? "Criando..." : "Criar Empresa"}
           </Button>
         </div>
