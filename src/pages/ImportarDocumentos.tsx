@@ -168,46 +168,6 @@ const ImportarDocumentos = () => {
     }
   };
 
-  const loadPendingImport = async (item: PendingImport) => {
-    const newFiles: FileResult[] = [{
-      fileName: item.nome_arquivo,
-      status: "done",
-      items: item.dados as any as ExtractedItem[],
-      modelUsed: item.modelo_ia || undefined,
-      resumo: item.resumo || undefined
-    }];
-    
-    setFiles(prev => [...prev, ...newFiles]);
-    setShowPending(false);
-    toast.success(`Carregado: ${item.nome_arquivo}`);
-  };
-
-  const updateItem = (fileIdx: number, itemIdx: number, patch: Partial<ExtractedItem>) => {
-    setFiles(prev => prev.map((f, fi) =>
-      fi === fileIdx ? {
-        ...f,
-        items: f.items.map((it, ii) => ii === itemIdx ? { ...it, ...patch } : it),
-      } : f
-    ));
-  };
-
-  const loadPendingImport = async (item: PendingImport) => {
-    // Carrega os dados salvos para o estado atual
-    const newFiles: FileResult[] = [{
-      fileName: item.nome_arquivo,
-      status: "done",
-      items: item.dados as ExtractedItem[],
-      modelUsed: item.modelo_ia || undefined,
-      resumo: item.resumo || undefined
-    }];
-    
-    setFiles(prev => [...prev, ...newFiles]);
-    setShowPending(false);
-    toast.success(`Carregado: ${item.nome_arquivo}`);
-    
-    // Opcional: remover da lista de pendentes ou marcar como processado ao carregar
-    // Aqui apenas carregamos para o usuário decidir o que fazer.
-  };
 
   useEffect(() => {
     if (!empresaId) return;
