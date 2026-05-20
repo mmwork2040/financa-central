@@ -209,15 +209,14 @@ const ImportarDocumentos = () => {
 
   const existingLancamentosRef = useRef<Array<{ id: string; descricao: string; valor: number; data_vencimento: string | null; tipo: string }>>([]);
 
-  // Normaliza string para comparação (lowercase, sem acentos, sem pontuação)
+  // Normaliza string para comparação case-insensitive (ex: Pix = PIX)
   const normalize = (s: string) =>
     (s || "")
+      .trim()
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9 ]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+      .replace(/[\u0300-\u036f]/g, ""); // Remove acentos
+
 
   const tokenOverlap = (a: string, b: string): number => {
     const ta = new Set(normalize(a).split(" ").filter(t => t.length >= 3));
@@ -1050,15 +1049,22 @@ const ImportarDocumentos = () => {
                                   )}
                                 </div>
                                 {item.fornecedor_cliente && (
-                                  <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                    {item.fornecedor_cliente}
+                                  <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                                    <span className={cn(
+                                      isNewEntity(item.fornecedor_cliente, item.tipo_sugerido === "receita" ? clientes : fornecedores) && 
+                                      "px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-medium"
+                                    )}>
+                                      {item.fornecedor_cliente}
+                                    </span>
                                     {isNewEntity(item.fornecedor_cliente, item.tipo_sugerido === "receita" ? clientes : fornecedores) && (
                                       <TooltipProvider delayDuration={200}>
                                         <Tooltip>
                                           <TooltipTrigger>
-                                            <Plus className="h-3 w-3 text-amber-600" />
+                                            <Badge variant="outline" className="h-4 px-1 text-[9px] border-amber-500/30 text-amber-600 bg-amber-500/5">
+                                              NOVO
+                                            </Badge>
                                           </TooltipTrigger>
-                                          <TooltipContent className="text-[10px]">Novo cadastro detectado</TooltipContent>
+                                          <TooltipContent className="text-[10px]">Este {item.tipo_sugerido === "receita" ? "cliente" : "fornecedor"} não foi encontrado no sistema e será cadastrado automaticamente.</TooltipContent>
                                         </Tooltip>
                                       </TooltipProvider>
                                     )}
@@ -1069,7 +1075,7 @@ const ImportarDocumentos = () => {
                                     variant="outline" 
                                     className={cn(
                                       "text-[10px] mt-0.5",
-                                      isNewEntity(item.categoria_sugerida, categorias) && "border-amber-400 text-amber-700 bg-amber-500/5"
+                                      isNewEntity(item.categoria_sugerida, categorias) && "border-amber-500/40 text-amber-700 bg-amber-500/10 font-semibold"
                                     )}
                                   >
                                     {isNewEntity(item.categoria_sugerida, categorias) && <Plus className="h-2 w-2 mr-1" />}
@@ -1081,7 +1087,7 @@ const ImportarDocumentos = () => {
                                     variant="outline" 
                                     className={cn(
                                       "text-[10px] mt-0.5 ml-1",
-                                      isNewEntity(item.forma_pagamento, formasPagamento) && "border-amber-400 text-amber-700 bg-amber-500/5"
+                                      isNewEntity(item.forma_pagamento, formasPagamento) && "border-amber-500/40 text-amber-700 bg-amber-500/10 font-semibold"
                                     )}
                                   >
                                     {isNewEntity(item.forma_pagamento, formasPagamento) && <Plus className="h-2 w-2 mr-1" />}
