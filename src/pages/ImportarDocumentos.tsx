@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical, Copy, Pencil, Undo2 } from "lucide-react";
+import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical, Copy, Pencil, Undo2, History } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { EditImportItemDialog, EntityOption } from "@/components/importacao/EditImportItemDialog";
+import { ImportacoesPendentes } from "@/components/importacao/ImportacoesPendentes";
 
 const ACCEPTED_TYPES = [
   "image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp",
@@ -86,8 +87,17 @@ type ActiveLLM = {
   plataforma: string;
 };
 
+type PendingImport = {
+  id: string;
+  nome_arquivo: string;
+  created_at: string;
+  modelo_ia: string | null;
+  dados: any[];
+  resumo: string | null;
+};
+
 const ImportarDocumentos = () => {
-  const { empresaId } = useAuth();
+  const { empresaId, user } = useAuth();
   const [files, setFiles] = useState<FileResult[]>([]);
   const [processing, setProcessing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -96,6 +106,10 @@ const ImportarDocumentos = () => {
   const [activeLLMs, setActiveLLMs] = useState<ActiveLLM[]>([]);
   const [selectedLLM, setSelectedLLM] = useState<string>("");
   const [loadingLLMs, setLoadingLLMs] = useState(true);
+  
+  const [pendingImports, setPendingImports] = useState<PendingImport[]>([]);
+  const [loadingPending, setLoadingPending] = useState(false);
+  const [showPending, setShowPending] = useState(false);
 
   // Cadastros existentes para edição
   const [categorias, setCategorias] = useState<EntityOption[]>([]);
@@ -126,8 +140,50 @@ const ImportarDocumentos = () => {
     toast.success("Lançamento revertido aos valores extraídos pela IA");
   };
 
+  const fetchPendingImports = async () => {
+    if (!empresaId) return;
+    setLoadingPending(true);
+    const { data, error } = await supabase
+      .from("importacoes_temporarias" as any)
+      .select("*")
+      .eq("empresa_id", empresaId)
+      .eq("status", "pendente")
+      .order("created_at", { ascending: false });
+    
+    if (!error && data) setPendingImports(data as any as PendingImport[]);
+    setLoadingPending(false);
+  };
+
+  const deletePendingImport = async (id: string) => {
+    const { error } = await supabase
+      .from("importacoes_temporarias" as any)
+      .delete()
+      .eq("id", id);
+    
+    if (!error) {
+      setPendingImports(prev => prev.filter(p => p.id !== id));
+      toast.success("Importação removida");
+    } else {
+      toast.error("Erro ao remover importação");
+    }
+  };
+  const loadPendingImport = async (item: PendingImport) => {
+    const newFiles: FileResult[] = [{
+      fileName: item.nome_arquivo,
+      status: "done",
+      items: item.dados as any as ExtractedItem[],
+      modelUsed: item.modelo_ia || undefined,
+      resumo: item.resumo || undefined
+    }];
+    
+    setFiles(prev => [...prev, ...newFiles]);
+    setShowPending(false);
+    toast.success(`Carregado: ${item.nome_arquivo}`);
+  };
+
   useEffect(() => {
     if (!empresaId) return;
+    fetchPendingImports();
     (async () => {
       const [cat, forn, cli, fp] = await Promise.all([
         supabase.from("categorias").select("id, nome").eq("empresa_id", empresaId).order("nome"),
@@ -433,6 +489,20 @@ const ImportarDocumentos = () => {
           idx === i ? { ...f, status: "done", items, modelUsed: modelLabel, resumo } : f
         ));
 
+        // Salvar na tabela temporária
+        if (items.length > 0 && empresaId && user) {
+          await supabase.from("importacoes_temporarias" as any).insert({
+            empresa_id: empresaId,
+            usuario_id: user.id,
+            nome_arquivo: files[i].fileName,
+            dados: items as any,
+            resumo: resumo,
+            modelo_ia: modelLabel,
+            status: "pendente"
+          });
+          fetchPendingImports();
+        }
+
         const dupCount = items.filter(it => (it.possibleDuplicates?.length || 0) > 0).length;
         if (dupCount > 0) {
           toast.warning(`${files[i].fileName}: ${dupCount} possível(eis) duplicata(s) — revise antes de importar`);
@@ -628,8 +698,13 @@ const ImportarDocumentos = () => {
         ...f,
         items: f.items.map(item => item.selected ? { ...item, selected: false } : item),
       })));
+      
+      // Marcar importações temporárias como importadas se todos os itens foram processados
+      // Simplificação: apenas atualizamos a lista de pendentes
+      fetchPendingImports();
     }
   };
+
 
   const totalSelected = selectedItems.length;
   const totalValue = selectedItems.reduce((s, i) => s + (i.valor || 0), 0);
@@ -693,6 +768,35 @@ const ImportarDocumentos = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Botão para mostrar pendentes */}
+      {!showPending && pendingImports.length > 0 && (
+        <Button 
+          variant="outline" 
+          className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5"
+          onClick={() => setShowPending(true)}
+        >
+          <History className="h-4 w-4" />
+          Ver {pendingImports.length} importações pendentes anteriores
+        </Button>
+      )}
+
+      {/* Lista de Pendentes */}
+      {showPending && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">Importações não finalizadas</h3>
+            <Button variant="ghost" size="sm" onClick={() => setShowPending(false)}>Ocultar</Button>
+          </div>
+          <ImportacoesPendentes 
+            items={pendingImports} 
+            loading={loadingPending}
+            onLoad={loadPendingImport}
+            onDelete={deletePendingImport}
+          />
+        </div>
+      )}
+
 
       {/* LLM Selection - show when at least 1 LLM is active */}
       {!loadingLLMs && activeLLMs.length >= 1 && (
