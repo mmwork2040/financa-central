@@ -63,27 +63,6 @@ export const EditImportItemDialog: React.FC<Props> = ({
 
   const update = (patch: Partial<EditableItem>) => setForm(prev => prev ? { ...prev, ...patch } : prev);
 
-
-  const handleEntityChange = (val: string) => {
-    if (val === NEW) {
-      if (isReceita) update({ cliente_id: NEW, fornecedor_id: null });
-      else update({ fornecedor_id: NEW, cliente_id: null });
-      return;
-    }
-    const found = entityList.find(e => e.id === val);
-    if (isReceita) update({ cliente_id: val, fornecedor_id: null, fornecedor_cliente: found?.nome || form.fornecedor_cliente });
-    else update({ fornecedor_id: val, cliente_id: null, fornecedor_cliente: found?.nome || form.fornecedor_cliente });
-  };
-
-  const handleCategoriaChange = (val: string) => {
-    if (val === NEW) { update({ categoria_id: NEW }); return; }
-    const found = categorias.find(c => c.id === val);
-    update({ categoria_id: val, categoria_sugerida: found?.nome || form.categoria_sugerida });
-  };
-
-  const handleFormaChange = (val: string) => {
-    if (val === NEW) { update({ forma_pagamento_id: NEW }); return; }
-    const found = formasPagamento.find(f => f.id === val);
   useEffect(() => {
     if (!form) return;
 
@@ -110,6 +89,7 @@ export const EditImportItemDialog: React.FC<Props> = ({
   }, [form?.fornecedor_cliente, form?.categoria_sugerida, form?.forma_pagamento]);
 
   if (!form) return null;
+
 
   const handleEntityChange = (val: string) => {
     if (val === NEW) {
