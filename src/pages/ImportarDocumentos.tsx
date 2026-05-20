@@ -698,8 +698,13 @@ const ImportarDocumentos = () => {
         ...f,
         items: f.items.map(item => item.selected ? { ...item, selected: false } : item),
       })));
+      
+      // Marcar importações temporárias como importadas se todos os itens foram processados
+      // Simplificação: apenas atualizamos a lista de pendentes
+      fetchPendingImports();
     }
   };
+
 
   const totalSelected = selectedItems.length;
   const totalValue = selectedItems.reduce((s, i) => s + (i.valor || 0), 0);
