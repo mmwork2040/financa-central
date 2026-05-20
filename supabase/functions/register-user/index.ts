@@ -105,7 +105,11 @@ serve(async (req) => {
           .from("user_roles")
           .insert({ user_id: userId, empresa_id: empresa.id, role: "admin" });
 
-        // NOTE: Do NOT set empresa_id on perfis here so onboarding still shows
+        // Set empresa_id on perfis immediately so they start in their personal company
+        await supabaseAdmin
+          .from("perfis")
+          .update({ empresa_id: empresa.id, permissao: 'admin' })
+          .eq("id", userId);
       }
     }
 

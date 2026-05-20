@@ -44,8 +44,20 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
       return;
     }
 
-    if (!form.cnpj.trim()) {
+    const cnpjClean = form.cnpj.replace(/\D/g, "");
+    if (!cnpjClean) {
       toast.error("CNPJ é obrigatório para criar uma nova empresa");
+      return;
+    }
+    
+    if (cnpjClean.length !== 14) {
+      toast.error("CNPJ deve conter exatamente 14 dígitos");
+      return;
+    }
+
+    const telefoneClean = form.telefone.replace(/\D/g, "");
+    if (telefoneClean && (telefoneClean.length < 10 || telefoneClean.length > 11)) {
+      toast.error("Telefone deve conter 10 ou 11 dígitos (com DDD)");
       return;
     }
 
