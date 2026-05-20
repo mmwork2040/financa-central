@@ -59,34 +59,34 @@ const ContasBancariasContent = () => {
           onExportCSV={handleExportCSV}
           onExportPDF={handleExportPDF}
         />
-        <div className="flex items-center gap-1 self-end sm:self-auto">
-          <Button variant="outline" size="sm" onClick={() => setOpenHistorico(true)} className="gap-1.5 text-xs">
-            <History className="h-3.5 w-3.5" />
-            Histórico
+        <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto sm:justify-end">
+          <Button variant="outline" size="sm" onClick={() => setOpenHistorico(true)} className="gap-1.5 text-xs flex-1 sm:flex-none min-w-0">
+            <History className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">Histórico</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setOpenExtrato(true)} className="gap-1.5 text-xs">
-            <FileText className="h-3.5 w-3.5" />
-            Extrato
+          <Button variant="outline" size="sm" onClick={() => setOpenExtrato(true)} className="gap-1.5 text-xs flex-1 sm:flex-none min-w-0">
+            <FileText className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">Extrato</span>
           </Button>
           {canAlterar && (
-            <Button variant="outline" size="sm" onClick={() => setOpenRecalcular(true)} className="gap-1.5 text-xs">
-              <Calculator className="h-3.5 w-3.5" />
-              Recalcular
+            <Button variant="outline" size="sm" onClick={() => setOpenRecalcular(true)} className="gap-1.5 text-xs flex-1 sm:flex-none min-w-0">
+              <Calculator className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Recalcular</span>
             </Button>
           )}
           {canAlterar && contasBancarias.length >= 2 && (
-            <Button variant="outline" size="sm" onClick={() => setOpenTransferencia(true)} className="gap-1.5 text-xs">
-              <ArrowRightLeft className="h-3.5 w-3.5" />
-              Transferir
+            <Button variant="outline" size="sm" onClick={() => setOpenTransferencia(true)} className="gap-1.5 text-xs flex-1 sm:flex-none min-w-0">
+              <ArrowRightLeft className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Transferir</span>
             </Button>
           )}
           {canAlterar && contasBancarias.length >= 1 && (
-            <Button variant="outline" size="sm" onClick={() => setOpenResgate(true)} className="gap-1.5 text-xs">
-              <ArrowDownToLine className="h-3.5 w-3.5" />
-              Resgatar
+            <Button variant="outline" size="sm" onClick={() => setOpenResgate(true)} className="gap-1.5 text-xs flex-1 sm:flex-none min-w-0">
+              <ArrowDownToLine className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Resgatar</span>
             </Button>
           )}
-          <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground" title={visible ? "Ocultar valores" : "Exibir valores"}>
+          <Button variant="ghost" size="icon" onClick={toggle} className="text-muted-foreground shrink-0" title={visible ? "Ocultar valores" : "Exibir valores"}>
             {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </Button>
         </div>
