@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Building2 } from "lucide-react";
+import { phoneInputMask, documentInputMask } from "@/utils/format";
 
 interface CreateEmpresaDialogProps {
   open: boolean;
@@ -28,7 +29,13 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
   });
 
   const handleChange = (field: string, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    let formattedValue = value;
+    if (field === "cnpj") {
+      formattedValue = documentInputMask(value);
+    } else if (field === "telefone") {
+      formattedValue = phoneInputMask(value);
+    }
+    setForm(prev => ({ ...prev, [field]: formattedValue }));
   };
 
   const handleSubmit = async () => {
@@ -97,6 +104,7 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
               placeholder="00.000.000/0000-00"
               value={form.cnpj}
               onChange={e => handleChange("cnpj", e.target.value)}
+              maxLength={18}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -117,6 +125,7 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
                 placeholder="(00) 00000-0000"
                 value={form.telefone}
                 onChange={e => handleChange("telefone", e.target.value)}
+                maxLength={15}
               />
             </div>
           </div>
