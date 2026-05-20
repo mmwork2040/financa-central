@@ -167,7 +167,19 @@ const ImportarDocumentos = () => {
       toast.error("Erro ao remover importação");
     }
   };
-
+  const loadPendingImport = async (item: PendingImport) => {
+    const newFiles: FileResult[] = [{
+      fileName: item.nome_arquivo,
+      status: "done",
+      items: item.dados as any as ExtractedItem[],
+      modelUsed: item.modelo_ia || undefined,
+      resumo: item.resumo || undefined
+    }];
+    
+    setFiles(prev => [...prev, ...newFiles]);
+    setShowPending(false);
+    toast.success(`Carregado: ${item.nome_arquivo}`);
+  };
 
   useEffect(() => {
     if (!empresaId) return;
