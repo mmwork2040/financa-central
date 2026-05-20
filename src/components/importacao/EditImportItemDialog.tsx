@@ -96,7 +96,11 @@ export const EditImportItemDialog: React.FC<Props> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <Label>Descrição *</Label>
-            <Input value={form.descricao} onChange={(e) => update({ descricao: e.target.value })} maxLength={255} />
+            <Input 
+              value={form.descricao || ""} 
+              onChange={(e) => update({ descricao: e.target.value })} 
+              maxLength={255} 
+            />
           </div>
 
           <div>

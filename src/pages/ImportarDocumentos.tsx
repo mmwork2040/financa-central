@@ -476,11 +476,25 @@ const ImportarDocumentos = () => {
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
-        const rawItems = (data?.data?.itens || []) as ExtractedItem[];
-        const items: ExtractedItem[] = rawItems.map((item: ExtractedItem) => {
-          const dups = findDuplicates(item);
-          const { selected: _s, possibleDuplicates: _p, original: _o, ...snapshot } = item as ExtractedItem;
-          return { ...item, possibleDuplicates: dups, selected: dups.length === 0, original: snapshot };
+        const rawItems = (data?.data?.itens || []) as any[];
+        const items: ExtractedItem[] = rawItems.map((item: any) => {
+          // Garantir que campos obrigatórios existam (AI às vezes usa nomes em inglês)
+          const normalized: ExtractedItem = {
+            descricao: item.descricao || item.description || item.name || "Sem descrição",
+            valor: parseFloat(item.valor || item.amount || item.value || 0),
+            data: item.data || item.date || null,
+            tipo_sugerido: item.tipo_sugerido || item.type || "despesa",
+            destino_sugerido: item.destino_sugerido || "lancamento",
+            categoria_sugerida: item.categoria_sugerida || item.category || null,
+            fornecedor_cliente: item.fornecedor_cliente || item.merchant || item.vendor || item.client || item.customer || null,
+            forma_pagamento: item.forma_pagamento || item.payment_method || null,
+            observacoes: item.observacoes || item.notes || item.observations || null,
+            confianca: item.confianca || item.confidence || 100,
+          };
+
+          const dups = findDuplicates(normalized);
+          const { selected: _s, possibleDuplicates: _p, original: _o, ...snapshot } = normalized;
+          return { ...normalized, possibleDuplicates: dups, selected: dups.length === 0, original: snapshot };
         });
         const modelLabel = data?.model || "desconhecido";
         const resumo = data?.resumo || data?.data?.resumo || null;
