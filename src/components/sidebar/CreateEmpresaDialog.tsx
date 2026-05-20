@@ -37,6 +37,11 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
       return;
     }
 
+    if (!form.cnpj.trim()) {
+      toast.error("CNPJ é obrigatório para criar uma nova empresa");
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-empresa", {
