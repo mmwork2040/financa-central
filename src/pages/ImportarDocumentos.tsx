@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical, Copy, Pencil, Undo2 } from "lucide-react";
+import { Upload, FileText, Image, Sheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Trash2, ArrowRight, FileUp, Brain, Eye, EyeOff, RefreshCw, Settings, FlaskConical, Copy, Pencil, Undo2, History } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { EditImportItemDialog, EntityOption } from "@/components/importacao/EditImportItemDialog";
+import { ImportacoesPendentes } from "@/components/importacao/ImportacoesPendentes";
 
 const ACCEPTED_TYPES = [
   "image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp",
@@ -86,8 +87,17 @@ type ActiveLLM = {
   plataforma: string;
 };
 
+type PendingImport = {
+  id: string;
+  nome_arquivo: string;
+  created_at: string;
+  modelo_ia: string | null;
+  dados: any[];
+  resumo: string | null;
+};
+
 const ImportarDocumentos = () => {
-  const { empresaId } = useAuth();
+  const { empresaId, user } = useAuth();
   const [files, setFiles] = useState<FileResult[]>([]);
   const [processing, setProcessing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -96,6 +106,10 @@ const ImportarDocumentos = () => {
   const [activeLLMs, setActiveLLMs] = useState<ActiveLLM[]>([]);
   const [selectedLLM, setSelectedLLM] = useState<string>("");
   const [loadingLLMs, setLoadingLLMs] = useState(true);
+  
+  const [pendingImports, setPendingImports] = useState<PendingImport[]>([]);
+  const [loadingPending, setLoadingPending] = useState(false);
+  const [showPending, setShowPending] = useState(false);
 
   // Cadastros existentes para edição
   const [categorias, setCategorias] = useState<EntityOption[]>([]);
