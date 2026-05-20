@@ -102,14 +102,28 @@ serve(async (req) => {
     const userEmpresaIds = userRoles?.map((r: any) => r.empresa_id) || [];
 
     if (userEmpresaIds.length > 0) {
-      // Check if user is in the exact empresa
+      // If user already belongs, just switch their active empresa instead of erroring
       if (userEmpresaIds.includes(invite.empresa_id)) {
-        console.warn("[redeem-invite-code] user already in this exact empresa", invite.empresa_id);
-        return new Response(JSON.stringify({ error: "Você já faz parte desta empresa" }), {
-          status: 400,
+        console.warn("[redeem-invite-code] user already in empresa, switching perfil", invite.empresa_id);
+        await supabaseAdmin
+          .from("perfis")
+          .update({ empresa_id: invite.empresa_id })
+          .eq("id", userId);
+
+        const { data: empresaAtual } = await supabaseAdmin
+          .from("empresas").select("nome").eq("id", invite.empresa_id).single();
+
+        return new Response(JSON.stringify({
+          success: true,
+          alreadyMember: true,
+          empresaNome: empresaAtual?.nome || "Empresa",
+          empresaId: invite.empresa_id,
+        }), {
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
 
       // Check if user is in any empresa with the same CNPJ
       if (inviteEmpresa?.cnpj) {
