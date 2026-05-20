@@ -150,7 +150,9 @@ const ContaBancariaForm: React.FC<ContaBancariaFormProps> = ({
               <Input id="nome" name="nome" value={formData.nome} onChange={handleInputChange} className="col-span-3" required placeholder="Ex: Conta Principal" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="banco" className="text-right">Banco</Label>
+              <Label htmlFor="banco" className="text-right">
+                Banco <span className="text-destructive">*</span>
+              </Label>
               <div className="col-span-3 relative">
                 <Input
                   ref={bancoInputRef}
@@ -169,6 +171,7 @@ const ContaBancariaForm: React.FC<ContaBancariaFormProps> = ({
                   }}
                   placeholder="Digite o nome do banco"
                   autoComplete="off"
+                  required
                 />
                 {showSuggestions && bancoSuggestions.length > 0 && (
                   <div
@@ -193,12 +196,16 @@ const ContaBancariaForm: React.FC<ContaBancariaFormProps> = ({
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="agencia" className="text-right">Agência</Label>
-              <Input id="agencia" name="agencia" value={formData.agencia || ""} onChange={handleInputChange} className="col-span-3" placeholder="Ex: 0001" />
+              <Label htmlFor="agencia" className="text-right">
+                Agência <span className="text-destructive">*</span>
+              </Label>
+              <Input id="agencia" name="agencia" value={formData.agencia || ""} onChange={handleInputChange} className="col-span-3" placeholder="Ex: 0001" required />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="conta" className="text-right">Conta</Label>
-              <Input id="conta" name="conta" value={formData.conta || ""} onChange={handleInputChange} className="col-span-3" placeholder="Ex: 12345-6" />
+              <Label htmlFor="conta" className="text-right">
+                Conta <span className="text-destructive">*</span>
+              </Label>
+              <Input id="conta" name="conta" value={formData.conta || ""} onChange={handleInputChange} className="col-span-3" placeholder="Ex: 12345-6" required />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="saldo_inicial" className="text-right">Saldo Inicial</Label>
