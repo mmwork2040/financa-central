@@ -120,7 +120,7 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
               />
             </div>
           </div>
-          <Button onClick={handleSubmit} disabled={loading || !form.nomeEmpresa.trim()} className="w-full">
+          <Button onClick={handleSubmit} disabled={loading || !form.nomeEmpresa.trim() || !form.cnpj.trim()} className="w-full">
             {loading ? "Criando..." : "Criar Empresa"}
           </Button>
         </div>
