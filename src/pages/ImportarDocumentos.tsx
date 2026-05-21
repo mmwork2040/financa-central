@@ -70,6 +70,10 @@ type ExtractedItem = {
   projeto_id?: string | null;
   observacoes: string | null;
   confianca: number;
+  conta_bancaria_nome?: string | null;
+  conta_bancaria_id?: string | null;
+  conta_destino_nome?: string | null;
+  conta_destino_id?: string | null;
   selected?: boolean;
   possibleDuplicates?: DuplicateMatch[];
   original?: Omit<ExtractedItem, "selected" | "possibleDuplicates" | "original">;
@@ -99,6 +103,41 @@ type PendingImport = {
   resumo: string | null;
 };
 
+type ContaBancariaOption = { id: string; nome: string; banco: string | null; agencia: string | null; conta: string | null; principal: boolean };
+
+// Normaliza forma de pagamento detectada pela IA para nomes canônicos
+const FORMA_PAGAMENTO_ALIASES: Record<string, string> = {
+  "pix": "PIX",
+  "pix recebido": "PIX",
+  "pix enviado": "PIX",
+  "transferencia pix": "PIX",
+  "transferência pix": "PIX",
+  "transf pix": "PIX",
+  "pix transf": "PIX",
+  "transferencia via pix": "PIX",
+  "transferência via pix": "PIX",
+  "ted": "TED",
+  "doc": "DOC",
+  "boleto": "Boleto",
+  "dinheiro": "Dinheiro",
+  "cartao de credito": "Cartão de Crédito",
+  "cartão de crédito": "Cartão de Crédito",
+  "cartao credito": "Cartão de Crédito",
+  "credito": "Cartão de Crédito",
+  "cartao de debito": "Cartão de Débito",
+  "cartão de débito": "Cartão de Débito",
+  "cartao debito": "Cartão de Débito",
+  "debito": "Cartão de Débito",
+  "transferencia": "Transferência",
+  "transferência": "Transferência",
+};
+const normalizeFormaPagamento = (raw: string | null | undefined): string | null => {
+  if (!raw) return null;
+  const key = raw.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return FORMA_PAGAMENTO_ALIASES[key] || raw.trim();
+};
+
+
 const ImportarDocumentos = () => {
   const { empresaId, user } = useAuth();
   const [files, setFiles] = useState<FileResult[]>([]);
@@ -120,6 +159,9 @@ const ImportarDocumentos = () => {
   const [clientes, setClientes] = useState<EntityOption[]>([]);
   const [formasPagamento, setFormasPagamento] = useState<EntityOption[]>([]);
   const [projetos, setProjetos] = useState<EntityOption[]>([]);
+  const [contasBancarias, setContasBancarias] = useState<ContaBancariaOption[]>([]);
+  const [contaUploadId, setContaUploadId] = useState<string>(""); // conta selecionada para esta leva de uploads
+
 
   // Edit dialog
   const [editingRef, setEditingRef] = useState<{ fileIdx: number; itemIdx: number } | null>(null);
@@ -136,7 +178,9 @@ const ImportarDocumentos = () => {
     "descricao", "valor", "data", "tipo_sugerido", "destino_sugerido",
     "categoria_sugerida", "categoria_id", "fornecedor_cliente", "fornecedor_id",
     "cliente_id", "forma_pagamento", "forma_pagamento_id", "projeto_id", "observacoes",
+    "conta_bancaria_id", "conta_destino_id",
   ];
+
   const isEdited = (item: ExtractedItem) => {
     if (!item.original) return false;
     return EDIT_KEYS.some(k => (item as any)[k] !== (item.original as any)[k]);
@@ -196,20 +240,28 @@ const ImportarDocumentos = () => {
     if (!empresaId) return;
     fetchPendingImports();
     (async () => {
-      const [cat, forn, cli, fp, proj] = await Promise.all([
+      const [cat, forn, cli, fp, proj, contas] = await Promise.all([
         supabase.from("categorias").select("id, nome, tipo").eq("empresa_id", empresaId).order("nome"),
         supabase.from("fornecedores").select("id, nome").eq("empresa_id", empresaId).eq("ativo", true).order("nome"),
         supabase.from("clientes").select("id, nome").eq("empresa_id", empresaId).eq("ativo", true).order("nome"),
         supabase.from("formas_pagamento").select("id, descricao").eq("empresa_id", empresaId).order("descricao"),
         (supabase as any).from("projetos").select("id, nome").eq("empresa_id", empresaId).eq("status", "ativo").order("nome"),
+        supabase.from("contas_bancarias").select("id, nome, banco, agencia, conta, principal").eq("empresa_id", empresaId).order("nome"),
       ]);
       setCategorias((cat.data || []) as any);
       setFornecedores((forn.data || []) as any);
       setClientes((cli.data || []) as any);
       setFormasPagamento(((fp.data || []) as any[]).map(f => ({ id: f.id, nome: f.descricao })));
       setProjetos((proj.data || []) as any);
+      const contasList = (contas.data || []) as any as ContaBancariaOption[];
+      setContasBancarias(contasList);
+      // Padrão: conta principal
+      const principal = contasList.find(c => c.principal);
+      if (principal) setContaUploadId(principal.id);
+      else if (contasList[0]) setContaUploadId(contasList[0].id);
     })();
   }, [empresaId]);
+
 
   const updateItem = (fileIdx: number, itemIdx: number, patch: Partial<ExtractedItem>) => {
     setFiles(prev => prev.map((f, fi) =>
@@ -553,7 +605,13 @@ const ImportarDocumentos = () => {
 
         const { textContent, imageBase64, mimeType } = await readFileContent(fileObj);
 
-        const body: any = { fileName: files[i].fileName, textContent, imageBase64, mimeType };
+        const body: any = {
+          fileName: files[i].fileName,
+          textContent,
+          imageBase64,
+          mimeType,
+          contasBancarias: contasBancarias.map(c => ({ nome: c.nome, banco: c.banco, agencia: c.agencia, conta: c.conta })),
+        };
         if (selectedLLM) {
           body.preferredLLM = selectedLLM;
         }
@@ -569,20 +627,33 @@ const ImportarDocumentos = () => {
         if (data?.error) throw new Error(data.error);
 
         const rawItems = (data?.data?.itens || []) as any[];
+        const matchContaByName = (nome: string | null | undefined): string | null => {
+          if (!nome) return null;
+          const n = normalize(nome);
+          const found = contasBancarias.find(c => normalize(c.nome) === n);
+          return found?.id || null;
+        };
         const items: ExtractedItem[] = rawItems.map((item: any) => {
-          // Garantir que campos obrigatórios existam (AI às vezes usa nomes em inglês)
+          const tipo = item.tipo_sugerido || item.type || "despesa";
+          const contaResolvida = matchContaByName(item.conta_bancaria_nome) || contaUploadId || null;
+          const contaDestinoResolvida = matchContaByName(item.conta_destino_nome);
           const normalized: ExtractedItem = {
             descricao: item.descricao || item.description || item.name || "Sem descrição",
             valor: parseFloat(item.valor || item.amount || item.value || 0),
             data: item.data || item.date || null,
-            tipo_sugerido: item.tipo_sugerido || item.type || "despesa",
-            destino_sugerido: item.destino_sugerido || "lancamento",
-            categoria_sugerida: item.categoria_sugerida || item.category || null,
-            fornecedor_cliente: item.fornecedor_cliente || item.merchant || item.vendor || item.client || item.customer || null,
-            forma_pagamento: item.forma_pagamento || item.payment_method || null,
+            tipo_sugerido: tipo,
+            destino_sugerido: tipo === "transferencia" ? "lancamento" : (item.destino_sugerido || "lancamento"),
+            categoria_sugerida: tipo === "transferencia" ? null : (item.categoria_sugerida || item.category || null),
+            fornecedor_cliente: tipo === "transferencia" ? null : (item.fornecedor_cliente || item.merchant || item.vendor || item.client || item.customer || null),
+            forma_pagamento: normalizeFormaPagamento(item.forma_pagamento || item.payment_method || null),
             observacoes: item.observacoes || item.notes || item.observations || null,
             confianca: item.confianca || item.confidence || 100,
+            conta_bancaria_nome: item.conta_bancaria_nome || null,
+            conta_bancaria_id: contaResolvida,
+            conta_destino_nome: item.conta_destino_nome || null,
+            conta_destino_id: contaDestinoResolvida,
           };
+
 
           const dups = findDuplicates(normalized);
           const { selected: _s, possibleDuplicates: _p, original: _o, ...snapshot } = normalized;
@@ -725,6 +796,8 @@ const ImportarDocumentos = () => {
 
     for (const item of selectedItems) {
       try {
+        const dataEfetiva = item.data || new Date().toISOString().split("T")[0];
+
         if (item.destino_sugerido === "venda") {
           const { error } = await supabase.from("vendas_digitais").insert({
             empresa_id: empresaId,
@@ -740,16 +813,70 @@ const ImportarDocumentos = () => {
             origem: "importacao",
           });
           if (error) throw error;
+        } else if (item.tipo_sugerido === "transferencia") {
+          // Transferência interna: cria par de lançamentos (saída + entrada) usando recorrencia_grupo_id como link
+          if (!item.conta_bancaria_id || !item.conta_destino_id || item.conta_bancaria_id === item.conta_destino_id) {
+            throw new Error("Transferência: selecione contas de origem e destino diferentes");
+          }
+          const grupoId = crypto.randomUUID();
+          let formaPagamentoId: string | null = null;
+          if (item.forma_pagamento_id && item.forma_pagamento_id !== "__new__") {
+            formaPagamentoId = item.forma_pagamento_id;
+          } else if (item.forma_pagamento) {
+            const { data: existing } = await supabase
+              .from("formas_pagamento").select("id").eq("empresa_id", empresaId)
+              .ilike("descricao", item.forma_pagamento).maybeSingle();
+            if (existing?.id) formaPagamentoId = existing.id;
+            else {
+              const { data: created } = await supabase
+                .from("formas_pagamento").insert({ empresa_id: empresaId, descricao: item.forma_pagamento }).select("id").single();
+              if (created?.id) formaPagamentoId = created.id;
+            }
+          }
+          const catSaidaId = await findOrCreateCategoria("Transferência entre contas", "despesa");
+          const catEntradaId = await findOrCreateCategoria("Transferência entre contas", "receita");
+          const basePayload = {
+            empresa_id: empresaId,
+            descricao: item.descricao,
+            valor: item.valor,
+            data_vencimento: dataEfetiva,
+            data_pagamento: dataEfetiva,
+            origem: "importacao",
+            forma_pagamento_id: formaPagamentoId,
+            recorrencia_grupo_id: grupoId,
+          };
+          const { error: e1 } = await supabase.from("lancamentos").insert({
+            ...basePayload,
+            tipo: "despesa",
+            status: "pago",
+            conta_bancaria_id: item.conta_bancaria_id,
+            categoria_id: catSaidaId,
+          });
+          if (e1) throw e1;
+          const { error: e2 } = await supabase.from("lancamentos").insert({
+            ...basePayload,
+            tipo: "receita",
+            status: "recebido",
+            conta_bancaria_id: item.conta_destino_id,
+            categoria_id: catEntradaId,
+          });
+          if (e2) throw e2;
         } else {
           const tipo = item.tipo_sugerido || "despesa";
+          // Documento histórico: data já é data de pagamento. Status auto pago/recebido.
+          const status = item.data
+            ? (tipo === "receita" ? "recebido" : "pago")
+            : "pendente";
           const payload: any = {
             empresa_id: empresaId,
             descricao: item.descricao,
             valor: item.valor,
-            data_vencimento: item.data || new Date().toISOString().split("T")[0],
+            data_vencimento: dataEfetiva,
+            data_pagamento: item.data ? dataEfetiva : null,
             tipo,
-            status: "pendente",
+            status,
             origem: "importacao",
+            conta_bancaria_id: item.conta_bancaria_id || contaUploadId || null,
           };
           if (item.categoria_id && item.categoria_id !== "__new__") {
             payload.categoria_id = item.categoria_id;
@@ -760,7 +887,6 @@ const ImportarDocumentos = () => {
           if (item.forma_pagamento_id && item.forma_pagamento_id !== "__new__") {
             payload.forma_pagamento_id = item.forma_pagamento_id;
           } else if (item.forma_pagamento) {
-            // cria forma de pagamento se não existir
             const { data: existing } = await supabase
               .from("formas_pagamento").select("id").eq("empresa_id", empresaId)
               .ilike("descricao", item.forma_pagamento).maybeSingle();
@@ -785,6 +911,7 @@ const ImportarDocumentos = () => {
             }
           }
           if (item.projeto_id) payload.projeto_id = item.projeto_id;
+
           const { error } = await supabase.from("lancamentos").insert(payload);
           if (error) throw error;
         }
@@ -1330,12 +1457,17 @@ const ImportarDocumentos = () => {
           forma_pagamento_id: editingItem.forma_pagamento_id ?? null,
           projeto_id: editingItem.projeto_id ?? null,
           observacoes: editingItem.observacoes,
+          conta_bancaria_id: editingItem.conta_bancaria_id ?? null,
+          conta_destino_id: editingItem.conta_destino_id ?? null,
+
         } : null}
         categorias={categorias}
         fornecedores={fornecedores}
         clientes={clientes}
         formasPagamento={formasPagamento}
         projetos={projetos}
+        contasBancarias={contasBancarias.map(c => ({ id: c.id, nome: c.nome }))}
+
         onSave={(patch) => {
           if (editingRef) updateItem(editingRef.fileIdx, editingRef.itemIdx, patch as Partial<ExtractedItem>);
         }}
