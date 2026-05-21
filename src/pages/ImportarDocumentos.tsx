@@ -1090,7 +1090,29 @@ const ImportarDocumentos = () => {
 
       {/* Upload Area */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 space-y-4">
+          {/* Seletor de conta bancária do upload */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <label className="text-sm font-medium whitespace-nowrap">
+              Conta bancária do(s) documento(s):
+            </label>
+            <Select value={contaUploadId} onValueChange={setContaUploadId}>
+              <SelectTrigger className="sm:max-w-sm">
+                <SelectValue placeholder={contasBancarias.length ? "Selecione a conta" : "Nenhuma conta cadastrada"} />
+              </SelectTrigger>
+              <SelectContent>
+                {contasBancarias.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.nome}{c.principal ? " (principal)" : ""}{c.banco ? ` — ${c.banco}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-xs text-muted-foreground">
+              A IA tentará identificar no documento; se não conseguir, usaremos esta.
+            </span>
+          </div>
+
           <div
             className={cn(
               "border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer",
@@ -1116,6 +1138,7 @@ const ImportarDocumentos = () => {
               onChange={(e) => handleFilesSelected(e.target.files)}
             />
           </div>
+
 
           {/* File list */}
           {files.length > 0 && (
@@ -1328,6 +1351,24 @@ const ImportarDocumentos = () => {
                                         {item.forma_pagamento}
                                       </Badge>
                                     )}
+                                    {(() => {
+                                      const contaId = item.conta_bancaria_id || contaUploadId;
+                                      const conta = contasBancarias.find(c => c.id === contaId);
+                                      if (!conta) return null;
+                                      return (
+                                        <Badge variant="outline" className="text-[10px] mt-0.5 ml-1 border-primary/30 text-primary bg-primary/5">
+                                          🏦 {conta.nome}
+                                        </Badge>
+                                      );
+                                    })()}
+                                    {item.tipo_sugerido === "transferencia" && item.conta_destino_id && (() => {
+                                      const dest = contasBancarias.find(c => c.id === item.conta_destino_id);
+                                      return dest ? (
+                                        <Badge variant="outline" className="text-[10px] mt-0.5 ml-1 border-primary/30 text-primary bg-primary/5">
+                                          → {dest.nome}
+                                        </Badge>
+                                      ) : null;
+                                    })()}
                                     {item.observacoes && (
                                       <div className="text-[10px] text-muted-foreground mt-0.5 italic">{item.observacoes}</div>
                                     )}
