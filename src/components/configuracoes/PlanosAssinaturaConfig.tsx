@@ -257,6 +257,7 @@ const PlanosAssinaturaConfig = () => {
                     <span>Período: <Badge variant="outline" className="text-[10px]">{plano.periodo}</Badge></span>
                     <span>Empresas: <Badge variant="outline" className="text-[10px]">{plano.max_empresas}</Badge></span>
                     <span>NFs/mês: <Badge variant="outline" className="text-[10px]">{(plano as any).itens?.controles?.max_notas_fiscais === 0 ? "Ilimitado" : ((plano as any).itens?.controles?.max_notas_fiscais ?? "Não definido")}</Badge></span>
+                    <span>Tokens IA/mês: <Badge variant="outline" className="text-[10px]">{((plano as any).limite_tokens_ia_mes ?? 0).toLocaleString('pt-BR')}</Badge></span>
                   </div>
                   {plano.link_acesso && (
                     <div className="text-xs text-muted-foreground mb-3 flex items-center gap-1 truncate">
