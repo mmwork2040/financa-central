@@ -250,14 +250,13 @@ export const Sidebar = () => {
     ? allCadastrosItems.filter(i => !(i as any).businessOnly)
     : allCadastrosItems.filter(i => !(i as any).pessoalOnly);
 
-  // Configurações: empresa, integrações, acesso e termos
+  // Configurações: empresa (com integrações dentro), acesso & permissões, termos
   const configItems = [
     { name: isPessoal ? "Pessoal" : "Empresa", icon: isPessoal ? UserCircle : Building2, path: "/settings" },
-    { name: "Integrações", icon: Plug, path: "/settings/integracoes" },
-    { name: "Perfis de Acesso", icon: UserCog, path: "/perfis-acesso" },
-    { name: "Permissões", icon: ShieldCheck, path: "/permissions" },
+    { name: "Acesso e Permissões", icon: UserCog, path: "/perfis-acesso" },
     { name: "Termos e Políticas", icon: ScrollText, path: "/settings/termos" },
   ];
+
 
   // Super Admin: itens globais da plataforma
   const adminGlobalItems = isSuperAdmin ? [
