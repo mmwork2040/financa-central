@@ -218,16 +218,6 @@ export const EditImportItemDialog: React.FC<Props> = ({
             </Select>
           </div>
 
-          <div>
-            <Label>Destino</Label>
-            <Select value={form.destino_sugerido} onValueChange={(v) => update({ destino_sugerido: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="lancamento">Lançamento</SelectItem>
-                <SelectItem value="venda">Venda</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           {/* Fornecedor / Cliente */}
           <div className="md:col-span-2">
