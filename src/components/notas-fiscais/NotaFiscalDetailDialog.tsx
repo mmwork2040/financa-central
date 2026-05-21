@@ -244,6 +244,47 @@ const NotaFiscalDetailDialog: React.FC<Props> = ({ open, onOpenChange, venda, on
           )}
         </div>
       </DialogContent>
+
+      <AlertDialog open={cancelOpen} onOpenChange={(o) => !cancelling && setCancelOpen(o)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar nota fiscal</AlertDialogTitle>
+            <AlertDialogDescription>
+              O cancelamento será enviado à SEFAZ via Spedy. Informe uma justificativa
+              (mínimo 15 caracteres) — esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            placeholder="Ex.: Erro de digitação no valor / cliente desistiu da compra..."
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            rows={4}
+            disabled={cancelling}
+          />
+          <p className="text-[11px] text-muted-foreground">
+            {cancelReason.trim().length}/15 caracteres mínimos
+          </p>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleCancel();
+              }}
+              disabled={cancelling || cancelReason.trim().length < 15}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {cancelling ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Cancelando...
+                </>
+              ) : (
+                "Confirmar cancelamento"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
