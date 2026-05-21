@@ -502,9 +502,10 @@ export const Sidebar = () => {
           {/* Main items */}
           {mainItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
 
-          {/* Chat item removed - buttons now in Lançamentos and Vendas pages */}
-          
-          {/* Cadastros collapsible */}
+          {/* Separator */}
+          <li className="my-2 border-t border-sidebar-border/60" />
+
+          {/* Cadastros group */}
           {showExpanded ? (
             <li>
               <Collapsible open={cadastrosOpen} onOpenChange={setCadastrosOpen}>
@@ -523,13 +524,13 @@ export const Sidebar = () => {
               </Collapsible>
             </li>
           ) : (
-            cadastrosItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))
+            renderCollapsedGroup("Cadastros", FolderOpen, cadastrosItems.filter(item => canAccessRoute(item.path)))
           )}
 
-          {/* Bottom items */}
-          {bottomItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
+          {/* Separator */}
+          <li className="my-2 border-t border-sidebar-border/60" />
 
-          {/* Configurações collapsible */}
+          {/* Configurações group */}
           {showExpanded ? (
             <li>
               <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
@@ -542,46 +543,49 @@ export const Sidebar = () => {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <ul className="space-y-0.5 mt-0.5">
-                    {configItems.map(item => renderMenuItem(item, true))}
+                    {configItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item, true))}
                   </ul>
                 </CollapsibleContent>
               </Collapsible>
             </li>
           ) : (
-            <>{renderMenuItem({ name: "Configurações", icon: Settings, path: "/settings" })}</>
+            renderCollapsedGroup("Configurações", Settings, configItems.filter(item => canAccessRoute(item.path)))
           )}
-          
-          {/* Admin items (Permissões, Perfis de Acesso) */}
-          {adminItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
 
-          {/* Administração (Super Admin) */}
+          {/* Super Admin group */}
           {isSuperAdmin && adminGlobalItems.length > 0 && (
-            showExpanded ? (
-              <li>
-                <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
-                  <CollapsibleTrigger className="sidebar-link w-full justify-between">
-                    <div className="flex items-center gap-3">
-                      <ShieldCheck size={18} />
-                      <span className="text-sm">Administração</span>
-                    </div>
-                    <ChevronDown size={14} className={cn("transition-transform", adminOpen && "rotate-180")} />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <ul className="space-y-0.5 mt-0.5">
-                      {adminGlobalItems.map(item => renderMenuItem(item, true))}
-                    </ul>
-                  </CollapsibleContent>
-                </Collapsible>
-              </li>
-            ) : (
-              adminGlobalItems.map(item => renderMenuItem(item))
-            )
+            <>
+              <li className="my-2 border-t border-sidebar-border/60" />
+              {showExpanded ? (
+                <li>
+                  <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
+                    <CollapsibleTrigger className="sidebar-link w-full justify-between">
+                      <div className="flex items-center gap-3">
+                        <ShieldCheck size={18} />
+                        <span className="text-sm">Super Admin</span>
+                      </div>
+                      <ChevronDown size={14} className={cn("transition-transform", adminOpen && "rotate-180")} />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <ul className="space-y-0.5 mt-0.5">
+                        {adminGlobalItems.map(item => renderMenuItem(item, true))}
+                      </ul>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </li>
+              ) : (
+                renderCollapsedGroup("Super Admin", ShieldCheck, adminGlobalItems)
+              )}
+            </>
           )}
 
           {/* Suporte - always last */}
+          <li className="my-2 border-t border-sidebar-border/60" />
           {renderMenuItem({ name: "Suporte", icon: HelpCircle, path: "/suporte" })}
         </ul>
       </nav>
+      
+
       
       
       {/* Logout */}
