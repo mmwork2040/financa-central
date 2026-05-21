@@ -42,9 +42,24 @@ const MODEL_DEFAULTS: Record<string, string> = {
   lovable_ai: "google/gemini-3-flash-preview",
 };
 
-function buildUserPrompt(fileName: string, textContent?: string) {
-  return `Arquivo: ${fileName}\n\n${textContent ? `Conteúdo extraído:\n${textContent}` : "Imagem anexada — analise visualmente o documento."}`;
+function buildContextBlock(ctx?: { empresaNome?: string; contasBancarias?: Array<{ nome: string; banco?: string; agencia?: string; conta?: string }> }) {
+  if (!ctx) return "";
+  const lines: string[] = [];
+  if (ctx.empresaNome) lines.push(`Empresa (titular do documento): ${ctx.empresaNome}`);
+  if (ctx.contasBancarias && ctx.contasBancarias.length > 0) {
+    lines.push("Contas bancárias conhecidas da empresa (use para reconhecer conta de origem em extratos e detectar TRANSFERÊNCIA INTERNA quando a contraparte for uma destas contas):");
+    ctx.contasBancarias.forEach((c, i) => {
+      const detalhes = [c.banco, c.agencia ? `Ag. ${c.agencia}` : null, c.conta ? `CC ${c.conta}` : null].filter(Boolean).join(" / ");
+      lines.push(`  ${i + 1}. "${c.nome}"${detalhes ? ` — ${detalhes}` : ""}`);
+    });
+  }
+  return lines.length > 0 ? `\n\n=== CONTEXTO DA EMPRESA ===\n${lines.join("\n")}\n=== FIM DO CONTEXTO ===\n` : "";
 }
+
+function buildUserPrompt(fileName: string, textContent?: string, contextBlock?: string) {
+  return `Arquivo: ${fileName}${contextBlock || ""}\n\n${textContent ? `Conteúdo extraído:\n${textContent}` : "Imagem anexada — analise visualmente o documento."}`;
+}
+
 
 async function callOpenAI(apiKey: string, model: string, fileName: string, textContent?: string, imageBase64?: string, mimeType?: string) {
   const userContent: any[] = [{ type: "text", text: buildUserPrompt(fileName, textContent) }];
