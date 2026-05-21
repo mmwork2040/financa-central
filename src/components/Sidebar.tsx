@@ -129,7 +129,7 @@ export const Sidebar = () => {
   // Auto-open submenus when on their routes
   useEffect(() => {
     const cadastrosPaths = ["/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods", "/users", "/cartoes-credito"];
-    const configPaths = ["/settings", "/settings/integracoes", "/settings/termos"];
+    const configPaths = ["/settings", "/settings/termos", "/perfis-acesso", "/permissions"];
     const adminPaths = ["/settings/webhooks", "/settings/logs", "/settings/n8n-templates", "/settings/assinaturas", "/admin/ia-global"];
     if (cadastrosPaths.some(p => location.pathname.startsWith(p))) setCadastrosOpen(true);
     if (configPaths.some(p => location.pathname === p || location.pathname.startsWith(p + "/"))) setConfigOpen(true);
@@ -231,7 +231,7 @@ export const Sidebar = () => {
     { name: "Notas Fiscais", icon: FileText, path: "/notas-fiscais", businessOnly: true, visible: showNotas },
     { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true, visible: showAds },
     { name: "Projetos", icon: Briefcase, path: "/projetos", businessOnly: true },
-    { name: "Importar", icon: FileUp, path: "/importar-documentos" },
+    
     { name: "Relatórios", icon: PieChart, path: "/reports" },
   ];
   const mainItems = (isPessoal ? allMainItems.filter(i => !i.businessOnly) : allMainItems)
@@ -250,14 +250,13 @@ export const Sidebar = () => {
     ? allCadastrosItems.filter(i => !(i as any).businessOnly)
     : allCadastrosItems.filter(i => !(i as any).pessoalOnly);
 
-  // Configurações: empresa, integrações, acesso e termos
+  // Configurações: empresa (com integrações dentro), acesso & permissões, termos
   const configItems = [
     { name: isPessoal ? "Pessoal" : "Empresa", icon: isPessoal ? UserCircle : Building2, path: "/settings" },
-    { name: "Integrações", icon: Plug, path: "/settings/integracoes" },
-    { name: "Perfis de Acesso", icon: UserCog, path: "/perfis-acesso" },
-    { name: "Permissões", icon: ShieldCheck, path: "/permissions" },
+    { name: "Acesso e Permissões", icon: UserCog, path: "/perfis-acesso" },
     { name: "Termos e Políticas", icon: ScrollText, path: "/settings/termos" },
   ];
+
 
   // Super Admin: itens globais da plataforma
   const adminGlobalItems = isSuperAdmin ? [

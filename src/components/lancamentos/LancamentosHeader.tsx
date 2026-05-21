@@ -1,8 +1,10 @@
 
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Filter, MessageCircle, Plus, Receipt, RefreshCw, Search } from "lucide-react";
+import { Eye, EyeOff, Filter, MessageCircle, Plus, Receipt, RefreshCw, Search, Upload } from "lucide-react";
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
 import ExportDropdown from "@/components/common/ExportDropdown";
@@ -91,6 +93,20 @@ export const LancamentosHeader = () => {
           </Tooltip>
         </TooltipProvider>
         <ExportDropdown onExport={handleExport} />
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/importar-documentos">
+                  <Upload className="mr-1.5 h-4 w-4" />
+                  <span className="hidden sm:inline">Importar</span>
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>Importar documentos (extratos, notas, etc.)</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
         {chatLancamentosUrl && (
           <TooltipProvider delayDuration={200}>
             <Tooltip>

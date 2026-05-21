@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { UserCog, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { usePerfisAcesso, PerfilAcessoPermissao } from "@/hooks/usePerfisAcesso";
 import { toast } from "sonner";
+import { AcessoTabs } from "@/components/common/AcessoTabs";
+
 
 const SCREENS = [
   { value: "users", name: "Usuários" },
@@ -93,6 +95,8 @@ const PerfisAcesso = () => {
 
   return (
     <div className="space-y-6">
+      <AcessoTabs />
+
       <div>
         <div className="flex items-center gap-2 mb-1">
           <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">

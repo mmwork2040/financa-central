@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
+import { AcessoTabs } from "@/components/common/AcessoTabs";
+
 import {
   Card,
   CardContent,
@@ -225,6 +227,8 @@ const Permissoes = () => {
   
   return (
     <div className="space-y-6">
+      <AcessoTabs />
+
       <div>
         <div className="flex items-center gap-2 mb-1">
           <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
