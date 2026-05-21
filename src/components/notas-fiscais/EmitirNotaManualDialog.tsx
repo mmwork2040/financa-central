@@ -49,14 +49,6 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess, initialCliente 
   const [tab, setTab] = useState("cliente");
   const [emitting, setEmitting] = useState(false);
 
-  // Preselect cliente when opened with initialCliente
-  useEffect(() => {
-    if (open && initialCliente) {
-      setSelectedCliente(initialCliente);
-      setTab("cliente");
-    }
-  }, [open, initialCliente]);
-
   // --- Cliente search ---
   const [clienteSearch, setClienteSearch] = useState("");
   const [clientes, setClientes] = useState<ClienteResult[]>([]);
@@ -68,6 +60,14 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess, initialCliente 
   const [loadingVendas, setLoadingVendas] = useState(false);
   const [selectedVendaIds, setSelectedVendaIds] = useState<Set<string>>(new Set());
   const [vendaEdits, setVendaEdits] = useState<Record<string, { produto: string; valor: string }>>({});
+
+  // Preselect cliente when opened with initialCliente
+  useEffect(() => {
+    if (open && initialCliente) {
+      setSelectedCliente(initialCliente);
+      setTab("cliente");
+    }
+  }, [open, initialCliente]);
 
   // --- Manual form ---
   const [manual, setManual] = useState({
