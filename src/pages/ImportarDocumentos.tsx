@@ -1205,8 +1205,6 @@ const ImportarDocumentos = () => {
                         </Button>
                       </div>
                     )}
-                      </table>
-                    </div>
                   </div>
                 )
               )}
