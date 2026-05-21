@@ -23,6 +23,7 @@ interface Plano {
   link_acesso: string | null;
   ordem: number;
   max_empresas: number;
+  limite_tokens_ia_mes?: number | null;
 }
 
 const periodoOptions = [
@@ -49,6 +50,7 @@ const PlanosAssinaturaConfig = () => {
     ordem: 0,
     max_empresas: "1",
     max_notas_fiscais: "0",
+    limite_tokens_ia_mes: "0",
   });
 
   useEffect(() => {
