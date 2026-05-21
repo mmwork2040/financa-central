@@ -392,7 +392,7 @@ const VendasDigitais = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
@@ -402,7 +402,7 @@ const VendasDigitais = () => {
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground">Registre vendas manuais e receba vendas das plataformas conectadas</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {chatVendasUrl && (
             <TooltipProvider delayDuration={200}>
               <Tooltip>
@@ -424,6 +424,7 @@ const VendasDigitais = () => {
           )}
         </div>
       </div>
+
 
       {/* Connected platforms status */}
       <Card>
