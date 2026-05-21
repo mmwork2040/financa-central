@@ -228,6 +228,17 @@ const Clientes = () => {
           onEdit={openModal}
           onDelete={confirmDelete}
           onSupportDelete={handleSupportDelete}
+          onEmitirNota={(c) => {
+            setEmitirCliente({
+              id: c.id,
+              nome: c.nome,
+              cpf_cnpj: c.cpf_cnpj || null,
+              email: c.email || null,
+              telefone: c.telefone || null,
+              endereco: c.endereco || null,
+            });
+            setEmitirOpen(true);
+          }}
           hasPendingRequest={(id) => hasPendingRequest("clientes", id)}
           canEdit={canAlterar}
           canDelete={canExcluir}
