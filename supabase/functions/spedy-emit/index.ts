@@ -222,6 +222,21 @@ serve(async (req) => {
         })
         .eq("id", venda_id);
 
+      // Log request/response for traceability
+      await supabase.from("logs_integracoes").insert({
+        empresa_id: venda.empresa_id,
+        plataforma: "spedy",
+        evento: "spedy-emit:rejected",
+        status: "error",
+        payload: {
+          venda_id,
+          request_url: spedyUrl,
+          request_payload: payload,
+          response_status: spedyResponse.status,
+          response_body: spedyData,
+        },
+      });
+
       return new Response(JSON.stringify({
         error: "Erro na emissão",
         details: errorDetail,
@@ -237,6 +252,21 @@ serve(async (req) => {
         invoice_status: "PROCESSING",
       })
       .eq("id", venda_id);
+
+    // Log success
+    await supabase.from("logs_integracoes").insert({
+      empresa_id: venda.empresa_id,
+      plataforma: "spedy",
+      evento: "spedy-emit:sent",
+      status: "success",
+      payload: {
+        venda_id,
+        request_url: spedyUrl,
+        request_payload: payload,
+        response_status: spedyResponse.status,
+        response_body: spedyData,
+      },
+    });
 
     return new Response(JSON.stringify({
       success: true,
