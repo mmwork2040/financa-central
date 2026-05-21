@@ -95,6 +95,13 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                         </div>
                       ) : (
                         <>
+                          {onEmitirNota && (
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => onEmitirNota(c)}>
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger><TooltipContent><p>Emitir nota fiscal</p></TooltipContent></Tooltip></TooltipProvider>
+                          )}
                           {canEdit && (
                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(c)}>
                               <Pencil className="h-4 w-4" />
