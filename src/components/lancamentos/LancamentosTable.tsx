@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Check, Lock, Clock, Pencil, Trash2, Send } from "lucide-react";
+import { ArrowUpDown, Check, Lock, Clock, Pencil, Trash2, Send, Repeat, Layers } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
