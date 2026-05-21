@@ -702,6 +702,40 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
           throw error;
         }
 
+        // Propagar para futuros se solicitado e item faz parte de série
+        const grupoId = (dataToSave as any).recorrencia_grupo_id || (lancamentos.find(l => l.id === selectedId) as any)?.recorrencia_grupo_id;
+        if (scope === "future" && grupoId) {
+          const baseDesc = (dataToSave.descricao || "").replace(/\s*\(\d+\/\d+\)\s*$/, "");
+          const futurePayload: any = {
+            valor: updatePayload.valor,
+            categoria_id: updatePayload.categoria_id,
+            fornecedor_id: updatePayload.fornecedor_id,
+            cliente_id: updatePayload.cliente_id,
+            conta_bancaria_id: updatePayload.conta_bancaria_id,
+            forma_pagamento_id: updatePayload.forma_pagamento_id,
+            projeto_id: updatePayload.projeto_id,
+            tipo: updatePayload.tipo,
+          };
+          // Buscar irmãos pendentes/cancelados com data >= atual
+          const { data: siblings } = await supabase
+            .from("lancamentos")
+            .select("id, parcela_atual, total_parcelas")
+            .eq("recorrencia_grupo_id", grupoId)
+            .neq("id", selectedId)
+            .gte("data_vencimento", dataToSave.data_vencimento)
+            .in("status", ["pendente", "cancelado"]);
+
+          if (siblings && siblings.length) {
+            await Promise.all(siblings.map((s: any) => {
+              const desc = s.total_parcelas && s.parcela_atual
+                ? `${baseDesc} (${s.parcela_atual}/${s.total_parcelas})`
+                : baseDesc;
+              return supabase.from("lancamentos").update({ ...futurePayload, descricao: desc }).eq("id", s.id);
+            }));
+          }
+        }
+
+
         // Fire webhook for edit
         try {
           await supabase.functions.invoke("fire-webhook", {
