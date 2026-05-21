@@ -13,6 +13,7 @@ import { ptBR } from "date-fns/locale";
 import { useIsMobile } from "@/hooks/use-mobile";
 import PageHeader from "@/components/common/PageHeader";
 import EmitirNotaManualDialog from "@/components/notas-fiscais/EmitirNotaManualDialog";
+import NotaFiscalDetailDialog from "@/components/notas-fiscais/NotaFiscalDetailDialog";
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   ISSUED: { label: "Emitida", icon: CheckCircle2, variant: "default" },
