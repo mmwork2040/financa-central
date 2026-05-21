@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Save } from "lucide-react";
+import { Plus, Save, ArrowLeftRight } from "lucide-react";
 
 export type EntityOption = { id: string; nome: string };
 export type CategoriaOption = { id: string; nome: string; tipo: string };
@@ -26,6 +26,8 @@ export type EditableItem = {
   forma_pagamento_id?: string | null;
   projeto_id?: string | null;
   observacoes: string | null;
+  conta_bancaria_id?: string | null;
+  conta_destino_id?: string | null;
 };
 
 interface Props {
@@ -37,6 +39,7 @@ interface Props {
   clientes: EntityOption[];
   formasPagamento: EntityOption[];
   projetos: EntityOption[];
+  contasBancarias: EntityOption[];
   onSave: (patch: EditableItem) => void;
 }
 
@@ -50,7 +53,6 @@ const normalize = (s: string) =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-// Mapeia tipo do lançamento -> tipo de categoria correspondente
 const categoriaTipoFor = (tipoLancamento: string): string => {
   if (tipoLancamento === "receita") return "receita";
   if (tipoLancamento === "investimento") return "investimento";
@@ -58,37 +60,35 @@ const categoriaTipoFor = (tipoLancamento: string): string => {
 };
 
 export const EditImportItemDialog: React.FC<Props> = ({
-  open, onOpenChange, item, categorias, fornecedores, clientes, formasPagamento, projetos, onSave,
+  open, onOpenChange, item, categorias, fornecedores, clientes, formasPagamento, projetos, contasBancarias, onSave,
 }) => {
   const [form, setForm] = useState<EditableItem | null>(null);
 
   useEffect(() => {
     if (item) {
       const updatedForm = { ...item };
+      // Fallback mínimo só quando NÃO existe descrição alguma vinda do documento.
       if (!updatedForm.descricao || updatedForm.descricao === "Sem descrição" || updatedForm.descricao.trim() === "") {
-        const acao = updatedForm.tipo_sugerido === "receita" ? "Recebimento" : "Pagamento";
+        const acao = updatedForm.tipo_sugerido === "receita" ? "Recebimento" : updatedForm.tipo_sugerido === "transferencia" ? "Transferência" : "Pagamento";
         const entidade = updatedForm.fornecedor_cliente || "";
-        const valor = updatedForm.valor ? updatedForm.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "";
-        if (entidade && valor) updatedForm.descricao = `${acao} de ${valor} - ${entidade}`;
-        else if (entidade) updatedForm.descricao = `${acao} - ${entidade}`;
-        else if (updatedForm.observacoes) updatedForm.descricao = `${acao}: ${updatedForm.observacoes.substring(0, 50)}${updatedForm.observacoes.length > 50 ? "..." : ""}`;
+        if (entidade) updatedForm.descricao = `${acao} - ${entidade}`;
+        else updatedForm.descricao = acao;
       }
       setForm(updatedForm);
     }
   }, [item]);
 
+  const isTransferencia = form?.tipo_sugerido === "transferencia";
   const isReceita = form?.tipo_sugerido === "receita";
   const entityList = isReceita ? clientes : fornecedores;
   const entityLabel = isReceita ? "Cliente" : "Fornecedor";
   const currentEntityId = isReceita ? form?.cliente_id : form?.fornecedor_id;
 
-  // Categorias filtradas pelo tipo atual
   const categoriaTipo = categoriaTipoFor(form?.tipo_sugerido || "despesa");
   const categoriasFiltradas = categorias.filter(c => c.tipo === categoriaTipo);
 
   const update = (patch: Partial<EditableItem>) => setForm(prev => prev ? { ...prev, ...patch } : prev);
 
-  // Reset de categoria_id quando o tipo muda e a categoria selecionada não pertence ao novo tipo
   useEffect(() => {
     if (!form?.categoria_id || form.categoria_id === NEW) return;
     const cat = categorias.find(c => c.id === form.categoria_id);
@@ -97,9 +97,8 @@ export const EditImportItemDialog: React.FC<Props> = ({
     }
   }, [form?.tipo_sugerido, categorias, categoriaTipo]);
 
-  // Auto-match case-insensitive
   useEffect(() => {
-    if (!form) return;
+    if (!form || isTransferencia) return;
 
     if (form.fornecedor_cliente && (currentEntityId === NEW || !currentEntityId)) {
       const normalizedName = normalize(form.fornecedor_cliente);
@@ -161,9 +160,15 @@ export const EditImportItemDialog: React.FC<Props> = ({
 
   const handleSubmit = () => {
     if (!form.descricao?.trim()) return;
+    if (isTransferencia) {
+      if (!form.conta_bancaria_id || !form.conta_destino_id) return;
+      if (form.conta_bancaria_id === form.conta_destino_id) return;
+    }
     onSave(form);
     onOpenChange(false);
   };
+
+  const transferInvalid = isTransferencia && (!form.conta_bancaria_id || !form.conta_destino_id || form.conta_bancaria_id === form.conta_destino_id);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -199,118 +204,162 @@ export const EditImportItemDialog: React.FC<Props> = ({
           </div>
 
           <div>
-            <Label>Data</Label>
+            <Label>Data da transação</Label>
             <Input type="date" value={form.data || ""} onChange={(e) => update({ data: e.target.value || null })} />
+            <p className="text-[10px] text-muted-foreground mt-1">Será usada como vencimento e pagamento (lançamento já realizado).</p>
           </div>
 
-          <div>
+          <div className="md:col-span-2">
             <Label>Tipo</Label>
             <Select
               value={form.tipo_sugerido}
-              onValueChange={(v) => update({ tipo_sugerido: v, cliente_id: null, fornecedor_id: null })}
+              onValueChange={(v) => update({ tipo_sugerido: v, cliente_id: null, fornecedor_id: null, categoria_id: null })}
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="receita">Receita</SelectItem>
                 <SelectItem value="despesa">Despesa</SelectItem>
                 <SelectItem value="investimento">Investimento</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-
-          {/* Fornecedor / Cliente */}
-          <div className="md:col-span-2">
-            <Label>{entityLabel}</Label>
-            <Select value={currentEntityId || ""} onValueChange={handleEntityChange}>
-              <SelectTrigger>
-                <SelectValue placeholder={`Selecione um ${entityLabel.toLowerCase()} existente ou crie novo`} />
-              </SelectTrigger>
-              <SelectContent>
-                {entityList.map(e => (
-                  <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
-                ))}
-                <SelectItem value={NEW}>
-                  <span className="flex items-center gap-1.5 text-primary">
-                    <Plus className="h-3.5 w-3.5" /> Criar novo {entityLabel.toLowerCase()}
-                  </span>
+                <SelectItem value="transferencia">
+                  <span className="flex items-center gap-1.5"><ArrowLeftRight className="h-3.5 w-3.5" /> Transferência entre contas</span>
                 </SelectItem>
               </SelectContent>
             </Select>
-            {(currentEntityId === NEW || !currentEntityId) && (
-              <div className="mt-2 space-y-1">
-                <div className="flex items-center gap-1.5 px-1">
-                  <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200">
-                    <Plus className="h-2.5 w-2.5 mr-1" /> Novo cadastro
-                  </Badge>
-                  <span className="text-[10px] text-muted-foreground">Este {entityLabel.toLowerCase()} será criado ao importar</span>
-                </div>
-                <Input
-                  placeholder={`Nome do ${entityLabel.toLowerCase()}`}
-                  value={form.fornecedor_cliente || ""}
-                  onChange={(e) => update({ fornecedor_cliente: e.target.value })}
-                  maxLength={150}
-                />
-              </div>
-            )}
           </div>
 
-          {/* Categoria */}
-          <div className="md:col-span-2">
-            <Label>Categoria ({categoriaTipo})</Label>
-            <Select value={form.categoria_id || ""} onValueChange={handleCategoriaChange}>
+          {/* Conta bancária (sempre visível) */}
+          <div className={isTransferencia ? "" : "md:col-span-2"}>
+            <Label>{isTransferencia ? "Conta de origem *" : "Conta bancária"}</Label>
+            <Select value={form.conta_bancaria_id || NONE} onValueChange={(v) => update({ conta_bancaria_id: v === NONE ? null : v })}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione uma categoria existente ou crie nova" />
+                <SelectValue placeholder="Selecione a conta" />
               </SelectTrigger>
               <SelectContent>
-                {categoriasFiltradas.length === 0 && (
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                    Nenhuma categoria de {categoriaTipo} cadastrada
-                  </div>
-                )}
-                {categoriasFiltradas.map(c => (
+                {!isTransferencia && <SelectItem value={NONE}>Conta principal (padrão)</SelectItem>}
+                {contasBancarias.map(c => (
                   <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                 ))}
-                <SelectItem value={NEW}>
-                  <span className="flex items-center gap-1.5 text-primary">
-                    <Plus className="h-3.5 w-3.5" /> Criar nova categoria
-                  </span>
-                </SelectItem>
               </SelectContent>
             </Select>
-            {(form.categoria_id === NEW || !form.categoria_id) && (
-              <div className="mt-2 space-y-1">
-                <div className="flex items-center gap-1.5 px-1">
-                  <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200">
-                    <Plus className="h-2.5 w-2.5 mr-1" /> Nova categoria
-                  </Badge>
-                  <span className="text-[10px] text-muted-foreground">Esta categoria será criada ao importar</span>
-                </div>
-                <Input
-                  placeholder="Nome da categoria"
-                  value={form.categoria_sugerida || ""}
-                  onChange={(e) => update({ categoria_sugerida: e.target.value })}
-                  maxLength={80}
-                />
-              </div>
-            )}
           </div>
 
+          {isTransferencia && (
+            <div>
+              <Label>Conta de destino *</Label>
+              <Select value={form.conta_destino_id || NONE} onValueChange={(v) => update({ conta_destino_id: v === NONE ? null : v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a conta destino" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contasBancarias.map(c => (
+                    <SelectItem key={c.id} value={c.id} disabled={c.id === form.conta_bancaria_id}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {transferInvalid && (
+                <p className="text-[10px] text-destructive mt-1">Selecione contas de origem e destino diferentes.</p>
+              )}
+            </div>
+          )}
+
+          {/* Fornecedor / Cliente — oculto em transferência */}
+          {!isTransferencia && (
+            <div className="md:col-span-2">
+              <Label>{entityLabel}</Label>
+              <Select value={currentEntityId || ""} onValueChange={handleEntityChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder={`Selecione um ${entityLabel.toLowerCase()} existente ou crie novo`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {entityList.map(e => (
+                    <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                  ))}
+                  <SelectItem value={NEW}>
+                    <span className="flex items-center gap-1.5 text-primary">
+                      <Plus className="h-3.5 w-3.5" /> Criar novo {entityLabel.toLowerCase()}
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              {(currentEntityId === NEW || !currentEntityId) && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center gap-1.5 px-1">
+                    <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200">
+                      <Plus className="h-2.5 w-2.5 mr-1" /> Novo cadastro
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground">Este {entityLabel.toLowerCase()} será criado ao importar</span>
+                  </div>
+                  <Input
+                    placeholder={`Nome do ${entityLabel.toLowerCase()}`}
+                    value={form.fornecedor_cliente || ""}
+                    onChange={(e) => update({ fornecedor_cliente: e.target.value })}
+                    maxLength={150}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Categoria — oculta em transferência */}
+          {!isTransferencia && (
+            <div className="md:col-span-2">
+              <Label>Categoria ({categoriaTipo})</Label>
+              <Select value={form.categoria_id || ""} onValueChange={handleCategoriaChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma categoria existente ou crie nova" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoriasFiltradas.length === 0 && (
+                    <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                      Nenhuma categoria de {categoriaTipo} cadastrada
+                    </div>
+                  )}
+                  {categoriasFiltradas.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                  ))}
+                  <SelectItem value={NEW}>
+                    <span className="flex items-center gap-1.5 text-primary">
+                      <Plus className="h-3.5 w-3.5" /> Criar nova categoria
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              {(form.categoria_id === NEW || !form.categoria_id) && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center gap-1.5 px-1">
+                    <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200">
+                      <Plus className="h-2.5 w-2.5 mr-1" /> Nova categoria
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground">Esta categoria será criada ao importar</span>
+                  </div>
+                  <Input
+                    placeholder="Nome da categoria"
+                    value={form.categoria_sugerida || ""}
+                    onChange={(e) => update({ categoria_sugerida: e.target.value })}
+                    maxLength={80}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Projeto */}
-          <div className="md:col-span-2">
-            <Label>Projeto</Label>
-            <Select value={form.projeto_id || NONE} onValueChange={handleProjetoChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sem projeto" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE}>Sem projeto</SelectItem>
-                {projetos.map(p => (
-                  <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!isTransferencia && (
+            <div className="md:col-span-2">
+              <Label>Projeto</Label>
+              <Select value={form.projeto_id || NONE} onValueChange={handleProjetoChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sem projeto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>Sem projeto</SelectItem>
+                  {projetos.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Forma de pagamento */}
           <div className="md:col-span-2">
@@ -361,7 +410,7 @@ export const EditImportItemDialog: React.FC<Props> = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSubmit}>
+          <Button onClick={handleSubmit} disabled={transferInvalid}>
             <Save className="h-4 w-4 mr-2" /> Salvar alterações
           </Button>
         </DialogFooter>
