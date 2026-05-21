@@ -54,9 +54,13 @@ export const LancamentosFormDialog = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [modo, setModo] = useState<LancamentoModo>("unico");
   const [recorrenciaInicio, setRecorrenciaInicio] = useState<string | null>(null);
+  const [editScope, setEditScope] = useState<"single" | "future">("single");
 
-  // Detect if editing an existing recurring lancamento
+  // Detect if editing an existing series (recorrente ou parcelado)
   const isEditingRecorrente = !!selectedId && formData.recorrente && !!(formData as any).recorrencia_grupo_id;
+  const isEditingParcelado = !!selectedId && !formData.recorrente && !!(formData as any).recorrencia_grupo_id && (formData.total_parcelas ?? 0) > 1;
+  const isEditingSeries = isEditingRecorrente || isEditingParcelado;
+
 
   // Derived: is this an investment sub-operation that auto-sets status?
   const isAutoStatus = selectedTipo === "investimento" && ["resgate", "rentabilidade", "reajuste"].includes(subtipoInvestimento);
@@ -211,9 +215,11 @@ export const LancamentosFormDialog = () => {
       handleInputChange(syntheticEvent);
     }
     setConfirmOpen(false);
+    const scope = isEditingSeries ? editScope : "single";
     // Small delay to let state propagate
-    setTimeout(() => handleSave(), 50);
+    setTimeout(() => handleSave(scope), 50);
   };
+
 
   // Get display label for confirmation dialog
   const getDisplayTipo = () => {
@@ -422,13 +428,28 @@ export const LancamentosFormDialog = () => {
                   {modo === "parcelado" && formData.total_parcelas && formData.total_parcelas > 1 && (
                     <p className="text-primary font-medium">{formatCurrency(formData.valor || 0)} total → {formData.total_parcelas}x de {formatCurrency(Math.round(((formData.valor || 0) / formData.total_parcelas) * 100) / 100)}</p>
                   )}
-                  {isEditingRecorrente && (
-                    <p className="text-xs text-amber-600 font-medium">⚠ Apenas esta ocorrência será alterada. A cadeia recorrente não será afetada.</p>
+                  {isEditingSeries && (
+                    <div className="pt-2 mt-2 border-t space-y-2">
+                      <p className="text-xs font-medium text-foreground">
+                        Este lançamento faz parte de {isEditingParcelado ? "um parcelamento" : "uma série recorrente (fixa)"}. Aplicar alteração em:
+                      </p>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="flex items-center gap-2 text-xs cursor-pointer">
+                          <input type="radio" name="edit-scope" value="single" checked={editScope === "single"} onChange={() => setEditScope("single")} />
+                          Apenas {isEditingParcelado ? "esta parcela" : "este mês"}
+                        </label>
+                        <label className="flex items-center gap-2 text-xs cursor-pointer">
+                          <input type="radio" name="edit-scope" value="future" checked={editScope === "future"} onChange={() => setEditScope("future")} />
+                          Este e os próximos pendentes {isEditingParcelado ? "(parcelas seguintes)" : "(meses seguintes)"}
+                        </label>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
+
           <AlertDialogFooter>
             <AlertDialogCancel>Voltar</AlertDialogCancel>
             <AlertDialogAction onClick={handleSaveWithRecorrencia}>

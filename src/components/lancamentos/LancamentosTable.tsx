@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Check, Lock, Clock, Pencil, Trash2, Send } from "lucide-react";
+import { ArrowUpDown, Check, Lock, Clock, Pencil, Trash2, Send, Repeat, Layers } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
@@ -57,6 +57,30 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
   } = useLancamentosContext();
 
   const lancamentos = lancamentosOverride || contextLancamentos;
+
+  const renderSerieBadges = (l: any) => {
+    const isParcelado = !!l.recorrencia_grupo_id && (l.total_parcelas ?? 0) > 1 && l.parcela_atual;
+    const isFixa = !!l.recorrente;
+    return (
+      <>
+        {isParcelado && (
+          <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+            <span className="ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-purple-100 text-purple-700 cursor-help">
+              <Layers className="h-2.5 w-2.5" />{l.parcela_atual}/{l.total_parcelas}
+            </span>
+          </TooltipTrigger><TooltipContent><p>Parcela {l.parcela_atual} de {l.total_parcelas}</p></TooltipContent></Tooltip></TooltipProvider>
+        )}
+        {isFixa && (
+          <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+            <span className="ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-700 cursor-help">
+              <Repeat className="h-2.5 w-2.5" />Fixa
+            </span>
+          </TooltipTrigger><TooltipContent><p>Despesa/receita fixa — repete todos os meses</p></TooltipContent></Tooltip></TooltipProvider>
+        )}
+      </>
+    );
+  };
+
   const showActions = canAlterar || canExcluir;
   const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(lancamentos);
 
@@ -208,7 +232,9 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                               <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-100 text-blue-700 cursor-help">Previsto</span>
                             </TooltipTrigger><TooltipContent><p>Data prevista: {new Date(l.data_vencimento).toLocaleDateString('pt-BR')}</p></TooltipContent></Tooltip></TooltipProvider>
                           )}
+                          {renderSerieBadges(l)}
                         </p>
+
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getTipoBadgeClass(l.tipo, l.origem)}`}>
                             {l.origem === "resgate_investimento" ? "Resgate" : l.origem === "rentabilidade_investimento" ? "Rentabilidade" : l.origem === "reajuste_investimento" ? "Reajuste" : l.tipo === "receita" ? "Receita" : l.tipo === "investimento" ? "Investimento" : "Despesa"}
@@ -392,6 +418,8 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                         <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-100 text-blue-700 cursor-help">Previsto</span>
                       </TooltipTrigger><TooltipContent><p>Data prevista: {new Date(lancamento.data_vencimento).toLocaleDateString('pt-BR')}</p></TooltipContent></Tooltip></TooltipProvider>
                     )}
+                    {renderSerieBadges(lancamento)}
+
                     <div className="text-xs text-muted-foreground">
                       {lancamento.fornecedor ? `Fornecedor: ${lancamento.fornecedor.nome}` : 
                         lancamento.cliente ? `Cliente: ${lancamento.cliente.nome}` : ''}
