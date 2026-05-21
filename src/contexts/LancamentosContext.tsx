@@ -120,7 +120,7 @@ interface LancamentosContextType {
   handleFilterSelectChange: (field: string, value: string | null) => void;
   handleDelete: (scope?: "single" | "future") => Promise<void>;
   handleEdit: (lancamento: Lancamento) => void;
-  handleSave: () => Promise<void>;
+  handleSave: (scope?: "single" | "future") => Promise<void>;
   handleStatus: (id: string, status: "pendente" | "pago" | "recebido" | "cancelado") => Promise<void>;
   aplicarFiltros: () => void;
   resetFilters: () => void;
