@@ -150,6 +150,7 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
       if (uploadError) throw uploadError;
 
       setFiscal(prev => ({ ...prev, certificado_digital_url: path }));
+      await fetchCertMeta();
       toast.success("Certificado digital enviado com sucesso!");
     } catch (error: any) {
       toast.error(error.message || "Erro ao enviar certificado");
