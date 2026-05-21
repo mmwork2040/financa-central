@@ -155,8 +155,9 @@ const ConfigGlobalIA = () => {
           <Brain className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">IA Global</h1>
-          <p className="text-sm text-muted-foreground">Configure uma única chave de IA e libere acesso por empresa.</p>
+          <h1 className="text-2xl font-bold">IA — Provedor Global</h1>
+          <p className="text-sm text-muted-foreground">Chave de IA da plataforma (fallback). Empresas podem usar a própria em <strong>Configurações → Integrações → IA da Empresa</strong>.</p>
+
         </div>
       </div>
 
