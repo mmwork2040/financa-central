@@ -249,17 +249,51 @@ Deno.serve(async (req) => {
 
     const response = await fetch(testUrl, fetchOptions);
 
-    const isSuccess = response.ok || response.status === 401 && plataforma === "hotmart";
-    // Some APIs return 403 for valid keys with limited permissions - that still means key is valid
     const validStatuses = [200, 201, 202, 204];
     const partiallyValid = [401, 403];
 
     let message: string;
     let status: "success" | "error" | "warning";
+    let modelInfo: { available: number; model_valid?: boolean; selected_model?: string } | undefined;
 
     if (validStatuses.includes(response.status)) {
-      message = "Conexão validada com sucesso! Credenciais funcionando.";
-      status = "success";
+      // For AI providers, parse model list and validate selected model
+      const aiProviders = ["openai", "google_gemini", "anthropic", "deepseek"];
+      if (aiProviders.includes(plataforma)) {
+        try {
+          const body = await response.clone().json();
+          let models: string[] = [];
+          if (plataforma === "openai" || plataforma === "deepseek") {
+            models = (body?.data || []).map((m: any) => m.id);
+          } else if (plataforma === "anthropic") {
+            models = (body?.data || []).map((m: any) => m.id);
+          } else if (plataforma === "google_gemini") {
+            models = (body?.models || []).map((m: any) => (m.name || "").replace(/^models\//, ""));
+          }
+          const total = models.length;
+          if (selectedModel) {
+            const match = models.some((m) => m === selectedModel || m.includes(selectedModel) || selectedModel.includes(m));
+            modelInfo = { available: total, model_valid: match, selected_model: selectedModel };
+            if (match) {
+              message = `✅ Conexão OK · Modelo "${selectedModel}" disponível · ${total} modelo(s) acessível(is).`;
+              status = "success";
+            } else {
+              message = `⚠️ Chave válida (${total} modelos), mas o modelo "${selectedModel}" não consta na lista da sua conta.`;
+              status = "warning";
+            }
+          } else {
+            modelInfo = { available: total };
+            message = `✅ Conexão OK · ${total} modelo(s) disponível(is). Selecione um modelo padrão.`;
+            status = "success";
+          }
+        } catch {
+          message = "Conexão validada com sucesso! Credenciais funcionando.";
+          status = "success";
+        }
+      } else {
+        message = "Conexão validada com sucesso! Credenciais funcionando.";
+        status = "success";
+      }
     } else if (partiallyValid.includes(response.status)) {
       message = `Credenciais rejeitadas pela API (HTTP ${response.status}). Verifique se a chave está correta e ativa.`;
       status = "error";
