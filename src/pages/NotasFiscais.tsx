@@ -30,6 +30,8 @@ const NotasFiscais = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [emitirOpen, setEmitirOpen] = useState(false);
+  const [emittingId, setEmittingId] = useState<string | null>(null);
+  const [filterMode, setFilterMode] = useState<"todas" | "pendentes" | "emitidas">("todas");
 
   const fetchVendas = async () => {
     if (!empresaId) return;
@@ -39,8 +41,8 @@ const NotasFiscais = () => {
         .from("vendas_digitais")
         .select("*")
         .eq("empresa_id", empresaId)
-        .not("invoice_status", "is", null)
-        .order("data_venda", { ascending: false });
+        .order("data_venda", { ascending: false })
+        .limit(500);
 
       if (error) throw error;
       setVendas(data || []);
@@ -54,6 +56,25 @@ const NotasFiscais = () => {
   useEffect(() => {
     fetchVendas();
   }, [empresaId]);
+
+  const emitOne = async (vendaId: string) => {
+    setEmittingId(vendaId);
+    try {
+      const { data, error } = await supabase.functions.invoke("spedy-emit", {
+        body: { venda_id: vendaId },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || data?.details || error?.message || "Erro ao emitir");
+      } else {
+        toast.success("Nota enviada para emissão");
+        fetchVendas();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao emitir");
+    } finally {
+      setEmittingId(null);
+    }
+  };
 
   const filtered = vendas.filter(v => {
     const term = search.toLowerCase();
