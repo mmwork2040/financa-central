@@ -153,7 +153,7 @@ const NotasFiscais = () => {
       </div>
 
       {/* Search + Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -162,6 +162,19 @@ const NotasFiscais = () => {
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
+        </div>
+        <div className="flex items-center gap-1 rounded-md border bg-card p-0.5">
+          {(["todas", "pendentes", "emitidas"] as const).map(m => (
+            <Button
+              key={m}
+              size="sm"
+              variant={filterMode === m ? "default" : "ghost"}
+              className="h-7 text-xs capitalize"
+              onClick={() => setFilterMode(m)}
+            >
+              {m}
+            </Button>
+          ))}
         </div>
         <Button onClick={() => setEmitirOpen(true)} className="gap-1.5">
           <Plus className="h-4 w-4" /> {!isMobile && "Emitir Nota"}
