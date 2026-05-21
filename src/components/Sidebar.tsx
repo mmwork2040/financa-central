@@ -219,18 +219,23 @@ export const Sidebar = () => {
   const showExpanded = isExpanded || isMobile;
   
   // Simplified menu structure
+  // Visibility flags for company-specific modules
+  const showVendas = isSuperAdmin || hasSalesIntegration;
+  const showNotas = isSuperAdmin || fiscalConfigured || (planControles?.max_notas_fiscais ?? 0) > 0;
+  const showAds = isSuperAdmin || hasAdsIntegration;
 
   const allMainItems = [
     { name: "Dashboard", icon: Home, path: "/dashboard" },
     { name: "Lançamentos", icon: Files, path: "/transactions" },
-    { name: "Importar", icon: FileUp, path: "/importar-documentos" },
-    { name: "Vendas", icon: ShoppingCart, path: "/vendas-digitais", businessOnly: true },
-    { name: "Notas Fiscais", icon: FileText, path: "/notas-fiscais", businessOnly: true },
-    { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true, requiresAds: true },
+    { name: "Vendas", icon: ShoppingCart, path: "/vendas-digitais", businessOnly: true, visible: showVendas },
+    { name: "Notas Fiscais", icon: FileText, path: "/notas-fiscais", businessOnly: true, visible: showNotas },
+    { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true, visible: showAds },
     { name: "Projetos", icon: Briefcase, path: "/projetos", businessOnly: true },
+    { name: "Importar", icon: FileUp, path: "/importar-documentos" },
+    { name: "Relatórios", icon: PieChart, path: "/reports" },
   ];
   const mainItems = (isPessoal ? allMainItems.filter(i => !i.businessOnly) : allMainItems)
-    .filter((i: any) => !i.requiresAds || hasAdsIntegration || isSuperAdmin);
+    .filter((i: any) => i.visible !== false);
 
   const allCadastrosItems = [
     { name: "Clientes", icon: UsersRound, path: "/clientes", businessOnly: true },
@@ -245,30 +250,25 @@ export const Sidebar = () => {
     ? allCadastrosItems.filter(i => !(i as any).businessOnly)
     : allCadastrosItems.filter(i => !(i as any).pessoalOnly);
 
-  const bottomItems = [
-    { name: "Relatórios", icon: PieChart, path: "/reports" },
-  ];
-
-  // Configurações: apenas itens da empresa/usuário
+  // Configurações: empresa, integrações, acesso e termos
   const configItems = [
     { name: isPessoal ? "Pessoal" : "Empresa", icon: isPessoal ? UserCircle : Building2, path: "/settings" },
     { name: "Integrações", icon: Plug, path: "/settings/integracoes" },
+    { name: "Perfis de Acesso", icon: UserCog, path: "/perfis-acesso" },
+    { name: "Permissões", icon: ShieldCheck, path: "/permissions" },
     { name: "Termos e Políticas", icon: ScrollText, path: "/settings/termos" },
   ];
 
-  // Administração: apenas Super Admin
+  // Super Admin: itens globais da plataforma
   const adminGlobalItems = isSuperAdmin ? [
-    { name: "IA Global", icon: Brain, path: "/admin/ia-global" },
-    { name: "Assinaturas", icon: CreditCard, path: "/settings/assinaturas" },
+    { name: "IA — Provedor Global", icon: Brain, path: "/admin/ia-global" },
+    { name: "Planos de Assinatura", icon: CreditCard, path: "/settings/assinaturas" },
     { name: "Webhooks", icon: Webhook, path: "/settings/webhooks" },
     { name: "n8n Templates", icon: Code2, path: "/settings/n8n-templates" },
     { name: "Logs", icon: ScrollText, path: "/settings/logs" },
   ] : [];
 
-  const adminItems = [
-    { name: "Permissões", icon: ShieldCheck, path: "/permissions" },
-    { name: "Perfis de Acesso", icon: UserCog, path: "/perfis-acesso" },
-  ];
+
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
