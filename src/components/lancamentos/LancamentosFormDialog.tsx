@@ -215,9 +215,11 @@ export const LancamentosFormDialog = () => {
       handleInputChange(syntheticEvent);
     }
     setConfirmOpen(false);
+    const scope = isEditingSeries ? editScope : "single";
     // Small delay to let state propagate
-    setTimeout(() => handleSave(), 50);
+    setTimeout(() => handleSave(scope), 50);
   };
+
 
   // Get display label for confirmation dialog
   const getDisplayTipo = () => {
