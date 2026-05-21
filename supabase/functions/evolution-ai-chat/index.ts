@@ -456,6 +456,35 @@ Deno.serve(async (req) => {
     const llmData = await llmResponse.json();
     let reply = config.extractResponse(llmData) || "Desculpe, não consegui processar sua mensagem.";
 
+    // Log de uso de tokens (apenas IA Global)
+    if (usingGlobal) {
+      const usage = llmData?.usage || llmData?.usageMetadata || {};
+      const inputTokens = Number(usage.prompt_tokens ?? usage.input_tokens ?? usage.promptTokenCount ?? 0);
+      const outputTokens = Number(usage.completion_tokens ?? usage.output_tokens ?? usage.candidatesTokenCount ?? 0);
+      const totalTokens = Number(usage.total_tokens ?? usage.totalTokenCount ?? (inputTokens + outputTokens));
+
+      await supabase.from("ai_usage_log").insert({
+        empresa_id: empresaId,
+        user_id: userId,
+        provider: llmProvider,
+        model: globalModel,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        total_tokens: totalTokens,
+        origem: "chat",
+      });
+
+      // Aviso 80%
+      if (tokenLimit > 0) {
+        const novoUso = tokensUsed + totalTokens;
+        const pct = (novoUso / tokenLimit) * 100;
+        if (pct >= 80 && pct < 100) {
+          reply += `\n\n⚠️ Atenção: você usou ${Math.round(pct)}% do limite mensal de IA (${novoUso.toLocaleString("pt-BR")}/${tokenLimit.toLocaleString("pt-BR")} tokens).`;
+        }
+      }
+    }
+
+
     // ─── Step 6: Process action commands from LLM response ───
     const actionRegex = /\[AÇÃO:ATUALIZAR_DESCRICAO\|ID:([a-f0-9-]+)\|NOVA_DESCRICAO:(.+?)\]/gi;
     let match;
