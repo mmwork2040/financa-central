@@ -30,6 +30,8 @@ const Clientes = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false);
   const [currentCliente, setCurrentCliente] = useState<Cliente>({ ...initialCliente });
+  const [emitirOpen, setEmitirOpen] = useState(false);
+  const [emitirCliente, setEmitirCliente] = useState<any>(null);
 
   // Hooks para formatação dos inputs
   const cpfCnpjInput = useFormatInput(currentCliente.cpf_cnpj || "", "document");
