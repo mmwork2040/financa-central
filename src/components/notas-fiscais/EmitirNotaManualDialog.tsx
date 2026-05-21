@@ -44,10 +44,18 @@ interface VendaResult {
   invoice_status: string | null;
 }
 
-const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaManualDialogProps) => {
+const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess, initialCliente }: EmitirNotaManualDialogProps) => {
   const { empresaId } = useAuth();
   const [tab, setTab] = useState("cliente");
   const [emitting, setEmitting] = useState(false);
+
+  // Preselect cliente when opened with initialCliente
+  useEffect(() => {
+    if (open && initialCliente) {
+      setSelectedCliente(initialCliente);
+      setTab("cliente");
+    }
+  }, [open, initialCliente]);
 
   // --- Cliente search ---
   const [clienteSearch, setClienteSearch] = useState("");
