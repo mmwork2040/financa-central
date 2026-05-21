@@ -178,12 +178,13 @@ Deno.serve(async (req) => {
 
     let apiKey = "";
     let apiSecret: string | undefined;
+    let selectedModel: string | undefined;
 
     // Lovable AI uses pre-configured key, no need to fetch from integracoes
     if (plataforma !== "lovable_ai") {
       const { data: integ, error: fetchError } = await adminSupabase
         .from("integracoes")
-        .select("api_key_encrypted, api_secret_encrypted, ambiente")
+        .select("api_key_encrypted, api_secret_encrypted, ambiente, webhook_secret")
         .eq("empresa_id", empresa_id)
         .eq("plataforma", plataforma)
         .eq("ativo", true)
@@ -197,6 +198,7 @@ Deno.serve(async (req) => {
       }
       apiKey = integ.api_key_encrypted || "";
       apiSecret = integ.api_secret_encrypted || undefined;
+      selectedModel = integ.webhook_secret || undefined;
     }
 
     const testConfig = TEST_ENDPOINTS[plataforma];
