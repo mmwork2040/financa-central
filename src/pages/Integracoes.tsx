@@ -506,23 +506,16 @@ const Integracoes = () => {
     toast.success("URL copiada para a área de transferência!");
   };
 
-  // Auto-connect Lovable AI if no other IA is active
-  const autoConnectLovableAI = async () => {
-    if (!empresaId || !isSuperAdmin) return;
-    const iaPlataformas = PLATAFORMAS.filter(p => p.categoria === 'ia' && p.id !== 'lovable_ai').map(p => p.id);
-    const hasOtherIA = integracoes.some((i: any) => iaPlataformas.includes(i.plataforma) && i.ativo);
-    const lovableConnected = integracoes.some((i: any) => i.plataforma === 'lovable_ai' && i.ativo);
-    
-    if (!hasOtherIA && !lovableConnected) {
+  // Auto-disconnect Lovable AI (descontinuada – usar APIs próprias)
+  const autoDisconnectLovableAI = async () => {
+    if (!empresaId) return;
+    const lovableActive = integracoes.some((i: any) => i.plataforma === 'lovable_ai' && i.ativo);
+    if (lovableActive) {
       await (supabase as any)
         .from('integracoes')
-        .upsert({
-          empresa_id: empresaId,
-          plataforma: 'lovable_ai',
-          api_key_encrypted: 'webhook_only',
-          ambiente: 'producao',
-          ativo: true,
-        }, { onConflict: 'empresa_id,plataforma' });
+        .update({ ativo: false })
+        .eq('empresa_id', empresaId)
+        .eq('plataforma', 'lovable_ai');
       fetchIntegracoes();
     }
   };
@@ -533,12 +526,12 @@ const Integracoes = () => {
     fetchDisponibilidade();
   }, []);
 
-  // Auto-connect Lovable AI after integracoes are loaded
   useEffect(() => {
     if (!loading && integracoes.length >= 0) {
-      autoConnectLovableAI();
+      autoDisconnectLovableAI();
     }
   }, [loading, integracoes.length]);
+
 
   // Auto-test all active non-webhook-only integrations on page load
   useEffect(() => {
