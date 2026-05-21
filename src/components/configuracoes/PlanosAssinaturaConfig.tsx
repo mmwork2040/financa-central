@@ -82,7 +82,7 @@ const PlanosAssinaturaConfig = () => {
 
   const openNew = () => {
     setEditingPlano(null);
-    setForm({ nome: "", descricao: "", preco: 0, periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, max_empresas: "1", max_notas_fiscais: "0" });
+    setForm({ nome: "", descricao: "", preco: 0, periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, max_empresas: "1", max_notas_fiscais: "0", limite_tokens_ia_mes: "0" });
     setDialogOpen(true);
   };
 
