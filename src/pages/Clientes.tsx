@@ -289,6 +289,13 @@ const Clientes = () => {
         recordName={currentCliente.nome}
         isPending={hasPendingRequest("clientes", currentCliente.id)}
       />
+
+      <EmitirNotaManualDialog
+        open={emitirOpen}
+        onOpenChange={(o) => { setEmitirOpen(o); if (!o) setEmitirCliente(null); }}
+        onSuccess={() => {}}
+        initialCliente={emitirCliente}
+      />
     </div>
   );
 };
