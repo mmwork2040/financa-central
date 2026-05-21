@@ -84,7 +84,7 @@ const CATEGORIAS_INFO: Record<PlataformaCategoria, { label: string; icon: any }>
   bancos: { label: "Bancos", icon: Landmark },
   anuncios: { label: "Anúncios", icon: Megaphone },
   comunicacao: { label: "Comunicação", icon: MessageCircle },
-  ia: { label: "Inteligência Artificial", icon: Brain },
+  ia: { label: "IA da Empresa", icon: Brain },
   notas_fiscais: { label: "Notas Fiscais", icon: FileText },
 };
 
