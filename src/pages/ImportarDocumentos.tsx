@@ -605,7 +605,13 @@ const ImportarDocumentos = () => {
 
         const { textContent, imageBase64, mimeType } = await readFileContent(fileObj);
 
-        const body: any = { fileName: files[i].fileName, textContent, imageBase64, mimeType };
+        const body: any = {
+          fileName: files[i].fileName,
+          textContent,
+          imageBase64,
+          mimeType,
+          contasBancarias: contasBancarias.map(c => ({ nome: c.nome, banco: c.banco, agencia: c.agencia, conta: c.conta })),
+        };
         if (selectedLLM) {
           body.preferredLLM = selectedLLM;
         }
@@ -621,20 +627,33 @@ const ImportarDocumentos = () => {
         if (data?.error) throw new Error(data.error);
 
         const rawItems = (data?.data?.itens || []) as any[];
+        const matchContaByName = (nome: string | null | undefined): string | null => {
+          if (!nome) return null;
+          const n = normalize(nome);
+          const found = contasBancarias.find(c => normalize(c.nome) === n);
+          return found?.id || null;
+        };
         const items: ExtractedItem[] = rawItems.map((item: any) => {
-          // Garantir que campos obrigatórios existam (AI às vezes usa nomes em inglês)
+          const tipo = item.tipo_sugerido || item.type || "despesa";
+          const contaResolvida = matchContaByName(item.conta_bancaria_nome) || contaUploadId || null;
+          const contaDestinoResolvida = matchContaByName(item.conta_destino_nome);
           const normalized: ExtractedItem = {
             descricao: item.descricao || item.description || item.name || "Sem descrição",
             valor: parseFloat(item.valor || item.amount || item.value || 0),
             data: item.data || item.date || null,
-            tipo_sugerido: item.tipo_sugerido || item.type || "despesa",
-            destino_sugerido: item.destino_sugerido || "lancamento",
-            categoria_sugerida: item.categoria_sugerida || item.category || null,
-            fornecedor_cliente: item.fornecedor_cliente || item.merchant || item.vendor || item.client || item.customer || null,
-            forma_pagamento: item.forma_pagamento || item.payment_method || null,
+            tipo_sugerido: tipo,
+            destino_sugerido: tipo === "transferencia" ? "lancamento" : (item.destino_sugerido || "lancamento"),
+            categoria_sugerida: tipo === "transferencia" ? null : (item.categoria_sugerida || item.category || null),
+            fornecedor_cliente: tipo === "transferencia" ? null : (item.fornecedor_cliente || item.merchant || item.vendor || item.client || item.customer || null),
+            forma_pagamento: normalizeFormaPagamento(item.forma_pagamento || item.payment_method || null),
             observacoes: item.observacoes || item.notes || item.observations || null,
             confianca: item.confianca || item.confidence || 100,
+            conta_bancaria_nome: item.conta_bancaria_nome || null,
+            conta_bancaria_id: contaResolvida,
+            conta_destino_nome: item.conta_destino_nome || null,
+            conta_destino_id: contaDestinoResolvida,
           };
+
 
           const dups = findDuplicates(normalized);
           const { selected: _s, possibleDuplicates: _p, original: _o, ...snapshot } = normalized;
