@@ -723,6 +723,33 @@ const ImportarDocumentos = () => {
     ));
   };
 
+  const changeCategoria = (fileIdx: number, itemIdx: number, categoriaId: string) => {
+    setFiles(prev => prev.map((f, fi) =>
+      fi === fileIdx ? {
+        ...f,
+        items: f.items.map((item, ii) => {
+          if (ii !== itemIdx) return item;
+          if (!categoriaId) {
+            return { ...item, categoria_id: null, categoria_sugerida: null };
+          }
+          const cat = categorias.find(c => c.id === categoriaId);
+          return { ...item, categoria_id: categoriaId, categoria_sugerida: cat?.nome || item.categoria_sugerida };
+        }),
+      } : f
+    ));
+  };
+
+  const changeProjeto = (fileIdx: number, itemIdx: number, projetoId: string) => {
+    setFiles(prev => prev.map((f, fi) =>
+      fi === fileIdx ? {
+        ...f,
+        items: f.items.map((item, ii) =>
+          ii === itemIdx ? { ...item, projeto_id: projetoId || null } : item
+        ),
+      } : f
+    ));
+  };
+
   const changeTipo = (fileIdx: number, itemIdx: number, tipo: string) => {
     setFiles(prev => prev.map((f, fi) =>
       fi === fileIdx ? {
@@ -1254,9 +1281,9 @@ const ImportarDocumentos = () => {
                             <th className="p-2">Descrição</th>
                             <th className="p-2">Valor</th>
                             <th className="p-2">Data</th>
-                            <th className="p-2">Destino</th>
+                            <th className="p-2">Categoria</th>
                             <th className="p-2">Tipo</th>
-                            <th className="p-2">Confiança</th>
+                            <th className="p-2">Projeto</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1400,15 +1427,25 @@ const ImportarDocumentos = () => {
                                   <td className="p-2 font-mono font-medium whitespace-nowrap">{formatCurrency(item.valor)}</td>
                                   <td className="p-2 whitespace-nowrap">{item.data || "—"}</td>
                                   <td className="p-2">
-                                    <Select value={item.destino_sugerido} onValueChange={(v) => changeDestino(fileIdx, itemIdx, v)}>
-                                      <SelectTrigger className="h-7 text-xs w-28">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="lancamento">Lançamento</SelectItem>
-                                        <SelectItem value="venda">Venda</SelectItem>
-                                      </SelectContent>
-                                    </Select>
+                                    {item.tipo_sugerido === "transferencia" ? (
+                                      <span className="text-xs text-muted-foreground italic">Transferência</span>
+                                    ) : (
+                                      <Select
+                                        value={item.categoria_id || ""}
+                                        onValueChange={(v) => changeCategoria(fileIdx, itemIdx, v)}
+                                      >
+                                        <SelectTrigger className="h-7 text-xs w-40">
+                                          <SelectValue placeholder={item.categoria_sugerida || "Selecione"} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {categorias
+                                            .filter(c => c.tipo === (item.tipo_sugerido === "investimento" ? "investimento" : item.tipo_sugerido))
+                                            .map(c => (
+                                              <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                      </Select>
+                                    )}
                                   </td>
                                   <td className="p-2">
                                     <Select value={item.tipo_sugerido} onValueChange={(v) => changeTipo(fileIdx, itemIdx, v)}>
@@ -1423,10 +1460,20 @@ const ImportarDocumentos = () => {
                                     </Select>
                                   </td>
                                   <td className="p-2">
-                                    <div className="flex items-center gap-1.5">
-                                      <Progress value={item.confianca} className="h-1.5 w-12" />
-                                      <span className="text-xs text-muted-foreground">{item.confianca}%</span>
-                                    </div>
+                                    <Select
+                                      value={item.projeto_id || "none"}
+                                      onValueChange={(v) => changeProjeto(fileIdx, itemIdx, v === "none" ? "" : v)}
+                                    >
+                                      <SelectTrigger className="h-7 text-xs w-36">
+                                        <SelectValue placeholder="Sem projeto" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="none">Sem projeto</SelectItem>
+                                        {projetos.map(p => (
+                                          <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
                                   </td>
                                 </tr>
                               );
