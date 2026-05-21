@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { UserCog, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { usePerfisAcesso, PerfilAcessoPermissao } from "@/hooks/usePerfisAcesso";
 import { toast } from "sonner";
+import { AcessoTabs } from "@/components/common/AcessoTabs";
+
 
 const SCREENS = [
   { value: "users", name: "Usuários" },
