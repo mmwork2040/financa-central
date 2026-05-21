@@ -98,7 +98,14 @@ const NotasFiscais = () => {
     erros: vendas.filter(v => v.invoice_status === "REJECTED" || v.invoice_status === "ERROR").length,
   };
 
-  const renderStatus = (status: string) => {
+  const renderStatus = (status: string | null) => {
+    if (!status) {
+      return (
+        <Badge variant="outline" className="gap-1">
+          <Clock className="h-3 w-3" /> Não emitida
+        </Badge>
+      );
+    }
     const config = statusConfig[status] || { label: status, icon: Clock, variant: "outline" as const };
     const Icon = config.icon;
     return (
