@@ -41,6 +41,124 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_global_access: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          liberado: boolean
+          liberado_em: string | null
+          liberado_por: string | null
+          limite_tokens_mes_override: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          liberado?: boolean
+          liberado_em?: string | null
+          liberado_por?: string | null
+          limite_tokens_mes_override?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          liberado?: boolean
+          liberado_em?: string | null
+          liberado_por?: string | null
+          limite_tokens_mes_override?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_global_access_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_global_config: {
+        Row: {
+          api_key: string | null
+          ativo: boolean
+          created_at: string
+          id: string
+          model: string
+          provider: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          api_key?: string | null
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          model: string
+          provider: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          api_key?: string | null
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          model?: string
+          provider?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      ai_usage_log: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          input_tokens: number
+          model: string | null
+          origem: string | null
+          output_tokens: number
+          provider: string | null
+          total_tokens: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          input_tokens?: number
+          model?: string | null
+          origem?: string | null
+          output_tokens?: number
+          provider?: string | null
+          total_tokens?: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          input_tokens?: number
+          model?: string | null
+          origem?: string | null
+          output_tokens?: number
+          provider?: string | null
+          total_tokens?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_log_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asaas_config: {
         Row: {
           ambiente: string
@@ -1246,6 +1364,7 @@ export type Database = {
           grupo: string | null
           id: string
           itens: Json | null
+          limite_tokens_ia_mes: number
           link_acesso: string | null
           max_empresas: number
           nome: string
@@ -1263,6 +1382,7 @@ export type Database = {
           grupo?: string | null
           id?: string
           itens?: Json | null
+          limite_tokens_ia_mes?: number
           link_acesso?: string | null
           max_empresas?: number
           nome: string
@@ -1280,6 +1400,7 @@ export type Database = {
           grupo?: string | null
           id?: string
           itens?: Json | null
+          limite_tokens_ia_mes?: number
           link_acesso?: string | null
           max_empresas?: number
           nome?: string
@@ -1815,6 +1936,11 @@ export type Database = {
     }
     Functions: {
       check_cnpj_exists: { Args: { _cnpj: string }; Returns: boolean }
+      get_ai_token_limit: { Args: { _empresa_id: string }; Returns: number }
+      get_ai_tokens_used_month: {
+        Args: { _empresa_id: string }
+        Returns: number
+      }
       get_user_empresa_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
