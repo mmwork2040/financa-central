@@ -27,9 +27,41 @@ interface Props {
   onCancelled?: () => void;
 }
 
-const NotaFiscalDetailDialog: React.FC<Props> = ({ open, onOpenChange, venda }) => {
+const NotaFiscalDetailDialog: React.FC<Props> = ({ open, onOpenChange, venda, onCancelled }) => {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+
+  const canCancel =
+    !!venda?.spedy_order_id &&
+    venda?.invoice_status &&
+    !["CANCELLED", "REJECTED", "PENDING_EMISSION"].includes(venda.invoice_status);
+
+  const handleCancel = async () => {
+    if (cancelReason.trim().length < 15) {
+      toast.error("Justificativa deve ter pelo menos 15 caracteres");
+      return;
+    }
+    setCancelling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("spedy-cancel", {
+        body: { venda_id: venda.id, reason: cancelReason.trim() },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).details || (data as any).error);
+      toast.success("Nota cancelada com sucesso");
+      setCancelOpen(false);
+      setCancelReason("");
+      onCancelled?.();
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao cancelar a nota");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   useEffect(() => {
     if (!open || !venda) return;
