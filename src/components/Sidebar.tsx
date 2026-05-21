@@ -104,6 +104,10 @@ export const Sidebar = () => {
   const [creatingPessoal, setCreatingPessoal] = useState(false);
   const [confirmSwitchEmpresa, setConfirmSwitchEmpresa] = useState<{ id: string; nome: string } | null>(null);
   const [hasAdsIntegration, setHasAdsIntegration] = useState(false);
+  const [hasSalesIntegration, setHasSalesIntegration] = useState(false);
+  const [fiscalConfigured, setFiscalConfigured] = useState(false);
+
+
 
   const hasPessoalEmpresa = empresas.some(e => e.pessoal === true);
 
