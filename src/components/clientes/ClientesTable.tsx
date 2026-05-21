@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Lock, Clock, Send, Bot, UserPlus } from "lucide-react";
+import { Pencil, Trash2, Lock, Clock, Send, Bot, UserPlus, FileText } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
