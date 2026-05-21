@@ -23,6 +23,7 @@ interface EmitirNotaManualDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  initialCliente?: ClienteResult | null;
 }
 
 interface ClienteResult {
