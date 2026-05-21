@@ -595,6 +595,22 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
                   </CardContent>
                 </Card>
 
+                {(() => {
+                  const faltando: string[] = [];
+                  if (!selectedCliente.cpf_cnpj?.trim()) faltando.push("CPF/CNPJ");
+                  if (!selectedCliente.endereco?.trim()) faltando.push("Endereço");
+                  if (faltando.length === 0) return null;
+                  return (
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
+                      <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="text-xs text-amber-700 dark:text-amber-400">
+                        <p className="font-medium">Dados obrigatórios faltando: {faltando.join(", ")}</p>
+                        <p className="mt-0.5">Edite o cliente em "Clientes" para completar antes de emitir a nota.</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {loadingVendas ? (
                   <div className="flex justify-center py-6">
                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
