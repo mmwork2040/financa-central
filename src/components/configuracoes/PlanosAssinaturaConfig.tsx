@@ -338,6 +338,11 @@ const PlanosAssinaturaConfig = () => {
               <Input type="number" min="0" value={form.max_notas_fiscais} onChange={(e) => setForm(prev => ({ ...prev, max_notas_fiscais: e.target.value }))} placeholder="0 = ilimitado" />
               <p className="text-xs text-muted-foreground">0 = ilimitado</p>
             </div>
+            <div className="space-y-2">
+              <Label>Limite de tokens de IA / mês</Label>
+              <Input type="number" min="0" value={form.limite_tokens_ia_mes} onChange={(e) => setForm(prev => ({ ...prev, limite_tokens_ia_mes: e.target.value }))} placeholder="0 = sem IA" />
+              <p className="text-xs text-muted-foreground">Ex.: 100000. 0 = empresas neste plano não usam IA global.</p>
+            </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Switch checked={form.destaque} onCheckedChange={(v) => setForm(prev => ({ ...prev, destaque: v }))} />
