@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FileText, Search, ExternalLink, CheckCircle2, XCircle, Clock, AlertTriangle, Loader2, RefreshCw, Plus } from "lucide-react";
+import { FileText, Search, ExternalLink, CheckCircle2, XCircle, Clock, AlertTriangle, Loader2, RefreshCw, Plus, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { ptBR } from "date-fns/locale";
 import { useIsMobile } from "@/hooks/use-mobile";
 import PageHeader from "@/components/common/PageHeader";
 import EmitirNotaManualDialog from "@/components/notas-fiscais/EmitirNotaManualDialog";
+import NotaFiscalDetailDialog from "@/components/notas-fiscais/NotaFiscalDetailDialog";
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   ISSUED: { label: "Emitida", icon: CheckCircle2, variant: "default" },
@@ -32,6 +33,7 @@ const NotasFiscais = () => {
   const [emitirOpen, setEmitirOpen] = useState(false);
   const [emittingId, setEmittingId] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<"todas" | "pendentes" | "emitidas">("todas");
+  const [detailVenda, setDetailVenda] = useState<any | null>(null);
 
   const fetchVendas = async () => {
     if (!empresaId) return;
@@ -225,6 +227,15 @@ const NotasFiscais = () => {
                       {!isMobile && (
                         <TableCell>
                           <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 gap-1"
+                              onClick={() => setDetailVenda(v)}
+                              title="Ver detalhes e retorno da API"
+                            >
+                              <Eye className="h-3.5 w-3.5" /> Detalhes
+                            </Button>
                             {isPending(v.invoice_status) && v.invoice_status !== "PROCESSING" && (
                               <Button
                                 size="sm"
@@ -269,6 +280,12 @@ const NotasFiscais = () => {
         open={emitirOpen}
         onOpenChange={setEmitirOpen}
         onSuccess={fetchVendas}
+      />
+
+      <NotaFiscalDetailDialog
+        open={!!detailVenda}
+        onOpenChange={(o) => !o && setDetailVenda(null)}
+        venda={detailVenda}
       />
     </div>
   );
