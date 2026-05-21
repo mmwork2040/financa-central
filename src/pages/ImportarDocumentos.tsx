@@ -497,7 +497,10 @@ const ImportarDocumentos = () => {
           body,
         });
 
-        if (error) throw error;
+        if (error) {
+          const msg = await extractEdgeError(error, "Erro ao processar documento");
+          throw new Error(msg);
+        }
         if (data?.error) throw new Error(data.error);
 
         const rawItems = (data?.data?.itens || []) as any[];
