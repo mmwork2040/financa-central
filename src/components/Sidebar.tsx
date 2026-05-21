@@ -532,16 +532,38 @@ export const Sidebar = () => {
             <>{renderMenuItem({ name: "Configurações", icon: Settings, path: "/settings" })}</>
           )}
           
-          {/* Admin items */}
+          {/* Admin items (Permissões, Perfis de Acesso) */}
           {adminItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
 
-          {/* Super Admin shortcut - sempre visível no topo */}
-          {isSuperAdmin && renderMenuItem({ name: "IA Global", icon: Brain, path: "/admin/ia-global" })}
+          {/* Administração (Super Admin) */}
+          {isSuperAdmin && adminGlobalItems.length > 0 && (
+            showExpanded ? (
+              <li>
+                <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
+                  <CollapsibleTrigger className="sidebar-link w-full justify-between">
+                    <div className="flex items-center gap-3">
+                      <ShieldCheck size={18} />
+                      <span className="text-sm">Administração</span>
+                    </div>
+                    <ChevronDown size={14} className={cn("transition-transform", adminOpen && "rotate-180")} />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <ul className="space-y-0.5 mt-0.5">
+                      {adminGlobalItems.map(item => renderMenuItem(item, true))}
+                    </ul>
+                  </CollapsibleContent>
+                </Collapsible>
+              </li>
+            ) : (
+              adminGlobalItems.map(item => renderMenuItem(item))
+            )
+          )}
 
           {/* Suporte - always last */}
           {renderMenuItem({ name: "Suporte", icon: HelpCircle, path: "/suporte" })}
         </ul>
       </nav>
+      
       
       {/* Logout */}
       <div className="px-2 py-3 border-t border-sidebar-border">
