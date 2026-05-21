@@ -227,6 +227,15 @@ const NotasFiscais = () => {
                       {!isMobile && (
                         <TableCell>
                           <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 gap-1"
+                              onClick={() => setDetailVenda(v)}
+                              title="Ver detalhes e retorno da API"
+                            >
+                              <Eye className="h-3.5 w-3.5" /> Detalhes
+                            </Button>
                             {isPending(v.invoice_status) && v.invoice_status !== "PROCESSING" && (
                               <Button
                                 size="sm"
@@ -271,6 +280,12 @@ const NotasFiscais = () => {
         open={emitirOpen}
         onOpenChange={setEmitirOpen}
         onSuccess={fetchVendas}
+      />
+
+      <NotaFiscalDetailDialog
+        open={!!detailVenda}
+        onOpenChange={(o) => !o && setDetailVenda(null)}
+        venda={detailVenda}
       />
     </div>
   );
