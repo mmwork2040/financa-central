@@ -97,12 +97,56 @@ function parseHotmart(body: any): SaleData | null {
   }
 
   const valorBruto = Number(purchase?.price?.value || purchase?.original_offer_price?.value || purchase?.full_price?.value || purchase?.price || 0);
-  const commissionRaw = Number(purchase?.commission?.value || 0);
-  const fee = commissionRaw > 0 ? (valorBruto - commissionRaw) : Number(purchase?.fee?.value || 0);
-  const valorComissao = commissionRaw > 0 ? commissionRaw : (valorBruto - fee);
 
-  // Hotmart fornece transaction code que identifica unicamente a compra
+  // Hotmart envia commissions[] com { source, value }. Sources comuns: PRODUCER, CO_PRODUCER, AFFILIATE, MARKETPLACE
+  let valorComissao = 0;
+  let commissionSource = "fallback";
+  const commissionsArr: any[] = Array.isArray(purchase?.commissions) ? purchase.commissions : [];
+  if (commissionsArr.length > 0) {
+    const sumBy = (sources: string[]) =>
+      commissionsArr
+        .filter((c) => sources.includes(String(c?.source || "").toUpperCase()))
+        .reduce((acc, c) => acc + Number(c?.value || 0), 0);
+    const producerSum = sumBy(["PRODUCER", "CO_PRODUCER"]);
+    if (producerSum > 0) { valorComissao = producerSum; commissionSource = "PRODUCER+CO_PRODUCER"; }
+    else {
+      const affiliateSum = sumBy(["AFFILIATE"]);
+      if (affiliateSum > 0) { valorComissao = affiliateSum; commissionSource = "AFFILIATE"; }
+    }
+  }
+  if (valorComissao <= 0) {
+    const commissionRaw = Number(purchase?.commission?.value || 0);
+    if (commissionRaw > 0) { valorComissao = commissionRaw; commissionSource = "commission.value"; }
+  }
+  const fee = valorComissao > 0 ? (valorBruto - valorComissao) : Number(purchase?.fee?.value || 0);
+  if (valorComissao <= 0) {
+    valorComissao = valorBruto - fee;
+    commissionSource = "valorBruto - fee";
+  }
+  console.log(`[Hotmart] commission resolved via "${commissionSource}": bruto=${valorBruto} comissao=${valorComissao}`);
+
+  // Hotmart transaction code identifica unicamente a compra
   const transactionId = purchase?.transaction || purchase?.transaction_id || body?.data?.purchase?.transaction || null;
+
+  // Endereço do comprador (buyer.address)
+  const addr = buyer?.address || {};
+  const enderecoStruct: ClienteEndereco = {
+    cep: addr?.zipcode || addr?.zip_code || addr?.cep || null,
+    rua: addr?.address || addr?.street || addr?.rua || null,
+    numero: addr?.number || addr?.address_number || addr?.numero || null,
+    complemento: addr?.complement || addr?.address_comp || addr?.complemento || null,
+    bairro: addr?.neighborhood || addr?.bairro || null,
+    cidade: addr?.city || addr?.cidade || null,
+    estado: addr?.state || addr?.estado || null,
+    pais: addr?.country || addr?.country_iso || addr?.pais || null,
+  };
+  const enderecoStr = [
+    enderecoStruct.rua && enderecoStruct.numero ? `${enderecoStruct.rua}, ${enderecoStruct.numero}` : enderecoStruct.rua,
+    enderecoStruct.complemento,
+    enderecoStruct.bairro,
+    enderecoStruct.cidade && enderecoStruct.estado ? `${enderecoStruct.cidade}/${enderecoStruct.estado}` : enderecoStruct.cidade,
+    enderecoStruct.cep,
+  ].filter(Boolean).join(" - ") || null;
 
   return {
     plataforma: "hotmart",
@@ -119,6 +163,8 @@ function parseHotmart(body: any): SaleData | null {
     cliente_email: buyer?.email || null,
     cliente_telefone: buyer?.phone || buyer?.cel_phone || null,
     cliente_documento: buyer?.document || buyer?.cpf || null,
+    cliente_endereco: enderecoStr,
+    cliente_endereco_struct: enderecoStruct,
     transaction_id: transactionId ? String(transactionId) : null,
   };
 }
