@@ -509,6 +509,9 @@ export const Sidebar = () => {
           {/* Admin items */}
           {adminItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
 
+          {/* Super Admin shortcut - sempre visível no topo */}
+          {isSuperAdmin && renderMenuItem({ name: "IA Global", icon: Brain, path: "/admin/ia-global" })}
+
           {/* Suporte - always last */}
           {renderMenuItem({ name: "Suporte", icon: HelpCircle, path: "/suporte" })}
         </ul>
