@@ -136,22 +136,37 @@ export const Sidebar = () => {
     if (adminPaths.some(p => location.pathname.startsWith(p))) setAdminOpen(true);
   }, [location.pathname]);
 
-  // Check if empresa has any ads integration (Google Ads / Meta Ads)
+  // Check if empresa has any ads / sales integrations and fiscal setup
   useEffect(() => {
-    if (!empresaId || isPessoal) { setHasAdsIntegration(false); return; }
+    if (!empresaId || isPessoal) {
+      setHasAdsIntegration(false);
+      setHasSalesIntegration(false);
+      setFiscalConfigured(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("integracoes")
-        .select("plataforma")
-        .eq("empresa_id", empresaId)
-        .eq("ativo", true)
-        .in("plataforma", ["google_ads", "meta_ads"])
-        .limit(1);
-      if (!cancelled) setHasAdsIntegration((data?.length ?? 0) > 0);
+      const [{ data: ints }, { data: emp }] = await Promise.all([
+        supabase
+          .from("integracoes")
+          .select("plataforma")
+          .eq("empresa_id", empresaId)
+          .eq("ativo", true),
+        supabase
+          .from("empresas")
+          .select("fiscal_configurado")
+          .eq("id", empresaId)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+      const plats = (ints || []).map((i: any) => i.plataforma);
+      setHasAdsIntegration(plats.some((p: string) => ["google_ads", "meta_ads"].includes(p)));
+      setHasSalesIntegration(plats.some((p: string) => ["hotmart", "eduzz", "monetizze", "kiwify", "hubla"].includes(p)));
+      setFiscalConfigured(!!emp?.fiscal_configurado);
     })();
     return () => { cancelled = true; };
   }, [empresaId, isPessoal]);
+
 
   useEffect(() => {
     setMobileOpen(false);
