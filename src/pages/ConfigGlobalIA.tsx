@@ -35,30 +35,57 @@ const ConfigGlobalIA = () => {
   const [hasKey, setHasKey] = useState(false);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [access, setAccess] = useState<Record<string, boolean>>({});
+  const [overrides, setOverrides] = useState<Record<string, string>>({});
+  const [usage, setUsage] = useState<Record<string, number>>({});
+  const [planLimits, setPlanLimits] = useState<Record<string, number>>({}); // empresa_id -> limite do plano
+
+  const loadAll = async () => {
+    setLoading(true);
+    const [{ data: cfg }, { data: emps }, { data: liberacoes }, { data: usageRows }, { data: perfis }] = await Promise.all([
+      sb.from("ai_global_config").select("*").eq("ativo", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("empresas").select("id, nome, email").order("nome"),
+      sb.from("ai_global_access").select("empresa_id, liberado, limite_tokens_mes_override"),
+      sb.from("ai_usage_log")
+        .select("empresa_id, total_tokens")
+        .gte("created_at", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+      sb.from("perfis").select("empresa_id, assinatura_plano_id, planos_assinatura:assinatura_plano_id(limite_tokens_ia_mes)").not("empresa_id", "is", null),
+    ]);
+
+    if (cfg) {
+      setProvider(cfg.provider);
+      setModel(cfg.model);
+      setAtivo(cfg.ativo);
+      setHasKey(!!cfg.api_key);
+    }
+    setEmpresas((emps || []) as Empresa[]);
+    const acc: Record<string, boolean> = {};
+    const ovr: Record<string, string> = {};
+    (liberacoes || []).forEach((l: any) => {
+      acc[l.empresa_id] = l.liberado;
+      ovr[l.empresa_id] = l.limite_tokens_mes_override != null ? String(l.limite_tokens_mes_override) : "";
+    });
+    setAccess(acc);
+    setOverrides(ovr);
+
+    const usageMap: Record<string, number> = {};
+    (usageRows || []).forEach((r: any) => {
+      usageMap[r.empresa_id] = (usageMap[r.empresa_id] || 0) + Number(r.total_tokens || 0);
+    });
+    setUsage(usageMap);
+
+    const limitMap: Record<string, number> = {};
+    (perfis || []).forEach((p: any) => {
+      const lim = Number(p.planos_assinatura?.limite_tokens_ia_mes || 0);
+      if (p.empresa_id && lim > (limitMap[p.empresa_id] || 0)) limitMap[p.empresa_id] = lim;
+    });
+    setPlanLimits(limitMap);
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!isSuperAdmin) return;
-    const load = async () => {
-      setLoading(true);
-      const [{ data: cfg }, { data: emps }, { data: liberacoes }] = await Promise.all([
-        sb.from("ai_global_config").select("*").eq("ativo", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
-        supabase.from("empresas").select("id, nome, email").order("nome"),
-        sb.from("ai_global_access").select("empresa_id, liberado"),
-      ]);
-
-      if (cfg) {
-        setProvider(cfg.provider);
-        setModel(cfg.model);
-        setAtivo(cfg.ativo);
-        setHasKey(!!cfg.api_key);
-      }
-      setEmpresas((emps || []) as Empresa[]);
-      const acc: Record<string, boolean> = {};
-      (liberacoes || []).forEach((l: any) => { acc[l.empresa_id] = l.liberado; });
-      setAccess(acc);
-      setLoading(false);
-    };
-    load();
+    loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuperAdmin]);
 
   if (!isSuperAdmin) return <Navigate to="/dashboard" replace />;
