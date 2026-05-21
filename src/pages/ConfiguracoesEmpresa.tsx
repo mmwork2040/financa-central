@@ -177,15 +177,24 @@ const ConfiguracoesEmpresa = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
-            {isPessoal ? <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" /> : <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10">
+              {isPessoal ? <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" /> : <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />}
+            </div>
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">{isPessoal ? "Configurações Pessoais" : "Configurações da Empresa"}</h1>
           </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">{isPessoal ? "Configurações Pessoais" : "Configurações da Empresa"}</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Gerencie os dados e personalização</p>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground">Gerencie os dados e personalização</p>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/settings/integracoes">
+            <Plug className="mr-1.5 h-4 w-4" />
+            Integrações
+          </Link>
+        </Button>
       </div>
+
 
       {isPessoal && (
         <Card className="border-dashed">
