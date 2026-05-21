@@ -600,23 +600,73 @@ Deno.serve(async (req) => {
       else {
         action = "created";
 
-        // Auto-cadastro de cliente
+        // Auto-cadastro / enriquecimento de cliente
         if (saleData.cliente) {
           const clienteName = saleData.cliente;
           const isEmail = clienteName.includes("@");
           const nome = isEmail ? clienteName.split("@")[0] : clienteName;
-          const email = isEmail ? clienteName : null;
+          const email = saleData.cliente_email || (isEmail ? clienteName : null);
+          const doc = saleData.cliente_documento;
+          const endStruct = saleData.cliente_endereco_struct || null;
 
-          const { data: existingCliente } = await supabase
-            .from("clientes").select("id").eq("empresa_id", empresaId)
-            .or(`nome.eq.${clienteName}${email ? `,email.eq.${email}` : ""}`)
-            .maybeSingle();
+          // Busca por documento (mais confiável), depois email, depois nome
+          let existingCliente: any = null;
+          if (doc) {
+            const { data } = await supabase
+              .from("clientes").select("id, telefone, cpf_cnpj, endereco, cep, rua, numero, complemento, bairro, cidade, estado, email")
+              .eq("empresa_id", empresaId).eq("cpf_cnpj", doc).maybeSingle();
+            existingCliente = data;
+          }
+          if (!existingCliente && email) {
+            const { data } = await supabase
+              .from("clientes").select("id, telefone, cpf_cnpj, endereco, cep, rua, numero, complemento, bairro, cidade, estado, email")
+              .eq("empresa_id", empresaId).eq("email", email).maybeSingle();
+            existingCliente = data;
+          }
+          if (!existingCliente) {
+            const { data } = await supabase
+              .from("clientes").select("id, telefone, cpf_cnpj, endereco, cep, rua, numero, complemento, bairro, cidade, estado, email")
+              .eq("empresa_id", empresaId).eq("nome", clienteName).maybeSingle();
+            existingCliente = data;
+          }
 
-          if (existingCliente) clienteId = existingCliente.id;
-          else {
-            const { data: newCliente } = await supabase.from("clientes").insert({
+          if (existingCliente) {
+            clienteId = existingCliente.id;
+            // Enriquecimento: preencher apenas campos vazios para não sobrescrever edições do usuário
+            const patch: any = {};
+            if (!existingCliente.email && email) patch.email = email;
+            if (!existingCliente.telefone && saleData.cliente_telefone) patch.telefone = saleData.cliente_telefone;
+            if (!existingCliente.cpf_cnpj && doc) patch.cpf_cnpj = doc;
+            if (!existingCliente.endereco && saleData.cliente_endereco) patch.endereco = saleData.cliente_endereco;
+            if (endStruct) {
+              if (!existingCliente.cep && endStruct.cep) patch.cep = endStruct.cep;
+              if (!existingCliente.rua && endStruct.rua) patch.rua = endStruct.rua;
+              if (!existingCliente.numero && endStruct.numero) patch.numero = endStruct.numero;
+              if (!existingCliente.complemento && endStruct.complemento) patch.complemento = endStruct.complemento;
+              if (!existingCliente.bairro && endStruct.bairro) patch.bairro = endStruct.bairro;
+              if (!existingCliente.cidade && endStruct.cidade) patch.cidade = endStruct.cidade;
+              if (!existingCliente.estado && endStruct.estado) patch.estado = endStruct.estado;
+            }
+            if (Object.keys(patch).length > 0) {
+              await supabase.from("clientes").update(patch).eq("id", clienteId);
+            }
+          } else {
+            const insertPayload: any = {
               empresa_id: empresaId, nome, email, ativo: true, origem: "integracao",
-            }).select("id").single();
+              telefone: saleData.cliente_telefone || null,
+              cpf_cnpj: doc || null,
+              endereco: saleData.cliente_endereco || null,
+            };
+            if (endStruct) {
+              insertPayload.cep = endStruct.cep;
+              insertPayload.rua = endStruct.rua;
+              insertPayload.numero = endStruct.numero;
+              insertPayload.complemento = endStruct.complemento;
+              insertPayload.bairro = endStruct.bairro;
+              insertPayload.cidade = endStruct.cidade;
+              insertPayload.estado = endStruct.estado;
+            }
+            const { data: newCliente } = await supabase.from("clientes").insert(insertPayload).select("id").single();
             if (newCliente) clienteId = newCliente.id;
           }
         }
@@ -638,11 +688,13 @@ Deno.serve(async (req) => {
             cliente_email: saleData.cliente_email,
             cliente_telefone: saleData.cliente_telefone,
             cliente_documento: saleData.cliente_documento,
+            cliente_endereco: saleData.cliente_endereco || null,
             origem: "integracao",
             transaction_id: saleData.transaction_id,
             ...(clienteId ? { cliente_id: clienteId } : {}),
           })
           .select("id").single();
+
 
         if (vendaError) {
           console.error("Erro ao inserir venda:", vendaError);
