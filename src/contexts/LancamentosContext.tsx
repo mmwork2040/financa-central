@@ -765,7 +765,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
             lancamento.id === selectedId ? { ...lancamento, ...dataToSave } : lancamento
           )
         );
-        toast.success("O lançamento foi atualizado com sucesso.");
+        toast.success(scope === "future" ? "Este e os próximos lançamentos foram atualizados." : "O lançamento foi atualizado com sucesso.");
       } else {
         // Create new lancamento
         const totalParcelas = dataToSave.total_parcelas;
