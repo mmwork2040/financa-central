@@ -102,6 +102,7 @@ const PlanosAssinaturaConfig = () => {
       ordem: plano.ordem,
       max_empresas: String(plano.max_empresas ?? 1),
       max_notas_fiscais: String(controles.max_notas_fiscais ?? 0),
+      limite_tokens_ia_mes: String((plano as any).limite_tokens_ia_mes ?? 0),
     });
     setDialogOpen(true);
   };
