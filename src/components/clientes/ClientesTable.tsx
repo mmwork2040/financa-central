@@ -196,6 +196,13 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                       </div>
                     ) : (
                       <div className="flex justify-center items-center gap-2">
+                        {onEmitirNota && (
+                          <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => onEmitirNota(cliente)}>
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger><TooltipContent><p>Emitir nota fiscal</p></TooltipContent></Tooltip></TooltipProvider>
+                        )}
                         {canEdit && (
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(cliente)}>
                             <Pencil className="h-4 w-4" />
