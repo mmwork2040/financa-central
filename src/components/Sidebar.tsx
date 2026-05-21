@@ -99,9 +99,11 @@ export const Sidebar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const [createEmpresaOpen, setCreateEmpresaOpen] = useState(false);
   const [creatingPessoal, setCreatingPessoal] = useState(false);
   const [confirmSwitchEmpresa, setConfirmSwitchEmpresa] = useState<{ id: string; nome: string } | null>(null);
+  const [hasAdsIntegration, setHasAdsIntegration] = useState(false);
 
   const hasPessoalEmpresa = empresas.some(e => e.pessoal === true);
 
@@ -123,10 +125,29 @@ export const Sidebar = () => {
   // Auto-open submenus when on their routes
   useEffect(() => {
     const cadastrosPaths = ["/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods", "/users", "/cartoes-credito"];
-    const configPaths = ["/settings", "/settings/integracoes", "/settings/webhooks", "/settings/logs", "/settings/n8n-templates", "/settings/assinaturas", "/settings/termos"];
+    const configPaths = ["/settings", "/settings/integracoes", "/settings/termos"];
+    const adminPaths = ["/settings/webhooks", "/settings/logs", "/settings/n8n-templates", "/settings/assinaturas", "/admin/ia-global"];
     if (cadastrosPaths.some(p => location.pathname.startsWith(p))) setCadastrosOpen(true);
-    if (configPaths.some(p => location.pathname.startsWith(p))) setConfigOpen(true);
+    if (configPaths.some(p => location.pathname === p || location.pathname.startsWith(p + "/"))) setConfigOpen(true);
+    if (adminPaths.some(p => location.pathname.startsWith(p))) setAdminOpen(true);
   }, [location.pathname]);
+
+  // Check if empresa has any ads integration (Google Ads / Meta Ads)
+  useEffect(() => {
+    if (!empresaId || isPessoal) { setHasAdsIntegration(false); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("integracoes")
+        .select("plataforma")
+        .eq("empresa_id", empresaId)
+        .eq("ativo", true)
+        .in("plataforma", ["google_ads", "meta_ads"])
+        .limit(1);
+      if (!cancelled) setHasAdsIntegration((data?.length ?? 0) > 0);
+    })();
+    return () => { cancelled = true; };
+  }, [empresaId, isPessoal]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -186,10 +207,11 @@ export const Sidebar = () => {
     { name: "Importar", icon: FileUp, path: "/importar-documentos" },
     { name: "Vendas", icon: ShoppingCart, path: "/vendas-digitais", businessOnly: true },
     { name: "Notas Fiscais", icon: FileText, path: "/notas-fiscais", businessOnly: true },
-    { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true },
+    { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true, requiresAds: true },
     { name: "Projetos", icon: Briefcase, path: "/projetos", businessOnly: true },
   ];
-  const mainItems = isPessoal ? allMainItems.filter(i => !i.businessOnly) : allMainItems;
+  const mainItems = (isPessoal ? allMainItems.filter(i => !i.businessOnly) : allMainItems)
+    .filter((i: any) => !i.requiresAds || hasAdsIntegration || isSuperAdmin);
 
   const allCadastrosItems = [
     { name: "Clientes", icon: UsersRound, path: "/clientes", businessOnly: true },
@@ -208,17 +230,21 @@ export const Sidebar = () => {
     { name: "Relatórios", icon: PieChart, path: "/reports" },
   ];
 
-  const allConfigItems = [
+  // Configurações: apenas itens da empresa/usuário
+  const configItems = [
     { name: isPessoal ? "Pessoal" : "Empresa", icon: isPessoal ? UserCircle : Building2, path: "/settings" },
     { name: "Integrações", icon: Plug, path: "/settings/integracoes" },
-    ...(isSuperAdmin ? [{ name: "Assinaturas", icon: CreditCard, path: "/settings/assinaturas" }] : []),
     { name: "Termos e Políticas", icon: ScrollText, path: "/settings/termos" },
-    ...(isSuperAdmin ? [{ name: "Webhooks", icon: Webhook, path: "/settings/webhooks" }] : []),
-    ...(isSuperAdmin ? [{ name: "n8n Templates", icon: Code2, path: "/settings/n8n-templates" }] : []),
-    ...(isSuperAdmin ? [{ name: "Logs", icon: ScrollText, path: "/settings/logs" }] : []),
-    ...(isSuperAdmin ? [{ name: "IA Global", icon: Brain, path: "/admin/ia-global" }] : []),
   ];
-  const configItems = isPessoal ? allConfigItems.filter(i => !(i as any).businessOnly) : allConfigItems;
+
+  // Administração: apenas Super Admin
+  const adminGlobalItems = isSuperAdmin ? [
+    { name: "IA Global", icon: Brain, path: "/admin/ia-global" },
+    { name: "Assinaturas", icon: CreditCard, path: "/settings/assinaturas" },
+    { name: "Webhooks", icon: Webhook, path: "/settings/webhooks" },
+    { name: "n8n Templates", icon: Code2, path: "/settings/n8n-templates" },
+    { name: "Logs", icon: ScrollText, path: "/settings/logs" },
+  ] : [];
 
   const adminItems = [
     { name: "Permissões", icon: ShieldCheck, path: "/permissions" },
@@ -506,16 +532,38 @@ export const Sidebar = () => {
             <>{renderMenuItem({ name: "Configurações", icon: Settings, path: "/settings" })}</>
           )}
           
-          {/* Admin items */}
+          {/* Admin items (Permissões, Perfis de Acesso) */}
           {adminItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
 
-          {/* Super Admin shortcut - sempre visível no topo */}
-          {isSuperAdmin && renderMenuItem({ name: "IA Global", icon: Brain, path: "/admin/ia-global" })}
+          {/* Administração (Super Admin) */}
+          {isSuperAdmin && adminGlobalItems.length > 0 && (
+            showExpanded ? (
+              <li>
+                <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
+                  <CollapsibleTrigger className="sidebar-link w-full justify-between">
+                    <div className="flex items-center gap-3">
+                      <ShieldCheck size={18} />
+                      <span className="text-sm">Administração</span>
+                    </div>
+                    <ChevronDown size={14} className={cn("transition-transform", adminOpen && "rotate-180")} />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <ul className="space-y-0.5 mt-0.5">
+                      {adminGlobalItems.map(item => renderMenuItem(item, true))}
+                    </ul>
+                  </CollapsibleContent>
+                </Collapsible>
+              </li>
+            ) : (
+              adminGlobalItems.map(item => renderMenuItem(item))
+            )
+          )}
 
           {/* Suporte - always last */}
           {renderMenuItem({ name: "Suporte", icon: HelpCircle, path: "/suporte" })}
         </ul>
       </nav>
+      
       
       {/* Logout */}
       <div className="px-2 py-3 border-t border-sidebar-border">
