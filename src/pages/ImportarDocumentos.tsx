@@ -796,6 +796,8 @@ const ImportarDocumentos = () => {
 
     for (const item of selectedItems) {
       try {
+        const dataEfetiva = item.data || new Date().toISOString().split("T")[0];
+
         if (item.destino_sugerido === "venda") {
           const { error } = await supabase.from("vendas_digitais").insert({
             empresa_id: empresaId,
@@ -811,16 +813,70 @@ const ImportarDocumentos = () => {
             origem: "importacao",
           });
           if (error) throw error;
+        } else if (item.tipo_sugerido === "transferencia") {
+          // Transferência interna: cria par de lançamentos (saída + entrada) usando recorrencia_grupo_id como link
+          if (!item.conta_bancaria_id || !item.conta_destino_id || item.conta_bancaria_id === item.conta_destino_id) {
+            throw new Error("Transferência: selecione contas de origem e destino diferentes");
+          }
+          const grupoId = crypto.randomUUID();
+          let formaPagamentoId: string | null = null;
+          if (item.forma_pagamento_id && item.forma_pagamento_id !== "__new__") {
+            formaPagamentoId = item.forma_pagamento_id;
+          } else if (item.forma_pagamento) {
+            const { data: existing } = await supabase
+              .from("formas_pagamento").select("id").eq("empresa_id", empresaId)
+              .ilike("descricao", item.forma_pagamento).maybeSingle();
+            if (existing?.id) formaPagamentoId = existing.id;
+            else {
+              const { data: created } = await supabase
+                .from("formas_pagamento").insert({ empresa_id: empresaId, descricao: item.forma_pagamento }).select("id").single();
+              if (created?.id) formaPagamentoId = created.id;
+            }
+          }
+          const catSaidaId = await findOrCreateCategoria("Transferência entre contas", "despesa");
+          const catEntradaId = await findOrCreateCategoria("Transferência entre contas", "receita");
+          const basePayload = {
+            empresa_id: empresaId,
+            descricao: item.descricao,
+            valor: item.valor,
+            data_vencimento: dataEfetiva,
+            data_pagamento: dataEfetiva,
+            origem: "importacao",
+            forma_pagamento_id: formaPagamentoId,
+            recorrencia_grupo_id: grupoId,
+          };
+          const { error: e1 } = await supabase.from("lancamentos").insert({
+            ...basePayload,
+            tipo: "despesa",
+            status: "pago",
+            conta_bancaria_id: item.conta_bancaria_id,
+            categoria_id: catSaidaId,
+          });
+          if (e1) throw e1;
+          const { error: e2 } = await supabase.from("lancamentos").insert({
+            ...basePayload,
+            tipo: "receita",
+            status: "recebido",
+            conta_bancaria_id: item.conta_destino_id,
+            categoria_id: catEntradaId,
+          });
+          if (e2) throw e2;
         } else {
           const tipo = item.tipo_sugerido || "despesa";
+          // Documento histórico: data já é data de pagamento. Status auto pago/recebido.
+          const status = item.data
+            ? (tipo === "receita" ? "recebido" : "pago")
+            : "pendente";
           const payload: any = {
             empresa_id: empresaId,
             descricao: item.descricao,
             valor: item.valor,
-            data_vencimento: item.data || new Date().toISOString().split("T")[0],
+            data_vencimento: dataEfetiva,
+            data_pagamento: item.data ? dataEfetiva : null,
             tipo,
-            status: "pendente",
+            status,
             origem: "importacao",
+            conta_bancaria_id: item.conta_bancaria_id || contaUploadId || null,
           };
           if (item.categoria_id && item.categoria_id !== "__new__") {
             payload.categoria_id = item.categoria_id;
@@ -831,7 +887,6 @@ const ImportarDocumentos = () => {
           if (item.forma_pagamento_id && item.forma_pagamento_id !== "__new__") {
             payload.forma_pagamento_id = item.forma_pagamento_id;
           } else if (item.forma_pagamento) {
-            // cria forma de pagamento se não existir
             const { data: existing } = await supabase
               .from("formas_pagamento").select("id").eq("empresa_id", empresaId)
               .ilike("descricao", item.forma_pagamento).maybeSingle();
@@ -856,6 +911,7 @@ const ImportarDocumentos = () => {
             }
           }
           if (item.projeto_id) payload.projeto_id = item.projeto_id;
+
           const { error } = await supabase.from("lancamentos").insert(payload);
           if (error) throw error;
         }
