@@ -418,6 +418,8 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                         <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-100 text-blue-700 cursor-help">Previsto</span>
                       </TooltipTrigger><TooltipContent><p>Data prevista: {new Date(lancamento.data_vencimento).toLocaleDateString('pt-BR')}</p></TooltipContent></Tooltip></TooltipProvider>
                     )}
+                    {renderSerieBadges(lancamento)}
+
                     <div className="text-xs text-muted-foreground">
                       {lancamento.fornecedor ? `Fornecedor: ${lancamento.fornecedor.nome}` : 
                         lancamento.cliente ? `Cliente: ${lancamento.cliente.nome}` : ''}
