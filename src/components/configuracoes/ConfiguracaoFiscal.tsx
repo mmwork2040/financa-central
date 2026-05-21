@@ -31,6 +31,8 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingCert, setUploadingCert] = useState(false);
+  const [certMeta, setCertMeta] = useState<{ name: string; size: number; updated_at: string } | null>(null);
+  const [downloadingCert, setDownloadingCert] = useState(false);
 
   const [fiscal, setFiscal] = useState({
     cnpj: "",
