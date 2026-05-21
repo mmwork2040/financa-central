@@ -320,7 +320,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: status === "success", status, message }),
+      JSON.stringify({ success: status === "success", status, message, modelInfo }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
