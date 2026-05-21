@@ -122,6 +122,7 @@ const ImportarDocumentos = () => {
   const [editingRef, setEditingRef] = useState<{ fileIdx: number; itemIdx: number } | null>(null);
   const editingItem = editingRef ? files[editingRef.fileIdx]?.items[editingRef.itemIdx] : null;
   const [revertRef, setRevertRef] = useState<{ fileIdx: number; itemIdx: number } | null>(null);
+  const [deletePendingRef, setDeletePendingRef] = useState<string | null>(null);
 
   // Paginação
   const ITEMS_PER_PAGE = 10;
@@ -840,7 +841,7 @@ const ImportarDocumentos = () => {
             items={pendingImports} 
             loading={loadingPending}
             onLoad={loadPendingImport}
-            onDelete={deletePendingImport}
+            onDelete={(id) => setDeletePendingRef(id)}
           />
         </div>
       )}
@@ -1285,6 +1286,29 @@ const ImportarDocumentos = () => {
               }}
             >
               Sim, restaurar valores da IA
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deletePendingRef} onOpenChange={(v) => { if (!v) setDeletePendingRef(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover importação pendente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação removerá permanentemente os dados desta análise que ainda não foram importados. Você terá que processar o arquivo novamente se precisar destes dados no futuro.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deletePendingRef) deletePendingImport(deletePendingRef);
+                setDeletePendingRef(null);
+              }}
+            >
+              Remover
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
