@@ -232,7 +232,9 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
                               <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-100 text-blue-700 cursor-help">Previsto</span>
                             </TooltipTrigger><TooltipContent><p>Data prevista: {new Date(l.data_vencimento).toLocaleDateString('pt-BR')}</p></TooltipContent></Tooltip></TooltipProvider>
                           )}
+                          {renderSerieBadges(l)}
                         </p>
+
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getTipoBadgeClass(l.tipo, l.origem)}`}>
                             {l.origem === "resgate_investimento" ? "Resgate" : l.origem === "rentabilidade_investimento" ? "Rentabilidade" : l.origem === "reajuste_investimento" ? "Reajuste" : l.tipo === "receita" ? "Receita" : l.tipo === "investimento" ? "Investimento" : "Despesa"}
