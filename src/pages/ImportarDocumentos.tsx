@@ -74,6 +74,7 @@ type ExtractedItem = {
 };
 
 type FileResult = {
+  id?: string;
   fileName: string;
   status: "pending" | "processing" | "done" | "error";
   items: ExtractedItem[];
@@ -174,6 +175,7 @@ const ImportarDocumentos = () => {
   };
   const loadPendingImport = async (item: PendingImport) => {
     const newFiles: FileResult[] = [{
+      id: item.id,
       fileName: item.nome_arquivo,
       status: "done",
       items: item.dados as any as ExtractedItem[],
@@ -728,13 +730,25 @@ const ImportarDocumentos = () => {
     if (errorCount > 0) toast.error(`${errorCount} item(ns) falharam ao importar`);
 
     if (successCount > 0) {
-      setFiles(prev => prev.map(f => ({
-        ...f,
-        items: f.items.map(item => item.selected ? { ...item, selected: false } : item),
-      })));
+      setFiles(prev => {
+        const next = prev.map(f => ({
+          ...f,
+          items: f.items.map(item => item.selected ? { ...item, selected: false } : item),
+        }));
+        
+        // Remove arquivos que não possuem mais itens pendentes de seleção
+        return next.filter(f => f.items.some(item => item.selected === false || !item.selected));
+      });
       
-      // Marcar importações temporárias como importadas se todos os itens foram processados
-      // Simplificação: apenas atualizamos a lista de pendentes
+      // Remove da base temporária os registros que foram importados (arquivos carregados de pendentes)
+      const importedFileIds = files
+        .filter(f => f.id && f.items.every(item => item.selected))
+        .map(f => f.id as string);
+
+      if (importedFileIds.length > 0) {
+        await Promise.all(importedFileIds.map(id => deletePendingImport(id)));
+      }
+
       fetchPendingImports();
     }
   };
