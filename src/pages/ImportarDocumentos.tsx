@@ -1273,7 +1273,7 @@ const ImportarDocumentos = () => {
                       <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 italic">{file.resumo}</p>
                     )}
 
-                    <div className="overflow-x-auto">
+                    <div className="hidden md:block overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b text-left">
