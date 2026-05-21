@@ -286,6 +286,7 @@ const NotasFiscais = () => {
         open={!!detailVenda}
         onOpenChange={(o) => !o && setDetailVenda(null)}
         venda={detailVenda}
+        onCancelled={fetchVendas}
       />
     </div>
   );

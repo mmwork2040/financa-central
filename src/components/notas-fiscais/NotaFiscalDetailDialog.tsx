@@ -3,21 +3,65 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, FileText, Loader2, Copy, FileCode } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ExternalLink, FileText, Loader2, Copy, FileCode, Ban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Props {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   venda: any | null;
+  onCancelled?: () => void;
 }
 
-const NotaFiscalDetailDialog: React.FC<Props> = ({ open, onOpenChange, venda }) => {
+const NotaFiscalDetailDialog: React.FC<Props> = ({ open, onOpenChange, venda, onCancelled }) => {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+
+  const canCancel =
+    !!venda?.spedy_order_id &&
+    venda?.invoice_status &&
+    !["CANCELLED", "REJECTED", "PENDING_EMISSION"].includes(venda.invoice_status);
+
+  const handleCancel = async () => {
+    if (cancelReason.trim().length < 15) {
+      toast.error("Justificativa deve ter pelo menos 15 caracteres");
+      return;
+    }
+    setCancelling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("spedy-cancel", {
+        body: { venda_id: venda.id, reason: cancelReason.trim() },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).details || (data as any).error);
+      toast.success("Nota cancelada com sucesso");
+      setCancelOpen(false);
+      setCancelReason("");
+      onCancelled?.();
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao cancelar a nota");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   useEffect(() => {
     if (!open || !venda) return;
@@ -102,6 +146,11 @@ const NotaFiscalDetailDialog: React.FC<Props> = ({ open, onOpenChange, venda }) 
               <p className="text-xs text-destructive font-medium">Mensagem de erro</p>
               <p className="text-xs">{venda.invoice_error_message}</p>
             </div>
+          )}
+          {canCancel && (
+            <Button variant="destructive" size="sm" onClick={() => setCancelOpen(true)}>
+              <Ban className="h-3.5 w-3.5 mr-1.5" /> Cancelar nota
+            </Button>
           )}
         </div>
 
@@ -195,6 +244,47 @@ const NotaFiscalDetailDialog: React.FC<Props> = ({ open, onOpenChange, venda }) 
           )}
         </div>
       </DialogContent>
+
+      <AlertDialog open={cancelOpen} onOpenChange={(o) => !cancelling && setCancelOpen(o)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar nota fiscal</AlertDialogTitle>
+            <AlertDialogDescription>
+              O cancelamento será enviado à SEFAZ via Spedy. Informe uma justificativa
+              (mínimo 15 caracteres) — esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            placeholder="Ex.: Erro de digitação no valor / cliente desistiu da compra..."
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            rows={4}
+            disabled={cancelling}
+          />
+          <p className="text-[11px] text-muted-foreground">
+            {cancelReason.trim().length}/15 caracteres mínimos
+          </p>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleCancel();
+              }}
+              disabled={cancelling || cancelReason.trim().length < 15}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {cancelling ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Cancelando...
+                </>
+              ) : (
+                "Confirmar cancelamento"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
