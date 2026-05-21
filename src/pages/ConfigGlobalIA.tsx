@@ -128,20 +128,25 @@ const ConfigGlobalIA = () => {
     }
   };
 
-  const toggleAccess = async (empresaId: string, value: boolean) => {
-    setAccess(prev => ({ ...prev, [empresaId]: value }));
+  const saveOverride = async (empresaId: string) => {
+    const raw = overrides[empresaId];
+    const value = raw === "" || raw == null ? null : Number(raw);
     const { error } = await sb.from("ai_global_access").upsert({
       empresa_id: empresaId,
-      liberado: value,
-      liberado_em: value ? new Date().toISOString() : null,
+      liberado: !!access[empresaId],
+      limite_tokens_mes_override: value,
     }, { onConflict: "empresa_id" });
-    if (error) {
-      toast.error("Erro ao alterar liberação");
-      setAccess(prev => ({ ...prev, [empresaId]: !value }));
-    } else {
-      toast.success(value ? "Empresa liberada" : "Acesso revogado");
-    }
+    if (error) toast.error("Erro ao salvar limite");
+    else toast.success("Limite atualizado");
   };
+
+  const getEffectiveLimit = (empresaId: string): number => {
+    const ovr = overrides[empresaId];
+    if (ovr && ovr !== "") return Number(ovr);
+    return planLimits[empresaId] || 0;
+  };
+
+  const fmt = (n: number) => n.toLocaleString("pt-BR");
 
   return (
     <div className="space-y-6">
