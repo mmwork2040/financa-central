@@ -352,9 +352,25 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
             </CardHeader>
             <CardContent className="space-y-4">
               {fiscal.certificado_digital_url ? (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900">
-                  <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
-                  <span className="text-sm text-green-700 dark:text-green-400">Certificado digital enviado</span>
+                <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                    <span className="text-sm font-medium text-green-700 dark:text-green-400">Certificado digital enviado</span>
+                  </div>
+                  {certMeta && (
+                    <div className="text-xs text-green-700/80 dark:text-green-400/80 pl-6 space-y-0.5">
+                      <div><strong>Arquivo:</strong> {certMeta.name}</div>
+                      {certMeta.size > 0 && <div><strong>Tamanho:</strong> {(certMeta.size / 1024).toFixed(1)} KB</div>}
+                      <div><strong>Enviado em:</strong> {new Date(certMeta.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
+                    </div>
+                  )}
+                  <div className="pl-6">
+                    <Button type="button" variant="outline" size="sm" onClick={handleDownloadCert} disabled={downloadingCert} className="gap-2">
+                      {downloadingCert ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                      Baixar para conferir
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-1">Abra o arquivo localmente para verificar CNPJ/razão social.</p>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
