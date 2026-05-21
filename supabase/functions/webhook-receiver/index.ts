@@ -5,6 +5,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+interface ClienteEndereco {
+  cep: string | null;
+  rua: string | null;
+  numero: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  estado: string | null;
+  pais: string | null;
+}
+
 interface SaleData {
   plataforma: string;
   evento: string;
@@ -20,6 +31,8 @@ interface SaleData {
   cliente_email: string | null;
   cliente_telefone: string | null;
   cliente_documento: string | null;
+  cliente_endereco?: string | null;
+  cliente_endereco_struct?: ClienteEndereco | null;
   transaction_id: string | null;
 }
 
