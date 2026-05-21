@@ -30,6 +30,8 @@ const NotasFiscais = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [emitirOpen, setEmitirOpen] = useState(false);
+  const [emittingId, setEmittingId] = useState<string | null>(null);
+  const [filterMode, setFilterMode] = useState<"todas" | "pendentes" | "emitidas">("todas");
 
   const fetchVendas = async () => {
     if (!empresaId) return;
@@ -39,8 +41,8 @@ const NotasFiscais = () => {
         .from("vendas_digitais")
         .select("*")
         .eq("empresa_id", empresaId)
-        .not("invoice_status", "is", null)
-        .order("data_venda", { ascending: false });
+        .order("data_venda", { ascending: false })
+        .limit(500);
 
       if (error) throw error;
       setVendas(data || []);
@@ -55,8 +57,33 @@ const NotasFiscais = () => {
     fetchVendas();
   }, [empresaId]);
 
+  const emitOne = async (vendaId: string) => {
+    setEmittingId(vendaId);
+    try {
+      const { data, error } = await supabase.functions.invoke("spedy-emit", {
+        body: { venda_id: vendaId },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || data?.details || error?.message || "Erro ao emitir");
+      } else {
+        toast.success("Nota enviada para emissão");
+        fetchVendas();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao emitir");
+    } finally {
+      setEmittingId(null);
+    }
+  };
+
+  const isPending = (s: string | null) => !s || s === "PENDING_EMISSION" || s === "REJECTED" || s === "ERROR";
+  const isIssued = (s: string | null) => s === "ISSUED" || s === "AUTHORIZED";
+
   const filtered = vendas.filter(v => {
+    if (filterMode === "pendentes" && !isPending(v.invoice_status)) return false;
+    if (filterMode === "emitidas" && !isIssued(v.invoice_status)) return false;
     const term = search.toLowerCase();
+    if (!term) return true;
     return (
       (v.cliente || "").toLowerCase().includes(term) ||
       (v.produto || "").toLowerCase().includes(term) ||
@@ -66,12 +93,19 @@ const NotasFiscais = () => {
 
   const stats = {
     total: vendas.length,
-    emitidas: vendas.filter(v => v.invoice_status === "ISSUED" || v.invoice_status === "AUTHORIZED").length,
-    pendentes: vendas.filter(v => v.invoice_status === "PROCESSING" || v.invoice_status === "PENDING_EMISSION").length,
+    emitidas: vendas.filter(v => isIssued(v.invoice_status)).length,
+    pendentes: vendas.filter(v => !v.invoice_status || v.invoice_status === "PROCESSING" || v.invoice_status === "PENDING_EMISSION").length,
     erros: vendas.filter(v => v.invoice_status === "REJECTED" || v.invoice_status === "ERROR").length,
   };
 
-  const renderStatus = (status: string) => {
+  const renderStatus = (status: string | null) => {
+    if (!status) {
+      return (
+        <Badge variant="outline" className="gap-1">
+          <Clock className="h-3 w-3" /> Não emitida
+        </Badge>
+      );
+    }
     const config = statusConfig[status] || { label: status, icon: Clock, variant: "outline" as const };
     const Icon = config.icon;
     return (
@@ -119,7 +153,7 @@ const NotasFiscais = () => {
       </div>
 
       {/* Search + Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -128,6 +162,19 @@ const NotasFiscais = () => {
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
+        </div>
+        <div className="flex items-center gap-1 rounded-md border bg-card p-0.5">
+          {(["todas", "pendentes", "emitidas"] as const).map(m => (
+            <Button
+              key={m}
+              size="sm"
+              variant={filterMode === m ? "default" : "ghost"}
+              className="h-7 text-xs capitalize"
+              onClick={() => setFilterMode(m)}
+            >
+              {m}
+            </Button>
+          ))}
         </div>
         <Button onClick={() => setEmitirOpen(true)} className="gap-1.5">
           <Plus className="h-4 w-4" /> {!isMobile && "Emitir Nota"}
@@ -178,6 +225,22 @@ const NotasFiscais = () => {
                       {!isMobile && (
                         <TableCell>
                           <div className="flex items-center gap-1">
+                            {isPending(v.invoice_status) && v.invoice_status !== "PROCESSING" && (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className="h-7 gap-1"
+                                disabled={emittingId === v.id}
+                                onClick={() => emitOne(v.id)}
+                              >
+                                {emittingId === v.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <FileText className="h-3.5 w-3.5" />
+                                )}
+                                Emitir
+                              </Button>
+                            )}
                             {v.invoice_pdf_url && (
                               <Button variant="ghost" size="sm" asChild>
                                 <a href={v.invoice_pdf_url} target="_blank" rel="noopener noreferrer">

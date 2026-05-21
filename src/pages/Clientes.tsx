@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { generateStyledPDF } from "@/utils/pdfTemplate";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import EmitirNotaManualDialog from "@/components/notas-fiscais/EmitirNotaManualDialog";
 
 const Clientes = () => {
   const { canPerformAction, user, userProfile, empresaId } = useAuth();
@@ -29,6 +30,8 @@ const Clientes = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false);
   const [currentCliente, setCurrentCliente] = useState<Cliente>({ ...initialCliente });
+  const [emitirOpen, setEmitirOpen] = useState(false);
+  const [emitirCliente, setEmitirCliente] = useState<any>(null);
 
   // Hooks para formatação dos inputs
   const cpfCnpjInput = useFormatInput(currentCliente.cpf_cnpj || "", "document");
@@ -225,6 +228,17 @@ const Clientes = () => {
           onEdit={openModal}
           onDelete={confirmDelete}
           onSupportDelete={handleSupportDelete}
+          onEmitirNota={(c) => {
+            setEmitirCliente({
+              id: c.id,
+              nome: c.nome,
+              cpf_cnpj: c.cpf_cnpj || null,
+              email: c.email || null,
+              telefone: c.telefone || null,
+              endereco: c.endereco || null,
+            });
+            setEmitirOpen(true);
+          }}
           hasPendingRequest={(id) => hasPendingRequest("clientes", id)}
           canEdit={canAlterar}
           canDelete={canExcluir}
@@ -274,6 +288,13 @@ const Clientes = () => {
         }
         recordName={currentCliente.nome}
         isPending={hasPendingRequest("clientes", currentCliente.id)}
+      />
+
+      <EmitirNotaManualDialog
+        open={emitirOpen}
+        onOpenChange={(o) => { setEmitirOpen(o); if (!o) setEmitirCliente(null); }}
+        onSuccess={() => {}}
+        initialCliente={emitirCliente}
       />
     </div>
   );

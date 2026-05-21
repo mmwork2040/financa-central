@@ -23,6 +23,7 @@ interface EmitirNotaManualDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  initialCliente?: ClienteResult | null;
 }
 
 interface ClienteResult {
@@ -43,7 +44,7 @@ interface VendaResult {
   invoice_status: string | null;
 }
 
-const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaManualDialogProps) => {
+const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess, initialCliente }: EmitirNotaManualDialogProps) => {
   const { empresaId } = useAuth();
   const [tab, setTab] = useState("cliente");
   const [emitting, setEmitting] = useState(false);
@@ -59,6 +60,14 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
   const [loadingVendas, setLoadingVendas] = useState(false);
   const [selectedVendaIds, setSelectedVendaIds] = useState<Set<string>>(new Set());
   const [vendaEdits, setVendaEdits] = useState<Record<string, { produto: string; valor: string }>>({});
+
+  // Preselect cliente when opened with initialCliente
+  useEffect(() => {
+    if (open && initialCliente) {
+      setSelectedCliente(initialCliente);
+      setTab("cliente");
+    }
+  }, [open, initialCliente]);
 
   // --- Manual form ---
   const [manual, setManual] = useState({

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Lock, Clock, Send, Bot, UserPlus } from "lucide-react";
+import { Pencil, Trash2, Lock, Clock, Send, Bot, UserPlus, FileText } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -20,13 +20,14 @@ interface ClientesTableProps {
   onEdit: (cliente: Cliente) => void;
   onDelete: (cliente: Cliente) => void;
   onSupportDelete?: (cliente: Cliente) => void;
+  onEmitirNota?: (cliente: Cliente) => void;
   hasPendingRequest?: (id: string) => boolean;
   canEdit?: boolean;
   canDelete?: boolean;
 }
 
 const ClientesTable: React.FC<ClientesTableProps> = ({
-  clientes, onEdit, onDelete, onSupportDelete, hasPendingRequest, canEdit = true, canDelete = true,
+  clientes, onEdit, onDelete, onSupportDelete, onEmitirNota, hasPendingRequest, canEdit = true, canDelete = true,
 }) => {
   const { isSuperAdmin } = useAuth();
   const showActions = canEdit || canDelete;
@@ -94,6 +95,13 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                         </div>
                       ) : (
                         <>
+                          {onEmitirNota && (
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => onEmitirNota(c)}>
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger><TooltipContent><p>Emitir nota fiscal</p></TooltipContent></Tooltip></TooltipProvider>
+                          )}
                           {canEdit && (
                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(c)}>
                               <Pencil className="h-4 w-4" />
@@ -188,6 +196,13 @@ const ClientesTable: React.FC<ClientesTableProps> = ({
                       </div>
                     ) : (
                       <div className="flex justify-center items-center gap-2">
+                        {onEmitirNota && (
+                          <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => onEmitirNota(cliente)}>
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger><TooltipContent><p>Emitir nota fiscal</p></TooltipContent></Tooltip></TooltipProvider>
+                        )}
                         {canEdit && (
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(cliente)}>
                             <Pencil className="h-4 w-4" />
