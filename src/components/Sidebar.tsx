@@ -125,10 +125,29 @@ export const Sidebar = () => {
   // Auto-open submenus when on their routes
   useEffect(() => {
     const cadastrosPaths = ["/clientes", "/fornecedores", "/categorias", "/bank-accounts", "/payment-methods", "/users", "/cartoes-credito"];
-    const configPaths = ["/settings", "/settings/integracoes", "/settings/webhooks", "/settings/logs", "/settings/n8n-templates", "/settings/assinaturas", "/settings/termos"];
+    const configPaths = ["/settings", "/settings/integracoes", "/settings/termos"];
+    const adminPaths = ["/settings/webhooks", "/settings/logs", "/settings/n8n-templates", "/settings/assinaturas", "/admin/ia-global"];
     if (cadastrosPaths.some(p => location.pathname.startsWith(p))) setCadastrosOpen(true);
-    if (configPaths.some(p => location.pathname.startsWith(p))) setConfigOpen(true);
+    if (configPaths.some(p => location.pathname === p || location.pathname.startsWith(p + "/"))) setConfigOpen(true);
+    if (adminPaths.some(p => location.pathname.startsWith(p))) setAdminOpen(true);
   }, [location.pathname]);
+
+  // Check if empresa has any ads integration (Google Ads / Meta Ads)
+  useEffect(() => {
+    if (!empresaId || isPessoal) { setHasAdsIntegration(false); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("integracoes")
+        .select("plataforma")
+        .eq("empresa_id", empresaId)
+        .eq("ativo", true)
+        .in("plataforma", ["google_ads", "meta_ads"])
+        .limit(1);
+      if (!cancelled) setHasAdsIntegration((data?.length ?? 0) > 0);
+    })();
+    return () => { cancelled = true; };
+  }, [empresaId, isPessoal]);
 
   useEffect(() => {
     setMobileOpen(false);
