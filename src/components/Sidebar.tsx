@@ -322,7 +322,42 @@ export const Sidebar = () => {
     );
   };
 
+  const renderCollapsedGroup = (
+    label: string,
+    Icon: any,
+    items: { name: string; icon: any; path: string }[],
+  ) => {
+    if (items.length === 0) return null;
+    const groupActive = items.some(i => isActive(i.path));
+    return (
+      <li>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn("sidebar-link w-full justify-center px-0", groupActive && "active")}
+              title={label}
+              aria-label={label}
+            >
+              <Icon size={18} className="shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="start" className="w-56 z-[60]">
+            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{label}</div>
+            <DropdownMenuSeparator />
+            {items.map(item => (
+              <DropdownMenuItem key={item.path} onSelect={() => navigate(item.path)}>
+                <item.icon size={14} className="mr-2" />
+                {item.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </li>
+    );
+  };
+
   const sidebarContent = (
+
     <>
       {/* Header */}
       <div className={cn("flex h-14 items-center px-4", showExpanded ? "justify-between" : "justify-center flex-col gap-1 h-auto py-2")}>
