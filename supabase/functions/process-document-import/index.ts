@@ -210,11 +210,28 @@ serve(async (req) => {
     const empresaId = perfil.empresa_id;
 
     const body = await req.json();
-    const { fileName, textContent, imageBase64, mimeType, preferredLLM } = body;
+    const { fileName, textContent, imageBase64, mimeType, preferredLLM, contasBancarias: contasFromBody, empresaNome: empresaNomeFromBody } = body;
 
     if (!textContent && !imageBase64) {
       return new Response(JSON.stringify({ error: "Conteúdo do documento não fornecido" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
+    // Contexto: nome da empresa + contas bancárias (para reconhecimento de transferência interna e conta de origem)
+    let empresaNome: string | undefined = empresaNomeFromBody;
+    let contasBancarias: Array<{ nome: string; banco?: string; agencia?: string; conta?: string }> = Array.isArray(contasFromBody) ? contasFromBody : [];
+    if (!empresaNome) {
+      const { data: emp } = await admin.from("empresas").select("nome").eq("id", empresaId).maybeSingle();
+      if (emp?.nome) empresaNome = emp.nome;
+    }
+    if (contasBancarias.length === 0) {
+      const { data: contas } = await admin
+        .from("contas_bancarias")
+        .select("nome, banco, agencia, conta")
+        .eq("empresa_id", empresaId);
+      contasBancarias = (contas || []) as any;
+    }
+    const contextBlock = buildContextBlock({ empresaNome, contasBancarias });
+
 
     // Resolução de credenciais: 1) Global liberada para empresa  2) Integração da própria empresa
     let provider: string | null = null;
