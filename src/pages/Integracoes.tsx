@@ -275,20 +275,7 @@ const PLATAFORMAS: Plataforma[] = [
     categoria: "comunicacao",
   },
   // --- Inteligência Artificial ---
-  {
-    id: "lovable_ai", name: "Lovable AI", description: "IA integrada (sem configuração de chave)",
-    icon: Brain, color: "bg-violet-100 text-violet-700",
-    site: "https://docs.lovable.dev/features/ai", doc: "https://docs.lovable.dev/features/ai",
-    steps: [
-      "A Lovable AI já está pré-configurada no sistema",
-      "Basta ativar a integração clicando no botão abaixo",
-      "Nenhuma chave de API é necessária",
-      "Modelos disponíveis: Gemini, GPT-5 e outros",
-    ],
-    needsSecret: false, webhookOnly: true, usesWebhook: false,
-    keyValidation: { hint: "" },
-    categoria: "ia",
-  },
+
   {
     id: "openai", name: "OpenAI", description: "GPT-4o, GPT-4, GPT-3.5 e outros modelos",
     icon: Brain, color: "bg-gray-100 text-gray-800",
