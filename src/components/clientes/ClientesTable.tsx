@@ -20,13 +20,14 @@ interface ClientesTableProps {
   onEdit: (cliente: Cliente) => void;
   onDelete: (cliente: Cliente) => void;
   onSupportDelete?: (cliente: Cliente) => void;
+  onEmitirNota?: (cliente: Cliente) => void;
   hasPendingRequest?: (id: string) => boolean;
   canEdit?: boolean;
   canDelete?: boolean;
 }
 
 const ClientesTable: React.FC<ClientesTableProps> = ({
-  clientes, onEdit, onDelete, onSupportDelete, hasPendingRequest, canEdit = true, canDelete = true,
+  clientes, onEdit, onDelete, onSupportDelete, onEmitirNota, hasPendingRequest, canEdit = true, canDelete = true,
 }) => {
   const { isSuperAdmin } = useAuth();
   const showActions = canEdit || canDelete;
