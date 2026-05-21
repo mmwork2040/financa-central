@@ -104,6 +104,10 @@ export const Sidebar = () => {
   const [creatingPessoal, setCreatingPessoal] = useState(false);
   const [confirmSwitchEmpresa, setConfirmSwitchEmpresa] = useState<{ id: string; nome: string } | null>(null);
   const [hasAdsIntegration, setHasAdsIntegration] = useState(false);
+  const [hasSalesIntegration, setHasSalesIntegration] = useState(false);
+  const [fiscalConfigured, setFiscalConfigured] = useState(false);
+
+
 
   const hasPessoalEmpresa = empresas.some(e => e.pessoal === true);
 
@@ -132,22 +136,37 @@ export const Sidebar = () => {
     if (adminPaths.some(p => location.pathname.startsWith(p))) setAdminOpen(true);
   }, [location.pathname]);
 
-  // Check if empresa has any ads integration (Google Ads / Meta Ads)
+  // Check if empresa has any ads / sales integrations and fiscal setup
   useEffect(() => {
-    if (!empresaId || isPessoal) { setHasAdsIntegration(false); return; }
+    if (!empresaId || isPessoal) {
+      setHasAdsIntegration(false);
+      setHasSalesIntegration(false);
+      setFiscalConfigured(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("integracoes")
-        .select("plataforma")
-        .eq("empresa_id", empresaId)
-        .eq("ativo", true)
-        .in("plataforma", ["google_ads", "meta_ads"])
-        .limit(1);
-      if (!cancelled) setHasAdsIntegration((data?.length ?? 0) > 0);
+      const [{ data: ints }, { data: emp }] = await Promise.all([
+        supabase
+          .from("integracoes")
+          .select("plataforma")
+          .eq("empresa_id", empresaId)
+          .eq("ativo", true),
+        supabase
+          .from("empresas")
+          .select("fiscal_configurado")
+          .eq("id", empresaId)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+      const plats = (ints || []).map((i: any) => i.plataforma);
+      setHasAdsIntegration(plats.some((p: string) => ["google_ads", "meta_ads"].includes(p)));
+      setHasSalesIntegration(plats.some((p: string) => ["hotmart", "eduzz", "monetizze", "kiwify", "hubla"].includes(p)));
+      setFiscalConfigured(!!emp?.fiscal_configurado);
     })();
     return () => { cancelled = true; };
   }, [empresaId, isPessoal]);
+
 
   useEffect(() => {
     setMobileOpen(false);
@@ -200,18 +219,23 @@ export const Sidebar = () => {
   const showExpanded = isExpanded || isMobile;
   
   // Simplified menu structure
+  // Visibility flags for company-specific modules
+  const showVendas = isSuperAdmin || hasSalesIntegration;
+  const showNotas = isSuperAdmin || fiscalConfigured || (planControles?.max_notas_fiscais ?? 0) > 0;
+  const showAds = isSuperAdmin || hasAdsIntegration;
 
   const allMainItems = [
     { name: "Dashboard", icon: Home, path: "/dashboard" },
     { name: "Lançamentos", icon: Files, path: "/transactions" },
-    { name: "Importar", icon: FileUp, path: "/importar-documentos" },
-    { name: "Vendas", icon: ShoppingCart, path: "/vendas-digitais", businessOnly: true },
-    { name: "Notas Fiscais", icon: FileText, path: "/notas-fiscais", businessOnly: true },
-    { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true, requiresAds: true },
+    { name: "Vendas", icon: ShoppingCart, path: "/vendas-digitais", businessOnly: true, visible: showVendas },
+    { name: "Notas Fiscais", icon: FileText, path: "/notas-fiscais", businessOnly: true, visible: showNotas },
+    { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true, visible: showAds },
     { name: "Projetos", icon: Briefcase, path: "/projetos", businessOnly: true },
+    { name: "Importar", icon: FileUp, path: "/importar-documentos" },
+    { name: "Relatórios", icon: PieChart, path: "/reports" },
   ];
   const mainItems = (isPessoal ? allMainItems.filter(i => !i.businessOnly) : allMainItems)
-    .filter((i: any) => !i.requiresAds || hasAdsIntegration || isSuperAdmin);
+    .filter((i: any) => i.visible !== false);
 
   const allCadastrosItems = [
     { name: "Clientes", icon: UsersRound, path: "/clientes", businessOnly: true },
@@ -226,30 +250,25 @@ export const Sidebar = () => {
     ? allCadastrosItems.filter(i => !(i as any).businessOnly)
     : allCadastrosItems.filter(i => !(i as any).pessoalOnly);
 
-  const bottomItems = [
-    { name: "Relatórios", icon: PieChart, path: "/reports" },
-  ];
-
-  // Configurações: apenas itens da empresa/usuário
+  // Configurações: empresa, integrações, acesso e termos
   const configItems = [
     { name: isPessoal ? "Pessoal" : "Empresa", icon: isPessoal ? UserCircle : Building2, path: "/settings" },
     { name: "Integrações", icon: Plug, path: "/settings/integracoes" },
+    { name: "Perfis de Acesso", icon: UserCog, path: "/perfis-acesso" },
+    { name: "Permissões", icon: ShieldCheck, path: "/permissions" },
     { name: "Termos e Políticas", icon: ScrollText, path: "/settings/termos" },
   ];
 
-  // Administração: apenas Super Admin
+  // Super Admin: itens globais da plataforma
   const adminGlobalItems = isSuperAdmin ? [
-    { name: "IA Global", icon: Brain, path: "/admin/ia-global" },
-    { name: "Assinaturas", icon: CreditCard, path: "/settings/assinaturas" },
+    { name: "IA — Provedor Global", icon: Brain, path: "/admin/ia-global" },
+    { name: "Planos de Assinatura", icon: CreditCard, path: "/settings/assinaturas" },
     { name: "Webhooks", icon: Webhook, path: "/settings/webhooks" },
     { name: "n8n Templates", icon: Code2, path: "/settings/n8n-templates" },
     { name: "Logs", icon: ScrollText, path: "/settings/logs" },
   ] : [];
 
-  const adminItems = [
-    { name: "Permissões", icon: ShieldCheck, path: "/permissions" },
-    { name: "Perfis de Acesso", icon: UserCog, path: "/perfis-acesso" },
-  ];
+
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -303,7 +322,42 @@ export const Sidebar = () => {
     );
   };
 
+  const renderCollapsedGroup = (
+    label: string,
+    Icon: any,
+    items: { name: string; icon: any; path: string }[],
+  ) => {
+    if (items.length === 0) return null;
+    const groupActive = items.some(i => isActive(i.path));
+    return (
+      <li>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn("sidebar-link w-full justify-center px-0", groupActive && "active")}
+              title={label}
+              aria-label={label}
+            >
+              <Icon size={18} className="shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="start" className="w-56 z-[60]">
+            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{label}</div>
+            <DropdownMenuSeparator />
+            {items.map(item => (
+              <DropdownMenuItem key={item.path} onSelect={() => navigate(item.path)}>
+                <item.icon size={14} className="mr-2" />
+                {item.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </li>
+    );
+  };
+
   const sidebarContent = (
+
     <>
       {/* Header */}
       <div className={cn("flex h-14 items-center px-4", showExpanded ? "justify-between" : "justify-center flex-col gap-1 h-auto py-2")}>
@@ -483,9 +537,10 @@ export const Sidebar = () => {
           {/* Main items */}
           {mainItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
 
-          {/* Chat item removed - buttons now in Lançamentos and Vendas pages */}
-          
-          {/* Cadastros collapsible */}
+          {/* Separator */}
+          <li className="my-2 border-t border-sidebar-border/60" />
+
+          {/* Cadastros group */}
           {showExpanded ? (
             <li>
               <Collapsible open={cadastrosOpen} onOpenChange={setCadastrosOpen}>
@@ -504,13 +559,13 @@ export const Sidebar = () => {
               </Collapsible>
             </li>
           ) : (
-            cadastrosItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))
+            renderCollapsedGroup("Cadastros", FolderOpen, cadastrosItems.filter(item => canAccessRoute(item.path)))
           )}
 
-          {/* Bottom items */}
-          {bottomItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
+          {/* Separator */}
+          <li className="my-2 border-t border-sidebar-border/60" />
 
-          {/* Configurações collapsible */}
+          {/* Configurações group */}
           {showExpanded ? (
             <li>
               <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
@@ -523,46 +578,49 @@ export const Sidebar = () => {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <ul className="space-y-0.5 mt-0.5">
-                    {configItems.map(item => renderMenuItem(item, true))}
+                    {configItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item, true))}
                   </ul>
                 </CollapsibleContent>
               </Collapsible>
             </li>
           ) : (
-            <>{renderMenuItem({ name: "Configurações", icon: Settings, path: "/settings" })}</>
+            renderCollapsedGroup("Configurações", Settings, configItems.filter(item => canAccessRoute(item.path)))
           )}
-          
-          {/* Admin items (Permissões, Perfis de Acesso) */}
-          {adminItems.filter(item => canAccessRoute(item.path)).map(item => renderMenuItem(item))}
 
-          {/* Administração (Super Admin) */}
+          {/* Super Admin group */}
           {isSuperAdmin && adminGlobalItems.length > 0 && (
-            showExpanded ? (
-              <li>
-                <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
-                  <CollapsibleTrigger className="sidebar-link w-full justify-between">
-                    <div className="flex items-center gap-3">
-                      <ShieldCheck size={18} />
-                      <span className="text-sm">Administração</span>
-                    </div>
-                    <ChevronDown size={14} className={cn("transition-transform", adminOpen && "rotate-180")} />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <ul className="space-y-0.5 mt-0.5">
-                      {adminGlobalItems.map(item => renderMenuItem(item, true))}
-                    </ul>
-                  </CollapsibleContent>
-                </Collapsible>
-              </li>
-            ) : (
-              adminGlobalItems.map(item => renderMenuItem(item))
-            )
+            <>
+              <li className="my-2 border-t border-sidebar-border/60" />
+              {showExpanded ? (
+                <li>
+                  <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
+                    <CollapsibleTrigger className="sidebar-link w-full justify-between">
+                      <div className="flex items-center gap-3">
+                        <ShieldCheck size={18} />
+                        <span className="text-sm">Super Admin</span>
+                      </div>
+                      <ChevronDown size={14} className={cn("transition-transform", adminOpen && "rotate-180")} />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <ul className="space-y-0.5 mt-0.5">
+                        {adminGlobalItems.map(item => renderMenuItem(item, true))}
+                      </ul>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </li>
+              ) : (
+                renderCollapsedGroup("Super Admin", ShieldCheck, adminGlobalItems)
+              )}
+            </>
           )}
 
           {/* Suporte - always last */}
+          <li className="my-2 border-t border-sidebar-border/60" />
           {renderMenuItem({ name: "Suporte", icon: HelpCircle, path: "/suporte" })}
         </ul>
       </nav>
+      
+
       
       
       {/* Logout */}
