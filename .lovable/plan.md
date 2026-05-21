@@ -1,35 +1,41 @@
-## Problema identificado
+## Objetivo
 
-**Causa 1 — Categoria não filtra por tipo:**
-- `ImportarDocumentos.tsx` carrega categorias com `select("id, nome")` (sem o campo `tipo`)
-- `EditImportItemDialog` recebe `EntityOption[]` e renderiza todas as categorias sem filtrar
-- Ao trocar Receita ↔ Despesa ↔ Investimento, o select continua mostrando a mesma lista (e mantém uma categoria do tipo errado selecionada)
+Tornar a detecção de duplicidade na importação mais precisa, exigindo múltiplos indicadores e respeitando que pagamentos repetidos do mesmo cliente em datas diferentes são legítimos.
 
-**Causa 2 — Faltam Projeto e Tag:**
-- Dialog não expõe seleção de projeto (campo `projeto_id` existe em `lancamentos`)
-- Não existe campo "tag" no schema — assumindo que se refere a **projeto**
+## Regras de detecção
 
-## Correções
+Comparações só acontecem entre lançamentos do **mesmo `tipo`** (receita só com receita, despesa só com despesa, investimento só com investimento). Isso elimina o caso de uma receita ser marcada como duplicada de uma despesa.
 
-### 1. Filtrar categorias por tipo no dialog
-- Estender `EntityOption` (ou criar `CategoriaOption = { id, nome, tipo }`) e ajustar `ImportarDocumentos.tsx` para buscar `id, nome, tipo`
-- No `EditImportItemDialog`, derivar `categoriasFiltradas = categorias.filter(c => c.tipo === form.tipo_sugerido)` (mapeando `investimento` corretamente)
-- Ao trocar `tipo_sugerido`, resetar `categoria_id` se a categoria atual não pertencer ao novo tipo (mantendo `categoria_sugerida` como texto para permitir auto-match ou criação)
-- O auto-match case-insensitive existente também deve respeitar o tipo
+### Indicadores avaliados
 
-### 2. Adicionar seleção de Projeto
-- Adicionar `projeto_id?: string | null` ao tipo `EditableItem`
-- Adicionar prop `projetos: EntityOption[]` ao dialog
-- Em `ImportarDocumentos.tsx`, carregar projetos (`select("id, nome").eq("empresa_id", empresaId).eq("status", "ativo")`) e passar ao dialog
-- Renderizar um `<Select>` opcional "Projeto" no dialog (com opção "Sem projeto")
-- Propagar `projeto_id` no `onSave` e usar na criação do lançamento final (ajustar o ponto de inserção em `lancamentos` para incluir `projeto_id`)
+1. `mesmoTipo` — pré-requisito obrigatório, não conta como ponto
+2. `valorExato` — diferença ≤ 1% ou ≤ R$ 0,01
+3. `mesmaData` — **mesmo dia exato** (não janela de dias)
+4. `dataProxima` — diferença entre 1 e 3 dias (mais fraco que `mesmaData`)
+5. `mesmoCpfCnpj` — CPF/CNPJ extraído da descrição/observações bate com o do cliente/fornecedor existente
+6. `mesmaPessoa` — nome normalizado do cliente/fornecedor bate
+7. `descricaoSemelhante` — overlap de tokens ≥ 0.6
 
-### 3. Sem mudanças de tag
-- Não há entidade "tag" no projeto. Se quiser uma classificação extra, precisa especificar (nova tabela `tags` + `lancamento_tags`, ou um campo `tags text[]` em `lancamentos`)
+### Regra de decisão
+
+A **data** é decisiva, conforme pedido:
+
+- Se **não** houver `mesmaData` **nem** `dataProxima` → **nunca** é duplicata (pagamentos repetidos do mesmo cliente em datas diferentes são legítimos).
+- Se `mesmoCpfCnpj` **E** (`mesmaData` ou `valorExato`) → duplicata.
+- Caso contrário, exige **≥ 3 indicadores** entre: `valorExato`, `mesmaData`, `mesmoCpfCnpj`, `mesmaPessoa`, `descricaoSemelhante`. `dataProxima` conta como meio indicador (substitui `mesmaData` quando precisar combinar com outros).
+
+Exemplos:
+- Mesma pessoa + mesma data + valor exato → duplicata
+- Mesmo CPF + mesma data → duplicata
+- Mesmo valor + descrição parecida, datas diferentes → **não** é duplicata
+- Mesmo cliente, mesmo valor, datas diferentes (10/03 e 25/03) → **não** é duplicata (pagamentos recorrentes legítimos)
+
+O motivo exibido lista todos os indicadores que bateram, ex.: "Mesmo CPF/CNPJ + mesma data + valor exato".
 
 ## Arquivos afetados
-- `src/components/importacao/EditImportItemDialog.tsx` — filtro de categoria por tipo, reset ao trocar tipo, campo Projeto
-- `src/pages/ImportarDocumentos.tsx` — buscar `tipo` das categorias, buscar lista de projetos, passar ao dialog, gravar `projeto_id` ao confirmar importação
 
-## Pergunta antes de implementar
-Você quer que eu trate "tag" como sinônimo de **Projeto** (apenas adicionar Projeto), ou quer que eu **crie um sistema novo de tags** (tabela + vinculação aos lançamentos)?
+- `src/pages/ImportarDocumentos.tsx`
+  - `loadExistingLancamentos`: incluir joins com `clientes` e `fornecedores` para trazer `nome` normalizado e `cpf_cnpj`.
+  - `findDuplicates`: reescrever com os indicadores e a regra acima; extrair CPF/CNPJ do item importado via regex sobre descrição/observações; filtrar por `tipo` antes de comparar.
+
+Nenhuma alteração em schema, RLS ou outros componentes.
