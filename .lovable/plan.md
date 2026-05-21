@@ -1,53 +1,82 @@
-## Plano de Correção
+## Problemas identificados
 
-### 1. Valor de venda Hotmart = comissão real recebida
+1. **Excesso de ícones soltos** no nível raiz (Dashboard, Lançamentos, Importar, Vendas, Notas, Anúncios, Projetos, Cadastros, Relatórios, Configurações, Permissões, Perfis, Suporte, Administração) → poluição visual.
+2. **Itens não-universais visíveis para todas as empresas** (ex: Anúncios aparece para qualquer empresa business mesmo sem integração de Ads → já existe filtro `requiresAds`, mas Vendas/Notas/Projetos seguem o mesmo problema).
+3. **Itens de Super Admin misturados** dentro de "Configurações" mental do usuário (Logs, n8n Templates, Webhooks, Planos/Assinaturas) — hoje já estão em "Administração", mas o ícone "IA Global" está duplicado conceitualmente com a aba de IA dentro de Integrações.
+4. **Duas entradas de "IA"**: `IA Global` (admin) + `Inteligência Artificial` (categoria em /settings/integracoes). Confunde.
+5. **Configurações** mistura "Empresa/Pessoal", "Integrações", "Termos" — ok, mas pode receber também "Perfis de Acesso" e "Permissões" que hoje vivem soltos no menu raiz.
 
-**Problema:** `parseHotmart` em `supabase/functions/webhook-receiver/index.ts` lê `purchase.commission.value`, que normalmente não existe no payload real da Hotmart. O payload traz `purchase.commissions: [{ source, value, currency_value }]` com fontes como `PRODUCER`, `CO_PRODUCER`, `AFFILIATE`, `MARKETPLACE`. Sem isso, `valorComissao` cai no fallback do valor bruto e o lançamento é criado com o preço cheio do produto.
+## Solução proposta
 
-**Correção:**
-- Em `parseHotmart`, calcular `valorComissao` somando os itens de `purchase.commissions` cuja `source` seja do dono da conta (`PRODUCER` + `CO_PRODUCER` quando aplicável; `AFFILIATE` quando a venda é de afiliado). Estratégia segura: somar `PRODUCER` + `CO_PRODUCER`; se zero, usar `AFFILIATE`; se ainda zero, manter o fallback atual.
-- `taxa` = `valor_bruto - valor_comissao` quando a comissão for resolvida pela lista.
-- O bloco de criação do lançamento (linhas 616–627) já usa `valor_comissao` quando > 0; nenhuma mudança adicional necessária além do parser.
-- Adicionar um pequeno log com a fonte usada para auditoria.
+### A. Reagrupamento do menu (raiz mais enxuto)
 
-### 2. Visualização do certificado digital enviado
+```
+[Topo fixo]
+  Dashboard
+  Lançamentos
+  Vendas              (só se empresa tem integração de vendas ativa)
+  Notas Fiscais       (só se módulo fiscal habilitado / business)
+  Anúncios            (só se integração Ads ativa — já existe)
+  Projetos            (só se ativado nos controles do plano)
+  Importar
+  Relatórios
 
-**Problema:** Em `src/components/configuracoes/ConfiguracaoFiscal.tsx` (bucket privado `certificados`, caminho fixo `{empresaId}/certificado.pfx`), o usuário só vê "Certificado digital enviado", sem confirmação do arquivo correto.
+[Grupo: Cadastros]   (colapsável — já existe)
+  Clientes, Fornecedores, Categorias, Contas, Formas, Cartões, Usuários
 
-**Correção (apenas frontend):**
-- Após o upload e no load inicial, buscar metadados via `supabase.storage.from('certificados').list(empresaId)` para obter `name`, `updated_at` e `metadata.size` do arquivo.
-- Exibir no card verde: nome do arquivo, tamanho (KB) e data/hora de upload em pt-BR (DD/MM/AAAA HH:mm).
-- Botão "Baixar para conferir" gerando `createSignedUrl(path, 60)` e abrindo em nova aba — assim o usuário valida que subiu o `.pfx` certo (CNPJ/razão social) abrindo localmente.
-- Mensagens de erro amigáveis caso o arquivo não exista mais.
+[Grupo: Configurações]   (colapsável)
+  Empresa / Pessoal
+  Integrações          (inclui IA da empresa)
+  Perfis de Acesso     ← movido pra cá
+  Permissões           ← movido pra cá
+  Termos e Políticas
 
-### 3. Dados completos do cliente Hotmart + emissão de NF
+[Grupo: Super Admin]   (colapsável, só isSuperAdmin, ícone Shield)
+  IA Global
+  Planos de Assinatura
+  n8n Templates
+  Webhooks
+  Logs
 
-**Problema:** O parser só salva `name`, `email`, `phone`, `document`. Endereço e demais campos são ignorados, então o cliente criado no sistema fica incompleto e a emissão de NF via Spedy falha por falta de endereço.
+[Rodapé]
+  Suporte
+  Sair
+```
 
-**Correção no `webhook-receiver`:**
-- Estender `SaleData` com objeto `cliente_endereco_struct` contendo `cep, rua, numero, complemento, bairro, cidade, estado, pais` extraído de `buyer.address` (Hotmart envia `address`, `address_number`, `address_comp`, `neighborhood`, `city`, `state`, `zipcode`, `country`).
-- Concatenar uma string legível em `cliente_endereco` (campo já existente em `vendas_digitais`).
-- No bloco de auto-cadastro de cliente (linhas 544–563):
-  - Buscar cliente também por `cpf_cnpj` (documento) quando disponível, para evitar duplicidade.
-  - No `INSERT`, gravar `telefone`, `cpf_cnpj`, `endereco` (string) e os campos estruturados (`cep, rua, numero, complemento, bairro, cidade, estado`) — colunas já existem na tabela `clientes`.
-  - Quando o cliente já existir, fazer `UPDATE` apenas dos campos atualmente vazios (não sobrescrever dados editados pelo usuário).
-- Replicar o mesmo enriquecimento para os outros parsers que já trazem endereço (Kiwify/Hubla) quando o payload disponibilizar — escopo principal: Hotmart.
+### B. Regras de visibilidade por empresa
 
-**Emissão de NF na página de Notas Fiscais:**
-- `NotasFiscais.tsx` hoje filtra `invoice_status IS NOT NULL`, ou seja, só lista vendas que já têm tentativa de emissão. Vendas vindas do webhook entram com `invoice_status = 'PENDING_EMISSION'` (default da coluna), então já aparecem — confirmar o filtro continua válido após as mudanças.
-- Garantir que `EmitirNotaManualDialog` permita selecionar qualquer venda com `cliente_id` preenchido e endereço válido. Adicionar aviso no card da venda quando faltar CPF/CNPJ ou endereço, com link para editar o cliente — assim o usuário sabe o que falta antes de chamar `spedy-emit`.
-- Nenhuma mudança no `spedy-emit` é necessária; ele já lê o cliente associado.
+Cada item "businessOnly" passa a checar uma flag derivada:
+- `Vendas` → existe integração ativa em `plataformas_vendas` OU `planControles.vendas !== false`
+- `Notas Fiscais` → `planControles.notas_fiscais` ligado E (config fiscal feita OU super admin)
+- `Anúncios` → integração google_ads/meta_ads ativa (já existe)
+- `Projetos` → `planControles.projetos !== false`
 
-### Detalhes técnicos
+Itens não aplicáveis simplesmente **não aparecem** (em vez de virem desabilitados). Super Admin sempre vê tudo com badge "admin".
 
-- Arquivos alterados:
-  - `supabase/functions/webhook-receiver/index.ts` (parser Hotmart + auto-cadastro cliente)
-  - `src/components/configuracoes/ConfiguracaoFiscal.tsx` (metadados + signed URL)
-  - `src/pages/NotasFiscais.tsx` e/ou `src/components/notas-fiscais/EmitirNotaManualDialog.tsx` (avisos de campos faltantes)
-- Sem mudanças de schema: todas as colunas necessárias (`cliente_endereco`, `cep`, `rua`, `numero`, etc.) já existem.
-- RLS: nenhum impacto; bucket `certificados` continua privado, acesso via signed URL temporária.
+### C. Resolver duplicação de IA
 
-### Validação após implementação
-1. Reenviar webhook de teste Hotmart com `commissions[]` → conferir `vendas_digitais.valor_comissao` e `lancamentos.valor` iguais à comissão.
-2. Subir um `.pfx` em ConfiguracaoFiscal → ver nome/data/tamanho e baixar via botão.
-3. Webhook Hotmart com endereço → conferir cliente criado com CPF, telefone, endereço completo e venda visível em Notas Fiscais para emissão.
+- Renomear `IA Global` (admin) → **"IA — Provedor Global"** (deixa claro que é configuração de chave global / fallback).
+- Dentro de Integrações, a categoria "IA" permanece como **"IA da Empresa"** (chaves próprias do tenant).
+- Tooltip explicando a diferença em ambos.
+
+### D. Densidade visual
+
+- Ícones do menu raiz reduzidos de 18 → 16px no estado colapsado.
+- Separadores sutis entre os 4 grupos (Operação / Cadastros / Config / Admin).
+- No estado colapsado (w-14): grupos viram apenas o ícone "chefe" (FolderOpen / Settings / Shield) clicável que expande tooltip-flyout com os filhos — não derrama todos os itens individuais como hoje (linhas 507, 558 fazem isso).
+
+## Arquivos afetados
+
+- `src/components/Sidebar.tsx` — reorganização das arrays `mainItems`, `configItems`, `adminGlobalItems`; mover `adminItems` (Permissões/Perfis) para dentro de `configItems`; adicionar checagens de visibilidade para Vendas/Notas/Projetos; ajustar render colapsado para usar flyout.
+- `src/pages/ConfigGlobalIA.tsx` — atualizar título para "IA — Provedor Global" + texto explicativo.
+- `src/pages/Integracoes.tsx` — ajustar label da categoria `ia` para "IA da Empresa".
+
+## Fora do escopo
+
+- Não muda rotas nem permissões reais (apenas visibilidade no menu).
+- Não toca em RLS, edge functions ou dados.
+- Não redesigna estilos — apenas hierarquia e agrupamento.
+
+## Pergunta antes de implementar
+
+Confirma os 4 grupos (Operação / Cadastros / Configurações / Super Admin) e a movimentação de **Permissões + Perfis de Acesso** para dentro de Configurações? Se preferir mantê-los soltos no raiz, ajusto.
