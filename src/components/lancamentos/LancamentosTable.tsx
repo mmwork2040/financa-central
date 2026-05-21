@@ -57,6 +57,30 @@ export const LancamentosTable = ({ lancamentosOverride }: { lancamentosOverride?
   } = useLancamentosContext();
 
   const lancamentos = lancamentosOverride || contextLancamentos;
+
+  const renderSerieBadges = (l: any) => {
+    const isParcelado = !!l.recorrencia_grupo_id && (l.total_parcelas ?? 0) > 1 && l.parcela_atual;
+    const isFixa = !!l.recorrente;
+    return (
+      <>
+        {isParcelado && (
+          <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+            <span className="ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-purple-100 text-purple-700 cursor-help">
+              <Layers className="h-2.5 w-2.5" />{l.parcela_atual}/{l.total_parcelas}
+            </span>
+          </TooltipTrigger><TooltipContent><p>Parcela {l.parcela_atual} de {l.total_parcelas}</p></TooltipContent></Tooltip></TooltipProvider>
+        )}
+        {isFixa && (
+          <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+            <span className="ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-700 cursor-help">
+              <Repeat className="h-2.5 w-2.5" />Fixa
+            </span>
+          </TooltipTrigger><TooltipContent><p>Despesa/receita fixa — repete todos os meses</p></TooltipContent></Tooltip></TooltipProvider>
+        )}
+      </>
+    );
+  };
+
   const showActions = canAlterar || canExcluir;
   const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(lancamentos);
 
