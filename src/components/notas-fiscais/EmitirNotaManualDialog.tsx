@@ -53,9 +53,12 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
   const [clientes, setClientes] = useState<ClienteResult[]>([]);
   const [loadingClientes, setLoadingClientes] = useState(false);
   const [selectedCliente, setSelectedCliente] = useState<ClienteResult | null>(null);
+  const [clienteEdit, setClienteEdit] = useState({ cpf_cnpj: "", email: "", telefone: "", endereco: "" });
+  const [savingCliente, setSavingCliente] = useState(false);
   const [vendas, setVendas] = useState<VendaResult[]>([]);
   const [loadingVendas, setLoadingVendas] = useState(false);
   const [selectedVendaIds, setSelectedVendaIds] = useState<Set<string>>(new Set());
+  const [vendaEdits, setVendaEdits] = useState<Record<string, { produto: string; valor: string }>>({});
 
   // --- Manual form ---
   const [manual, setManual] = useState({
