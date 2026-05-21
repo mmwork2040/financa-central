@@ -103,6 +103,18 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
     }
   };
 
+  // Sync editable cliente fields
+  useEffect(() => {
+    if (selectedCliente) {
+      setClienteEdit({
+        cpf_cnpj: selectedCliente.cpf_cnpj || "",
+        email: selectedCliente.email || "",
+        telefone: selectedCliente.telefone || "",
+        endereco: selectedCliente.endereco || "",
+      });
+    }
+  }, [selectedCliente]);
+
   // Load vendas for selected cliente
   useEffect(() => {
     if (!selectedCliente || !empresaId) {
@@ -119,7 +131,13 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
           .eq("cliente_id", selectedCliente.id)
           .order("data_venda", { ascending: false });
         if (error) throw error;
-        setVendas(data || []);
+        const list = data || [];
+        setVendas(list);
+        const edits: Record<string, { produto: string; valor: string }> = {};
+        list.forEach(v => {
+          edits[v.id] = { produto: v.produto || "", valor: String(v.valor_bruto ?? "") };
+        });
+        setVendaEdits(edits);
       } catch {
         toast.error("Erro ao buscar vendas do cliente");
       } finally {
@@ -128,6 +146,29 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
     };
     load();
   }, [selectedCliente, empresaId]);
+
+  const saveClienteEdits = async () => {
+    if (!selectedCliente) return;
+    setSavingCliente(true);
+    try {
+      const { error } = await supabase
+        .from("clientes")
+        .update({
+          cpf_cnpj: clienteEdit.cpf_cnpj.trim() || null,
+          email: clienteEdit.email.trim() || null,
+          telefone: clienteEdit.telefone.trim() || null,
+          endereco: clienteEdit.endereco.trim() || null,
+        })
+        .eq("id", selectedCliente.id);
+      if (error) throw error;
+      setSelectedCliente({ ...selectedCliente, ...clienteEdit });
+      toast.success("Dados do cliente atualizados");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar cliente");
+    } finally {
+      setSavingCliente(false);
+    }
+  };
 
   const toggleVenda = (id: string) => {
     setSelectedVendaIds(prev => {
