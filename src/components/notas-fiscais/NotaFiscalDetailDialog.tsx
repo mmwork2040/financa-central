@@ -3,16 +3,28 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, FileText, Loader2, Copy, FileCode } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ExternalLink, FileText, Loader2, Copy, FileCode, Ban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Props {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   venda: any | null;
+  onCancelled?: () => void;
 }
 
 const NotaFiscalDetailDialog: React.FC<Props> = ({ open, onOpenChange, venda }) => {
