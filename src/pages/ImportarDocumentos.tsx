@@ -122,6 +122,11 @@ const ImportarDocumentos = () => {
   const editingItem = editingRef ? files[editingRef.fileIdx]?.items[editingRef.itemIdx] : null;
   const [revertRef, setRevertRef] = useState<{ fileIdx: number; itemIdx: number } | null>(null);
 
+  // Paginação
+  const ITEMS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState<Record<number, number>>({});
+
+
   const EDIT_KEYS: (keyof ExtractedItem)[] = [
     "descricao", "valor", "data", "tipo_sugerido", "destino_sugerido",
     "categoria_sugerida", "categoria_id", "fornecedor_cliente", "fornecedor_id",
@@ -1020,154 +1025,186 @@ const ImportarDocumentos = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {file.items.map((item, itemIdx) => (
-                            <tr key={itemIdx} className={cn(
-                              "border-b transition-colors",
-                              item.selected ? "bg-primary/5" : "opacity-50",
-                              (item.possibleDuplicates?.length || 0) > 0 && "bg-amber-500/5"
-                            )}>
-                              <td className="p-2">
-                                <Checkbox
-                                  checked={item.selected}
-                                  onCheckedChange={() => toggleItem(fileIdx, itemIdx)}
-                                />
-                              </td>
-                              <td className="p-2">
-                                <div className="font-medium flex items-center gap-1.5 flex-wrap">
-                                  <Button
-                                    variant="ghost" size="icon" className="h-6 w-6 -ml-1"
-                                    onClick={() => setEditingRef({ fileIdx, itemIdx })}
-                                    title="Editar lançamento"
-                                  >
-                                    <Pencil className="h-3 w-3" />
-                                  </Button>
-                                  {isEdited(item) && (
-                                    <Button
-                                      variant="ghost" size="icon" className="h-6 w-6 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
-                                      onClick={() => setRevertRef({ fileIdx, itemIdx })}
-                                      title="Desfazer edição e voltar aos valores da IA"
-                                    >
-                                      <Undo2 className="h-3 w-3" />
-                                    </Button>
-                                  )}
-                                  <span>{item.descricao}</span>
-                                  {(item.possibleDuplicates?.length || 0) > 0 && (
-                                    <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-400 bg-amber-500/10">
-                                      <Copy className="h-3 w-3 mr-1" />
-                                      Possível duplicata ({item.possibleDuplicates!.length})
-                                    </Badge>
-                                  )}
-                                </div>
-                                {item.fornecedor_cliente && (
-                                  <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                                    <span className={cn(
-                                      isNewEntity(item.fornecedor_cliente, item.tipo_sugerido === "receita" ? "cliente" : "fornecedor") && 
-                                      "px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-medium"
-                                    )}>
-                                      {item.fornecedor_cliente}
-                                    </span>
-                                    {isNewEntity(item.fornecedor_cliente, item.tipo_sugerido === "receita" ? "cliente" : "fornecedor") && (
-                                      <TooltipProvider delayDuration={200}>
-                                        <Tooltip>
-                                          <TooltipTrigger>
-                                            <Badge variant="outline" className="h-4 px-1 text-[9px] border-amber-500/30 text-amber-600 bg-amber-500/5">
-                                              NOVO
-                                            </Badge>
-                                          </TooltipTrigger>
-                                          <TooltipContent className="text-[10px]">Este {item.tipo_sugerido === "receita" ? "cliente" : "fornecedor"} não foi encontrado no sistema e será cadastrado automaticamente.</TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    )}
-                                  </div>
-                                )}
-                                {item.categoria_sugerida && (
-                                  <Badge 
-                                    variant="outline" 
-                                    className={cn(
-                                      "text-[10px] mt-0.5",
-                                      isNewEntity(item.categoria_sugerida, "categoria") && "border-amber-500/40 text-amber-700 bg-amber-500/10 font-semibold"
-                                    )}
-                                  >
-                                    {isNewEntity(item.categoria_sugerida, "categoria") && <Plus className="h-2 w-2 mr-1" />}
-                                    {item.categoria_sugerida}
-                                  </Badge>
-                                )}
-                                {item.forma_pagamento && (
-                                  <Badge 
-                                    variant="outline" 
-                                    className={cn(
-                                      "text-[10px] mt-0.5 ml-1",
-                                      isNewEntity(item.forma_pagamento, "forma_pagamento") && "border-amber-500/40 text-amber-700 bg-amber-500/10 font-semibold"
-                                    )}
-                                  >
-                                    {isNewEntity(item.forma_pagamento, "forma_pagamento") && <Plus className="h-2 w-2 mr-1" />}
-                                    {item.forma_pagamento}
-                                  </Badge>
-                                )}
-                                {item.observacoes && (
-                                  <div className="text-[10px] text-muted-foreground mt-0.5 italic">{item.observacoes}</div>
-                                )}
-                                {(item.possibleDuplicates?.length || 0) > 0 && (
-                                  <div className="mt-2 rounded-md border border-amber-400/40 bg-amber-500/5 p-2">
-                                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 mb-1.5">
-                                      <Copy className="h-3 w-3" />
-                                      Lançamento(s) já existente(s) semelhante(s) — confira antes de importar:
+                          {file.items
+                            .slice(
+                              ((currentPage[fileIdx] || 1) - 1) * ITEMS_PER_PAGE,
+                              (currentPage[fileIdx] || 1) * ITEMS_PER_PAGE
+                            )
+                            .map((item, itemIdxInPage) => {
+                              const itemIdx = ((currentPage[fileIdx] || 1) - 1) * ITEMS_PER_PAGE + itemIdxInPage;
+                              return (
+                                <tr key={itemIdx} className={cn(
+                                  "border-b transition-colors",
+                                  item.selected ? "bg-primary/5" : "opacity-50",
+                                  (item.possibleDuplicates?.length || 0) > 0 && "bg-amber-500/5"
+                                )}>
+                                  <td className="p-2">
+                                    <Checkbox
+                                      checked={item.selected}
+                                      onCheckedChange={() => toggleItem(fileIdx, itemIdx)}
+                                    />
+                                  </td>
+                                  <td className="p-2">
+                                    <div className="font-medium flex items-center gap-1.5 flex-wrap">
+                                      <Button
+                                        variant="ghost" size="icon" className="h-6 w-6 -ml-1"
+                                        onClick={() => setEditingRef({ fileIdx, itemIdx })}
+                                        title="Editar lançamento"
+                                      >
+                                        <Pencil className="h-3 w-3" />
+                                      </Button>
+                                      {isEdited(item) && (
+                                        <Button
+                                          variant="ghost" size="icon" className="h-6 w-6 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+                                          onClick={() => setRevertRef({ fileIdx, itemIdx })}
+                                          title="Desfazer edição e voltar aos valores da IA"
+                                        >
+                                          <Undo2 className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                      <span>{item.descricao}</span>
+                                      {(item.possibleDuplicates?.length || 0) > 0 && (
+                                        <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-400 bg-amber-500/10">
+                                          <Copy className="h-3 w-3 mr-1" />
+                                          Possível duplicata ({item.possibleDuplicates!.length})
+                                        </Badge>
+                                      )}
                                     </div>
-                                    <ul className="space-y-1.5">
-                                      {item.possibleDuplicates!.map(d => (
-                                        <li key={d.id} className="text-[11px] border-l-2 border-amber-400 pl-2 bg-background/40 rounded-sm py-1 pr-2">
-                                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                                            <span className="font-medium">{d.descricao}</span>
-                                            <span className="font-mono flex items-center gap-2">
-                                              {d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                                              {d.data_vencimento && <span>• {new Date(d.data_vencimento).toLocaleDateString("pt-BR")}</span>}
-                                              <Badge variant="outline" className="text-[9px] py-0">{d.tipo}</Badge>
-                                            </span>
-                                          </div>
-                                          <div className="text-[10px] italic text-amber-700 dark:text-amber-400 mt-0.5">{d.motivo}</div>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                    <p className="text-[10px] mt-1.5 text-muted-foreground">Marque a caixa de seleção apenas se confirmar que NÃO é o mesmo lançamento.</p>
-                                  </div>
-                                )}
-                              </td>
-                              <td className="p-2 font-mono font-medium whitespace-nowrap">{formatCurrency(item.valor)}</td>
-                              <td className="p-2 whitespace-nowrap">{item.data || "—"}</td>
-                              <td className="p-2">
-                                <Select value={item.destino_sugerido} onValueChange={(v) => changeDestino(fileIdx, itemIdx, v)}>
-                                  <SelectTrigger className="h-7 text-xs w-28">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="lancamento">Lançamento</SelectItem>
-                                    <SelectItem value="venda">Venda</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </td>
-                              <td className="p-2">
-                                <Select value={item.tipo_sugerido} onValueChange={(v) => changeTipo(fileIdx, itemIdx, v)}>
-                                  <SelectTrigger className="h-7 text-xs w-28">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="receita">Receita</SelectItem>
-                                    <SelectItem value="despesa">Despesa</SelectItem>
-                                    <SelectItem value="investimento">Investimento</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </td>
-                              <td className="p-2">
-                                <div className="flex items-center gap-1.5">
-                                  <Progress value={item.confianca} className="h-1.5 w-12" />
-                                  <span className="text-xs text-muted-foreground">{item.confianca}%</span>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
+                                    {item.fornecedor_cliente && (
+                                      <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                                        <span className={cn(
+                                          isNewEntity(item.fornecedor_cliente, item.tipo_sugerido === "receita" ? "cliente" : "fornecedor") && 
+                                          "px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-medium"
+                                        )}>
+                                          {item.fornecedor_cliente}
+                                        </span>
+                                        {isNewEntity(item.fornecedor_cliente, item.tipo_sugerido === "receita" ? "cliente" : "fornecedor") && (
+                                          <TooltipProvider delayDuration={200}>
+                                            <Tooltip>
+                                              <TooltipTrigger>
+                                                <Badge variant="outline" className="h-4 px-1 text-[9px] border-amber-500/30 text-amber-600 bg-amber-500/5">
+                                                  NOVO
+                                                </Badge>
+                                              </TooltipTrigger>
+                                              <TooltipContent className="text-[10px]">Este {item.tipo_sugerido === "receita" ? "cliente" : "fornecedor"} não foi encontrado no sistema e será cadastrado automaticamente.</TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+                                        )}
+                                      </div>
+                                    )}
+                                    {item.categoria_sugerida && (
+                                      <Badge 
+                                        variant="outline" 
+                                        className={cn(
+                                          "text-[10px] mt-0.5",
+                                          isNewEntity(item.categoria_sugerida, "categoria") && "border-amber-500/40 text-amber-700 bg-amber-500/10 font-semibold"
+                                        )}
+                                      >
+                                        {isNewEntity(item.categoria_sugerida, "categoria") && <Plus className="h-2 w-2 mr-1" />}
+                                        {item.categoria_sugerida}
+                                      </Badge>
+                                    )}
+                                    {item.forma_pagamento && (
+                                      <Badge 
+                                        variant="outline" 
+                                        className={cn(
+                                          "text-[10px] mt-0.5 ml-1",
+                                          isNewEntity(item.forma_pagamento, "forma_pagamento") && "border-amber-500/40 text-amber-700 bg-amber-500/10 font-semibold"
+                                        )}
+                                      >
+                                        {isNewEntity(item.forma_pagamento, "forma_pagamento") && <Plus className="h-2 w-2 mr-1" />}
+                                        {item.forma_pagamento}
+                                      </Badge>
+                                    )}
+                                    {item.observacoes && (
+                                      <div className="text-[10px] text-muted-foreground mt-0.5 italic">{item.observacoes}</div>
+                                    )}
+                                    {(item.possibleDuplicates?.length || 0) > 0 && (
+                                      <div className="mt-2 rounded-md border border-amber-400/40 bg-amber-500/5 p-2">
+                                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 mb-1.5">
+                                          <Copy className="h-3 w-3" />
+                                          Lançamento(s) já existente(s) semelhante(s) — confira antes de importar:
+                                        </div>
+                                        <ul className="space-y-1.5">
+                                          {item.possibleDuplicates!.map(d => (
+                                            <li key={d.id} className="text-[11px] border-l-2 border-amber-400 pl-2 bg-background/40 rounded-sm py-1 pr-2">
+                                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                <span className="font-medium">{d.descricao}</span>
+                                                <span className="font-mono flex items-center gap-2">
+                                                  {d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                                                  {d.data_vencimento && <span>• {new Date(d.data_vencimento).toLocaleDateString("pt-BR")}</span>}
+                                                  <Badge variant="outline" className="text-[9px] py-0">{d.tipo}</Badge>
+                                                </span>
+                                              </div>
+                                              <div className="text-[10px] italic text-amber-700 dark:text-amber-400 mt-0.5">{d.motivo}</div>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                        <p className="text-[10px] mt-1.5 text-muted-foreground">Marque a caixa de seleção apenas se confirmar que NÃO é o mesmo lançamento.</p>
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="p-2 font-mono font-medium whitespace-nowrap">{formatCurrency(item.valor)}</td>
+                                  <td className="p-2 whitespace-nowrap">{item.data || "—"}</td>
+                                  <td className="p-2">
+                                    <Select value={item.destino_sugerido} onValueChange={(v) => changeDestino(fileIdx, itemIdx, v)}>
+                                      <SelectTrigger className="h-7 text-xs w-28">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="lancamento">Lançamento</SelectItem>
+                                        <SelectItem value="venda">Venda</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </td>
+                                  <td className="p-2">
+                                    <Select value={item.tipo_sugerido} onValueChange={(v) => changeTipo(fileIdx, itemIdx, v)}>
+                                      <SelectTrigger className="h-7 text-xs w-28">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="receita">Receita</SelectItem>
+                                        <SelectItem value="despesa">Despesa</SelectItem>
+                                        <SelectItem value="investimento">Investimento</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </td>
+                                  <td className="p-2">
+                                    <div className="flex items-center gap-1.5">
+                                      <Progress value={item.confianca} className="h-1.5 w-12" />
+                                      <span className="text-xs text-muted-foreground">{item.confianca}%</span>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
                         </tbody>
                       </table>
                     </div>
+
+                    {file.items.length > ITEMS_PER_PAGE && (
+                      <div className="flex items-center justify-center gap-2 mt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={(currentPage[fileIdx] || 1) === 1}
+                          onClick={() => setCurrentPage(prev => ({ ...prev, [fileIdx]: (prev[fileIdx] || 1) - 1 }))}
+                        >
+                          Anterior
+                        </Button>
+                        <span className="text-xs text-muted-foreground">
+                          Página {currentPage[fileIdx] || 1} de {Math.ceil(file.items.length / ITEMS_PER_PAGE)}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={(currentPage[fileIdx] || 1) === Math.ceil(file.items.length / ITEMS_PER_PAGE)}
+                          onClick={() => setCurrentPage(prev => ({ ...prev, [fileIdx]: (prev[fileIdx] || 1) + 1 }))}
+                        >
+                          Próxima
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )
               )}
