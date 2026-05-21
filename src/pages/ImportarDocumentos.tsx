@@ -70,6 +70,10 @@ type ExtractedItem = {
   projeto_id?: string | null;
   observacoes: string | null;
   confianca: number;
+  conta_bancaria_nome?: string | null;
+  conta_bancaria_id?: string | null;
+  conta_destino_nome?: string | null;
+  conta_destino_id?: string | null;
   selected?: boolean;
   possibleDuplicates?: DuplicateMatch[];
   original?: Omit<ExtractedItem, "selected" | "possibleDuplicates" | "original">;
@@ -98,6 +102,41 @@ type PendingImport = {
   dados: any[];
   resumo: string | null;
 };
+
+type ContaBancariaOption = { id: string; nome: string; banco: string | null; agencia: string | null; conta: string | null; principal: boolean };
+
+// Normaliza forma de pagamento detectada pela IA para nomes canônicos
+const FORMA_PAGAMENTO_ALIASES: Record<string, string> = {
+  "pix": "PIX",
+  "pix recebido": "PIX",
+  "pix enviado": "PIX",
+  "transferencia pix": "PIX",
+  "transferência pix": "PIX",
+  "transf pix": "PIX",
+  "pix transf": "PIX",
+  "transferencia via pix": "PIX",
+  "transferência via pix": "PIX",
+  "ted": "TED",
+  "doc": "DOC",
+  "boleto": "Boleto",
+  "dinheiro": "Dinheiro",
+  "cartao de credito": "Cartão de Crédito",
+  "cartão de crédito": "Cartão de Crédito",
+  "cartao credito": "Cartão de Crédito",
+  "credito": "Cartão de Crédito",
+  "cartao de debito": "Cartão de Débito",
+  "cartão de débito": "Cartão de Débito",
+  "cartao debito": "Cartão de Débito",
+  "debito": "Cartão de Débito",
+  "transferencia": "Transferência",
+  "transferência": "Transferência",
+};
+const normalizeFormaPagamento = (raw: string | null | undefined): string | null => {
+  if (!raw) return null;
+  const key = raw.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return FORMA_PAGAMENTO_ALIASES[key] || raw.trim();
+};
+
 
 const ImportarDocumentos = () => {
   const { empresaId, user } = useAuth();
