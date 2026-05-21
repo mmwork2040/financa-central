@@ -189,6 +189,20 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
     let errors = 0;
     for (const vendaId of selectedVendaIds) {
       try {
+        // Persist per-venda edits (produto/valor) before emitting
+        const edit = vendaEdits[vendaId];
+        if (edit) {
+          const valorNum = parseFloat(String(edit.valor).replace(",", "."));
+          const patch: Record<string, unknown> = {};
+          if (edit.produto?.trim()) patch.produto = edit.produto.trim();
+          if (!isNaN(valorNum) && valorNum > 0) {
+            patch.valor_bruto = valorNum;
+            patch.valor_liquido = valorNum;
+          }
+          if (Object.keys(patch).length > 0) {
+            await supabase.from("vendas_digitais").update(patch).eq("id", vendaId);
+          }
+        }
         const { data, error } = await supabase.functions.invoke("spedy-emit", {
           body: { venda_id: vendaId },
         });
