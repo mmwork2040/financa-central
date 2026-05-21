@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { FileText, Upload, Loader2, CheckCircle2, AlertTriangle, Shield, Building2 } from "lucide-react";
+import { FileText, Upload, Loader2, CheckCircle2, AlertTriangle, Shield, Building2, Download } from "lucide-react";
 import CepAddressFields, { AddressData } from "@/components/common/CepAddressFields";
 
 interface ConfiguracaoFiscalProps {
