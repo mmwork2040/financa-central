@@ -54,9 +54,13 @@ export const LancamentosFormDialog = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [modo, setModo] = useState<LancamentoModo>("unico");
   const [recorrenciaInicio, setRecorrenciaInicio] = useState<string | null>(null);
+  const [editScope, setEditScope] = useState<"single" | "future">("single");
 
-  // Detect if editing an existing recurring lancamento
+  // Detect if editing an existing series (recorrente ou parcelado)
   const isEditingRecorrente = !!selectedId && formData.recorrente && !!(formData as any).recorrencia_grupo_id;
+  const isEditingParcelado = !!selectedId && !formData.recorrente && !!(formData as any).recorrencia_grupo_id && (formData.total_parcelas ?? 0) > 1;
+  const isEditingSeries = isEditingRecorrente || isEditingParcelado;
+
 
   // Derived: is this an investment sub-operation that auto-sets status?
   const isAutoStatus = selectedTipo === "investimento" && ["resgate", "rentabilidade", "reajuste"].includes(subtipoInvestimento);
