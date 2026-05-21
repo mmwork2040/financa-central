@@ -76,8 +76,14 @@ const NotasFiscais = () => {
     }
   };
 
+  const isPending = (s: string | null) => !s || s === "PENDING_EMISSION" || s === "REJECTED" || s === "ERROR";
+  const isIssued = (s: string | null) => s === "ISSUED" || s === "AUTHORIZED";
+
   const filtered = vendas.filter(v => {
+    if (filterMode === "pendentes" && !isPending(v.invoice_status)) return false;
+    if (filterMode === "emitidas" && !isIssued(v.invoice_status)) return false;
     const term = search.toLowerCase();
+    if (!term) return true;
     return (
       (v.cliente || "").toLowerCase().includes(term) ||
       (v.produto || "").toLowerCase().includes(term) ||
@@ -87,8 +93,8 @@ const NotasFiscais = () => {
 
   const stats = {
     total: vendas.length,
-    emitidas: vendas.filter(v => v.invoice_status === "ISSUED" || v.invoice_status === "AUTHORIZED").length,
-    pendentes: vendas.filter(v => v.invoice_status === "PROCESSING" || v.invoice_status === "PENDING_EMISSION").length,
+    emitidas: vendas.filter(v => isIssued(v.invoice_status)).length,
+    pendentes: vendas.filter(v => !v.invoice_status || v.invoice_status === "PROCESSING" || v.invoice_status === "PENDING_EMISSION").length,
     erros: vendas.filter(v => v.invoice_status === "REJECTED" || v.invoice_status === "ERROR").length,
   };
 
