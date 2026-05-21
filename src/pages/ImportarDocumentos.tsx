@@ -1281,9 +1281,9 @@ const ImportarDocumentos = () => {
                             <th className="p-2">Descrição</th>
                             <th className="p-2">Valor</th>
                             <th className="p-2">Data</th>
-                            <th className="p-2">Destino</th>
+                            <th className="p-2">Categoria</th>
                             <th className="p-2">Tipo</th>
-                            <th className="p-2">Confiança</th>
+                            <th className="p-2">Projeto</th>
                           </tr>
                         </thead>
                         <tbody>
