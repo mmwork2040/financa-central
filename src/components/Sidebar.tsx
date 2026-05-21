@@ -231,7 +231,7 @@ export const Sidebar = () => {
     { name: "Notas Fiscais", icon: FileText, path: "/notas-fiscais", businessOnly: true, visible: showNotas },
     { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true, visible: showAds },
     { name: "Projetos", icon: Briefcase, path: "/projetos", businessOnly: true },
-    { name: "Importar", icon: FileUp, path: "/importar-documentos" },
+    
     { name: "Relatórios", icon: PieChart, path: "/reports" },
   ];
   const mainItems = (isPessoal ? allMainItems.filter(i => !i.businessOnly) : allMainItems)
