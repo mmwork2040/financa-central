@@ -640,34 +640,84 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
             {selectedCliente && (
               <>
                 <Card>
-                  <CardContent className="p-3 flex items-center justify-between">
-                    <div>
+                  <CardContent className="p-3 space-y-3">
+                    <div className="flex items-center justify-between">
                       <p className="text-sm font-medium">{selectedCliente.nome}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {selectedCliente.cpf_cnpj || "—"} · {selectedCliente.email || "—"}
-                      </p>
+                      <Button variant="ghost" size="sm" onClick={() => { setSelectedCliente(null); setVendas([]); }}>
+                        Trocar
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => { setSelectedCliente(null); setVendas([]); }}>
-                      Trocar
-                    </Button>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">CPF/CNPJ <span className="text-destructive">*</span></Label>
+                        <Input
+                          value={clienteEdit.cpf_cnpj}
+                          onChange={e => setClienteEdit(p => ({ ...p, cpf_cnpj: e.target.value }))}
+                          placeholder="000.000.000-00"
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Telefone</Label>
+                        <Input
+                          value={clienteEdit.telefone}
+                          onChange={e => setClienteEdit(p => ({ ...p, telefone: e.target.value }))}
+                          placeholder="(00) 00000-0000"
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">E-mail</Label>
+                        <Input
+                          type="email"
+                          value={clienteEdit.email}
+                          onChange={e => setClienteEdit(p => ({ ...p, email: e.target.value }))}
+                          placeholder="cliente@email.com"
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Endereço <span className="text-destructive">*</span></Label>
+                        <Input
+                          value={clienteEdit.endereco}
+                          onChange={e => setClienteEdit(p => ({ ...p, endereco: e.target.value }))}
+                          placeholder="Rua, número, bairro, cidade/UF, CEP"
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                    </div>
+                    {(() => {
+                      const faltando: string[] = [];
+                      if (!clienteEdit.cpf_cnpj.trim()) faltando.push("CPF/CNPJ");
+                      if (!clienteEdit.endereco.trim()) faltando.push("Endereço");
+                      const dirty =
+                        clienteEdit.cpf_cnpj !== (selectedCliente.cpf_cnpj || "") ||
+                        clienteEdit.email !== (selectedCliente.email || "") ||
+                        clienteEdit.telefone !== (selectedCliente.telefone || "") ||
+                        clienteEdit.endereco !== (selectedCliente.endereco || "");
+                      return (
+                        <div className="flex items-center justify-between gap-2">
+                          {faltando.length > 0 ? (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Faltando: {faltando.join(", ")}
+                            </p>
+                          ) : <span />}
+                          <Button
+                            size="sm"
+                            variant={dirty ? "default" : "outline"}
+                            onClick={saveClienteEdits}
+                            disabled={savingCliente || !dirty}
+                          >
+                            {savingCliente ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                            Salvar cliente
+                          </Button>
+                        </div>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
 
-                {(() => {
-                  const faltando: string[] = [];
-                  if (!selectedCliente.cpf_cnpj?.trim()) faltando.push("CPF/CNPJ");
-                  if (!selectedCliente.endereco?.trim()) faltando.push("Endereço");
-                  if (faltando.length === 0) return null;
-                  return (
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
-                      <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                      <div className="text-xs text-amber-700 dark:text-amber-400">
-                        <p className="font-medium">Dados obrigatórios faltando: {faltando.join(", ")}</p>
-                        <p className="mt-0.5">Edite o cliente em "Clientes" para completar antes de emitir a nota.</p>
-                      </div>
-                    </div>
-                  );
-                })()}
 
                 {loadingVendas ? (
                   <div className="flex justify-center py-6">
