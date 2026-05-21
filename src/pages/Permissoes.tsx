@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
+import { AcessoTabs } from "@/components/common/AcessoTabs";
+
 import {
   Card,
   CardContent,
