@@ -1382,6 +1382,9 @@ const ImportarDocumentos = () => {
           forma_pagamento_id: editingItem.forma_pagamento_id ?? null,
           projeto_id: editingItem.projeto_id ?? null,
           observacoes: editingItem.observacoes,
+          conta_bancaria_id: editingItem.conta_bancaria_id ?? null,
+          conta_destino_id: editingItem.conta_destino_id ?? null,
+
         } : null}
         categorias={categorias}
         fornecedores={fornecedores}
