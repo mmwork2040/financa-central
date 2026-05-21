@@ -1388,6 +1388,8 @@ const ImportarDocumentos = () => {
         clientes={clientes}
         formasPagamento={formasPagamento}
         projetos={projetos}
+        contasBancarias={contasBancarias.map(c => ({ id: c.id, nome: c.nome }))}
+
         onSave={(patch) => {
           if (editingRef) updateItem(editingRef.fileIdx, editingRef.itemIdx, patch as Partial<ExtractedItem>);
         }}
