@@ -216,26 +216,80 @@ const ConfigGlobalIA = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Empresas liberadas</CardTitle>
-          <CardDescription>Empresas ativas usam a IA global; as não liberadas continuam com integração própria (Integrações).</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-lg"><BarChart3 className="h-4 w-4 text-primary" />Uso de tokens por empresa (mês atual)</CardTitle>
+          <CardDescription>Libere acesso, ajuste o limite manual e acompanhe o consumo. O limite efetivo segue o override; se vazio, vale o limite do plano.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : (
-            <div className="space-y-2 max-h-[500px] overflow-y-auto">
-              {empresas.map(emp => (
-                <div key={emp.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">{emp.nome}</div>
-                    {emp.email && <div className="text-xs text-muted-foreground truncate">{emp.email}</div>}
+            <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              {empresas.map(emp => {
+                const used = usage[emp.id] || 0;
+                const limit = getEffectiveLimit(emp.id);
+                const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+                const over = limit > 0 && used >= limit;
+                const warn = limit > 0 && pct >= 80 && !over;
+                return (
+                  <div key={emp.id} className="p-3 rounded-lg border bg-muted/30 space-y-2">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium truncate">{emp.nome}</div>
+                        {emp.email && <div className="text-xs text-muted-foreground truncate">{emp.email}</div>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Liberado</span>
+                        <Switch
+                          checked={!!access[emp.id]}
+                          onCheckedChange={async (v) => {
+                            setAccess(prev => ({ ...prev, [emp.id]: v }));
+                            const { error } = await sb.from("ai_global_access").upsert({
+                              empresa_id: emp.id, liberado: v,
+                              liberado_em: v ? new Date().toISOString() : null,
+                            }, { onConflict: "empresa_id" });
+                            if (error) { toast.error("Erro"); setAccess(prev => ({ ...prev, [emp.id]: !v })); }
+                            else toast.success(v ? "Liberada" : "Acesso revogado");
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-end gap-2 flex-wrap">
+                      <div className="text-xs">
+                        <div className="text-muted-foreground">Usado / Limite</div>
+                        <div className="font-semibold">
+                          {fmt(used)} / {limit > 0 ? fmt(limit) : "—"}
+                          {limit > 0 && <Badge variant={over ? "destructive" : warn ? "outline" : "outline"} className="ml-2 text-[10px]">{pct}%</Badge>}
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-[180px]">
+                        <div className="h-2 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${over ? "bg-destructive" : warn ? "bg-amber-500" : "bg-primary"}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder={`Plano: ${fmt(planLimits[emp.id] || 0)}`}
+                        value={overrides[emp.id] ?? ""}
+                        onChange={(e) => setOverrides(prev => ({ ...prev, [emp.id]: e.target.value }))}
+                        className="h-9 text-sm max-w-[180px]"
+                      />
+                      <Button size="sm" variant="outline" onClick={() => saveOverride(emp.id)}>Salvar limite</Button>
+                      {(warn || over) && (
+                        <Badge variant={over ? "destructive" : "outline"} className="gap-1 text-[10px]">
+                          <AlertTriangle className="h-3 w-3" />
+                          {over ? "Bloqueado" : "Alerta 80%"}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                  <Switch
-                    checked={!!access[emp.id]}
-                    onCheckedChange={(v) => toggleAccess(emp.id, v)}
-                  />
-                </div>
-              ))}
+                );
+              })}
               {empresas.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhuma empresa cadastrada</p>}
             </div>
           )}
