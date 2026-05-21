@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Loader2, Save, Eye, EyeOff, ShieldAlert } from "lucide-react";
+import { Brain, Loader2, Save, Eye, EyeOff, ShieldAlert, BarChart3, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -35,30 +35,57 @@ const ConfigGlobalIA = () => {
   const [hasKey, setHasKey] = useState(false);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [access, setAccess] = useState<Record<string, boolean>>({});
+  const [overrides, setOverrides] = useState<Record<string, string>>({});
+  const [usage, setUsage] = useState<Record<string, number>>({});
+  const [planLimits, setPlanLimits] = useState<Record<string, number>>({}); // empresa_id -> limite do plano
+
+  const loadAll = async () => {
+    setLoading(true);
+    const [{ data: cfg }, { data: emps }, { data: liberacoes }, { data: usageRows }, { data: perfis }] = await Promise.all([
+      sb.from("ai_global_config").select("*").eq("ativo", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("empresas").select("id, nome, email").order("nome"),
+      sb.from("ai_global_access").select("empresa_id, liberado, limite_tokens_mes_override"),
+      sb.from("ai_usage_log")
+        .select("empresa_id, total_tokens")
+        .gte("created_at", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+      sb.from("perfis").select("empresa_id, assinatura_plano_id, planos_assinatura:assinatura_plano_id(limite_tokens_ia_mes)").not("empresa_id", "is", null),
+    ]);
+
+    if (cfg) {
+      setProvider(cfg.provider);
+      setModel(cfg.model);
+      setAtivo(cfg.ativo);
+      setHasKey(!!cfg.api_key);
+    }
+    setEmpresas((emps || []) as Empresa[]);
+    const acc: Record<string, boolean> = {};
+    const ovr: Record<string, string> = {};
+    (liberacoes || []).forEach((l: any) => {
+      acc[l.empresa_id] = l.liberado;
+      ovr[l.empresa_id] = l.limite_tokens_mes_override != null ? String(l.limite_tokens_mes_override) : "";
+    });
+    setAccess(acc);
+    setOverrides(ovr);
+
+    const usageMap: Record<string, number> = {};
+    (usageRows || []).forEach((r: any) => {
+      usageMap[r.empresa_id] = (usageMap[r.empresa_id] || 0) + Number(r.total_tokens || 0);
+    });
+    setUsage(usageMap);
+
+    const limitMap: Record<string, number> = {};
+    (perfis || []).forEach((p: any) => {
+      const lim = Number(p.planos_assinatura?.limite_tokens_ia_mes || 0);
+      if (p.empresa_id && lim > (limitMap[p.empresa_id] || 0)) limitMap[p.empresa_id] = lim;
+    });
+    setPlanLimits(limitMap);
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!isSuperAdmin) return;
-    const load = async () => {
-      setLoading(true);
-      const [{ data: cfg }, { data: emps }, { data: liberacoes }] = await Promise.all([
-        sb.from("ai_global_config").select("*").eq("ativo", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
-        supabase.from("empresas").select("id, nome, email").order("nome"),
-        sb.from("ai_global_access").select("empresa_id, liberado"),
-      ]);
-
-      if (cfg) {
-        setProvider(cfg.provider);
-        setModel(cfg.model);
-        setAtivo(cfg.ativo);
-        setHasKey(!!cfg.api_key);
-      }
-      setEmpresas((emps || []) as Empresa[]);
-      const acc: Record<string, boolean> = {};
-      (liberacoes || []).forEach((l: any) => { acc[l.empresa_id] = l.liberado; });
-      setAccess(acc);
-      setLoading(false);
-    };
-    load();
+    loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuperAdmin]);
 
   if (!isSuperAdmin) return <Navigate to="/dashboard" replace />;
@@ -101,20 +128,25 @@ const ConfigGlobalIA = () => {
     }
   };
 
-  const toggleAccess = async (empresaId: string, value: boolean) => {
-    setAccess(prev => ({ ...prev, [empresaId]: value }));
+  const saveOverride = async (empresaId: string) => {
+    const raw = overrides[empresaId];
+    const value = raw === "" || raw == null ? null : Number(raw);
     const { error } = await sb.from("ai_global_access").upsert({
       empresa_id: empresaId,
-      liberado: value,
-      liberado_em: value ? new Date().toISOString() : null,
+      liberado: !!access[empresaId],
+      limite_tokens_mes_override: value,
     }, { onConflict: "empresa_id" });
-    if (error) {
-      toast.error("Erro ao alterar liberação");
-      setAccess(prev => ({ ...prev, [empresaId]: !value }));
-    } else {
-      toast.success(value ? "Empresa liberada" : "Acesso revogado");
-    }
+    if (error) toast.error("Erro ao salvar limite");
+    else toast.success("Limite atualizado");
   };
+
+  const getEffectiveLimit = (empresaId: string): number => {
+    const ovr = overrides[empresaId];
+    if (ovr && ovr !== "") return Number(ovr);
+    return planLimits[empresaId] || 0;
+  };
+
+  const fmt = (n: number) => n.toLocaleString("pt-BR");
 
   return (
     <div className="space-y-6">
@@ -184,26 +216,80 @@ const ConfigGlobalIA = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Empresas liberadas</CardTitle>
-          <CardDescription>Empresas ativas usam a IA global; as não liberadas continuam com integração própria (Integrações).</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-lg"><BarChart3 className="h-4 w-4 text-primary" />Uso de tokens por empresa (mês atual)</CardTitle>
+          <CardDescription>Libere acesso, ajuste o limite manual e acompanhe o consumo. O limite efetivo segue o override; se vazio, vale o limite do plano.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : (
-            <div className="space-y-2 max-h-[500px] overflow-y-auto">
-              {empresas.map(emp => (
-                <div key={emp.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">{emp.nome}</div>
-                    {emp.email && <div className="text-xs text-muted-foreground truncate">{emp.email}</div>}
+            <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              {empresas.map(emp => {
+                const used = usage[emp.id] || 0;
+                const limit = getEffectiveLimit(emp.id);
+                const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+                const over = limit > 0 && used >= limit;
+                const warn = limit > 0 && pct >= 80 && !over;
+                return (
+                  <div key={emp.id} className="p-3 rounded-lg border bg-muted/30 space-y-2">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium truncate">{emp.nome}</div>
+                        {emp.email && <div className="text-xs text-muted-foreground truncate">{emp.email}</div>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Liberado</span>
+                        <Switch
+                          checked={!!access[emp.id]}
+                          onCheckedChange={async (v) => {
+                            setAccess(prev => ({ ...prev, [emp.id]: v }));
+                            const { error } = await sb.from("ai_global_access").upsert({
+                              empresa_id: emp.id, liberado: v,
+                              liberado_em: v ? new Date().toISOString() : null,
+                            }, { onConflict: "empresa_id" });
+                            if (error) { toast.error("Erro"); setAccess(prev => ({ ...prev, [emp.id]: !v })); }
+                            else toast.success(v ? "Liberada" : "Acesso revogado");
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-end gap-2 flex-wrap">
+                      <div className="text-xs">
+                        <div className="text-muted-foreground">Usado / Limite</div>
+                        <div className="font-semibold">
+                          {fmt(used)} / {limit > 0 ? fmt(limit) : "—"}
+                          {limit > 0 && <Badge variant={over ? "destructive" : warn ? "outline" : "outline"} className="ml-2 text-[10px]">{pct}%</Badge>}
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-[180px]">
+                        <div className="h-2 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${over ? "bg-destructive" : warn ? "bg-amber-500" : "bg-primary"}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder={`Plano: ${fmt(planLimits[emp.id] || 0)}`}
+                        value={overrides[emp.id] ?? ""}
+                        onChange={(e) => setOverrides(prev => ({ ...prev, [emp.id]: e.target.value }))}
+                        className="h-9 text-sm max-w-[180px]"
+                      />
+                      <Button size="sm" variant="outline" onClick={() => saveOverride(emp.id)}>Salvar limite</Button>
+                      {(warn || over) && (
+                        <Badge variant={over ? "destructive" : "outline"} className="gap-1 text-[10px]">
+                          <AlertTriangle className="h-3 w-3" />
+                          {over ? "Bloqueado" : "Alerta 80%"}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                  <Switch
-                    checked={!!access[emp.id]}
-                    onCheckedChange={(v) => toggleAccess(emp.id, v)}
-                  />
-                </div>
-              ))}
+                );
+              })}
               {empresas.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhuma empresa cadastrada</p>}
             </div>
           )}

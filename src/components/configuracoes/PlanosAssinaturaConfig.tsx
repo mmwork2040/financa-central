@@ -23,6 +23,7 @@ interface Plano {
   link_acesso: string | null;
   ordem: number;
   max_empresas: number;
+  limite_tokens_ia_mes?: number | null;
 }
 
 const periodoOptions = [
@@ -49,6 +50,7 @@ const PlanosAssinaturaConfig = () => {
     ordem: 0,
     max_empresas: "1",
     max_notas_fiscais: "0",
+    limite_tokens_ia_mes: "0",
   });
 
   useEffect(() => {
@@ -80,7 +82,7 @@ const PlanosAssinaturaConfig = () => {
 
   const openNew = () => {
     setEditingPlano(null);
-    setForm({ nome: "", descricao: "", preco: 0, periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, max_empresas: "1", max_notas_fiscais: "0" });
+    setForm({ nome: "", descricao: "", preco: 0, periodo: "mensal", destaque: false, badge: "", ativo: true, link_acesso: "", ordem: planos.length + 1, max_empresas: "1", max_notas_fiscais: "0", limite_tokens_ia_mes: "0" });
     setDialogOpen(true);
   };
 
@@ -100,6 +102,7 @@ const PlanosAssinaturaConfig = () => {
       ordem: plano.ordem,
       max_empresas: String(plano.max_empresas ?? 1),
       max_notas_fiscais: String(controles.max_notas_fiscais ?? 0),
+      limite_tokens_ia_mes: String((plano as any).limite_tokens_ia_mes ?? 0),
     });
     setDialogOpen(true);
   };
@@ -132,6 +135,7 @@ const PlanosAssinaturaConfig = () => {
         link_acesso: form.link_acesso || null,
         ordem: form.ordem,
         max_empresas: parseInt(form.max_empresas) || 1,
+        limite_tokens_ia_mes: parseInt(form.limite_tokens_ia_mes) || 0,
         itens: itensPayload,
       };
 
@@ -253,6 +257,7 @@ const PlanosAssinaturaConfig = () => {
                     <span>Período: <Badge variant="outline" className="text-[10px]">{plano.periodo}</Badge></span>
                     <span>Empresas: <Badge variant="outline" className="text-[10px]">{plano.max_empresas}</Badge></span>
                     <span>NFs/mês: <Badge variant="outline" className="text-[10px]">{(plano as any).itens?.controles?.max_notas_fiscais === 0 ? "Ilimitado" : ((plano as any).itens?.controles?.max_notas_fiscais ?? "Não definido")}</Badge></span>
+                    <span>Tokens IA/mês: <Badge variant="outline" className="text-[10px]">{((plano as any).limite_tokens_ia_mes ?? 0).toLocaleString('pt-BR')}</Badge></span>
                   </div>
                   {plano.link_acesso && (
                     <div className="text-xs text-muted-foreground mb-3 flex items-center gap-1 truncate">
@@ -333,6 +338,11 @@ const PlanosAssinaturaConfig = () => {
               <Label>Máx. Notas Fiscais / mês</Label>
               <Input type="number" min="0" value={form.max_notas_fiscais} onChange={(e) => setForm(prev => ({ ...prev, max_notas_fiscais: e.target.value }))} placeholder="0 = ilimitado" />
               <p className="text-xs text-muted-foreground">0 = ilimitado</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Limite de tokens de IA / mês</Label>
+              <Input type="number" min="0" value={form.limite_tokens_ia_mes} onChange={(e) => setForm(prev => ({ ...prev, limite_tokens_ia_mes: e.target.value }))} placeholder="0 = sem IA" />
+              <p className="text-xs text-muted-foreground">Ex.: 100000. 0 = empresas neste plano não usam IA global.</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
