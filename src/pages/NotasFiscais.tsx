@@ -33,6 +33,7 @@ const NotasFiscais = () => {
   const [emitirOpen, setEmitirOpen] = useState(false);
   const [emittingId, setEmittingId] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<"todas" | "pendentes" | "emitidas">("todas");
+  const [detailVenda, setDetailVenda] = useState<any | null>(null);
 
   const fetchVendas = async () => {
     if (!empresaId) return;
