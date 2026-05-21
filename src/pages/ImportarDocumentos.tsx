@@ -1485,6 +1485,103 @@ const ImportarDocumentos = () => {
                       </table>
                     </div>
 
+                    {/* Mobile: cards */}
+                    <div className="md:hidden space-y-2">
+                      {file.items
+                        .slice(
+                          ((currentPage[fileIdx] || 1) - 1) * ITEMS_PER_PAGE,
+                          (currentPage[fileIdx] || 1) * ITEMS_PER_PAGE
+                        )
+                        .map((item, itemIdxInPage) => {
+                          const itemIdx = ((currentPage[fileIdx] || 1) - 1) * ITEMS_PER_PAGE + itemIdxInPage;
+                          return (
+                            <div key={itemIdx} className={cn(
+                              "rounded-lg border p-3 space-y-2 transition-colors",
+                              !item.selected && "opacity-60",
+                              item.tipo_sugerido === "receita" && "bg-green-500/5 border-green-500/20",
+                              item.tipo_sugerido === "despesa" && "bg-red-500/5 border-red-500/20",
+                              item.selected && !["receita","despesa"].includes(item.tipo_sugerido) && "bg-primary/5 border-primary/20",
+                              (item.possibleDuplicates?.length || 0) > 0 && "bg-amber-500/10 border-amber-500/40"
+                            )}>
+                              <div className="flex items-start gap-2">
+                                <Checkbox
+                                  checked={item.selected}
+                                  onCheckedChange={() => toggleItem(fileIdx, itemIdx)}
+                                  className="mt-1"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="font-medium text-sm break-words">{item.descricao}</div>
+                                    <div className="font-mono font-semibold text-sm whitespace-nowrap">{formatCurrency(item.valor)}</div>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5 flex-wrap">
+                                    <span>{item.data || "—"}</span>
+                                    <Badge variant="outline" className="text-[10px] capitalize">{item.tipo_sugerido}</Badge>
+                                    {item.fornecedor_cliente && <span className="truncate max-w-[160px]">• {item.fornecedor_cliente}</span>}
+                                  </div>
+                                </div>
+                                <div className="flex flex-col gap-1 shrink-0">
+                                  <Button
+                                    variant="outline" size="icon" className="h-7 w-7"
+                                    onClick={() => setEditingRef({ fileIdx, itemIdx })}
+                                    title="Editar lançamento"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Button>
+                                  {isEdited(item) && (
+                                    <Button
+                                      variant="outline" size="icon" className="h-7 w-7 text-amber-600 border-amber-400"
+                                      onClick={() => setRevertRef({ fileIdx, itemIdx })}
+                                      title="Desfazer edição"
+                                    >
+                                      <Undo2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-1">
+                                {item.categoria_sugerida && (
+                                  <Badge variant="outline" className={cn(
+                                    "text-[10px]",
+                                    isNewEntity(item.categoria_sugerida, "categoria") && "border-amber-500/40 text-amber-700 bg-amber-500/10 font-semibold"
+                                  )}>
+                                    {isNewEntity(item.categoria_sugerida, "categoria") && <Plus className="h-2 w-2 mr-1" />}
+                                    {item.categoria_sugerida}
+                                  </Badge>
+                                )}
+                                {item.forma_pagamento && (
+                                  <Badge variant="outline" className="text-[10px]">
+                                    {item.forma_pagamento}
+                                  </Badge>
+                                )}
+                                {(() => {
+                                  const contaId = item.conta_bancaria_id || contaUploadId;
+                                  const conta = contasBancarias.find(c => c.id === contaId);
+                                  if (!conta) return null;
+                                  return (
+                                    <Badge variant="outline" className="text-[10px] border-primary/30 text-primary bg-primary/5">
+                                      🏦 {conta.nome}
+                                    </Badge>
+                                  );
+                                })()}
+                                {(item.possibleDuplicates?.length || 0) > 0 && (
+                                  <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 bg-amber-500/10">
+                                    <Copy className="h-3 w-3 mr-1" />
+                                    Duplicata ({item.possibleDuplicates!.length})
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {item.observacoes && (
+                                <div className="text-[10px] text-muted-foreground italic">{item.observacoes}</div>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+
+
                     {file.items.length > ITEMS_PER_PAGE && (
                       <div className="flex items-center justify-center gap-2 mt-4">
                         <Button
