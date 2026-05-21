@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { extractEdgeError } from "@/lib/edgeFunctionError";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -496,7 +497,10 @@ const ImportarDocumentos = () => {
           body,
         });
 
-        if (error) throw error;
+        if (error) {
+          const msg = await extractEdgeError(error, "Erro ao processar documento");
+          throw new Error(msg);
+        }
         if (data?.error) throw new Error(data.error);
 
         const rawItems = (data?.data?.itens || []) as any[];
