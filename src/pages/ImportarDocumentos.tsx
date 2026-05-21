@@ -220,7 +220,15 @@ const ImportarDocumentos = () => {
     ));
   };
 
-  const existingLancamentosRef = useRef<Array<{ id: string; descricao: string; valor: number; data_vencimento: string | null; tipo: string }>>([]);
+  const existingLancamentosRef = useRef<Array<{
+    id: string;
+    descricao: string;
+    valor: number;
+    data_vencimento: string | null;
+    tipo: string;
+    pessoa_nome: string | null;
+    pessoa_cpf_cnpj: string | null;
+  }>>([]);
 
   // Normaliza string para comparação case-insensitive (ex: Pix = PIX)
   const normalize = (s: string) =>
@@ -230,6 +238,16 @@ const ImportarDocumentos = () => {
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, ""); // Remove acentos
 
+  const onlyDigits = (s: string | null | undefined) => (s || "").replace(/\D/g, "");
+
+  // Extrai CPF/CNPJ de texto livre
+  const extractCpfCnpj = (texts: (string | null | undefined)[]): string | null => {
+    const blob = texts.filter(Boolean).join(" ");
+    const m = blob.match(/(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2})|(\d{3}\.?\d{3}\.?\d{3}-?\d{2})/);
+    if (!m) return null;
+    const digits = onlyDigits(m[0]);
+    return digits.length === 11 || digits.length === 14 ? digits : null;
+  };
 
   const tokenOverlap = (a: string, b: string): number => {
     const ta = new Set(normalize(a).split(" ").filter(t => t.length >= 3));
@@ -243,33 +261,65 @@ const ImportarDocumentos = () => {
   const findDuplicates = (item: ExtractedItem): DuplicateMatch[] => {
     const results: DuplicateMatch[] = [];
     const itemDate = item.data ? new Date(item.data).getTime() : null;
+    const itemTipo = item.tipo_sugerido;
+    const itemCpfCnpj = extractCpfCnpj([item.descricao, item.observacoes, item.fornecedor_cliente]);
+    const itemPessoa = normalize(item.fornecedor_cliente || "");
+
     for (const l of existingLancamentosRef.current) {
-      const valorDelta = Math.abs(l.valor - item.valor);
-      const valorRel = item.valor > 0 ? valorDelta / item.valor : 1;
-      const sameValor = valorDelta < 0.01 || valorRel <= 0.01; // exato ou 1%
+      // Pré-requisito: mesmo tipo (receita só compara com receita, etc.)
+      if (l.tipo !== itemTipo) continue;
+
+      // Indicadores de data — a data é decisiva
       let dateDiffDays: number | null = null;
       if (itemDate && l.data_vencimento) {
         dateDiffDays = Math.abs((itemDate - new Date(l.data_vencimento).getTime()) / 86400000);
       }
-      const closeDate = dateDiffDays !== null && dateDiffDays <= 15;
+      const mesmaData = dateDiffDays !== null && dateDiffDays < 1;
+      const dataProxima = dateDiffDays !== null && dateDiffDays >= 1 && dateDiffDays <= 3;
+
+      // Sem coincidência de data não há duplicata (pagamentos repetidos em datas diferentes são legítimos)
+      if (!mesmaData && !dataProxima) continue;
+
+      const valorDelta = Math.abs(l.valor - item.valor);
+      const valorRel = item.valor > 0 ? valorDelta / item.valor : 1;
+      const valorExato = item.valor > 0 && (valorDelta < 0.01 || valorRel <= 0.01);
+
+      const mesmoCpfCnpj = !!(itemCpfCnpj && l.pessoa_cpf_cnpj && onlyDigits(l.pessoa_cpf_cnpj) === itemCpfCnpj);
+      const mesmaPessoa = !!(itemPessoa && l.pessoa_nome && normalize(l.pessoa_nome) === itemPessoa);
       const descSim = tokenOverlap(item.descricao, l.descricao);
-      const sameDesc = descSim >= 0.6;
+      const descricaoSemelhante = descSim >= 0.6;
 
-      let motivo = "";
-      if (sameValor && closeDate) motivo = `Valor idêntico e data próxima (${Math.round(dateDiffDays!)}d)`;
-      else if (sameValor && sameDesc) motivo = "Valor e descrição muito semelhantes";
-      else if (sameDesc && closeDate) motivo = "Descrição semelhante e data próxima";
-      else if (sameValor && item.valor > 0) motivo = "Valor exato";
-      else if (descSim >= 0.8) motivo = "Descrição muito semelhante";
+      const motivos: string[] = [];
+      if (mesmaData) motivos.push("mesma data");
+      else if (dataProxima) motivos.push(`data próxima (${Math.round(dateDiffDays!)}d)`);
+      if (valorExato) motivos.push("valor exato");
+      if (mesmoCpfCnpj) motivos.push("mesmo CPF/CNPJ");
+      if (mesmaPessoa) motivos.push("mesma pessoa");
+      if (descricaoSemelhante) motivos.push("descrição semelhante");
 
-      if (motivo) {
+      // Decisão
+      let isDup = false;
+      if (mesmoCpfCnpj && (mesmaData || valorExato)) {
+        isDup = true;
+      } else {
+        let score = 0;
+        if (mesmaData) score += 1;
+        else if (dataProxima) score += 0.5;
+        if (valorExato) score += 1;
+        if (mesmoCpfCnpj) score += 1;
+        if (mesmaPessoa) score += 1;
+        if (descricaoSemelhante) score += 1;
+        if (score >= 3) isDup = true;
+      }
+
+      if (isDup) {
         results.push({
           id: l.id,
           descricao: l.descricao,
           valor: l.valor,
           data_vencimento: l.data_vencimento,
           tipo: l.tipo,
-          motivo,
+          motivo: motivos.join(" + "),
         });
         if (results.length >= 3) break;
       }
@@ -283,12 +333,23 @@ const ImportarDocumentos = () => {
     since.setDate(since.getDate() - 180);
     const { data } = await supabase
       .from("lancamentos")
-      .select("id, descricao, valor, data_vencimento, tipo")
+      .select("id, descricao, valor, data_vencimento, tipo, cliente:clientes(nome, cpf_cnpj), fornecedor:fornecedores(nome, cpf_cnpj)")
       .eq("empresa_id", empresaId)
       .gte("data_vencimento", since.toISOString().split("T")[0])
       .order("data_vencimento", { ascending: false })
       .limit(1000);
-    existingLancamentosRef.current = (data || []) as any;
+    existingLancamentosRef.current = ((data || []) as any[]).map((l) => {
+      const pessoa = l.cliente || l.fornecedor || null;
+      return {
+        id: l.id,
+        descricao: l.descricao,
+        valor: Number(l.valor) || 0,
+        data_vencimento: l.data_vencimento,
+        tipo: l.tipo,
+        pessoa_nome: pessoa?.nome ?? null,
+        pessoa_cpf_cnpj: pessoa?.cpf_cnpj ?? null,
+      };
+    });
   };
 
   // Load active LLMs (excluding lovable_ai)
