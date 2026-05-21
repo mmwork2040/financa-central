@@ -207,10 +207,11 @@ export const Sidebar = () => {
     { name: "Importar", icon: FileUp, path: "/importar-documentos" },
     { name: "Vendas", icon: ShoppingCart, path: "/vendas-digitais", businessOnly: true },
     { name: "Notas Fiscais", icon: FileText, path: "/notas-fiscais", businessOnly: true },
-    { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true },
+    { name: "Anúncios", icon: Megaphone, path: "/anuncios", businessOnly: true, requiresAds: true },
     { name: "Projetos", icon: Briefcase, path: "/projetos", businessOnly: true },
   ];
-  const mainItems = isPessoal ? allMainItems.filter(i => !i.businessOnly) : allMainItems;
+  const mainItems = (isPessoal ? allMainItems.filter(i => !i.businessOnly) : allMainItems)
+    .filter((i: any) => !i.requiresAds || hasAdsIntegration || isSuperAdmin);
 
   const allCadastrosItems = [
     { name: "Clientes", icon: UsersRound, path: "/clientes", businessOnly: true },
@@ -229,17 +230,21 @@ export const Sidebar = () => {
     { name: "Relatórios", icon: PieChart, path: "/reports" },
   ];
 
-  const allConfigItems = [
+  // Configurações: apenas itens da empresa/usuário
+  const configItems = [
     { name: isPessoal ? "Pessoal" : "Empresa", icon: isPessoal ? UserCircle : Building2, path: "/settings" },
     { name: "Integrações", icon: Plug, path: "/settings/integracoes" },
-    ...(isSuperAdmin ? [{ name: "Assinaturas", icon: CreditCard, path: "/settings/assinaturas" }] : []),
     { name: "Termos e Políticas", icon: ScrollText, path: "/settings/termos" },
-    ...(isSuperAdmin ? [{ name: "Webhooks", icon: Webhook, path: "/settings/webhooks" }] : []),
-    ...(isSuperAdmin ? [{ name: "n8n Templates", icon: Code2, path: "/settings/n8n-templates" }] : []),
-    ...(isSuperAdmin ? [{ name: "Logs", icon: ScrollText, path: "/settings/logs" }] : []),
-    ...(isSuperAdmin ? [{ name: "IA Global", icon: Brain, path: "/admin/ia-global" }] : []),
   ];
-  const configItems = isPessoal ? allConfigItems.filter(i => !(i as any).businessOnly) : allConfigItems;
+
+  // Administração: apenas Super Admin
+  const adminGlobalItems = isSuperAdmin ? [
+    { name: "IA Global", icon: Brain, path: "/admin/ia-global" },
+    { name: "Assinaturas", icon: CreditCard, path: "/settings/assinaturas" },
+    { name: "Webhooks", icon: Webhook, path: "/settings/webhooks" },
+    { name: "n8n Templates", icon: Code2, path: "/settings/n8n-templates" },
+    { name: "Logs", icon: ScrollText, path: "/settings/logs" },
+  ] : [];
 
   const adminItems = [
     { name: "Permissões", icon: ShieldCheck, path: "/permissions" },
