@@ -275,20 +275,7 @@ const PLATAFORMAS: Plataforma[] = [
     categoria: "comunicacao",
   },
   // --- Inteligência Artificial ---
-  {
-    id: "lovable_ai", name: "Lovable AI", description: "IA integrada (sem configuração de chave)",
-    icon: Brain, color: "bg-violet-100 text-violet-700",
-    site: "https://docs.lovable.dev/features/ai", doc: "https://docs.lovable.dev/features/ai",
-    steps: [
-      "A Lovable AI já está pré-configurada no sistema",
-      "Basta ativar a integração clicando no botão abaixo",
-      "Nenhuma chave de API é necessária",
-      "Modelos disponíveis: Gemini, GPT-5 e outros",
-    ],
-    needsSecret: false, webhookOnly: true, usesWebhook: false,
-    keyValidation: { hint: "" },
-    categoria: "ia",
-  },
+
   {
     id: "openai", name: "OpenAI", description: "GPT-4o, GPT-4, GPT-3.5 e outros modelos",
     icon: Brain, color: "bg-gray-100 text-gray-800",
@@ -519,23 +506,16 @@ const Integracoes = () => {
     toast.success("URL copiada para a área de transferência!");
   };
 
-  // Auto-connect Lovable AI if no other IA is active
-  const autoConnectLovableAI = async () => {
-    if (!empresaId || !isSuperAdmin) return;
-    const iaPlataformas = PLATAFORMAS.filter(p => p.categoria === 'ia' && p.id !== 'lovable_ai').map(p => p.id);
-    const hasOtherIA = integracoes.some((i: any) => iaPlataformas.includes(i.plataforma) && i.ativo);
-    const lovableConnected = integracoes.some((i: any) => i.plataforma === 'lovable_ai' && i.ativo);
-    
-    if (!hasOtherIA && !lovableConnected) {
+  // Auto-disconnect Lovable AI (descontinuada – usar APIs próprias)
+  const autoDisconnectLovableAI = async () => {
+    if (!empresaId) return;
+    const lovableActive = integracoes.some((i: any) => i.plataforma === 'lovable_ai' && i.ativo);
+    if (lovableActive) {
       await (supabase as any)
         .from('integracoes')
-        .upsert({
-          empresa_id: empresaId,
-          plataforma: 'lovable_ai',
-          api_key_encrypted: 'webhook_only',
-          ambiente: 'producao',
-          ativo: true,
-        }, { onConflict: 'empresa_id,plataforma' });
+        .update({ ativo: false })
+        .eq('empresa_id', empresaId)
+        .eq('plataforma', 'lovable_ai');
       fetchIntegracoes();
     }
   };
@@ -546,12 +526,12 @@ const Integracoes = () => {
     fetchDisponibilidade();
   }, []);
 
-  // Auto-connect Lovable AI after integracoes are loaded
   useEffect(() => {
     if (!loading && integracoes.length >= 0) {
-      autoConnectLovableAI();
+      autoDisconnectLovableAI();
     }
   }, [loading, integracoes.length]);
+
 
   // Auto-test all active non-webhook-only integrations on page load
   useEffect(() => {
