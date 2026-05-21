@@ -61,8 +61,8 @@ function buildUserPrompt(fileName: string, textContent?: string, contextBlock?: 
 }
 
 
-async function callOpenAI(apiKey: string, model: string, fileName: string, textContent?: string, imageBase64?: string, mimeType?: string) {
-  const userContent: any[] = [{ type: "text", text: buildUserPrompt(fileName, textContent) }];
+async function callOpenAI(apiKey: string, model: string, fileName: string, textContent: string | undefined, contextBlock: string | undefined, imageBase64?: string, mimeType?: string) {
+  const userContent: any[] = [{ type: "text", text: buildUserPrompt(fileName, textContent, contextBlock) }];
   if (imageBase64) {
     userContent.push({
       type: "image_url",
@@ -87,8 +87,8 @@ async function callOpenAI(apiKey: string, model: string, fileName: string, textC
   return data.choices[0].message.content;
 }
 
-async function callGemini(apiKey: string, model: string, fileName: string, textContent?: string, imageBase64?: string, mimeType?: string) {
-  const parts: any[] = [{ text: `${SYSTEM_PROMPT}\n\n---\n\n${buildUserPrompt(fileName, textContent)}` }];
+async function callGemini(apiKey: string, model: string, fileName: string, textContent: string | undefined, contextBlock: string | undefined, imageBase64?: string, mimeType?: string) {
+  const parts: any[] = [{ text: `${SYSTEM_PROMPT}\n\n---\n\n${buildUserPrompt(fileName, textContent, contextBlock)}` }];
   if (imageBase64) {
     parts.push({ inline_data: { mime_type: mimeType || "image/png", data: imageBase64 } });
   }
@@ -106,8 +106,8 @@ async function callGemini(apiKey: string, model: string, fileName: string, textC
   return data.candidates[0].content.parts[0].text;
 }
 
-async function callAnthropic(apiKey: string, model: string, fileName: string, textContent?: string, imageBase64?: string, mimeType?: string) {
-  const content: any[] = [{ type: "text", text: buildUserPrompt(fileName, textContent) }];
+async function callAnthropic(apiKey: string, model: string, fileName: string, textContent: string | undefined, contextBlock: string | undefined, imageBase64?: string, mimeType?: string) {
+  const content: any[] = [{ type: "text", text: buildUserPrompt(fileName, textContent, contextBlock) }];
   if (imageBase64) {
     content.push({
       type: "image",
@@ -133,7 +133,7 @@ async function callAnthropic(apiKey: string, model: string, fileName: string, te
   return data.content[0].text;
 }
 
-async function callDeepSeek(apiKey: string, model: string, fileName: string, textContent?: string) {
+async function callDeepSeek(apiKey: string, model: string, fileName: string, textContent: string | undefined, contextBlock: string | undefined) {
   // DeepSeek não suporta visão em produção; só texto.
   const resp = await fetch("https://api.deepseek.com/v1/chat/completions", {
     method: "POST",
@@ -142,7 +142,7 @@ async function callDeepSeek(apiKey: string, model: string, fileName: string, tex
       model,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: buildUserPrompt(fileName, textContent) },
+        { role: "user", content: buildUserPrompt(fileName, textContent, contextBlock) },
       ],
       response_format: { type: "json_object" },
       temperature: 0.1,
@@ -153,8 +153,8 @@ async function callDeepSeek(apiKey: string, model: string, fileName: string, tex
   return data.choices[0].message.content;
 }
 
-async function callLovableAI(apiKey: string, model: string, fileName: string, textContent?: string, imageBase64?: string, mimeType?: string) {
-  const userContent: any[] = [{ type: "text", text: buildUserPrompt(fileName, textContent) }];
+async function callLovableAI(apiKey: string, model: string, fileName: string, textContent: string | undefined, contextBlock: string | undefined, imageBase64?: string, mimeType?: string) {
+  const userContent: any[] = [{ type: "text", text: buildUserPrompt(fileName, textContent, contextBlock) }];
   if (imageBase64) {
     userContent.push({
       type: "image_url",
@@ -272,11 +272,11 @@ serve(async (req) => {
 
     let result: string;
     switch (provider) {
-      case "openai": result = await callOpenAI(apiKey, model!, fileName, textContent, imageBase64, mimeType); break;
-      case "google_gemini": result = await callGemini(apiKey, model!, fileName, textContent, imageBase64, mimeType); break;
-      case "anthropic": result = await callAnthropic(apiKey, model!, fileName, textContent, imageBase64, mimeType); break;
-      case "deepseek": result = await callDeepSeek(apiKey, model!, fileName, textContent); break;
-      case "lovable_ai": result = await callLovableAI(apiKey, model!, fileName, textContent, imageBase64, mimeType); break;
+      case "openai": result = await callOpenAI(apiKey, model!, fileName, textContent, contextBlock, imageBase64, mimeType); break;
+      case "google_gemini": result = await callGemini(apiKey, model!, fileName, textContent, contextBlock, imageBase64, mimeType); break;
+      case "anthropic": result = await callAnthropic(apiKey, model!, fileName, textContent, contextBlock, imageBase64, mimeType); break;
+      case "deepseek": result = await callDeepSeek(apiKey, model!, fileName, textContent, contextBlock); break;
+      case "lovable_ai": result = await callLovableAI(apiKey, model!, fileName, textContent, contextBlock, imageBase64, mimeType); break;
       default: throw new Error(`Provedor não suportado: ${provider}`);
     }
 
