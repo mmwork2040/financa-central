@@ -758,9 +758,21 @@ const EmitirNotaManualDialog = ({ open, onOpenChange, onSuccess }: EmitirNotaMan
                                 <TableCell className="text-xs">
                                   {format(new Date(v.data_venda), "dd/MM/yy", { locale: ptBR })}
                                 </TableCell>
-                                <TableCell className="text-xs truncate max-w-[150px]">{v.produto || "—"}</TableCell>
-                                <TableCell className="text-xs text-right font-medium">
-                                  {formatCurrency(v.valor_bruto)}
+                                <TableCell className="text-xs max-w-[180px]">
+                                  <Input
+                                    value={vendaEdits[v.id]?.produto ?? (v.produto || "")}
+                                    onChange={e => setVendaEdits(p => ({ ...p, [v.id]: { ...(p[v.id] || { valor: String(v.valor_bruto) }), produto: e.target.value } }))}
+                                    disabled={!canEmit}
+                                    className="h-7 text-xs"
+                                  />
+                                </TableCell>
+                                <TableCell className="text-xs text-right font-medium w-28">
+                                  <Input
+                                    value={vendaEdits[v.id]?.valor ?? String(v.valor_bruto)}
+                                    onChange={e => setVendaEdits(p => ({ ...p, [v.id]: { ...(p[v.id] || { produto: v.produto || "" }), valor: e.target.value } }))}
+                                    disabled={!canEmit}
+                                    className="h-7 text-xs text-right"
+                                  />
                                 </TableCell>
                                 <TableCell>
                                   <Badge variant={canEmit ? "outline" : "secondary"} className="text-[10px]">
