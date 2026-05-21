@@ -159,6 +159,9 @@ const ImportarDocumentos = () => {
   const [clientes, setClientes] = useState<EntityOption[]>([]);
   const [formasPagamento, setFormasPagamento] = useState<EntityOption[]>([]);
   const [projetos, setProjetos] = useState<EntityOption[]>([]);
+  const [contasBancarias, setContasBancarias] = useState<ContaBancariaOption[]>([]);
+  const [contaUploadId, setContaUploadId] = useState<string>(""); // conta selecionada para esta leva de uploads
+
 
   // Edit dialog
   const [editingRef, setEditingRef] = useState<{ fileIdx: number; itemIdx: number } | null>(null);
