@@ -1297,8 +1297,11 @@ const ImportarDocumentos = () => {
                               return (
                                 <tr key={itemIdx} className={cn(
                                   "border-b transition-colors",
-                                  item.selected ? "bg-primary/5" : "opacity-50",
-                                  (item.possibleDuplicates?.length || 0) > 0 && "bg-amber-500/5"
+                                  !item.selected && "opacity-50",
+                                  item.tipo_sugerido === "receita" && "bg-green-500/5 hover:bg-green-500/10",
+                                  item.tipo_sugerido === "despesa" && "bg-red-500/5 hover:bg-red-500/10",
+                                  item.selected && !["receita","despesa"].includes(item.tipo_sugerido) && "bg-primary/5",
+                                  (item.possibleDuplicates?.length || 0) > 0 && "bg-amber-500/10"
                                 )}>
                                   <td className="p-2">
                                     <Checkbox
