@@ -240,20 +240,28 @@ const ImportarDocumentos = () => {
     if (!empresaId) return;
     fetchPendingImports();
     (async () => {
-      const [cat, forn, cli, fp, proj] = await Promise.all([
+      const [cat, forn, cli, fp, proj, contas] = await Promise.all([
         supabase.from("categorias").select("id, nome, tipo").eq("empresa_id", empresaId).order("nome"),
         supabase.from("fornecedores").select("id, nome").eq("empresa_id", empresaId).eq("ativo", true).order("nome"),
         supabase.from("clientes").select("id, nome").eq("empresa_id", empresaId).eq("ativo", true).order("nome"),
         supabase.from("formas_pagamento").select("id, descricao").eq("empresa_id", empresaId).order("descricao"),
         (supabase as any).from("projetos").select("id, nome").eq("empresa_id", empresaId).eq("status", "ativo").order("nome"),
+        supabase.from("contas_bancarias").select("id, nome, banco, agencia, conta, principal").eq("empresa_id", empresaId).order("nome"),
       ]);
       setCategorias((cat.data || []) as any);
       setFornecedores((forn.data || []) as any);
       setClientes((cli.data || []) as any);
       setFormasPagamento(((fp.data || []) as any[]).map(f => ({ id: f.id, nome: f.descricao })));
       setProjetos((proj.data || []) as any);
+      const contasList = (contas.data || []) as any as ContaBancariaOption[];
+      setContasBancarias(contasList);
+      // Padrão: conta principal
+      const principal = contasList.find(c => c.principal);
+      if (principal) setContaUploadId(principal.id);
+      else if (contasList[0]) setContaUploadId(contasList[0].id);
     })();
   }, [empresaId]);
+
 
   const updateItem = (fileIdx: number, itemIdx: number, patch: Partial<ExtractedItem>) => {
     setFiles(prev => prev.map((f, fi) =>
