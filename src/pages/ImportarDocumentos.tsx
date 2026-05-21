@@ -1612,12 +1612,12 @@ const ImportarDocumentos = () => {
 
             {/* Summary & Save */}
             {totalSelected > 0 && (
-              <div className="mt-6 flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
                 <div className="text-sm">
                   <span className="font-medium">{totalSelected} item(ns) selecionado(s)</span>
                   <span className="text-muted-foreground ml-2">• Total: {formatCurrency(totalValue)}</span>
                 </div>
-                <Button onClick={handleSaveSelected} disabled={saving}>
+                <Button onClick={handleSaveSelected} disabled={saving} className="w-full sm:w-auto">
                   {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowRight className="h-4 w-4 mr-2" />}
                   Importar Selecionados
                 </Button>
