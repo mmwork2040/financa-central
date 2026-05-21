@@ -225,6 +225,22 @@ const NotasFiscais = () => {
                       {!isMobile && (
                         <TableCell>
                           <div className="flex items-center gap-1">
+                            {isPending(v.invoice_status) && v.invoice_status !== "PROCESSING" && (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className="h-7 gap-1"
+                                disabled={emittingId === v.id}
+                                onClick={() => emitOne(v.id)}
+                              >
+                                {emittingId === v.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <FileText className="h-3.5 w-3.5" />
+                                )}
+                                Emitir
+                              </Button>
+                            )}
                             {v.invoice_pdf_url && (
                               <Button variant="ghost" size="sm" asChild>
                                 <a href={v.invoice_pdf_url} target="_blank" rel="noopener noreferrer">
