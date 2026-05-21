@@ -211,22 +211,58 @@ Deno.serve(async (req) => {
     }
 
     // ─── Step 3: Get configured LLM ───
-    const { data: empresa } = await supabase
-      .from("empresas")
-      .select("llm_padrao")
-      .eq("id", empresaId)
-      .single();
-
-    const llmPadrao = empresa?.llm_padrao || null;
-
+    // Prioridade 1: IA Global liberada para a empresa
     let llmProvider: string | null = null;
     let apiKey: string | null = null;
+    let globalModel: string | null = null;
+    let usingGlobal = false;
+    let tokenLimit = 0;
+    let tokensUsed = 0;
 
-    if (llmPadrao) {
-      if (llmPadrao === "lovable_ai") {
-        llmProvider = "lovable_ai";
-        apiKey = Deno.env.get("LOVABLE_API_KEY") || null;
-      } else {
+    const { data: globalAccess } = await supabase
+      .from("ai_global_access")
+      .select("liberado")
+      .eq("empresa_id", empresaId)
+      .maybeSingle();
+
+    if (globalAccess?.liberado) {
+      const { data: globalCfg } = await supabase
+        .from("ai_global_config")
+        .select("provider, model, api_key, ativo")
+        .eq("ativo", true)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (globalCfg?.api_key) {
+        const { data: limitData } = await supabase.rpc("get_ai_token_limit", { _empresa_id: empresaId });
+        const { data: usedData } = await supabase.rpc("get_ai_tokens_used_month", { _empresa_id: empresaId });
+        tokenLimit = Number(limitData || 0);
+        tokensUsed = Number(usedData || 0);
+
+        if (tokenLimit > 0 && tokensUsed >= tokenLimit) {
+          return new Response(JSON.stringify({
+            reply: `🚫 Limite mensal de tokens de IA atingido (${tokensUsed.toLocaleString("pt-BR")}/${tokenLimit.toLocaleString("pt-BR")}). Fale com o Super Admin para liberar mais.`,
+          }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        llmProvider = globalCfg.provider;
+        apiKey = globalCfg.api_key;
+        globalModel = globalCfg.model;
+        usingGlobal = true;
+      }
+    }
+
+    // Prioridade 2: LLM padrão da empresa via integracoes
+    if (!llmProvider) {
+      const { data: empresa } = await supabase
+        .from("empresas")
+        .select("llm_padrao")
+        .eq("id", empresaId)
+        .single();
+
+      const llmPadrao = empresa?.llm_padrao || null;
+      if (llmPadrao && llmPadrao !== "lovable_ai") {
         const { data: integ } = await supabase
           .from("integracoes")
           .select("api_key_encrypted, ativo")
@@ -242,19 +278,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fallback to Lovable AI if no LLM configured
-    if (!llmProvider) {
-      const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-      if (lovableKey) {
-        llmProvider = "lovable_ai";
-        apiKey = lovableKey;
-      }
-    }
-
     if (!llmProvider || !apiKey) {
-      return new Response(JSON.stringify({ reply: NO_AI_MSG }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({
+        reply: "🔒 IA não liberada para esta empresa. Solicite a liberação ao Super Admin em IA Global ou configure uma chave própria em Integrações.",
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // ─── Step 4: Load conversation history ───
