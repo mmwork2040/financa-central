@@ -147,6 +147,11 @@ const NotaFiscalDetailDialog: React.FC<Props> = ({ open, onOpenChange, venda, on
               <p className="text-xs">{venda.invoice_error_message}</p>
             </div>
           )}
+          {canCancel && (
+            <Button variant="destructive" size="sm" onClick={() => setCancelOpen(true)}>
+              <Ban className="h-3.5 w-3.5 mr-1.5" /> Cancelar nota
+            </Button>
+          )}
         </div>
 
         {/* Documentos */}
