@@ -135,6 +135,7 @@ const PlanosAssinaturaConfig = () => {
         link_acesso: form.link_acesso || null,
         ordem: form.ordem,
         max_empresas: parseInt(form.max_empresas) || 1,
+        limite_tokens_ia_mes: parseInt(form.limite_tokens_ia_mes) || 0,
         itens: itensPayload,
       };
 
