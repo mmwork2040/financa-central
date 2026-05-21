@@ -53,7 +53,27 @@ export const EditImportItemDialog: React.FC<Props> = ({
   const [form, setForm] = useState<EditableItem | null>(null);
 
   useEffect(() => {
-    if (item) setForm({ ...item });
+    if (item) {
+      const updatedForm = { ...item };
+      
+      // Se a descrição estiver vazia ou for genérica, preenche com uma avaliação breve baseada nos dados
+      if (!updatedForm.descricao || updatedForm.descricao === "Sem descrição" || updatedForm.descricao.trim() === "") {
+        const acao = updatedForm.tipo_sugerido === "receita" ? "Recebimento" : "Pagamento";
+        const entidade = updatedForm.fornecedor_cliente || "";
+        const valor = updatedForm.valor ? updatedForm.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "";
+        
+        if (entidade && valor) {
+          updatedForm.descricao = `${acao} de ${valor} - ${entidade}`;
+        } else if (entidade) {
+          updatedForm.descricao = `${acao} - ${entidade}`;
+        } else if (updatedForm.observacoes) {
+          // Usa observações se existirem para dar contexto
+          updatedForm.descricao = `${acao}: ${updatedForm.observacoes.substring(0, 50)}${updatedForm.observacoes.length > 50 ? "..." : ""}`;
+        }
+      }
+      
+      setForm(updatedForm);
+    }
   }, [item]);
 
   const isReceita = form?.tipo_sugerido === "receita";
@@ -66,6 +86,7 @@ export const EditImportItemDialog: React.FC<Props> = ({
   useEffect(() => {
     if (!form) return;
 
+    // Verificação case-insensitive para Clientes/Fornecedores
     if (form.fornecedor_cliente && (currentEntityId === NEW || !currentEntityId)) {
       const normalizedName = normalize(form.fornecedor_cliente);
       const match = entityList.find(e => normalize(e.nome) === normalizedName);
@@ -75,18 +96,26 @@ export const EditImportItemDialog: React.FC<Props> = ({
       }
     }
 
+    // Verificação case-insensitive para Categorias
     if (form.categoria_sugerida && (form.categoria_id === NEW || !form.categoria_id)) {
       const normalizedCat = normalize(form.categoria_sugerida);
       const match = categorias.find(c => normalize(c.nome) === normalizedCat);
       if (match) update({ categoria_id: match.id, categoria_sugerida: match.nome });
     }
 
+    // Verificação case-insensitive para Formas de Pagamento
     if (form.forma_pagamento && (form.forma_pagamento_id === NEW || !form.forma_pagamento_id)) {
       const normalizedForma = normalize(form.forma_pagamento);
       const match = formasPagamento.find(f => normalize(f.nome) === normalizedForma);
       if (match) update({ forma_pagamento_id: match.id, forma_pagamento: match.nome });
     }
-  }, [form?.fornecedor_cliente, form?.categoria_sugerida, form?.forma_pagamento]);
+  }, [
+    form?.fornecedor_cliente, 
+    form?.categoria_sugerida, 
+    form?.forma_pagamento, 
+    form?.tipo_sugerido,
+    entityList, // Adicionado para garantir re-verificação se a lista mudar (tipo receita/despesa)
+  ]);
 
   if (!form) return null;
 
