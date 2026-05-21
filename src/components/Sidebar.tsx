@@ -99,9 +99,11 @@ export const Sidebar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const [createEmpresaOpen, setCreateEmpresaOpen] = useState(false);
   const [creatingPessoal, setCreatingPessoal] = useState(false);
   const [confirmSwitchEmpresa, setConfirmSwitchEmpresa] = useState<{ id: string; nome: string } | null>(null);
+  const [hasAdsIntegration, setHasAdsIntegration] = useState(false);
 
   const hasPessoalEmpresa = empresas.some(e => e.pessoal === true);
 
