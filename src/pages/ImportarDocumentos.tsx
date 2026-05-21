@@ -723,6 +723,33 @@ const ImportarDocumentos = () => {
     ));
   };
 
+  const changeCategoria = (fileIdx: number, itemIdx: number, categoriaId: string) => {
+    setFiles(prev => prev.map((f, fi) =>
+      fi === fileIdx ? {
+        ...f,
+        items: f.items.map((item, ii) => {
+          if (ii !== itemIdx) return item;
+          if (!categoriaId) {
+            return { ...item, categoria_id: null, categoria_sugerida: null };
+          }
+          const cat = categorias.find(c => c.id === categoriaId);
+          return { ...item, categoria_id: categoriaId, categoria_sugerida: cat?.nome || item.categoria_sugerida };
+        }),
+      } : f
+    ));
+  };
+
+  const changeProjeto = (fileIdx: number, itemIdx: number, projetoId: string) => {
+    setFiles(prev => prev.map((f, fi) =>
+      fi === fileIdx ? {
+        ...f,
+        items: f.items.map((item, ii) =>
+          ii === itemIdx ? { ...item, projeto_id: projetoId || null } : item
+        ),
+      } : f
+    ));
+  };
+
   const changeTipo = (fileIdx: number, itemIdx: number, tipo: string) => {
     setFiles(prev => prev.map((f, fi) =>
       fi === fileIdx ? {
