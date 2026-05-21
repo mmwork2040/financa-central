@@ -178,7 +178,9 @@ const ImportarDocumentos = () => {
     "descricao", "valor", "data", "tipo_sugerido", "destino_sugerido",
     "categoria_sugerida", "categoria_id", "fornecedor_cliente", "fornecedor_id",
     "cliente_id", "forma_pagamento", "forma_pagamento_id", "projeto_id", "observacoes",
+    "conta_bancaria_id", "conta_destino_id",
   ];
+
   const isEdited = (item: ExtractedItem) => {
     if (!item.original) return false;
     return EDIT_KEYS.some(k => (item as any)[k] !== (item.original as any)[k]);
