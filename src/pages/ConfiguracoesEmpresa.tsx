@@ -8,7 +8,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Building2, Upload, Loader2, User, Trash2, MessageCircle, Ticket, Settings2 } from "lucide-react";
+import { Building2, Upload, Loader2, User, Trash2, MessageCircle, Ticket, Settings2, Plug } from "lucide-react";
+import { Link } from "react-router-dom";
+
 import InviteCodesCard from "@/components/convites/InviteCodesCard";
 
 import ConfiguracaoFiscal from "@/components/configuracoes/ConfiguracaoFiscal";
