@@ -51,7 +51,43 @@ const ConfiguracaoFiscal = ({ empresaId, onComplete, isWizard = false }: Configu
 
   useEffect(() => {
     fetchFiscalData();
+    fetchCertMeta();
   }, [empresaId]);
+
+  const fetchCertMeta = async () => {
+    try {
+      const { data, error } = await supabase.storage.from("certificados").list(empresaId, { limit: 10 });
+      if (error) throw error;
+      const file = (data || []).find((f: any) => /\.(pfx|p12)$/i.test(f.name));
+      if (file) {
+        setCertMeta({
+          name: file.name,
+          size: (file as any).metadata?.size || 0,
+          updated_at: (file as any).updated_at || (file as any).created_at || new Date().toISOString(),
+        });
+      } else {
+        setCertMeta(null);
+      }
+    } catch {
+      setCertMeta(null);
+    }
+  };
+
+  const handleDownloadCert = async () => {
+    if (!fiscal.certificado_digital_url) return;
+    setDownloadingCert(true);
+    try {
+      const { data, error } = await supabase.storage
+        .from("certificados")
+        .createSignedUrl(fiscal.certificado_digital_url, 60);
+      if (error || !data?.signedUrl) throw error || new Error("URL inválida");
+      window.open(data.signedUrl, "_blank");
+    } catch (e: any) {
+      toast.error(e.message || "Não foi possível gerar o link de download");
+    } finally {
+      setDownloadingCert(false);
+    }
+  };
 
   const fetchFiscalData = async () => {
     try {
