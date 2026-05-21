@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Save } from "lucide-react";
 
 export type EntityOption = { id: string; nome: string };
+export type CategoriaOption = { id: string; nome: string; tipo: string };
 
 export type EditableItem = {
   descricao: string;
@@ -23,6 +24,7 @@ export type EditableItem = {
   cliente_id?: string | null;
   forma_pagamento: string | null;
   forma_pagamento_id?: string | null;
+  projeto_id?: string | null;
   observacoes: string | null;
 };
 
@@ -30,16 +32,17 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   item: EditableItem | null;
-  categorias: EntityOption[];
+  categorias: CategoriaOption[];
   fornecedores: EntityOption[];
   clientes: EntityOption[];
   formasPagamento: EntityOption[];
+  projetos: EntityOption[];
   onSave: (patch: EditableItem) => void;
 }
 
 const NEW = "__new__";
+const NONE = "__none__";
 
-// Normaliza string para comparação case-insensitive
 const normalize = (s: string) =>
   (s || "")
     .trim()
@@ -47,31 +50,29 @@ const normalize = (s: string) =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
+// Mapeia tipo do lançamento -> tipo de categoria correspondente
+const categoriaTipoFor = (tipoLancamento: string): string => {
+  if (tipoLancamento === "receita") return "receita";
+  if (tipoLancamento === "investimento") return "investimento";
+  return "despesa";
+};
+
 export const EditImportItemDialog: React.FC<Props> = ({
-  open, onOpenChange, item, categorias, fornecedores, clientes, formasPagamento, onSave,
+  open, onOpenChange, item, categorias, fornecedores, clientes, formasPagamento, projetos, onSave,
 }) => {
   const [form, setForm] = useState<EditableItem | null>(null);
 
   useEffect(() => {
     if (item) {
       const updatedForm = { ...item };
-      
-      // Se a descrição estiver vazia ou for genérica, preenche com uma avaliação breve baseada nos dados
       if (!updatedForm.descricao || updatedForm.descricao === "Sem descrição" || updatedForm.descricao.trim() === "") {
         const acao = updatedForm.tipo_sugerido === "receita" ? "Recebimento" : "Pagamento";
         const entidade = updatedForm.fornecedor_cliente || "";
         const valor = updatedForm.valor ? updatedForm.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "";
-        
-        if (entidade && valor) {
-          updatedForm.descricao = `${acao} de ${valor} - ${entidade}`;
-        } else if (entidade) {
-          updatedForm.descricao = `${acao} - ${entidade}`;
-        } else if (updatedForm.observacoes) {
-          // Usa observações se existirem para dar contexto
-          updatedForm.descricao = `${acao}: ${updatedForm.observacoes.substring(0, 50)}${updatedForm.observacoes.length > 50 ? "..." : ""}`;
-        }
+        if (entidade && valor) updatedForm.descricao = `${acao} de ${valor} - ${entidade}`;
+        else if (entidade) updatedForm.descricao = `${acao} - ${entidade}`;
+        else if (updatedForm.observacoes) updatedForm.descricao = `${acao}: ${updatedForm.observacoes.substring(0, 50)}${updatedForm.observacoes.length > 50 ? "..." : ""}`;
       }
-      
       setForm(updatedForm);
     }
   }, [item]);
@@ -81,12 +82,25 @@ export const EditImportItemDialog: React.FC<Props> = ({
   const entityLabel = isReceita ? "Cliente" : "Fornecedor";
   const currentEntityId = isReceita ? form?.cliente_id : form?.fornecedor_id;
 
+  // Categorias filtradas pelo tipo atual
+  const categoriaTipo = categoriaTipoFor(form?.tipo_sugerido || "despesa");
+  const categoriasFiltradas = categorias.filter(c => c.tipo === categoriaTipo);
+
   const update = (patch: Partial<EditableItem>) => setForm(prev => prev ? { ...prev, ...patch } : prev);
 
+  // Reset de categoria_id quando o tipo muda e a categoria selecionada não pertence ao novo tipo
+  useEffect(() => {
+    if (!form?.categoria_id || form.categoria_id === NEW) return;
+    const cat = categorias.find(c => c.id === form.categoria_id);
+    if (cat && cat.tipo !== categoriaTipo) {
+      update({ categoria_id: null });
+    }
+  }, [form?.tipo_sugerido, categorias, categoriaTipo]);
+
+  // Auto-match case-insensitive
   useEffect(() => {
     if (!form) return;
 
-    // Verificação case-insensitive para Clientes/Fornecedores
     if (form.fornecedor_cliente && (currentEntityId === NEW || !currentEntityId)) {
       const normalizedName = normalize(form.fornecedor_cliente);
       const match = entityList.find(e => normalize(e.nome) === normalizedName);
@@ -96,29 +110,27 @@ export const EditImportItemDialog: React.FC<Props> = ({
       }
     }
 
-    // Verificação case-insensitive para Categorias
     if (form.categoria_sugerida && (form.categoria_id === NEW || !form.categoria_id)) {
       const normalizedCat = normalize(form.categoria_sugerida);
-      const match = categorias.find(c => normalize(c.nome) === normalizedCat);
+      const match = categoriasFiltradas.find(c => normalize(c.nome) === normalizedCat);
       if (match) update({ categoria_id: match.id, categoria_sugerida: match.nome });
     }
 
-    // Verificação case-insensitive para Formas de Pagamento
     if (form.forma_pagamento && (form.forma_pagamento_id === NEW || !form.forma_pagamento_id)) {
       const normalizedForma = normalize(form.forma_pagamento);
       const match = formasPagamento.find(f => normalize(f.nome) === normalizedForma);
       if (match) update({ forma_pagamento_id: match.id, forma_pagamento: match.nome });
     }
   }, [
-    form?.fornecedor_cliente, 
-    form?.categoria_sugerida, 
-    form?.forma_pagamento, 
+    form?.fornecedor_cliente,
+    form?.categoria_sugerida,
+    form?.forma_pagamento,
     form?.tipo_sugerido,
-    entityList, // Adicionado para garantir re-verificação se a lista mudar (tipo receita/despesa)
+    entityList,
+    categoriasFiltradas,
   ]);
 
   if (!form) return null;
-
 
   const handleEntityChange = (val: string) => {
     if (val === NEW) {
@@ -133,7 +145,7 @@ export const EditImportItemDialog: React.FC<Props> = ({
 
   const handleCategoriaChange = (val: string) => {
     if (val === NEW) { update({ categoria_id: NEW }); return; }
-    const found = categorias.find(c => c.id === val);
+    const found = categoriasFiltradas.find(c => c.id === val);
     update({ categoria_id: val, categoria_sugerida: found?.nome || form.categoria_sugerida });
   };
 
@@ -141,6 +153,10 @@ export const EditImportItemDialog: React.FC<Props> = ({
     if (val === NEW) { update({ forma_pagamento_id: NEW }); return; }
     const found = formasPagamento.find(f => f.id === val);
     update({ forma_pagamento_id: val, forma_pagamento: found?.nome || form.forma_pagamento });
+  };
+
+  const handleProjetoChange = (val: string) => {
+    update({ projeto_id: val === NONE ? null : val });
   };
 
   const handleSubmit = () => {
@@ -160,10 +176,10 @@ export const EditImportItemDialog: React.FC<Props> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <Label>Descrição *</Label>
-            <Input 
-              value={form.descricao || ""} 
-              onChange={(e) => update({ descricao: e.target.value })} 
-              maxLength={255} 
+            <Input
+              value={form.descricao || ""}
+              onChange={(e) => update({ descricao: e.target.value })}
+              maxLength={255}
             />
           </div>
 
@@ -189,7 +205,10 @@ export const EditImportItemDialog: React.FC<Props> = ({
 
           <div>
             <Label>Tipo</Label>
-            <Select value={form.tipo_sugerido} onValueChange={(v) => update({ tipo_sugerido: v, cliente_id: null, fornecedor_id: null })}>
+            <Select
+              value={form.tipo_sugerido}
+              onValueChange={(v) => update({ tipo_sugerido: v, cliente_id: null, fornecedor_id: null })}
+            >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="receita">Receita</SelectItem>
@@ -248,13 +267,18 @@ export const EditImportItemDialog: React.FC<Props> = ({
 
           {/* Categoria */}
           <div className="md:col-span-2">
-            <Label>Categoria</Label>
+            <Label>Categoria ({categoriaTipo})</Label>
             <Select value={form.categoria_id || ""} onValueChange={handleCategoriaChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione uma categoria existente ou crie nova" />
               </SelectTrigger>
               <SelectContent>
-                {categorias.map(c => (
+                {categoriasFiltradas.length === 0 && (
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                    Nenhuma categoria de {categoriaTipo} cadastrada
+                  </div>
+                )}
+                {categoriasFiltradas.map(c => (
                   <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                 ))}
                 <SelectItem value={NEW}>
@@ -280,6 +304,22 @@ export const EditImportItemDialog: React.FC<Props> = ({
                 />
               </div>
             )}
+          </div>
+
+          {/* Projeto */}
+          <div className="md:col-span-2">
+            <Label>Projeto</Label>
+            <Select value={form.projeto_id || NONE} onValueChange={handleProjetoChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sem projeto" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>Sem projeto</SelectItem>
+                {projetos.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Forma de pagamento */}

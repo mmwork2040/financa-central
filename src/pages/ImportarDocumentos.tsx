@@ -23,7 +23,7 @@ import { extractEdgeError } from "@/lib/edgeFunctionError";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { EditImportItemDialog, EntityOption } from "@/components/importacao/EditImportItemDialog";
+import { EditImportItemDialog, EntityOption, CategoriaOption } from "@/components/importacao/EditImportItemDialog";
 import { ImportacoesPendentes } from "@/components/importacao/ImportacoesPendentes";
 
 const ACCEPTED_TYPES = [
@@ -67,6 +67,7 @@ type ExtractedItem = {
   cliente_id?: string | null;
   forma_pagamento: string | null;
   forma_pagamento_id?: string | null;
+  projeto_id?: string | null;
   observacoes: string | null;
   confianca: number;
   selected?: boolean;
@@ -114,10 +115,11 @@ const ImportarDocumentos = () => {
   const [showPending, setShowPending] = useState(false);
 
   // Cadastros existentes para edição
-  const [categorias, setCategorias] = useState<EntityOption[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaOption[]>([]);
   const [fornecedores, setFornecedores] = useState<EntityOption[]>([]);
   const [clientes, setClientes] = useState<EntityOption[]>([]);
   const [formasPagamento, setFormasPagamento] = useState<EntityOption[]>([]);
+  const [projetos, setProjetos] = useState<EntityOption[]>([]);
 
   // Edit dialog
   const [editingRef, setEditingRef] = useState<{ fileIdx: number; itemIdx: number } | null>(null);
@@ -133,7 +135,7 @@ const ImportarDocumentos = () => {
   const EDIT_KEYS: (keyof ExtractedItem)[] = [
     "descricao", "valor", "data", "tipo_sugerido", "destino_sugerido",
     "categoria_sugerida", "categoria_id", "fornecedor_cliente", "fornecedor_id",
-    "cliente_id", "forma_pagamento", "forma_pagamento_id", "observacoes",
+    "cliente_id", "forma_pagamento", "forma_pagamento_id", "projeto_id", "observacoes",
   ];
   const isEdited = (item: ExtractedItem) => {
     if (!item.original) return false;
@@ -194,16 +196,18 @@ const ImportarDocumentos = () => {
     if (!empresaId) return;
     fetchPendingImports();
     (async () => {
-      const [cat, forn, cli, fp] = await Promise.all([
-        supabase.from("categorias").select("id, nome").eq("empresa_id", empresaId).order("nome"),
+      const [cat, forn, cli, fp, proj] = await Promise.all([
+        supabase.from("categorias").select("id, nome, tipo").eq("empresa_id", empresaId).order("nome"),
         supabase.from("fornecedores").select("id, nome").eq("empresa_id", empresaId).eq("ativo", true).order("nome"),
         supabase.from("clientes").select("id, nome").eq("empresa_id", empresaId).eq("ativo", true).order("nome"),
         supabase.from("formas_pagamento").select("id, descricao").eq("empresa_id", empresaId).order("descricao"),
+        (supabase as any).from("projetos").select("id, nome").eq("empresa_id", empresaId).eq("status", "ativo").order("nome"),
       ]);
       setCategorias((cat.data || []) as any);
       setFornecedores((forn.data || []) as any);
       setClientes((cli.data || []) as any);
       setFormasPagamento(((fp.data || []) as any[]).map(f => ({ id: f.id, nome: f.descricao })));
+      setProjetos((proj.data || []) as any);
     })();
   }, [empresaId]);
 
@@ -719,6 +723,7 @@ const ImportarDocumentos = () => {
               if (fId) payload.fornecedor_id = fId;
             }
           }
+          if (item.projeto_id) payload.projeto_id = item.projeto_id;
           const { error } = await supabase.from("lancamentos").insert(payload);
           if (error) throw error;
         }
@@ -1262,12 +1267,14 @@ const ImportarDocumentos = () => {
           cliente_id: editingItem.cliente_id ?? null,
           forma_pagamento: editingItem.forma_pagamento,
           forma_pagamento_id: editingItem.forma_pagamento_id ?? null,
+          projeto_id: editingItem.projeto_id ?? null,
           observacoes: editingItem.observacoes,
         } : null}
         categorias={categorias}
         fornecedores={fornecedores}
         clientes={clientes}
         formasPagamento={formasPagamento}
+        projetos={projetos}
         onSave={(patch) => {
           if (editingRef) updateItem(editingRef.fileIdx, editingRef.itemIdx, patch as Partial<ExtractedItem>);
         }}

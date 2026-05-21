@@ -1,24 +1,35 @@
-I will implement a temporary storage system for AI-extracted document data to allow users to review and import at their convenience.
+## Problema identificado
 
-### Database Changes
-- Create a new table `importacoes_temporarias` to store extracted data.
-- Fields: `id`, `empresa_id`, `usuario_id`, `nome_arquivo`, `dados` (JSONB containing the extracted items), `resumo`, `modelo_ia`, `status` (pendente, importado, cancelado), and timestamps.
-- Enable RLS and add policies so users can only see and manage their own company's temporary imports.
+**Causa 1 — Categoria não filtra por tipo:**
+- `ImportarDocumentos.tsx` carrega categorias com `select("id, nome")` (sem o campo `tipo`)
+- `EditImportItemDialog` recebe `EntityOption[]` e renderiza todas as categorias sem filtrar
+- Ao trocar Receita ↔ Despesa ↔ Investimento, o select continua mostrando a mesma lista (e mantém uma categoria do tipo errado selecionada)
 
-### Frontend Changes
-- **Component Level**: Create `src/components/importacao/ImportacoesPendentes.tsx` to list and manage these temporary records.
-- **Page Level**: Update `src/pages/ImportarDocumentos.tsx` to:
-    - Save extracted data to the temporary table after IA analysis.
-    - Provide a way to view "Pending Imports" (a list of previous analyses).
-    - Allow loading a pending import back into the editor or deleting it.
+**Causa 2 — Faltam Projeto e Tag:**
+- Dialog não expõe seleção de projeto (campo `projeto_id` existe em `lancamentos`)
+- Não existe campo "tag" no schema — assumindo que se refere a **projeto**
 
-### Technical Details
-- Use a new migration for the table.
-- Update `ImportarDocumentos.tsx` state management to handle loading from DB.
-- The `dados` field in JSONB will store the `ExtractedItem[]` array.
+## Correções
 
----
+### 1. Filtrar categorias por tipo no dialog
+- Estender `EntityOption` (ou criar `CategoriaOption = { id, nome, tipo }`) e ajustar `ImportarDocumentos.tsx` para buscar `id, nome, tipo`
+- No `EditImportItemDialog`, derivar `categoriasFiltradas = categorias.filter(c => c.tipo === form.tipo_sugerido)` (mapeando `investimento` corretamente)
+- Ao trocar `tipo_sugerido`, resetar `categoria_id` se a categoria atual não pertencer ao novo tipo (mantendo `categoria_sugerida` como texto para permitir auto-match ou criação)
+- O auto-match case-insensitive existente também deve respeitar o tipo
 
-### Progress Note
-- I'll verify the schema doesn't have `empresa_id` in some tables (noticed `empresa_id` missing in the 20260214 migration but present in the edge function logic, implying it was added in a later migration or the edge function handles a multi-tenant structure I should follow).
-- Actually, looking at the edge function `process-document-import`, it fetches `empresa_id` from `perfis`. I will ensure the new table has `empresa_id` for proper multi-tenancy.
+### 2. Adicionar seleção de Projeto
+- Adicionar `projeto_id?: string | null` ao tipo `EditableItem`
+- Adicionar prop `projetos: EntityOption[]` ao dialog
+- Em `ImportarDocumentos.tsx`, carregar projetos (`select("id, nome").eq("empresa_id", empresaId).eq("status", "ativo")`) e passar ao dialog
+- Renderizar um `<Select>` opcional "Projeto" no dialog (com opção "Sem projeto")
+- Propagar `projeto_id` no `onSave` e usar na criação do lançamento final (ajustar o ponto de inserção em `lancamentos` para incluir `projeto_id`)
+
+### 3. Sem mudanças de tag
+- Não há entidade "tag" no projeto. Se quiser uma classificação extra, precisa especificar (nova tabela `tags` + `lancamento_tags`, ou um campo `tags text[]` em `lancamentos`)
+
+## Arquivos afetados
+- `src/components/importacao/EditImportItemDialog.tsx` — filtro de categoria por tipo, reset ao trocar tipo, campo Projeto
+- `src/pages/ImportarDocumentos.tsx` — buscar `tipo` das categorias, buscar lista de projetos, passar ao dialog, gravar `projeto_id` ao confirmar importação
+
+## Pergunta antes de implementar
+Você quer que eu trate "tag" como sinônimo de **Projeto** (apenas adicionar Projeto), ou quer que eu **crie um sistema novo de tags** (tabela + vinculação aos lançamentos)?
