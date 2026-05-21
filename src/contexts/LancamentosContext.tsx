@@ -634,7 +634,7 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setOpenModal(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (scope: "single" | "future" = "single") => {
     try {
       // Ensure proper typing — convert "resgate" and "rentabilidade" to receita with special origem
       const isResgate = formData.tipo === "resgate";
