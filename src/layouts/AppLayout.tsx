@@ -100,6 +100,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </main>
         <MobileBottomNav />
         <FloatingChatButton />
+        <FloatingWhatsAppButton />
         <PhoneReminderModal />
         
       </div>
