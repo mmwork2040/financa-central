@@ -30,10 +30,22 @@ const buildWhatsAppUrl = (url: string, message: string): string => {
 
 const FloatingWhatsAppButton: React.FC = () => {
   const { chatLancamentosUrl } = useChatUrls();
+  const { userProfile } = useAuth();
 
-  if (!chatLancamentosUrl) return null;
+  // Fallback: use user's WhatsApp phone (evolution_webhook_url) to build a wa.me link
+  const phoneFallback = (() => {
+    const raw = userProfile?.evolution_webhook_url;
+    if (!raw) return null;
+    const digits = String(raw).replace(/\D/g, "");
+    if (digits.length < 10) return null;
+    const withCountry = digits.startsWith("55") ? digits : `55${digits}`;
+    return `https://wa.me/${withCountry}`;
+  })();
 
-  const finalUrl = buildWhatsAppUrl(chatLancamentosUrl, PRE_MESSAGE);
+  const baseUrl = chatLancamentosUrl || phoneFallback;
+  if (!baseUrl) return null;
+
+  const finalUrl = buildWhatsAppUrl(baseUrl, PRE_MESSAGE);
 
   const content = (
     <TooltipProvider>
