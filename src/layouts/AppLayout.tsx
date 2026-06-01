@@ -8,7 +8,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
 import { useCompanyTheme } from "@/hooks/useCompanyTheme";
 import { useIsMobile } from "@/hooks/use-mobile";
-import FloatingChatButton from "@/components/common/FloatingChatButton";
+
 import FloatingWhatsAppButton from "@/components/common/FloatingWhatsAppButton";
 import MobileBottomNav from "@/components/common/MobileBottomNav";
 import { useSupportNotifications } from "@/hooks/useSupportNotifications";
@@ -99,7 +99,6 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </main>
         <MobileBottomNav />
-        <FloatingChatButton />
         <FloatingWhatsAppButton />
         <PhoneReminderModal />
         

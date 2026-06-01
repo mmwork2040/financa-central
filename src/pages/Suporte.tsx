@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import PageHeader from "@/components/common/PageHeader";
 import SupportFAQ from "@/components/suporte/SupportFAQ";
 import ChatwootWidget from "@/components/suporte/ChatwootWidget";
+import FloatingChatButton from "@/components/common/FloatingChatButton";
 
 const Suporte = () => {
   const { empresaId } = useAuth();
@@ -49,6 +50,7 @@ const Suporte = () => {
       />
       <SupportFAQ />
       <ChatwootWidget config={chatwootConfig} loading={loading} />
+      <FloatingChatButton />
     </div>
   );
 };
