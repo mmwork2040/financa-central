@@ -44,7 +44,7 @@ const FloatingWhatsAppButton: React.FC = () => {
             size="icon"
             aria-label="Lançar via WhatsApp"
           >
-            <MessageCircle className="h-6 w-6" />
+            <WhatsAppIcon className="h-7 w-7" />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="left">
