@@ -25,7 +25,7 @@ const FloatingChatButton: React.FC = () => {
     if (scriptLoaded.current) return;
 
     window.chatwootSettings = {
-      hideMessageBubble: false,
+      hideMessageBubble: true,
       position: "right",
       locale: "pt_BR",
       type: "standard",
