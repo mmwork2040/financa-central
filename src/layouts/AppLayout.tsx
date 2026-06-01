@@ -10,6 +10,7 @@ import { useCompanyTheme } from "@/hooks/useCompanyTheme";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import FloatingWhatsAppButton from "@/components/common/FloatingWhatsAppButton";
+import WhatsAppWelcomeModal from "@/components/common/WhatsAppWelcomeModal";
 import MobileBottomNav from "@/components/common/MobileBottomNav";
 import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 import { MonthFilterProvider } from "@/contexts/MonthFilterContext";
