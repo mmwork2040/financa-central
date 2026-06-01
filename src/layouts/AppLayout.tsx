@@ -9,6 +9,7 @@ import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
 import { useCompanyTheme } from "@/hooks/useCompanyTheme";
 import { useIsMobile } from "@/hooks/use-mobile";
 import FloatingChatButton from "@/components/common/FloatingChatButton";
+import FloatingWhatsAppButton from "@/components/common/FloatingWhatsAppButton";
 import MobileBottomNav from "@/components/common/MobileBottomNav";
 import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 import { MonthFilterProvider } from "@/contexts/MonthFilterContext";
