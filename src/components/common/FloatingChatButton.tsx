@@ -25,7 +25,7 @@ const FloatingChatButton: React.FC = () => {
     if (scriptLoaded.current) return;
 
     window.chatwootSettings = {
-      hideMessageBubble: false,
+      hideMessageBubble: true,
       position: "right",
       locale: "pt_BR",
       type: "standard",
@@ -55,7 +55,7 @@ const FloatingChatButton: React.FC = () => {
         baseUrl: CHATWOOT_BASE_URL,
       });
 
-      // Set user identity once widget is ready
+      // Set user identity once widget is ready and auto-open as fixed panel
       window.addEventListener("chatwoot:ready", () => {
         if (user && userProfile?.nome) {
           window.$chatwoot?.setUser(user.id, {
@@ -64,6 +64,7 @@ const FloatingChatButton: React.FC = () => {
             phone_number: userProfile.evolution_webhook_url || "",
           });
         }
+        try { window.$chatwoot?.toggle("open"); } catch {}
       });
     };
     document.head.appendChild(script);
