@@ -101,6 +101,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </main>
         <MobileBottomNav />
         <FloatingWhatsAppButton />
+        <WhatsAppWelcomeModal />
         <PhoneReminderModal />
         
       </div>
