@@ -225,7 +225,7 @@ export const Sidebar = () => {
   const showAds = isSuperAdmin || hasAdsIntegration;
 
   const allMainItems = [
-    { name: "Dashboard", icon: Home, path: "/dashboard" },
+    { name: "Página Inicial", icon: Home, path: "/dashboard" },
     { name: "Lançamentos", icon: Files, path: "/transactions" },
     { name: "Vendas", icon: ShoppingCart, path: "/vendas-digitais", businessOnly: true, visible: showVendas },
     { name: "Notas Fiscais", icon: FileText, path: "/notas-fiscais", businessOnly: true, visible: showNotas },
