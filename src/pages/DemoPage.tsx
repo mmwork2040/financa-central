@@ -24,7 +24,7 @@ import {
 import DemoTour, { type DemoSection } from "@/components/demo/DemoTour";
 
 const sectionItems: { key: DemoSection; label: string; icon: React.ElementType }[] = [
-  { key: "dashboard", label: "Dashboard", icon: Home },
+  { key: "dashboard", label: "Página Inicial", icon: Home },
   { key: "lancamentos", label: "Lançamentos", icon: Files },
   { key: "projetos", label: "Projetos", icon: Briefcase },
   { key: "clientes", label: "Clientes", icon: Users },

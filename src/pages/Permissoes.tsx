@@ -46,7 +46,7 @@ type Screen = {
 };
 
 const screens: Screen[] = [
-  { name: "Dashboard", value: "dashboard", description: "Visualização do painel financeiro", viewOnly: true },
+  { name: "Página Inicial", value: "dashboard", description: "Visualização do painel financeiro", viewOnly: true },
   { name: "Usuários", value: "users", description: "Gerenciamento de usuários" },
   { name: "Permissões", value: "permissions", description: "Configuração de permissões de acesso" },
   { name: "Fornecedores", value: "fornecedores", description: "Cadastro de fornecedores" },
