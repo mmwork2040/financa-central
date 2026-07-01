@@ -792,9 +792,27 @@ export const LancamentosProvider: React.FC<{ children: React.ReactNode }> = ({ c
             .insert(parcelas)
             .select();
 
-          if (error) throw error;
-          setLancamentos([...lancamentos, ...(data as unknown as Lancamento[])]);
-          toast.success(`${totalParcelas} parcelas criadas com sucesso.`);
+          if (error) {
+            console.error("Erro ao criar parcelas:", error, parcelas);
+            throw error;
+          }
+          const inserted = (data as unknown as Lancamento[]) || [];
+          setLancamentos([...lancamentos, ...inserted]);
+
+          if (inserted.length < totalParcelas) {
+            // Fallback: chama edge function para completar parcelas faltantes
+            try {
+              const { data: session } = await supabase.auth.getSession();
+              await supabase.functions.invoke("generate-recurring", {
+                headers: { Authorization: `Bearer ${session?.session?.access_token}` },
+              });
+            } catch (err) {
+              console.warn("Fallback generate-recurring falhou:", err);
+            }
+            toast.warning(`${inserted.length} de ${totalParcelas} parcelas criadas. As demais serão completadas em segundo plano.`);
+          } else {
+            toast.success(`${totalParcelas} parcelas de ${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(valorParcela)} criadas com sucesso.`);
+          }
         } else {
           // ÚNICO ou RECORRENTE: insere um único registro
           const insertData: any = { ...dataToSave, empresa_id: empresaId };
