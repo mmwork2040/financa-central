@@ -1,82 +1,72 @@
-## Problemas identificados
+## Diagnóstico
 
-1. **Excesso de ícones soltos** no nível raiz (Dashboard, Lançamentos, Importar, Vendas, Notas, Anúncios, Projetos, Cadastros, Relatórios, Configurações, Permissões, Perfis, Suporte, Administração) → poluição visual.
-2. **Itens não-universais visíveis para todas as empresas** (ex: Anúncios aparece para qualquer empresa business mesmo sem integração de Ads → já existe filtro `requiresAds`, mas Vendas/Notas/Projetos seguem o mesmo problema).
-3. **Itens de Super Admin misturados** dentro de "Configurações" mental do usuário (Logs, n8n Templates, Webhooks, Planos/Assinaturas) — hoje já estão em "Administração", mas o ícone "IA Global" está duplicado conceitualmente com a aba de IA dentro de Integrações.
-4. **Duas entradas de "IA"**: `IA Global` (admin) + `Inteligência Artificial` (categoria em /settings/integracoes). Confunde.
-5. **Configurações** mistura "Empresa/Pessoal", "Integrações", "Termos" — ok, mas pode receber também "Perfis de Acesso" e "Permissões" que hoje vivem soltos no menu raiz.
+Investiguei o banco e o código:
 
-## Solução proposta
+- **Parceladas**: só existem 2 lançamentos com `total_parcelas>1` em 438 registros, ambos sem `parcela_atual` e sem `recorrencia_grupo_id`. A criação em bulk no client (`LancamentosContext.handleSave`) não valida se todas as N parcelas foram realmente inseridas, e não há redundância server-side.
+- **Recorrentes**: havia duplicatas (mesmo grupo, mesma data). Já limpei os 3 duplicados que existiam. Não existe índice único impedindo novas duplicatas.
+- **Relatórios**: `useRelatoriosData` já calcula `receitasPrevistas`/`despesasPrevistas` a partir de status `pendente`/`vencido`. Não aparecem porque as ocorrências futuras não existem no banco.
+- **Virada do mês**: como `status='pendente'` e a listagem já os trata como "a pagar/receber", basta garantir que os registros existam.
 
-### A. Reagrupamento do menu (raiz mais enxuto)
+## Plano de correção
 
+### 1. Banco (arquivo SQL para aplicar via console)
+
+Como não tenho a ferramenta de migração ativa, vou gerar `db_migrations/fix_recorrencias_parcelas.sql`:
+
+- Índice **único parcial**: `UNIQUE (empresa_id, recorrencia_grupo_id, data_vencimento) WHERE recorrencia_grupo_id IS NOT NULL` — bloqueia duplicatas em qualquer cadeia.
+- Função `public.backfill_series(_empresa_id uuid)` (SECURITY DEFINER) que:
+  - Para cada grupo recorrente aberto, preenche meses faltantes até 12 meses adiante (respeitando `recorrencia_fim`).
+  - Para cada grupo parcelado incompleto, preenche as parcelas restantes até `total_parcelas`, dividindo o valor original se necessário.
+- Trigger `after_insert_lancamento_series` que dispara `backfill_series` sempre que um lançamento novo tem `recorrente=true` ou `total_parcelas>1` — redundância caso o client falhe.
+- pg_cron diário 06:00 BRT executando `backfill_series` para todas as empresas.
+
+### 2. Edge function `generate-recurring` (reescrita)
+
+- Passa a tratar **parceladas incompletas** também (hoje só cuida de recorrentes).
+- Aceita `{ empresa_id }` no body para uso pelo cron/backfill.
+- Grava com upsert idempotente (aproveitando o novo índice único quando aplicado).
+- Corrige loop para incrementar `currentDate` antes do `continue` (evita ficar preso em datas já existentes).
+
+### 3. Frontend `src/contexts/LancamentosContext.tsx`
+
+- No fluxo **parcelado**: após `.insert(parcelas)`, valida se `data.length === totalParcelas`. Se falhar parcialmente, dispara `generate-recurring` como fallback e mostra erro detalhado com `console.error` do payload que falhou.
+- No fluxo **recorrente**: mantém invocação de `generate-recurring` (já existe) e verifica retorno.
+- Substitui `toast.success` genérico por mensagens que reflitam quantos registros foram criados (ex.: "8 parcelas de R$ 125,00 criadas").
+
+### 4. Limpeza retroativa (via data-tool)
+
+- Já removi duplicatas de grupos existentes (concluído).
+- Backfill dos 2 parcelados órfãos (`Automações` 8x e `Black Friday Infinita` 5x): atribui `recorrencia_grupo_id`, define `parcela_atual=1`, divide o valor e cria as parcelas 2..N.
+- Backfill dos grupos recorrentes de todas as empresas — invocar `generate-recurring` por empresa após o deploy.
+
+### 5. Verificação
+
+- Após aplicar: consultar `lancamentos` do grupo `Automações` deve mostrar 8 registros com datas mensais consecutivas.
+- Abrir Relatórios com filtro "Próximos 3 meses" e confirmar que "Despesas previstas" reflete os pendentes futuros.
+- Simular virada do mês: registros `pendente` do mês atual já aparecem em "Contas a pagar".
+
+### Detalhes técnicos
+
+```text
+Estrutura da série
+  recorrente=true,  total_parcelas=null  → aberta (janela rolante de 12 meses)
+  recorrente=false, total_parcelas=N     → fechada (exatamente N registros)
+  Ambas agrupadas por recorrencia_grupo_id
 ```
-[Topo fixo]
-  Dashboard
-  Lançamentos
-  Vendas              (só se empresa tem integração de vendas ativa)
-  Notas Fiscais       (só se módulo fiscal habilitado / business)
-  Anúncios            (só se integração Ads ativa — já existe)
-  Projetos            (só se ativado nos controles do plano)
-  Importar
-  Relatórios
 
-[Grupo: Cadastros]   (colapsável — já existe)
-  Clientes, Fornecedores, Categorias, Contas, Formas, Cartões, Usuários
-
-[Grupo: Configurações]   (colapsável)
-  Empresa / Pessoal
-  Integrações          (inclui IA da empresa)
-  Perfis de Acesso     ← movido pra cá
-  Permissões           ← movido pra cá
-  Termos e Políticas
-
-[Grupo: Super Admin]   (colapsável, só isSuperAdmin, ícone Shield)
-  IA Global
-  Planos de Assinatura
-  n8n Templates
-  Webhooks
-  Logs
-
-[Rodapé]
-  Suporte
-  Sair
+Índice único (SQL):
+```sql
+CREATE UNIQUE INDEX idx_lanc_grupo_data
+  ON lancamentos(empresa_id, recorrencia_grupo_id, data_vencimento)
+  WHERE recorrencia_grupo_id IS NOT NULL;
 ```
 
-### B. Regras de visibilidade por empresa
+### Arquivos a modificar
 
-Cada item "businessOnly" passa a checar uma flag derivada:
-- `Vendas` → existe integração ativa em `plataformas_vendas` OU `planControles.vendas !== false`
-- `Notas Fiscais` → `planControles.notas_fiscais` ligado E (config fiscal feita OU super admin)
-- `Anúncios` → integração google_ads/meta_ads ativa (já existe)
-- `Projetos` → `planControles.projetos !== false`
+- `supabase/functions/generate-recurring/index.ts` — reescrita completa.
+- `src/contexts/LancamentosContext.tsx` — validação do bulk insert e fallback.
+- `db_migrations/fix_recorrencias_parcelas.sql` — novo, para aplicação manual (índice, função, trigger, cron).
 
-Itens não aplicáveis simplesmente **não aparecem** (em vez de virem desabilitados). Super Admin sempre vê tudo com badge "admin".
+### Após aprovação
 
-### C. Resolver duplicação de IA
-
-- Renomear `IA Global` (admin) → **"IA — Provedor Global"** (deixa claro que é configuração de chave global / fallback).
-- Dentro de Integrações, a categoria "IA" permanece como **"IA da Empresa"** (chaves próprias do tenant).
-- Tooltip explicando a diferença em ambos.
-
-### D. Densidade visual
-
-- Ícones do menu raiz reduzidos de 18 → 16px no estado colapsado.
-- Separadores sutis entre os 4 grupos (Operação / Cadastros / Config / Admin).
-- No estado colapsado (w-14): grupos viram apenas o ícone "chefe" (FolderOpen / Settings / Shield) clicável que expande tooltip-flyout com os filhos — não derrama todos os itens individuais como hoje (linhas 507, 558 fazem isso).
-
-## Arquivos afetados
-
-- `src/components/Sidebar.tsx` — reorganização das arrays `mainItems`, `configItems`, `adminGlobalItems`; mover `adminItems` (Permissões/Perfis) para dentro de `configItems`; adicionar checagens de visibilidade para Vendas/Notas/Projetos; ajustar render colapsado para usar flyout.
-- `src/pages/ConfigGlobalIA.tsx` — atualizar título para "IA — Provedor Global" + texto explicativo.
-- `src/pages/Integracoes.tsx` — ajustar label da categoria `ia` para "IA da Empresa".
-
-## Fora do escopo
-
-- Não muda rotas nem permissões reais (apenas visibilidade no menu).
-- Não toca em RLS, edge functions ou dados.
-- Não redesigna estilos — apenas hierarquia e agrupamento.
-
-## Pergunta antes de implementar
-
-Confirma os 4 grupos (Operação / Cadastros / Configurações / Super Admin) e a movimentação de **Permissões + Perfis de Acesso** para dentro de Configurações? Se preferir mantê-los soltos no raiz, ajusto.
+Executo tudo em uma única passagem, deploy da edge function, backfill via chamada por empresa e reporto o resultado.
