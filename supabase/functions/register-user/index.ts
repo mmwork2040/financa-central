@@ -34,18 +34,22 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Check phone uniqueness (skip orphaned perfis whose auth user was deleted)
+    // Check phone uniqueness (skip orphaned perfis whose auth user was deleted
+    // OR perfis whose owner shares the same email being registered — treat as reuse)
     const { data: existingPhone } = await supabaseAdmin
       .from("perfis")
-      .select("id")
+      .select("id, email")
       .eq("evolution_webhook_url", phoneClean)
       .maybeSingle();
 
     if (existingPhone) {
-      // Verify the auth user still exists; if not, clear the orphaned phone
       const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(existingPhone.id);
-      if (!authUser?.user) {
-        // Orphaned record – clear the phone so it can be reused
+      const sameEmail =
+        existingPhone.email?.toLowerCase() === email.toLowerCase() ||
+        authUser?.user?.email?.toLowerCase() === email.toLowerCase();
+
+      if (!authUser?.user || sameEmail) {
+        // Orphaned record or same-user retry – clear phone so it can be reused
         await supabaseAdmin
           .from("perfis")
           .update({ evolution_webhook_url: null })
