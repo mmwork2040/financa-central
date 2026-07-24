@@ -111,7 +111,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <FloatingWhatsAppButton />
         <WhatsAppWelcomeModal />
         <PhoneReminderModal />
-        
+        <OnboardingModal open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
       </div>
     </MonthFilterProvider>
   );
