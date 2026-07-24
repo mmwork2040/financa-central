@@ -16,6 +16,13 @@ import PageHeader from "@/components/common/PageHeader";
 import { phoneInputMask } from "@/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import {
+  isFloatingWAHidden,
+  setFloatingWAHidden,
+  FLOATING_WA_EVENT,
+  FLOATING_WA_STORAGE_KEY,
+} from "@/utils/floatingWhatsAppVisibility";
 
 const getInitials = (nome: string) =>
   nome.split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase();
