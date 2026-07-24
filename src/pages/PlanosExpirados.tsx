@@ -234,7 +234,14 @@ const PlanosExpirados = () => {
       )}
 
       <div className="flex flex-col sm:flex-row items-center gap-2">
-        <Button variant="outline" onClick={() => navigate("/")} className="gap-2">
+        <Button
+          variant="outline"
+          onClick={async () => {
+            const { data } = await supabase.auth.getSession();
+            navigate(data.session ? "/dashboard" : "/");
+          }}
+          className="gap-2"
+        >
           Voltar
         </Button>
         <Button variant="ghost" onClick={handleLogout} className="gap-2 text-muted-foreground">
