@@ -182,6 +182,7 @@ const ConfigGlobalIA = () => {
         .update({ chat_lancamentos_url: url } as any)
         .eq("id", globalChatEmpresaId);
       if (error) throw error;
+      window.dispatchEvent(new Event("chat-urls-updated"));
       toast.success("Link global do WhatsApp salvo");
     } catch (e: any) {
       toast.error(e.message || "Erro ao salvar");
