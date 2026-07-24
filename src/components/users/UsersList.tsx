@@ -38,6 +38,21 @@ interface User {
   empresa_nome?: string | null;
   is_super_admin?: boolean;
   assinatura_status?: string;
+  trial_started_at?: string | null;
+}
+
+const isUserExpired = (user: User): boolean => {
+  if (user.is_super_admin) return false;
+  const status = user.assinatura_status || "trial";
+  if (["vencido", "expired", "cancelled"].includes(status)) return true;
+  if (status === "trial") {
+    const started = user.trial_started_at || user.created_at;
+    if (!started) return false;
+    const end = new Date(started);
+    end.setDate(end.getDate() + 30);
+    return new Date() > end;
+  }
+  return false;
 }
 
 interface UsersListProps {
