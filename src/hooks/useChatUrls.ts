@@ -6,6 +6,16 @@ export const useChatUrls = () => {
   const { empresaId } = useAuth();
   const [chatLancamentosUrl, setChatLancamentosUrl] = useState<string | null>(null);
   const [chatVendasUrl, setChatVendasUrl] = useState<string | null>(null);
+  const [chatLancamentosUrlGlobal, setChatLancamentosUrlGlobal] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("get-global-chat-url");
+        if (data?.url) setChatLancamentosUrlGlobal(data.url);
+      } catch { /* noop */ }
+    })();
+  }, []);
 
   useEffect(() => {
     if (!empresaId) return;
@@ -22,5 +32,9 @@ export const useChatUrls = () => {
     })();
   }, [empresaId]);
 
-  return { chatLancamentosUrl, chatVendasUrl };
+  return {
+    chatLancamentosUrl: chatLancamentosUrl || chatLancamentosUrlGlobal,
+    chatVendasUrl,
+    chatLancamentosUrlGlobal,
+  };
 };
