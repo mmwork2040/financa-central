@@ -60,14 +60,15 @@ const FloatingWhatsAppButton: React.FC = () => {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            onClick={() => window.open(finalUrl, "_blank")}
-            className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-[9999] h-16 w-16 rounded-full shadow-2xl bg-[#25D366] hover:bg-[#1ebe5d] text-white hover:scale-110 transition-transform"
-            size="icon"
+          <a
+            href={finalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             aria-label="Lançar via WhatsApp"
+            className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-[9999] h-16 w-16 rounded-full shadow-2xl bg-[#25D366] hover:bg-[#1ebe5d] text-white hover:scale-110 transition-transform flex items-center justify-center"
           >
             <WhatsAppIcon className="h-10 w-10" />
-          </Button>
+          </a>
         </TooltipTrigger>
         <TooltipContent side="left">
           <p>Lançar via WhatsApp</p>
