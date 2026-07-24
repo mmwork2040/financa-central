@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useChatUrls } from "@/hooks/useChatUrls";
 import { useAuth } from "@/contexts/AuthContext";
 import { buildWhatsAppPhoneUrl, DEFAULT_WHATSAPP_PRE_MESSAGE, normalizeWhatsAppUrl } from "@/utils/whatsapp";
+import { FLOATING_WA_STORAGE_KEY, FLOATING_WA_EVENT, isFloatingWAHidden } from "@/utils/floatingWhatsAppVisibility";
+import { toast } from "sonner";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 32 32" fill="currentColor" className={className} aria-hidden="true">
@@ -17,17 +20,52 @@ const FloatingWhatsAppButton: React.FC = () => {
   const { userProfile } = useAuth();
   const preMessage = chatLancamentosMensagem || DEFAULT_WHATSAPP_PRE_MESSAGE;
 
+  const [hidden, setHidden] = useState<boolean>(() => isFloatingWAHidden());
+
+  useEffect(() => {
+    const sync = () => setHidden(isFloatingWAHidden());
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === FLOATING_WA_STORAGE_KEY) sync();
+    };
+    window.addEventListener(FLOATING_WA_EVENT, sync);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(FLOATING_WA_EVENT, sync);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
   const phoneFallback = buildWhatsAppPhoneUrl(userProfile?.evolution_webhook_url, preMessage);
   const baseUrl = chatLancamentosUrl || phoneFallback;
 
-  if (!baseUrl) return null;
+  if (!baseUrl || hidden) return null;
   const finalUrl = normalizeWhatsAppUrl(baseUrl, preMessage);
 
   // Clear any legacy stored position
   try { localStorage.removeItem("floating-wa-position"); } catch {}
 
+  const handleHide = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      localStorage.setItem(FLOATING_WA_STORAGE_KEY, "1");
+      window.dispatchEvent(new Event(FLOATING_WA_EVENT));
+    } catch {}
+    toast.success("Botão ocultado", {
+      description: "Reative em Configurações → IA — Provedor Global.",
+    });
+  };
+
   const content = (
     <div className="fixed z-[9999] bottom-24 right-8 md:bottom-8 md:right-8 h-16 w-16">
+      <button
+        type="button"
+        onClick={handleHide}
+        aria-label="Ocultar botão do WhatsApp"
+        className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-background border border-border shadow-md text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center z-10 transition-colors"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
