@@ -183,6 +183,27 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
               />
             </div>
           </div>
+          {blockError && (
+            <div className="flex items-start gap-3 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
+              <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div className="space-y-2 flex-1">
+                <p className="font-medium text-destructive">
+                  {blockError.code === "subscription_expired" ? "Assinatura expirada" : "Limite do plano atingido"}
+                </p>
+                <p className="text-muted-foreground">{blockError.message}</p>
+                <Button
+                  size="sm"
+                  className="mt-1"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate(blockError.code === "subscription_expired" ? "/planos-expirados" : "/ver-planos");
+                  }}
+                >
+                  {blockError.code === "subscription_expired" ? "Renovar assinatura" : "Fazer upgrade de plano"}
+                </Button>
+              </div>
+            </div>
+          )}
           <Button onClick={handleSubmit} disabled={loading || !form.nomeEmpresa.trim() || !form.cnpj.trim()} className="w-full">
             {loading ? "Criando..." : "Criar Empresa"}
           </Button>
