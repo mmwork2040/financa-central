@@ -1,17 +1,41 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Headphones, Send, Loader2, MessageCircle, User } from "lucide-react";
+import { Headphones, Send, Loader2, MessageCircle, User, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type Msg = { role: "user" | "assistant"; content: string; ts: Date };
 
+const STORAGE_KEY = "support-ai-chat:history";
+
+const loadHistory = (): Msg[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Array<{ role: "user" | "assistant"; content: string; ts: string }>;
+    return parsed.map((m) => ({ ...m, ts: new Date(m.ts) }));
+  } catch {
+    return [];
+  }
+};
+
 const SupportAIChat: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [messages, setMessages] = useState<Msg[]>(() => loadHistory());
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -24,6 +48,24 @@ const SupportAIChat: React.FC = () => {
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    } catch {
+      // ignore
+    }
+  }, [messages]);
+
+  const clearHistory = () => {
+    setMessages([]);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    toast.success("Conversa limpa");
+  };
 
   const send = async () => {
     const text = input.trim();
@@ -81,10 +123,35 @@ const SupportAIChat: React.FC = () => {
                 <p className="text-[10px] text-muted-foreground">Respostas objetivas</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-              Minimizar
-            </Button>
+            <div className="flex items-center gap-1">
+              {messages.length > 0 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm" title="Limpar conversa">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Iniciar nova conversa?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Isso apagará todo o histórico da conversa atual com o Agente de Suporte. Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={clearHistory}>Limpar e iniciar nova</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                Minimizar
+              </Button>
+            </div>
           </div>
+
+
 
           <div ref={scrollRef} className="h-80 overflow-y-auto p-4 space-y-3 bg-muted/20">
             {messages.length === 0 ? (
