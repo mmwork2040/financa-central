@@ -1195,6 +1195,7 @@ export type Database = {
           email: string
           empresa_id: string | null
           evolution_webhook_url: string | null
+          floating_wa_hidden: boolean
           foto_url: string | null
           id: string
           max_empresas_pj: number
@@ -1214,6 +1215,7 @@ export type Database = {
           email: string
           empresa_id?: string | null
           evolution_webhook_url?: string | null
+          floating_wa_hidden?: boolean
           foto_url?: string | null
           id: string
           max_empresas_pj?: number
@@ -1233,6 +1235,7 @@ export type Database = {
           email?: string
           empresa_id?: string | null
           evolution_webhook_url?: string | null
+          floating_wa_hidden?: boolean
           foto_url?: string | null
           id?: string
           max_empresas_pj?: number
