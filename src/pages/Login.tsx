@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
 import AuthContainer from "@/components/auth/AuthContainer";
 import { useAuth } from "@/contexts/AuthContext";
+import { getSavedRoute } from "@/components/auth/SessionManager";
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export const Login = () => {
   
   useEffect(() => {
     if (isAuthenticated && !loading) {
-      navigate("/dashboard");
+      navigate(getSavedRoute() || "/dashboard", { replace: true });
     }
   }, [isAuthenticated, loading, navigate]);
 
