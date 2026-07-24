@@ -149,6 +149,9 @@ const SupportAIChat: React.FC = () => {
                 Minimizar
               </Button>
             </div>
+          </div>
+
+
 
           <div ref={scrollRef} className="h-80 overflow-y-auto p-4 space-y-3 bg-muted/20">
             {messages.length === 0 ? (
