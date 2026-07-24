@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useChatUrls } from "@/hooks/useChatUrls";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildWhatsAppPhoneUrl, DEFAULT_WHATSAPP_PRE_MESSAGE, normalizeWhatsAppUrl } from "@/utils/whatsapp";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 32 32" fill="currentColor" className={className} aria-hidden="true">
@@ -11,65 +12,17 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-
-const DEFAULT_PRE_MESSAGE = "Faça os lançamentos pelo Whatsapp";
-
-const buildWhatsAppUrl = (rawUrl: string, message: string): string => {
-  const text = (message || "").trim();
-  const encoded = encodeURIComponent(text);
-  try {
-    const u = new URL(rawUrl);
-    const host = u.hostname.toLowerCase();
-    const isWa =
-      /(^|\.)wa\.me$/.test(host) || /(^|\.)whatsapp\.com$/.test(host);
-    if (!isWa) return rawUrl;
-
-    // wa.me/message/CODE (link curto do WhatsApp Business) ignora o parâmetro text.
-    // Não há como injetar mensagem pré-preenchida nesse formato — retornamos como está.
-    if (host === "wa.me" && /^\/message\//i.test(u.pathname)) {
-      if (text) console.warn("[WhatsApp] Link curto wa.me/message/... ignora mensagem pré-preenchida. Use wa.me/<numero>.");
-      return u.toString();
-    }
-
-    // api.whatsapp.com/send?phone=XXX  →  wa.me/XXX?text=...
-    if (host === "api.whatsapp.com" || host === "web.whatsapp.com") {
-      const phone = (u.searchParams.get("phone") || "").replace(/\D/g, "");
-      if (phone) {
-        return `https://wa.me/${phone}${text ? `?text=${encoded}` : ""}`;
-      }
-      // sem phone: mantém host original, apenas troca o texto
-      const params = new URLSearchParams(u.search);
-      if (text) params.set("text", text);
-      params.delete("app_absent");
-      u.search = params.toString();
-      return u.toString();
-    }
-
-    // wa.me/<numero>  → força ?text=<encoded>
-    const base = `${u.origin}${u.pathname}`.replace(/\/+$/, "");
-    return text ? `${base}?text=${encoded}` : base;
-  } catch {
-    return rawUrl;
-  }
-};
-
 const FloatingWhatsAppButton: React.FC = () => {
   const { chatLancamentosUrl, chatLancamentosMensagem } = useChatUrls();
   const { userProfile } = useAuth();
+  const preMessage = chatLancamentosMensagem || DEFAULT_WHATSAPP_PRE_MESSAGE;
 
-  const phoneFallback = (() => {
-    const raw = userProfile?.evolution_webhook_url;
-    if (!raw) return null;
-    const digits = String(raw).replace(/\D/g, "");
-    if (digits.length < 10) return null;
-    const withCountry = digits.startsWith("55") ? digits : `55${digits}`;
-    return `https://wa.me/${withCountry}`;
-  })();
+  const phoneFallback = buildWhatsAppPhoneUrl(userProfile?.evolution_webhook_url, preMessage);
 
   const baseUrl = chatLancamentosUrl || phoneFallback;
   if (!baseUrl) return null;
 
-  const finalUrl = buildWhatsAppUrl(baseUrl, chatLancamentosMensagem || DEFAULT_PRE_MESSAGE);
+  const finalUrl = normalizeWhatsAppUrl(baseUrl, preMessage);
 
   const content = (
     <TooltipProvider>
