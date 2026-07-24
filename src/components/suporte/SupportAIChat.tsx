@@ -1,17 +1,41 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Headphones, Send, Loader2, MessageCircle, User } from "lucide-react";
+import { Headphones, Send, Loader2, MessageCircle, User, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type Msg = { role: "user" | "assistant"; content: string; ts: Date };
 
+const STORAGE_KEY = "support-ai-chat:history";
+
+const loadHistory = (): Msg[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Array<{ role: "user" | "assistant"; content: string; ts: string }>;
+    return parsed.map((m) => ({ ...m, ts: new Date(m.ts) }));
+  } catch {
+    return [];
+  }
+};
+
 const SupportAIChat: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [messages, setMessages] = useState<Msg[]>(() => loadHistory());
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -24,6 +48,24 @@ const SupportAIChat: React.FC = () => {
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    } catch {
+      // ignore
+    }
+  }, [messages]);
+
+  const clearHistory = () => {
+    setMessages([]);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    toast.success("Conversa limpa");
+  };
 
   const send = async () => {
     const text = input.trim();
