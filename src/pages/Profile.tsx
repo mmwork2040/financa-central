@@ -54,6 +54,20 @@ const Profile = () => {
   const [savingWebhook, setSavingWebhook] = useState(false);
   const [planoNome, setPlanoNome] = useState<string | null>(null);
   const [inactivityTimeout, setInactivityTimeoutState] = useState<number>(getInactivityMinutes());
+  const [waBtnHidden, setWaBtnHidden] = useState<boolean>(() => isFloatingWAHidden());
+
+  useEffect(() => {
+    const sync = () => setWaBtnHidden(isFloatingWAHidden());
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === FLOATING_WA_STORAGE_KEY) sync();
+    };
+    window.addEventListener(FLOATING_WA_EVENT, sync);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(FLOATING_WA_EVENT, sync);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchPlano = async () => {
