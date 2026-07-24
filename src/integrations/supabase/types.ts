@@ -1194,8 +1194,11 @@ export type Database = {
           evolution_webhook_url: string | null
           foto_url: string | null
           id: string
+          max_empresas_pj: number
           nome: string
+          onboarding_concluido: boolean
           permissao: string
+          permite_conta_pessoal: boolean
           telegram_id: string | null
           trial_started_at: string
           updated_at: string
@@ -1210,8 +1213,11 @@ export type Database = {
           evolution_webhook_url?: string | null
           foto_url?: string | null
           id: string
+          max_empresas_pj?: number
           nome: string
+          onboarding_concluido?: boolean
           permissao?: string
+          permite_conta_pessoal?: boolean
           telegram_id?: string | null
           trial_started_at?: string
           updated_at?: string
@@ -1226,8 +1232,11 @@ export type Database = {
           evolution_webhook_url?: string | null
           foto_url?: string | null
           id?: string
+          max_empresas_pj?: number
           nome?: string
+          onboarding_concluido?: boolean
           permissao?: string
+          permite_conta_pessoal?: boolean
           telegram_id?: string | null
           trial_started_at?: string
           updated_at?: string
