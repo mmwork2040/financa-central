@@ -15,6 +15,7 @@ import { Building2, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { phoneInputMask, documentInputMask } from "@/utils/format";
+import { extractEdgeErrorDetails } from "@/lib/edgeFunctionError";
 
 interface CreateEmpresaDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
   const navigate = useNavigate();
   const isExpired = !isSuperAdmin && !isTrialActive && assinaturaStatus !== "ativo";
   const [loading, setLoading] = useState(false);
+  const [blockError, setBlockError] = useState<{ code: "subscription_expired" | "plan_limit_reached"; message: string } | null>(null);
   const [form, setForm] = useState({
     nomeEmpresa: "",
     cnpj: "",
@@ -67,6 +69,7 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
     }
 
     setLoading(true);
+    setBlockError(null);
     try {
       const { data, error } = await supabase.functions.invoke("create-empresa", {
         body: {
@@ -77,8 +80,21 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
         },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) {
+        const details = await extractEdgeErrorDetails(error, "Erro ao criar empresa");
+        if (details.code === "subscription_expired" || details.code === "plan_limit_reached") {
+          setBlockError({ code: details.code, message: details.message });
+          return;
+        }
+        throw new Error(details.message);
+      }
+      if (data?.error) {
+        if (data?.code === "subscription_expired" || data?.code === "plan_limit_reached") {
+          setBlockError({ code: data.code, message: data.error });
+          return;
+        }
+        throw new Error(data.error);
+      }
 
       toast.success(`Empresa "${form.nomeEmpresa}" criada com sucesso!`);
       onOpenChange(false);
@@ -167,6 +183,27 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
               />
             </div>
           </div>
+          {blockError && (
+            <div className="flex items-start gap-3 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
+              <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div className="space-y-2 flex-1">
+                <p className="font-medium text-destructive">
+                  {blockError.code === "subscription_expired" ? "Assinatura expirada" : "Limite do plano atingido"}
+                </p>
+                <p className="text-muted-foreground">{blockError.message}</p>
+                <Button
+                  size="sm"
+                  className="mt-1"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate(blockError.code === "subscription_expired" ? "/planos-expirados" : "/ver-planos");
+                  }}
+                >
+                  {blockError.code === "subscription_expired" ? "Renovar assinatura" : "Fazer upgrade de plano"}
+                </Button>
+              </div>
+            </div>
+          )}
           <Button onClick={handleSubmit} disabled={loading || !form.nomeEmpresa.trim() || !form.cnpj.trim()} className="w-full">
             {loading ? "Criando..." : "Criar Empresa"}
           </Button>
