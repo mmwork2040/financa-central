@@ -12,7 +12,7 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 );
 
 
-const PRE_MESSAGE = "Faça os lançamentos pelo Whatsapp";
+const DEFAULT_PRE_MESSAGE = "Faça os lançamentos pelo Whatsapp";
 
 const buildWhatsAppUrl = (url: string, message: string): string => {
   try {
@@ -29,10 +29,9 @@ const buildWhatsAppUrl = (url: string, message: string): string => {
 };
 
 const FloatingWhatsAppButton: React.FC = () => {
-  const { chatLancamentosUrl } = useChatUrls();
+  const { chatLancamentosUrl, chatLancamentosMensagem } = useChatUrls();
   const { userProfile } = useAuth();
 
-  // Fallback: use user's WhatsApp phone (evolution_webhook_url) to build a wa.me link
   const phoneFallback = (() => {
     const raw = userProfile?.evolution_webhook_url;
     if (!raw) return null;
@@ -45,7 +44,7 @@ const FloatingWhatsAppButton: React.FC = () => {
   const baseUrl = chatLancamentosUrl || phoneFallback;
   if (!baseUrl) return null;
 
-  const finalUrl = buildWhatsAppUrl(baseUrl, PRE_MESSAGE);
+  const finalUrl = buildWhatsAppUrl(baseUrl, chatLancamentosMensagem || DEFAULT_PRE_MESSAGE);
 
   const content = (
     <TooltipProvider>

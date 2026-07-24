@@ -76,14 +76,38 @@ const periodoLabels: Record<string, string> = {
 
 const VerPlanos = () => {
   const navigate = useNavigate();
-  const { isTrialActive, trialDaysRemaining, assinaturaStatus, isSuperAdmin } = useAuth();
+  const { isTrialActive, trialDaysRemaining, assinaturaStatus, isSuperAdmin, refreshProfile } = useAuth();
   const [planos, setPlanos] = useState<PlanoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodoSelecionado, setPeriodoSelecionado] = useState("mensal");
+  const [awaitingUpgrade, setAwaitingUpgrade] = useState(false);
+  const prevStatusRef = React.useRef(assinaturaStatus);
 
   useEffect(() => {
     fetchPlanos();
   }, []);
+
+  // Auto-refresh assinatura status when user returns to the tab after opening a payment link
+  useEffect(() => {
+    const onFocus = () => { refreshProfile(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, [refreshProfile]);
+
+  // Detect activation: trial/expired/cancelled -> ativo
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    if (awaitingUpgrade && prev !== "ativo" && assinaturaStatus === "ativo") {
+      toast.success("Assinatura ativada! Redirecionando...");
+      setAwaitingUpgrade(false);
+      setTimeout(() => navigate("/ver-planos", { replace: true }), 400);
+    }
+    prevStatusRef.current = assinaturaStatus;
+  }, [assinaturaStatus, awaitingUpgrade, navigate]);
 
 
   const fetchPlanos = async () => {
@@ -132,7 +156,9 @@ const VerPlanos = () => {
 
   const handleSelectPlan = (plano: PlanoRow) => {
     if (plano.link_acesso) {
+      setAwaitingUpgrade(true);
       window.open(plano.link_acesso, "_blank");
+      toast.info("Após concluir o pagamento, retorne para esta aba — atualizaremos o status automaticamente.");
     } else {
       toast.info("Entre em contato para assinar este plano.");
     }

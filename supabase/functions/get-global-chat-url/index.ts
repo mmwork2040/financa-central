@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    // Reads the earliest super_admin empresa's chat_lancamentos_url as the global default.
     const { data: role } = await supabase
       .from("user_roles")
       .select("empresa_id, created_at")
@@ -22,19 +21,21 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     let url: string | null = null;
+    let mensagem: string | null = null;
     if (role?.empresa_id) {
       const { data: emp } = await supabase
         .from("empresas")
-        .select("chat_lancamentos_url")
+        .select("chat_lancamentos_url, chat_lancamentos_mensagem")
         .eq("id", role.empresa_id)
         .maybeSingle();
-      url = emp?.chat_lancamentos_url || null;
+      url = (emp as any)?.chat_lancamentos_url || null;
+      mensagem = (emp as any)?.chat_lancamentos_mensagem || null;
     }
-    return new Response(JSON.stringify({ url }), {
+    return new Response(JSON.stringify({ url, mensagem }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ url: null, error: String(e) }), {
+    return new Response(JSON.stringify({ url: null, mensagem: null, error: String(e) }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

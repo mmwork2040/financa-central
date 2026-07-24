@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Loader2, Save, Eye, EyeOff, ShieldAlert, BarChart3, AlertTriangle, MessageCircle } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Brain, Loader2, Save, Eye, EyeOff, ShieldAlert, BarChart3, AlertTriangle, MessageCircle, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -39,8 +41,12 @@ const ConfigGlobalIA = () => {
   const [usage, setUsage] = useState<Record<string, number>>({});
   const [planLimits, setPlanLimits] = useState<Record<string, number>>({}); // empresa_id -> limite do plano
   const [globalChatUrl, setGlobalChatUrl] = useState("");
+  const [globalChatMensagem, setGlobalChatMensagem] = useState("");
   const [globalChatEmpresaId, setGlobalChatEmpresaId] = useState<string | null>(null);
   const [savingChat, setSavingChat] = useState(false);
+  const [openChat, setOpenChat] = useState(false);
+  const [openKey, setOpenKey] = useState(false);
+  const [openUsage, setOpenUsage] = useState(false);
 
   const loadAll = async () => {
     setLoading(true);
@@ -95,10 +101,11 @@ const ConfigGlobalIA = () => {
       setGlobalChatEmpresaId(role.empresa_id);
       const { data: emp } = await supabase
         .from("empresas")
-        .select("chat_lancamentos_url")
+        .select("chat_lancamentos_url, chat_lancamentos_mensagem")
         .eq("id", role.empresa_id)
         .maybeSingle();
       setGlobalChatUrl((emp as any)?.chat_lancamentos_url || "");
+      setGlobalChatMensagem((emp as any)?.chat_lancamentos_mensagem || "");
     }
     setLoading(false);
   };
@@ -177,9 +184,10 @@ const ConfigGlobalIA = () => {
     setSavingChat(true);
     try {
       const url = globalChatUrl.trim() || null;
+      const mensagem = globalChatMensagem.trim() || null;
       const { error } = await supabase
         .from("empresas")
-        .update({ chat_lancamentos_url: url } as any)
+        .update({ chat_lancamentos_url: url, chat_lancamentos_mensagem: mensagem } as any)
         .eq("id", globalChatEmpresaId);
       if (error) throw error;
       window.dispatchEvent(new Event("chat-urls-updated"));
@@ -206,37 +214,69 @@ const ConfigGlobalIA = () => {
       </div>
 
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <MessageCircle className="h-4 w-4 text-primary" />
-            Link global de lançamento (WhatsApp / Chat)
-          </CardTitle>
-          <CardDescription>
-            Usado por padrão em todas as empresas quando não houver link específico configurado. Aceita wa.me, Telegram ou qualquer URL de chat.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              value={globalChatUrl}
-              onChange={(e) => setGlobalChatUrl(e.target.value)}
-              placeholder="https://wa.me/5511999999999"
-              className="flex-1"
-            />
-            <Button onClick={handleSaveGlobalChat} disabled={savingChat || loading}>
-              {savingChat ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-              Salvar link
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <Collapsible open={openChat} onOpenChange={setOpenChat}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/40 transition-colors">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <MessageCircle className="h-4 w-4 text-primary" />
+                    Link global de lançamento (WhatsApp / Chat)
+                  </CardTitle>
+                  <CardDescription>
+                    Usado por padrão em todas as empresas quando não houver link específico configurado. Aceita wa.me, Telegram ou qualquer URL de chat.
+                  </CardDescription>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${openChat ? "rotate-180" : ""}`} />
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>Link de destino</Label>
+                <Input
+                  value={globalChatUrl}
+                  onChange={(e) => setGlobalChatUrl(e.target.value)}
+                  placeholder="https://wa.me/5511999999999"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Mensagem pré-preenchida (WhatsApp)</Label>
+                <Textarea
+                  value={globalChatMensagem}
+                  onChange={(e) => setGlobalChatMensagem(e.target.value)}
+                  placeholder="Faça os lançamentos pelo WhatsApp"
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground">Enviado como parâmetro `text` apenas quando o link for wa.me/whatsapp.com.</p>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={handleSaveGlobalChat} disabled={savingChat || loading}>
+                  {savingChat ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                  Salvar
+                </Button>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg"><ShieldAlert className="h-4 w-4 text-amber-600" />Configuração da chave</CardTitle>
-          <CardDescription>A chave fica protegida — só o Super Admin pode lê-la/alterá-la. Empresas liberadas usam transparentemente.</CardDescription>
-        </CardHeader>
+      <Collapsible open={openKey} onOpenChange={setOpenKey}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/40 transition-colors">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg"><ShieldAlert className="h-4 w-4 text-amber-600" />Configuração da chave</CardTitle>
+                  <CardDescription>A chave fica protegida — só o Super Admin pode lê-la/alterá-la. Empresas liberadas usam transparentemente.</CardDescription>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${openKey ? "rotate-180" : ""}`} />
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
         <CardContent className="space-y-4">
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
@@ -284,13 +324,24 @@ const ConfigGlobalIA = () => {
             </>
           )}
         </CardContent>
-      </Card>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg"><BarChart3 className="h-4 w-4 text-primary" />Uso de tokens por empresa (mês atual)</CardTitle>
-          <CardDescription>Libere acesso, ajuste o limite manual e acompanhe o consumo. O limite efetivo segue o override; se vazio, vale o limite do plano.</CardDescription>
-        </CardHeader>
+      <Collapsible open={openUsage} onOpenChange={setOpenUsage}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/40 transition-colors">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg"><BarChart3 className="h-4 w-4 text-primary" />Uso de tokens por empresa (mês atual)</CardTitle>
+                  <CardDescription>Libere acesso, ajuste o limite manual e acompanhe o consumo. O limite efetivo segue o override; se vazio, vale o limite do plano.</CardDescription>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${openUsage ? "rotate-180" : ""}`} />
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
@@ -366,7 +417,9 @@ const ConfigGlobalIA = () => {
             </div>
           )}
         </CardContent>
-      </Card>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 };
