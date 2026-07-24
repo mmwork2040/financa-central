@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -12,16 +12,91 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const STORAGE_KEY = "floating-wa-position";
+const BUTTON_SIZE = 64;
+const MARGIN = 8;
+
+type Pos = { x: number; y: number };
+
+const loadPos = (): Pos | null => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (typeof p?.x === "number" && typeof p?.y === "number") return p;
+  } catch {}
+  return null;
+};
+
+const clampPos = (p: Pos): Pos => {
+  const maxX = window.innerWidth - BUTTON_SIZE - MARGIN;
+  const maxY = window.innerHeight - BUTTON_SIZE - MARGIN;
+  return {
+    x: Math.min(Math.max(MARGIN, p.x), Math.max(MARGIN, maxX)),
+    y: Math.min(Math.max(MARGIN, p.y), Math.max(MARGIN, maxY)),
+  };
+};
+
+const defaultPos = (): Pos => ({
+  x: window.innerWidth - BUTTON_SIZE - 32,
+  y: window.innerHeight - BUTTON_SIZE - (window.innerWidth < 768 ? 96 : 32),
+});
+
 const FloatingWhatsAppButton: React.FC = () => {
   const { chatLancamentosUrl, chatLancamentosMensagem } = useChatUrls();
   const { userProfile } = useAuth();
   const preMessage = chatLancamentosMensagem || DEFAULT_WHATSAPP_PRE_MESSAGE;
 
   const phoneFallback = buildWhatsAppPhoneUrl(userProfile?.evolution_webhook_url, preMessage);
-
   const baseUrl = chatLancamentosUrl || phoneFallback;
-  if (!baseUrl) return null;
 
+  const [pos, setPos] = useState<Pos | null>(null);
+  const draggingRef = useRef(false);
+  const movedRef = useRef(false);
+  const offsetRef = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    setPos(clampPos(loadPos() || defaultPos()));
+    const onResize = () => setPos((p) => (p ? clampPos(p) : defaultPos()));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const onPointerDown = (e: React.PointerEvent<HTMLAnchorElement>) => {
+    if (!pos) return;
+    (e.currentTarget as HTMLAnchorElement).setPointerCapture(e.pointerId);
+    draggingRef.current = true;
+    movedRef.current = false;
+    offsetRef.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLAnchorElement>) => {
+    if (!draggingRef.current) return;
+    const nx = e.clientX - offsetRef.current.x;
+    const ny = e.clientY - offsetRef.current.y;
+    if (!movedRef.current && (Math.abs(e.movementX) + Math.abs(e.movementY) > 2)) {
+      movedRef.current = true;
+    }
+    setPos(clampPos({ x: nx, y: ny }));
+  };
+
+  const onPointerUp = (e: React.PointerEvent<HTMLAnchorElement>) => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    try { (e.currentTarget as HTMLAnchorElement).releasePointerCapture(e.pointerId); } catch {}
+    if (movedRef.current && pos) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pos));
+    }
+  };
+
+  const onClick = (e: React.MouseEvent) => {
+    if (movedRef.current) {
+      e.preventDefault();
+      movedRef.current = false;
+    }
+  };
+
+  if (!baseUrl || !pos) return null;
   const finalUrl = normalizeWhatsAppUrl(baseUrl, preMessage);
 
   const content = (
@@ -32,14 +107,20 @@ const FloatingWhatsAppButton: React.FC = () => {
             href={finalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Lançar via WhatsApp"
-            className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-[9999] h-16 w-16 rounded-full shadow-2xl bg-[#25D366] hover:bg-[#1ebe5d] text-white hover:scale-110 transition-transform flex items-center justify-center"
+            aria-label="Lançar via WhatsApp (arraste para mover)"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            onClick={onClick}
+            style={{ left: pos.x, top: pos.y, touchAction: "none" }}
+            className="fixed z-[9999] h-16 w-16 rounded-full shadow-2xl bg-[#25D366] hover:bg-[#1ebe5d] text-white hover:scale-110 transition-transform flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
           >
-            <WhatsAppIcon className="h-10 w-10" />
+            <WhatsAppIcon className="h-10 w-10 pointer-events-none" />
           </a>
         </TooltipTrigger>
         <TooltipContent side="left">
-          <p>Lançar via WhatsApp</p>
+          <p>Lançar via WhatsApp — arraste para mover</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
