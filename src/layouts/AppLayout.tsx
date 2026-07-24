@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
+import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import { useCompanyTheme } from "@/hooks/useCompanyTheme";
 import { useIsMobile } from "@/hooks/use-mobile";
 
