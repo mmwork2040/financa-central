@@ -23,6 +23,13 @@ import { PhoneReminderModal } from "@/components/common/PhoneReminderModal";
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
   const { isAuthenticated, loading, empresaId, userProfile, isSuperAdmin, isTrialActive, trialDaysRemaining, assinaturaStatus } = useAuth();
+  const [onboardingOpen, setOnboardingOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (userProfile && userProfile.onboarding_concluido === false) {
+      setOnboardingOpen(true);
+    }
+  }, [userProfile?.id, userProfile?.onboarding_concluido]);
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
