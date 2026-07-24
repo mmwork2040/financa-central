@@ -59,6 +59,7 @@ const App = () => {
           <SidebarProvider>
             <TooltipProvider>
               <Sonner />
+              <SessionManager />
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
