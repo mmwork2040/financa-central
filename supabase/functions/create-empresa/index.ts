@@ -97,7 +97,7 @@ serve(async (req) => {
       // Get user profile to check subscription
       const { data: perfil } = await supabaseAdmin
         .from("perfis")
-        .select("assinatura_status, assinatura_plano_id, trial_started_at, created_at")
+        .select("*")
         .eq("id", userId)
         .single();
 
@@ -148,10 +148,16 @@ serve(async (req) => {
         maxEmpresas = 0;
       }
 
+      // Per-user cap set by super admin (max_empresas_pj on perfil)
+      const perUserCap = (perfil as any)?.max_empresas_pj;
+      if (typeof perUserCap === "number") {
+        maxEmpresas = Math.min(maxEmpresas, perUserCap);
+      }
+
       if (nonPersonalCount >= maxEmpresas) {
         const msg = maxEmpresas === 0
-          ? "Sua assinatura expirou. Assine um plano para criar empresas."
-          : `Você atingiu o limite de ${maxEmpresas} empresa(s) do seu plano. Faça upgrade para criar mais.`;
+          ? "Você não tem permissão para criar empresas adicionais. Solicite ao administrador para liberar."
+          : `Você atingiu o limite de ${maxEmpresas} empresa(s). Solicite ao administrador aumento do limite ou faça upgrade do plano.`;
         return new Response(JSON.stringify({ error: msg }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

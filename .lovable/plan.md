@@ -1,72 +1,54 @@
-## Diagnóstico
 
-Investiguei o banco e o código:
+# Plano: Cadastro dual + Limites + Onboarding
 
-- **Parceladas**: só existem 2 lançamentos com `total_parcelas>1` em 438 registros, ambos sem `parcela_atual` e sem `recorrencia_grupo_id`. A criação em bulk no client (`LancamentosContext.handleSave`) não valida se todas as N parcelas foram realmente inseridas, e não há redundância server-side.
-- **Recorrentes**: havia duplicatas (mesmo grupo, mesma data). Já limpei os 3 duplicados que existiam. Não existe índice único impedindo novas duplicatas.
-- **Relatórios**: `useRelatoriosData` já calcula `receitasPrevistas`/`despesasPrevistas` a partir de status `pendente`/`vencido`. Não aparecem porque as ocorrências futuras não existem no banco.
-- **Virada do mês**: como `status='pendente'` e a listagem já os trata como "a pagar/receber", basta garantir que os registros existam.
+## 1. Cadastro sempre como Pessoal
+- Fluxo de signup permanece igual, mas cria automaticamente uma "empresa pessoal" (tipo PF) para o usuário.
+- Após o primeiro login, o onboarding modal apresenta o app e, no final, oferece o card **"Adicionar Contabilidade do meu Negócio"** que abre o fluxo atual de criação de empresa PJ.
+- O mesmo botão fica disponível no seletor de empresas (topo do sidebar) como "+ Adicionar Empresa".
 
-## Plano de correção
+## 2. Limites por usuário (campos no perfil)
+Adicionar em `perfis`:
+- `max_empresas_pj` int default `1`
+- `permite_conta_pessoal` bool default `true`
 
-### 1. Banco (arquivo SQL para aplicar via console)
+Regras:
+- Ao tentar criar empresa PJ, validar `count(empresas PJ do user) < max_empresas_pj`. Se excedido, mostrar mensagem "Solicite ao administrador aumento do limite" com link para suporte.
+- Se `permite_conta_pessoal = false`, ocultar o modo pessoa física do seletor.
+- Super admin gerencia esses campos numa nova aba **"Limites"** dentro da tela existente de Gestão de Usuários (`/gestao-usuarios` ou equivalente), com inputs inline.
 
-Como não tenho a ferramenta de migração ativa, vou gerar `db_migrations/fix_recorrencias_parcelas.sql`:
+## 3. Onboarding multi-step (modal)
+Novo componente `OnboardingModal.tsx`, disparado quando `perfis.onboarding_concluido = false`:
 
-- Índice **único parcial**: `UNIQUE (empresa_id, recorrencia_grupo_id, data_vencimento) WHERE recorrencia_grupo_id IS NOT NULL` — bloqueia duplicatas em qualquer cadeia.
-- Função `public.backfill_series(_empresa_id uuid)` (SECURITY DEFINER) que:
-  - Para cada grupo recorrente aberto, preenche meses faltantes até 12 meses adiante (respeitando `recorrencia_fim`).
-  - Para cada grupo parcelado incompleto, preenche as parcelas restantes até `total_parcelas`, dividindo o valor original se necessário.
-- Trigger `after_insert_lancamento_series` que dispara `backfill_series` sempre que um lançamento novo tem `recorrente=true` ou `total_parcelas>1` — redundância caso o client falhe.
-- pg_cron diário 06:00 BRT executando `backfill_series` para todas as empresas.
+Slides (6):
+1. **Bem-vindo** — apresentação rápida do app.
+2. **Página Inicial** — dashboards e métricas.
+3. **Lançamentos** — receitas/despesas, parcelas, recorrências.
+4. **WhatsApp** — botão flutuante para lançar via chat.
+5. **Notas Fiscais & Integrações** — emissão e Hotmart/Asaas.
+6. **Adicionar Empresa PJ** (condicional se `max_empresas_pj > 0`) — card CTA que leva ao formulário de nova empresa OU botão "Concluir" para ficar só na PF.
 
-### 2. Edge function `generate-recurring` (reescrita)
+Controles: "Pular", "Voltar", "Próximo", "Concluir". Ao concluir marca `onboarding_concluido = true`.
 
-- Passa a tratar **parceladas incompletas** também (hoje só cuida de recorrentes).
-- Aceita `{ empresa_id }` no body para uso pelo cron/backfill.
-- Grava com upsert idempotente (aproveitando o novo índice único quando aplicado).
-- Corrige loop para incrementar `currentDate` antes do `continue` (evita ficar preso em datas já existentes).
+## Detalhes técnicos
 
-### 3. Frontend `src/contexts/LancamentosContext.tsx`
-
-- No fluxo **parcelado**: após `.insert(parcelas)`, valida se `data.length === totalParcelas`. Se falhar parcialmente, dispara `generate-recurring` como fallback e mostra erro detalhado com `console.error` do payload que falhou.
-- No fluxo **recorrente**: mantém invocação de `generate-recurring` (já existe) e verifica retorno.
-- Substitui `toast.success` genérico por mensagens que reflitam quantos registros foram criados (ex.: "8 parcelas de R$ 125,00 criadas").
-
-### 4. Limpeza retroativa (via data-tool)
-
-- Já removi duplicatas de grupos existentes (concluído).
-- Backfill dos 2 parcelados órfãos (`Automações` 8x e `Black Friday Infinita` 5x): atribui `recorrencia_grupo_id`, define `parcela_atual=1`, divide o valor e cria as parcelas 2..N.
-- Backfill dos grupos recorrentes de todas as empresas — invocar `generate-recurring` por empresa após o deploy.
-
-### 5. Verificação
-
-- Após aplicar: consultar `lancamentos` do grupo `Automações` deve mostrar 8 registros com datas mensais consecutivas.
-- Abrir Relatórios com filtro "Próximos 3 meses" e confirmar que "Despesas previstas" reflete os pendentes futuros.
-- Simular virada do mês: registros `pendente` do mês atual já aparecem em "Contas a pagar".
-
-### Detalhes técnicos
-
-```text
-Estrutura da série
-  recorrente=true,  total_parcelas=null  → aberta (janela rolante de 12 meses)
-  recorrente=false, total_parcelas=N     → fechada (exatamente N registros)
-  Ambas agrupadas por recorrencia_grupo_id
-```
-
-Índice único (SQL):
+**Migration:**
 ```sql
-CREATE UNIQUE INDEX idx_lanc_grupo_data
-  ON lancamentos(empresa_id, recorrencia_grupo_id, data_vencimento)
-  WHERE recorrencia_grupo_id IS NOT NULL;
+ALTER TABLE public.perfis
+  ADD COLUMN max_empresas_pj int NOT NULL DEFAULT 1,
+  ADD COLUMN permite_conta_pessoal boolean NOT NULL DEFAULT true,
+  ADD COLUMN onboarding_concluido boolean NOT NULL DEFAULT false;
 ```
 
-### Arquivos a modificar
+**Arquivos alterados:**
+- `handle_new_user()` / `assign_super_admin()` — garantir criação de empresa pessoal padrão.
+- `src/components/onboarding/OnboardingModal.tsx` (novo).
+- `src/pages/Layout.tsx` (ou App) — montar o modal quando `!onboarding_concluido`.
+- `src/components/empresa/CriarEmpresaDialog.tsx` — validar limite antes de submeter.
+- `src/pages/GestaoUsuarios.tsx` — nova aba/coluna "Limites" (max_empresas_pj, permite_conta_pessoal) editável por super admin.
+- `src/components/layout/Sidebar.tsx` — botão "+ Adicionar Empresa" no seletor respeitando limite.
 
-- `supabase/functions/generate-recurring/index.ts` — reescrita completa.
-- `src/contexts/LancamentosContext.tsx` — validação do bulk insert e fallback.
-- `db_migrations/fix_recorrencias_parcelas.sql` — novo, para aplicação manual (índice, função, trigger, cron).
+**Sem alterações destrutivas:** usuários existentes recebem `onboarding_concluido = true` no backfill para não verem o modal.
 
-### Após aprovação
-
-Executo tudo em uma única passagem, deploy da edge function, backfill via chamada por empresa e reporto o resultado.
+## Fora do escopo
+- Onboarding não usará biblioteca de tour guiado (fica como modal simples).
+- Cobrança por empresa adicional não faz parte deste plano.

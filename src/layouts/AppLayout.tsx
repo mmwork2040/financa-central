@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
+import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import { useCompanyTheme } from "@/hooks/useCompanyTheme";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -22,6 +23,13 @@ import { PhoneReminderModal } from "@/components/common/PhoneReminderModal";
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded } = useSidebar();
   const { isAuthenticated, loading, empresaId, userProfile, isSuperAdmin, isTrialActive, trialDaysRemaining, assinaturaStatus } = useAuth();
+  const [onboardingOpen, setOnboardingOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (userProfile && userProfile.onboarding_concluido === false) {
+      setOnboardingOpen(true);
+    }
+  }, [userProfile?.id, userProfile?.onboarding_concluido]);
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -103,7 +111,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <FloatingWhatsAppButton />
         <WhatsAppWelcomeModal />
         <PhoneReminderModal />
-        
+        <OnboardingModal open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
       </div>
     </MonthFilterProvider>
   );

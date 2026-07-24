@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import LimitesUsuarioButton from "./LimitesUsuarioButton";
 
 interface User {
   id: string;
@@ -190,6 +191,9 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                         <Pencil className="h-4 w-4" />
                       </Button>
                     )}
+                    {isSuperAdmin && !isTargetSuperAdmin && (
+                      <LimitesUsuarioButton userId={user.id} userName={user.nome} onSaved={onRefresh} />
+                    )}
                     {canDelete && onRevoke && user.empresa_id && (
                       <Button size="icon" variant="ghost" className="h-8 w-8 text-warning" onClick={() => onRevoke(user.id, user.empresa_id!)}>
                         <UserX className="h-4 w-4" />
@@ -263,6 +267,9 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                       <Button size="icon" variant="ghost" onClick={() => onEdit(user)} className="h-8 w-8">
                         <Pencil className="h-4 w-4" />
                       </Button>
+                    )}
+                    {isSuperAdmin && !isTargetSuperAdmin && (
+                      <LimitesUsuarioButton userId={user.id} userName={user.nome} onSaved={onRefresh} />
                     )}
                     {canDeleteUser && onRevoke && user.empresa_id && (
                       <Button size="icon" variant="ghost" onClick={() => onRevoke(user.id, user.empresa_id!)} className="h-8 w-8 text-warning">
