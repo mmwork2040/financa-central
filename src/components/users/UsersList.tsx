@@ -1,7 +1,12 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, UserX } from "lucide-react";
+import { Pencil, Trash2, UserX, RefreshCw, AlertTriangle } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -33,6 +38,21 @@ interface User {
   empresa_nome?: string | null;
   is_super_admin?: boolean;
   assinatura_status?: string;
+  trial_started_at?: string | null;
+}
+
+const isUserExpired = (user: User): boolean => {
+  if (user.is_super_admin) return false;
+  const status = user.assinatura_status || "trial";
+  if (["vencido", "expired", "cancelled"].includes(status)) return true;
+  if (status === "trial") {
+    const started = user.trial_started_at || user.created_at;
+    if (!started) return false;
+    const end = new Date(started);
+    end.setDate(end.getDate() + 30);
+    return new Date() > end;
+  }
+  return false;
 }
 
 interface UsersListProps {
@@ -146,6 +166,78 @@ const AssinaturaBadge = ({ user, isSuperAdmin, onRefresh }: { user: User; isSupe
   );
 };
 
+const RenewTrialButton = ({ user, onRefresh }: { user: User; onRefresh?: () => void }) => {
+  const [open, setOpen] = useState(false);
+  const [days, setDays] = useState(7);
+  const [saving, setSaving] = useState(false);
+
+  const handleRenew = async () => {
+    setSaving(true);
+    try {
+      const newStart = new Date(Date.now() - (30 - days) * 86400000).toISOString();
+      const { error } = await supabase
+        .from("perfis")
+        .update({ assinatura_status: "trial", trial_started_at: newStart })
+        .eq("id", user.id);
+      if (error) throw error;
+      toast.success(`Teste de ${user.nome} renovado por ${days} dias.`);
+      setOpen(false);
+      onRefresh?.();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao renovar teste.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <Button
+        size="icon"
+        variant="ghost"
+        className="h-8 w-8 text-amber-600"
+        title="Renovar período de testes"
+        onClick={() => setOpen(true)}
+      >
+        <RefreshCw className="h-4 w-4" />
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Renovar período de testes</DialogTitle>
+            <DialogDescription>
+              Estender o teste de <strong>{user.nome}</strong> por mais alguns dias.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Dias adicionais</Label>
+            <Input
+              type="number"
+              min={1}
+              max={90}
+              value={days}
+              onChange={(e) => setDays(Math.max(1, Math.min(90, Number(e.target.value) || 1)))}
+            />
+            <div className="flex gap-1 flex-wrap">
+              {[7, 15, 30].map((d) => (
+                <Button key={d} type="button" size="sm" variant="outline" onClick={() => setDays(d)}>
+                  {d} dias
+                </Button>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={handleRenew} disabled={saving}>
+              {saving ? "Salvando..." : "Renovar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
 export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, currentUserId, onRefresh }: UsersListProps) => {
   const isMobile = useIsMobile();
   const { canPerformAction } = useAuth();
@@ -162,9 +254,10 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
           const isSelf = user.id === currentUserId;
           const canModify = (!isTargetSuperAdmin || isSelf) && canAlterar;
           const canDelete = (!isTargetSuperAdmin || isSelf) && canExcluir;
+          const expired = isUserExpired(user);
 
           return (
-            <Card key={user.id}>
+            <Card key={user.id} className={expired ? "border-destructive/50 bg-destructive/5" : ""}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex gap-3 flex-1 min-w-0">
@@ -177,11 +270,16 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                       {isSuperAdmin && (
                         <span className="text-[10px] text-muted-foreground">{user.empresa_nome || "Sem empresa"}</span>
                       )}
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-1 items-center">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getPermissaoClass(user.permissao)}`}>
                           {isTargetSuperAdmin ? "Super Admin" : getPermissaoLabel(user.permissao)}
                         </span>
                         <AssinaturaBadge user={user} isSuperAdmin={isSuperAdmin} onRefresh={onRefresh} />
+                        {expired && (
+                          <Badge variant="destructive" className="text-[10px] gap-1">
+                            <AlertTriangle className="h-3 w-3" /> Expirado
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -190,6 +288,9 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(user)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
+                    )}
+                    {isSuperAdmin && expired && !isTargetSuperAdmin && (
+                      <RenewTrialButton user={user} onRefresh={onRefresh} />
                     )}
                     {isSuperAdmin && !isTargetSuperAdmin && (
                       <LimitesUsuarioButton userId={user.id} userName={user.nome} onSaved={onRefresh} />
@@ -235,15 +336,21 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
             const isSelf = user.id === currentUserId;
             const canModify = (!isTargetSuperAdmin || isSelf) && canAlterar;
             const canDeleteUser = (!isTargetSuperAdmin || isSelf) && canExcluir;
+            const expired = isUserExpired(user);
 
             return (
-              <TableRow key={user.id}>
+              <TableRow key={user.id} className={expired ? "bg-destructive/5 hover:bg-destructive/10" : ""}>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-primary/10 text-primary text-xs">{getInitials(user.nome)}</AvatarFallback>
                     </Avatar>
                     <span className="font-medium">{user.nome}</span>
+                    {expired && (
+                      <Badge variant="destructive" className="text-[10px] gap-1">
+                        <AlertTriangle className="h-3 w-3" /> Expirado
+                      </Badge>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
@@ -267,6 +374,9 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                       <Button size="icon" variant="ghost" onClick={() => onEdit(user)} className="h-8 w-8">
                         <Pencil className="h-4 w-4" />
                       </Button>
+                    )}
+                    {isSuperAdmin && expired && !isTargetSuperAdmin && (
+                      <RenewTrialButton user={user} onRefresh={onRefresh} />
                     )}
                     {isSuperAdmin && !isTargetSuperAdmin && (
                       <LimitesUsuarioButton userId={user.id} userName={user.nome} onSaved={onRefresh} />

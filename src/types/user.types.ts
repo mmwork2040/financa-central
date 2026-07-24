@@ -9,6 +9,7 @@ export interface User {
   empresa_nome?: string | null;
   is_super_admin?: boolean;
   assinatura_status?: string;
+  trial_started_at?: string | null;
 }
 
 export type FormData = {
