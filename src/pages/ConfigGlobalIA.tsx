@@ -169,6 +169,28 @@ const ConfigGlobalIA = () => {
 
   const fmt = (n: number) => n.toLocaleString("pt-BR");
 
+  const handleSaveGlobalChat = async () => {
+    if (!globalChatEmpresaId) {
+      toast.error("Empresa super admin não encontrada");
+      return;
+    }
+    setSavingChat(true);
+    try {
+      const url = globalChatUrl.trim() || null;
+      const { error } = await supabase
+        .from("empresas")
+        .update({ chat_lancamentos_url: url } as any)
+        .eq("id", globalChatEmpresaId);
+      if (error) throw error;
+      toast.success("Link global do WhatsApp salvo");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar");
+    } finally {
+      setSavingChat(false);
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -182,8 +204,35 @@ const ConfigGlobalIA = () => {
         </div>
       </div>
 
+      </div>
+
       <Card>
         <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageCircle className="h-4 w-4 text-primary" />
+            Link global de lançamento (WhatsApp / Chat)
+          </CardTitle>
+          <CardDescription>
+            Usado por padrão em todas as empresas quando não houver link específico configurado. Aceita wa.me, Telegram ou qualquer URL de chat.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              value={globalChatUrl}
+              onChange={(e) => setGlobalChatUrl(e.target.value)}
+              placeholder="https://wa.me/5511999999999"
+              className="flex-1"
+            />
+            <Button onClick={handleSaveGlobalChat} disabled={savingChat || loading}>
+              {savingChat ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              Salvar link
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
           <CardTitle className="flex items-center gap-2 text-lg"><ShieldAlert className="h-4 w-4 text-amber-600" />Configuração da chave</CardTitle>
           <CardDescription>A chave fica protegida — só o Super Admin pode lê-la/alterá-la. Empresas liberadas usam transparentemente.</CardDescription>
         </CardHeader>
