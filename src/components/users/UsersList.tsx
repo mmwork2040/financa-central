@@ -268,6 +268,9 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                         <Pencil className="h-4 w-4" />
                       </Button>
                     )}
+                    {isSuperAdmin && !isTargetSuperAdmin && (
+                      <LimitesUsuarioButton userId={user.id} userName={user.nome} onSaved={onRefresh} />
+                    )}
                     {canDeleteUser && onRevoke && user.empresa_id && (
                       <Button size="icon" variant="ghost" onClick={() => onRevoke(user.id, user.empresa_id!)} className="h-8 w-8 text-warning">
                         <UserX className="h-4 w-4" />
