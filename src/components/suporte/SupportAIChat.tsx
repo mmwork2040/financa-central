@@ -123,10 +123,32 @@ const SupportAIChat: React.FC = () => {
                 <p className="text-[10px] text-muted-foreground">Respostas objetivas</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-              Minimizar
-            </Button>
-          </div>
+            <div className="flex items-center gap-1">
+              {messages.length > 0 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm" title="Limpar conversa">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Iniciar nova conversa?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Isso apagará todo o histórico da conversa atual com o Agente de Suporte. Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={clearHistory}>Limpar e iniciar nova</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                Minimizar
+              </Button>
+            </div>
 
           <div ref={scrollRef} className="h-80 overflow-y-auto p-4 space-y-3 bg-muted/20">
             {messages.length === 0 ? (
