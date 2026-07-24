@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Building2 } from "lucide-react";
+import { Building2, AlertTriangle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { phoneInputMask, documentInputMask } from "@/utils/format";
 
 interface CreateEmpresaDialogProps {
