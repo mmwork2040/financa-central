@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Save, Lock, User, MessageCircle, Loader2, CreditCard } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ALLOWED_TIMEOUTS, getInactivityMinutes, setInactivityMinutes } from "@/components/auth/SessionManager";
 import PageHeader from "@/components/common/PageHeader";
 import { phoneInputMask } from "@/utils/format";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +46,7 @@ const Profile = () => {
   const [evolutionWebhookUrl, setEvolutionWebhookUrl] = useState(rawPhone ? phoneInputMask(rawPhone) : "");
   const [savingWebhook, setSavingWebhook] = useState(false);
   const [planoNome, setPlanoNome] = useState<string | null>(null);
+  const [inactivityTimeout, setInactivityTimeoutState] = useState<number>(getInactivityMinutes());
 
   useEffect(() => {
     const fetchPlano = async () => {
@@ -370,6 +373,40 @@ const Profile = () => {
               <p className="text-xs text-muted-foreground">
                 Formato WhatsApp: (DDD) + número. Este número deve ser único no sistema.
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Segurança - Timeout de sessão */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              Segurança da sessão
+            </CardTitle>
+            <CardDescription>
+              Defina o tempo de inatividade antes do logout automático. Um aviso aparece 60s antes com opção de estender.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-w-xs">
+              <Label>Expirar sessão após</Label>
+              <Select
+                value={String(inactivityTimeout)}
+                onValueChange={(v) => {
+                  const n = Number(v);
+                  setInactivityTimeoutState(n);
+                  setInactivityMinutes(n);
+                  toast.success(`Sessão expirará após ${n} minutos de inatividade.`);
+                }}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ALLOWED_TIMEOUTS.map(m => (
+                    <SelectItem key={m} value={String(m)}>{m} minutos</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
