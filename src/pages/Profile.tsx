@@ -398,6 +398,39 @@ const Profile = () => {
           </CardContent>
         </Card>
 
+        {/* Botão flutuante do WhatsApp */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <MessageCircle className="h-4 w-4" />
+              Botão flutuante do WhatsApp
+            </CardTitle>
+            <CardDescription>
+              Controle a exibição do botão flutuante de lançamento via WhatsApp neste navegador.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label className="text-sm">Exibir botão flutuante</Label>
+                <p className="text-xs text-muted-foreground">
+                  Quando desativado, o botão fica oculto até ser reativado aqui.
+                </p>
+              </div>
+              <Switch
+                checked={!waBtnHidden}
+                onCheckedChange={(v) => {
+                  const hidden = !v;
+                  setWaBtnHidden(hidden);
+                  setFloatingWAHidden(hidden);
+                  toast.success(hidden ? "Botão ocultado" : "Botão exibido");
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+
         {/* Segurança - Timeout de sessão */}
         <Card className="md:col-span-2">
           <CardHeader>
