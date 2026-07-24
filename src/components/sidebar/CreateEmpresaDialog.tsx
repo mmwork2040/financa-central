@@ -22,6 +22,9 @@ interface CreateEmpresaDialogProps {
 }
 
 export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogProps) => {
+  const { isTrialActive, assinaturaStatus, isSuperAdmin } = useAuth();
+  const navigate = useNavigate();
+  const isExpired = !isSuperAdmin && !isTrialActive && assinaturaStatus !== "ativo";
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     nomeEmpresa: "",
