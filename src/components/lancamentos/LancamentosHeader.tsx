@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Filter, MessageCircle, Plus, Receipt, RefreshCw, Search, Upload } from "lucide-react";
+import { Eye, EyeOff, Filter, Plus, Receipt, RefreshCw, Search, Upload } from "lucide-react";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLancamentosContext } from "@/contexts/LancamentosContext";
