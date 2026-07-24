@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Loader2, Save, Eye, EyeOff, ShieldAlert, BarChart3, AlertTriangle, MessageCircle } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Brain, Loader2, Save, Eye, EyeOff, ShieldAlert, BarChart3, AlertTriangle, MessageCircle, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -39,8 +41,12 @@ const ConfigGlobalIA = () => {
   const [usage, setUsage] = useState<Record<string, number>>({});
   const [planLimits, setPlanLimits] = useState<Record<string, number>>({}); // empresa_id -> limite do plano
   const [globalChatUrl, setGlobalChatUrl] = useState("");
+  const [globalChatMensagem, setGlobalChatMensagem] = useState("");
   const [globalChatEmpresaId, setGlobalChatEmpresaId] = useState<string | null>(null);
   const [savingChat, setSavingChat] = useState(false);
+  const [openChat, setOpenChat] = useState(false);
+  const [openKey, setOpenKey] = useState(false);
+  const [openUsage, setOpenUsage] = useState(false);
 
   const loadAll = async () => {
     setLoading(true);
@@ -95,10 +101,11 @@ const ConfigGlobalIA = () => {
       setGlobalChatEmpresaId(role.empresa_id);
       const { data: emp } = await supabase
         .from("empresas")
-        .select("chat_lancamentos_url")
+        .select("chat_lancamentos_url, chat_lancamentos_mensagem")
         .eq("id", role.empresa_id)
         .maybeSingle();
       setGlobalChatUrl((emp as any)?.chat_lancamentos_url || "");
+      setGlobalChatMensagem((emp as any)?.chat_lancamentos_mensagem || "");
     }
     setLoading(false);
   };
@@ -177,9 +184,10 @@ const ConfigGlobalIA = () => {
     setSavingChat(true);
     try {
       const url = globalChatUrl.trim() || null;
+      const mensagem = globalChatMensagem.trim() || null;
       const { error } = await supabase
         .from("empresas")
-        .update({ chat_lancamentos_url: url } as any)
+        .update({ chat_lancamentos_url: url, chat_lancamentos_mensagem: mensagem } as any)
         .eq("id", globalChatEmpresaId);
       if (error) throw error;
       window.dispatchEvent(new Event("chat-urls-updated"));
