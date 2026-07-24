@@ -1,7 +1,12 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, UserX } from "lucide-react";
+import { Pencil, Trash2, UserX, RefreshCw, AlertTriangle } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
