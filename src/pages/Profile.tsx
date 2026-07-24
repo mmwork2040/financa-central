@@ -46,6 +46,7 @@ const Profile = () => {
   const [evolutionWebhookUrl, setEvolutionWebhookUrl] = useState(rawPhone ? phoneInputMask(rawPhone) : "");
   const [savingWebhook, setSavingWebhook] = useState(false);
   const [planoNome, setPlanoNome] = useState<string | null>(null);
+  const [inactivityTimeout, setInactivityTimeoutState] = useState<number>(getInactivityMinutes());
 
   useEffect(() => {
     const fetchPlano = async () => {
