@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 import { normalizeWhatsAppUrl } from "@/utils/whatsapp";
+import { isFloatingWAHidden, setFloatingWAHidden } from "@/utils/floatingWhatsAppVisibility";
 
 const PROVIDERS = [
   {
