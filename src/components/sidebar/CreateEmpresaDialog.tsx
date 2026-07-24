@@ -15,6 +15,7 @@ import { Building2, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { phoneInputMask, documentInputMask } from "@/utils/format";
+import { extractEdgeErrorDetails } from "@/lib/edgeFunctionError";
 
 interface CreateEmpresaDialogProps {
   open: boolean;
