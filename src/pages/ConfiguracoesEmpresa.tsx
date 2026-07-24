@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
@@ -17,6 +18,7 @@ import ConfiguracaoFiscal from "@/components/configuracoes/ConfiguracaoFiscal";
 
 import CepAddressFields, { AddressData } from "@/components/common/CepAddressFields";
 import { phoneInputMask, documentInputMask } from "@/utils/format";
+import { normalizeWhatsAppUrl } from "@/utils/whatsapp";
 
 const ConfiguracoesEmpresa = () => {
   const { empresaId, userRole, isSuperAdmin } = useAuth();
@@ -26,7 +28,7 @@ const ConfiguracoesEmpresa = () => {
   const [isPessoal, setIsPessoal] = useState(false);
   const [empresa, setEmpresa] = useState({
     nome: "", cnpj: "", email: "", telefone: "", endereco: "", logo_url: "",
-    chat_lancamentos_url: "", chat_vendas_url: "",
+    chat_lancamentos_url: "", chat_lancamentos_mensagem: "", chat_vendas_url: "",
   });
   const [address, setAddress] = useState<AddressData>({
     cep: "", rua: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
@@ -54,6 +56,7 @@ const ConfiguracoesEmpresa = () => {
           endereco: data.endereco || "",
           logo_url: data.logo_url || "",
           chat_lancamentos_url: (data as any).chat_lancamentos_url || "",
+          chat_lancamentos_mensagem: (data as any).chat_lancamentos_mensagem || "",
           chat_vendas_url: (data as any).chat_vendas_url || "",
         });
         setAddress({
@@ -99,12 +102,15 @@ const ConfiguracoesEmpresa = () => {
         cep: address.cep || null, rua: address.rua || null, numero: address.numero || null,
         complemento: address.complemento || null, bairro: address.bairro || null,
         cidade: address.cidade || null, estado: address.estado || null,
-        chat_lancamentos_url: empresa.chat_lancamentos_url?.trim() || null,
+        chat_lancamentos_url: normalizeWhatsAppUrl(empresa.chat_lancamentos_url, empresa.chat_lancamentos_mensagem) || null,
+        chat_lancamentos_mensagem: empresa.chat_lancamentos_mensagem?.trim() || null,
         chat_vendas_url: empresa.chat_vendas_url?.trim() || null,
       }).eq("id", empresaId);
       if (error) throw error;
+      setEmpresa(prev => ({ ...prev, chat_lancamentos_url: normalizeWhatsAppUrl(prev.chat_lancamentos_url, prev.chat_lancamentos_mensagem) }));
       toast.success("Dados da empresa atualizados com sucesso.");
       window.dispatchEvent(new CustomEvent("company-data-changed", { detail: { nome: empresa.nome } }));
+      window.dispatchEvent(new Event("chat-urls-updated"));
     } catch (error: any) {
       toast.error(error.message || "Erro ao salvar");
     } finally {
@@ -324,8 +330,20 @@ const ConfiguracoesEmpresa = () => {
                     id="chat_lancamentos_url"
                     value={empresa.chat_lancamentos_url}
                     onChange={(e) => handleChange("chat_lancamentos_url", e.target.value)}
+                    onBlur={() => handleChange("chat_lancamentos_url", normalizeWhatsAppUrl(empresa.chat_lancamentos_url, empresa.chat_lancamentos_mensagem))}
                     placeholder="https://t.me/seu_bot ou https://wa.me/..."
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="chat_lancamentos_mensagem">Mensagem pré-preenchida do WhatsApp</Label>
+                  <Textarea
+                    id="chat_lancamentos_mensagem"
+                    value={empresa.chat_lancamentos_mensagem}
+                    onChange={(e) => handleChange("chat_lancamentos_mensagem", e.target.value)}
+                    placeholder="Faça os lançamentos pelo WhatsApp"
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground">Use wa.me/55NUMERO para abrir com mensagem; links api.whatsapp.com serão convertidos automaticamente.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="chat_vendas_url">Link do Chat - Vendas</Label>

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useChatUrls } from "@/hooks/useChatUrls";
+import { buildWhatsAppPhoneUrl, DEFAULT_WHATSAPP_PRE_MESSAGE, normalizeWhatsAppUrl } from "@/utils/whatsapp";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 32 32" fill="currentColor" className={className} aria-hidden="true">
@@ -9,15 +11,15 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// TODO: substituir pelo link real do contato do WhatsApp
-const WHATSAPP_CONTACT_URL = "";
-
-const PRE_MESSAGE = "Faça os lançamentos pelo Whatsapp";
 const STORAGE_KEY = "whatsapp_welcome_shown_v1";
 
 export const WhatsAppWelcomeModal: React.FC = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, userProfile } = useAuth();
+  const { chatLancamentosUrl, chatLancamentosMensagem } = useChatUrls();
   const [open, setOpen] = useState(false);
+  const preMessage = chatLancamentosMensagem || DEFAULT_WHATSAPP_PRE_MESSAGE;
+  const fallbackUrl = buildWhatsAppPhoneUrl(userProfile?.evolution_webhook_url, preMessage);
+  const whatsAppUrl = normalizeWhatsAppUrl(chatLancamentosUrl || fallbackUrl, preMessage);
 
   useEffect(() => {
     if (!isAuthenticated || !user) return;
@@ -29,11 +31,6 @@ export const WhatsAppWelcomeModal: React.FC = () => {
     }, 800);
     return () => clearTimeout(t);
   }, [isAuthenticated, user]);
-
-  const handleOpen = () => {
-    if (WHATSAPP_CONTACT_URL) window.open(WHATSAPP_CONTACT_URL, "_blank");
-    setOpen(false);
-  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -48,14 +45,18 @@ export const WhatsAppWelcomeModal: React.FC = () => {
           </DialogDescription>
         </DialogHeader>
         <div className="rounded-lg border bg-muted/40 p-4 text-sm text-center font-medium">
-          “{PRE_MESSAGE}”
+          “{preMessage}”
         </div>
         <DialogFooter className="sm:justify-center gap-2">
           <Button variant="outline" onClick={() => setOpen(false)}>Agora não</Button>
-          <Button onClick={handleOpen} className="bg-[#25D366] hover:bg-[#1ebe5d] text-white">
-            <WhatsAppIcon className="h-4 w-4 mr-2" />
-            Abrir WhatsApp
-          </Button>
+          {whatsAppUrl && (
+            <Button asChild className="bg-[#25D366] hover:bg-[#1ebe5d] text-white">
+              <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
+                <WhatsAppIcon className="h-4 w-4 mr-2" />
+                Abrir WhatsApp
+              </a>
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
