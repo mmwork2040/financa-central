@@ -97,7 +97,7 @@ serve(async (req) => {
       // Get user profile to check subscription
       const { data: perfil } = await supabaseAdmin
         .from("perfis")
-        .select("assinatura_status, assinatura_plano_id, trial_started_at, created_at")
+        .select("assinatura_status, assinatura_plano_id, trial_started_at, created_at, max_empresas_pj")
         .eq("id", userId)
         .single();
 
