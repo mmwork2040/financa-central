@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
+import { normalizeWhatsAppUrl } from "@/utils/whatsapp";
 
 const PROVIDERS = [
   {
@@ -220,13 +221,14 @@ const ConfigGlobalIA = () => {
     }
     setSavingChat(true);
     try {
-      const url = globalChatUrl.trim() || null;
+      const url = normalizeWhatsAppUrl(globalChatUrl, globalChatMensagem) || null;
       const mensagem = globalChatMensagem.trim() || null;
       const { error } = await supabase
         .from("empresas")
         .update({ chat_lancamentos_url: url, chat_lancamentos_mensagem: mensagem } as any)
         .eq("id", globalChatEmpresaId);
       if (error) throw error;
+      setGlobalChatUrl(url || "");
       window.dispatchEvent(new Event("chat-urls-updated"));
       toast.success("Link global do WhatsApp salvo");
     } catch (e: any) {
@@ -276,6 +278,7 @@ const ConfigGlobalIA = () => {
                 <Input
                   value={globalChatUrl}
                   onChange={(e) => setGlobalChatUrl(e.target.value)}
+                  onBlur={() => setGlobalChatUrl(normalizeWhatsAppUrl(globalChatUrl, globalChatMensagem))}
                   placeholder="https://wa.me/5511999999999"
                 />
               </div>
@@ -287,7 +290,7 @@ const ConfigGlobalIA = () => {
                   placeholder="Faça os lançamentos pelo WhatsApp"
                   rows={3}
                 />
-                <p className="text-xs text-muted-foreground">Enviado como parâmetro `text` apenas quando o link for wa.me/whatsapp.com.</p>
+                <p className="text-xs text-muted-foreground">Use wa.me/55NUMERO para abrir com mensagem; links api.whatsapp.com serão convertidos automaticamente.</p>
               </div>
               <div className="flex justify-end">
                 <Button onClick={handleSaveGlobalChat} disabled={savingChat || loading}>
