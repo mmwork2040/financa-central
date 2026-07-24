@@ -86,6 +86,8 @@ const ConfigGlobalIA = () => {
   const [openChat, setOpenChat] = useState(false);
   const [openKey, setOpenKey] = useState(false);
   const [openUsage, setOpenUsage] = useState(false);
+  const [openWaBtn, setOpenWaBtn] = useState(false);
+  const [waBtnHidden, setWaBtnHidden] = useState<boolean>(() => isFloatingWAHidden());
 
   const loadAll = async () => {
     setLoading(true);
