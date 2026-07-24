@@ -44,15 +44,22 @@ const FloatingWhatsAppButton: React.FC = () => {
   // Clear any legacy stored position
   try { localStorage.removeItem("floating-wa-position"); } catch {}
 
-  const handleHide = (e: React.MouseEvent) => {
+  const handleHide = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     try {
       localStorage.setItem(FLOATING_WA_STORAGE_KEY, "1");
       window.dispatchEvent(new Event(FLOATING_WA_EVENT));
     } catch {}
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const uid = (await supabase.auth.getUser()).data.user?.id;
+      if (uid) {
+        await (supabase as any).from("perfis").update({ floating_wa_hidden: true }).eq("id", uid);
+      }
+    } catch {}
     toast.success("Botão ocultado", {
-      description: "Reative em Configurações → IA — Provedor Global.",
+      description: "Reative em Meu Perfil → Botão flutuante do WhatsApp.",
     });
   };
 
