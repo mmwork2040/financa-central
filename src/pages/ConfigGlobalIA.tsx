@@ -214,31 +214,54 @@ const ConfigGlobalIA = () => {
       </div>
 
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <MessageCircle className="h-4 w-4 text-primary" />
-            Link global de lançamento (WhatsApp / Chat)
-          </CardTitle>
-          <CardDescription>
-            Usado por padrão em todas as empresas quando não houver link específico configurado. Aceita wa.me, Telegram ou qualquer URL de chat.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              value={globalChatUrl}
-              onChange={(e) => setGlobalChatUrl(e.target.value)}
-              placeholder="https://wa.me/5511999999999"
-              className="flex-1"
-            />
-            <Button onClick={handleSaveGlobalChat} disabled={savingChat || loading}>
-              {savingChat ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-              Salvar link
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <Collapsible open={openChat} onOpenChange={setOpenChat}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/40 transition-colors">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <MessageCircle className="h-4 w-4 text-primary" />
+                    Link global de lançamento (WhatsApp / Chat)
+                  </CardTitle>
+                  <CardDescription>
+                    Usado por padrão em todas as empresas quando não houver link específico configurado. Aceita wa.me, Telegram ou qualquer URL de chat.
+                  </CardDescription>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${openChat ? "rotate-180" : ""}`} />
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>Link de destino</Label>
+                <Input
+                  value={globalChatUrl}
+                  onChange={(e) => setGlobalChatUrl(e.target.value)}
+                  placeholder="https://wa.me/5511999999999"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Mensagem pré-preenchida (WhatsApp)</Label>
+                <Textarea
+                  value={globalChatMensagem}
+                  onChange={(e) => setGlobalChatMensagem(e.target.value)}
+                  placeholder="Faça os lançamentos pelo WhatsApp"
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground">Enviado como parâmetro `text` apenas quando o link for wa.me/whatsapp.com.</p>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={handleSaveGlobalChat} disabled={savingChat || loading}>
+                  {savingChat ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                  Salvar
+                </Button>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       <Card>
         <CardHeader>
