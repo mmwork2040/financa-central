@@ -15,11 +15,48 @@ import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 
 const PROVIDERS = [
-  { value: "openai", label: "OpenAI", defaultModel: "gpt-4o" },
-  { value: "google_gemini", label: "Google Gemini", defaultModel: "gemini-2.5-flash" },
-  { value: "anthropic", label: "Anthropic Claude", defaultModel: "claude-3-5-sonnet-20241022" },
-  { value: "deepseek", label: "DeepSeek", defaultModel: "deepseek-chat" },
-  { value: "lovable_ai", label: "Lovable AI Gateway", defaultModel: "google/gemini-3-flash-preview" },
+  {
+    value: "openai",
+    label: "OpenAI",
+    defaultModel: "gpt-4o",
+    models: ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "o3-mini", "gpt-4-turbo"],
+  },
+  {
+    value: "google_gemini",
+    label: "Google Gemini",
+    defaultModel: "gemini-2.5-flash",
+    models: ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"],
+  },
+  {
+    value: "anthropic",
+    label: "Anthropic Claude",
+    defaultModel: "claude-3-5-sonnet-20241022",
+    models: [
+      "claude-3-5-sonnet-20241022",
+      "claude-3-5-haiku-20241022",
+      "claude-3-opus-20240229",
+      "claude-3-sonnet-20240229",
+      "claude-3-haiku-20240307",
+    ],
+  },
+  {
+    value: "deepseek",
+    label: "DeepSeek",
+    defaultModel: "deepseek-chat",
+    models: ["deepseek-chat", "deepseek-reasoner", "deepseek-coder"],
+  },
+  {
+    value: "lovable_ai",
+    label: "Lovable AI Gateway",
+    defaultModel: "google/gemini-3.6-flash",
+    models: [
+      "google/gemini-3.6-flash",
+      "google/gemini-2.5-pro",
+      "google/gemini-2.5-flash",
+      "openai/gpt-5-mini",
+      "openai/gpt-5",
+    ],
+  },
 ];
 
 type Empresa = { id: string; nome: string; email: string | null };
