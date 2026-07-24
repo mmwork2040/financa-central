@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 import { normalizeWhatsAppUrl } from "@/utils/whatsapp";
-import { isFloatingWAHidden, setFloatingWAHidden, FLOATING_WA_EVENT, FLOATING_WA_STORAGE_KEY } from "@/utils/floatingWhatsAppVisibility";
+
 
 const PROVIDERS = [
   {
@@ -86,21 +86,8 @@ const ConfigGlobalIA = () => {
   const [openChat, setOpenChat] = useState(false);
   const [openKey, setOpenKey] = useState(false);
   const [openUsage, setOpenUsage] = useState(false);
-  const [openWaBtn, setOpenWaBtn] = useState(false);
-  const [waBtnHidden, setWaBtnHidden] = useState<boolean>(() => isFloatingWAHidden());
 
-  useEffect(() => {
-    const sync = () => setWaBtnHidden(isFloatingWAHidden());
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === FLOATING_WA_STORAGE_KEY) sync();
-    };
-    window.addEventListener(FLOATING_WA_EVENT, sync);
-    window.addEventListener("storage", onStorage);
-    return () => {
-      window.removeEventListener(FLOATING_WA_EVENT, sync);
-      window.removeEventListener("storage", onStorage);
-    };
-  }, []);
+
 
 
   const loadAll = async () => {
