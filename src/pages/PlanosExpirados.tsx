@@ -234,8 +234,8 @@ const PlanosExpirados = () => {
       )}
 
       <div className="flex flex-col sm:flex-row items-center gap-2">
-        <Button variant="outline" onClick={() => navigate("/login")} className="gap-2">
-          Voltar para o login
+        <Button variant="outline" onClick={() => navigate("/")} className="gap-2">
+          Voltar
         </Button>
         <Button variant="ghost" onClick={handleLogout} className="gap-2 text-muted-foreground">
           <LogOut className="h-4 w-4" />
