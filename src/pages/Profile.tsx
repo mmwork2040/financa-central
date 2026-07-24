@@ -419,11 +419,20 @@ const Profile = () => {
               </div>
               <Switch
                 checked={!waBtnHidden}
-                onCheckedChange={(v) => {
+                onCheckedChange={async (v) => {
                   const hidden = !v;
                   setWaBtnHidden(hidden);
                   setFloatingWAHidden(hidden);
-                  toast.success(hidden ? "Botão ocultado" : "Botão exibido");
+                  try {
+                    const { error } = await (supabase as any)
+                      .from("perfis")
+                      .update({ floating_wa_hidden: hidden })
+                      .eq("id", user!.id);
+                    if (error) throw error;
+                    toast.success(hidden ? "Botão ocultado" : "Botão exibido");
+                  } catch (err: any) {
+                    toast.error(err.message || "Erro ao salvar preferência");
+                  }
                 }}
               />
             </div>
