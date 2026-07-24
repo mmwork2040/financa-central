@@ -82,12 +82,9 @@ const VerPlanos = () => {
   const [periodoSelecionado, setPeriodoSelecionado] = useState("mensal");
 
   useEffect(() => {
-    if (!isSuperAdmin && !isTrialActive && assinaturaStatus !== 'ativo') {
-      navigate("/planos-expirados", { replace: true });
-      return;
-    }
     fetchPlanos();
-  }, [isTrialActive, assinaturaStatus, isSuperAdmin]);
+  }, []);
+
 
   const fetchPlanos = async () => {
     try {
