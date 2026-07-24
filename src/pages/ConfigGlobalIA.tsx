@@ -204,7 +204,6 @@ const ConfigGlobalIA = () => {
         </div>
       </div>
 
-      </div>
 
       <Card>
         <CardHeader>
@@ -233,6 +232,7 @@ const ConfigGlobalIA = () => {
       </Card>
 
       <Card>
+        <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg"><ShieldAlert className="h-4 w-4 text-amber-600" />Configuração da chave</CardTitle>
           <CardDescription>A chave fica protegida — só o Super Admin pode lê-la/alterá-la. Empresas liberadas usam transparentemente.</CardDescription>
         </CardHeader>
