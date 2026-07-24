@@ -1,12 +1,15 @@
 
 import React, { useState, useEffect } from "react";
-import { HelpCircle, Loader2 } from "lucide-react";
+import { HelpCircle, Loader2, ChevronDown, MessageCircleQuestion, Headphones } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import PageHeader from "@/components/common/PageHeader";
 import SupportFAQ from "@/components/suporte/SupportFAQ";
 import ChatwootWidget from "@/components/suporte/ChatwootWidget";
 import SupportAIChat from "@/components/suporte/SupportAIChat";
+import { Card } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
 const Suporte = () => {
   const { empresaId } = useAuth();
