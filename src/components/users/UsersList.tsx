@@ -166,6 +166,78 @@ const AssinaturaBadge = ({ user, isSuperAdmin, onRefresh }: { user: User; isSupe
   );
 };
 
+const RenewTrialButton = ({ user, onRefresh }: { user: User; onRefresh?: () => void }) => {
+  const [open, setOpen] = useState(false);
+  const [days, setDays] = useState(7);
+  const [saving, setSaving] = useState(false);
+
+  const handleRenew = async () => {
+    setSaving(true);
+    try {
+      const newStart = new Date(Date.now() - (30 - days) * 86400000).toISOString();
+      const { error } = await supabase
+        .from("perfis")
+        .update({ assinatura_status: "trial", trial_started_at: newStart })
+        .eq("id", user.id);
+      if (error) throw error;
+      toast.success(`Teste de ${user.nome} renovado por ${days} dias.`);
+      setOpen(false);
+      onRefresh?.();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao renovar teste.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <Button
+        size="icon"
+        variant="ghost"
+        className="h-8 w-8 text-amber-600"
+        title="Renovar período de testes"
+        onClick={() => setOpen(true)}
+      >
+        <RefreshCw className="h-4 w-4" />
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Renovar período de testes</DialogTitle>
+            <DialogDescription>
+              Estender o teste de <strong>{user.nome}</strong> por mais alguns dias.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Dias adicionais</Label>
+            <Input
+              type="number"
+              min={1}
+              max={90}
+              value={days}
+              onChange={(e) => setDays(Math.max(1, Math.min(90, Number(e.target.value) || 1)))}
+            />
+            <div className="flex gap-1 flex-wrap">
+              {[7, 15, 30].map((d) => (
+                <Button key={d} type="button" size="sm" variant="outline" onClick={() => setDays(d)}>
+                  {d} dias
+                </Button>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={handleRenew} disabled={saving}>
+              {saving ? "Salvando..." : "Renovar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
 export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, currentUserId, onRefresh }: UsersListProps) => {
   const isMobile = useIsMobile();
   const { canPerformAction } = useAuth();
