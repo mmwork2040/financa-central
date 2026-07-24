@@ -376,6 +376,40 @@ const Profile = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Segurança - Timeout de sessão */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              Segurança da sessão
+            </CardTitle>
+            <CardDescription>
+              Defina o tempo de inatividade antes do logout automático. Um aviso aparece 60s antes com opção de estender.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-w-xs">
+              <Label>Expirar sessão após</Label>
+              <Select
+                value={String(inactivityTimeout)}
+                onValueChange={(v) => {
+                  const n = Number(v);
+                  setInactivityTimeoutState(n);
+                  setInactivityMinutes(n);
+                  toast.success(`Sessão expirará após ${n} minutos de inatividade.`);
+                }}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ALLOWED_TIMEOUTS.map(m => (
+                    <SelectItem key={m} value={String(m)}>{m} minutos</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
