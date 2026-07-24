@@ -27,6 +27,7 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
   const navigate = useNavigate();
   const isExpired = !isSuperAdmin && !isTrialActive && assinaturaStatus !== "ativo";
   const [loading, setLoading] = useState(false);
+  const [blockError, setBlockError] = useState<{ code: "subscription_expired" | "plan_limit_reached"; message: string } | null>(null);
   const [form, setForm] = useState({
     nomeEmpresa: "",
     cnpj: "",
@@ -68,6 +69,7 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
     }
 
     setLoading(true);
+    setBlockError(null);
     try {
       const { data, error } = await supabase.functions.invoke("create-empresa", {
         body: {
@@ -78,8 +80,21 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
         },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) {
+        const details = await extractEdgeErrorDetails(error, "Erro ao criar empresa");
+        if (details.code === "subscription_expired" || details.code === "plan_limit_reached") {
+          setBlockError({ code: details.code, message: details.message });
+          return;
+        }
+        throw new Error(details.message);
+      }
+      if (data?.error) {
+        if (data?.code === "subscription_expired" || data?.code === "plan_limit_reached") {
+          setBlockError({ code: data.code, message: data.error });
+          return;
+        }
+        throw new Error(data.error);
+      }
 
       toast.success(`Empresa "${form.nomeEmpresa}" criada com sucesso!`);
       onOpenChange(false);
