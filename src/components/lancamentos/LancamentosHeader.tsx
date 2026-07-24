@@ -11,7 +11,7 @@ import ExportDropdown from "@/components/common/ExportDropdown";
 import { useAuth } from "@/contexts/AuthContext";
 import { useValuesVisibility } from "@/contexts/ValuesVisibilityContext";
 import { cn } from "@/lib/utils";
-import { useChatUrls } from "@/hooks/useChatUrls";
+
 
 export const LancamentosHeader = () => {
   const { canPerformAction } = useAuth();
