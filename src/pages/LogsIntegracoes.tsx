@@ -112,6 +112,9 @@ const LogsIntegracoes = () => {
     }
   };
 
+  const isSuccess = (s: string) => s === "success" || s === "sucesso";
+  const isError = (s: string) => s === "error" || s === "erro";
+
   const plataformas = [...new Set([...logs.map(l => l.plataforma), "webhook"])].sort();
   const eventos = [...new Set([...logs.map(l => l.evento), "Suporte Técnico"])].sort();
 
@@ -135,11 +138,9 @@ const LogsIntegracoes = () => {
 
   const { currentPage, totalPages, setCurrentPage, paginatedItems } = usePagination(filteredLogs, 10);
 
-  const successCount = logs.filter(l => l.status === "success" || l.status === "sucesso").length;
-  const errorCount = logs.filter(l => l.status === "error" || l.status === "erro").length;
+  const successCount = logs.filter(l => isSuccess(l.status)).length;
+  const errorCount = logs.filter(l => isError(l.status)).length;
 
-  const isSuccess = (s: string) => s === "success" || s === "sucesso";
-  const isError = (s: string) => s === "error" || s === "erro";
 
   const StatusIcon = ({ status }: { status: string }) => {
     if (isSuccess(status)) return <CheckCircle2 className="h-4 w-4 text-green-600" />;
