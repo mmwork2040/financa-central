@@ -17,12 +17,22 @@ const DEFAULT_PRE_MESSAGE = "Faça os lançamentos pelo Whatsapp";
 const buildWhatsAppUrl = (url: string, message: string): string => {
   try {
     const u = new URL(url);
-    const isWa = /(^|\.)wa\.me$/i.test(u.hostname) || /(^|\.)whatsapp\.com$/i.test(u.hostname);
-    if (isWa) {
-      u.searchParams.set("text", message);
-      return u.toString();
+    const host = u.hostname.toLowerCase();
+    const isWa = /(^|\.)wa\.me$/.test(host) || /(^|\.)whatsapp\.com$/.test(host);
+    if (!isWa) return url;
+
+    // Normaliza api.whatsapp.com/send?phone=XXX para wa.me/XXX (evita "Recusado" em desktop/apps)
+    if (host === "api.whatsapp.com" || host === "web.whatsapp.com") {
+      const phone = (u.searchParams.get("phone") || "").replace(/\D/g, "");
+      if (phone) {
+        const wa = new URL(`https://wa.me/${phone}`);
+        wa.searchParams.set("text", message);
+        return wa.toString();
+      }
     }
-    return url;
+
+    u.searchParams.set("text", message);
+    return u.toString();
   } catch {
     return url;
   }
