@@ -14,27 +14,42 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 
 const DEFAULT_PRE_MESSAGE = "Faça os lançamentos pelo Whatsapp";
 
-const buildWhatsAppUrl = (url: string, message: string): string => {
+const buildWhatsAppUrl = (rawUrl: string, message: string): string => {
+  const text = (message || "").trim();
+  const encoded = encodeURIComponent(text);
   try {
-    const u = new URL(url);
+    const u = new URL(rawUrl);
     const host = u.hostname.toLowerCase();
-    const isWa = /(^|\.)wa\.me$/.test(host) || /(^|\.)whatsapp\.com$/.test(host);
-    if (!isWa) return url;
+    const isWa =
+      /(^|\.)wa\.me$/.test(host) || /(^|\.)whatsapp\.com$/.test(host);
+    if (!isWa) return rawUrl;
 
-    // Normaliza api.whatsapp.com/send?phone=XXX para wa.me/XXX (evita "Recusado" em desktop/apps)
+    // wa.me/message/CODE (link curto do WhatsApp Business) ignora o parâmetro text.
+    // Não há como injetar mensagem pré-preenchida nesse formato — retornamos como está.
+    if (host === "wa.me" && /^\/message\//i.test(u.pathname)) {
+      if (text) console.warn("[WhatsApp] Link curto wa.me/message/... ignora mensagem pré-preenchida. Use wa.me/<numero>.");
+      return u.toString();
+    }
+
+    // api.whatsapp.com/send?phone=XXX  →  wa.me/XXX?text=...
     if (host === "api.whatsapp.com" || host === "web.whatsapp.com") {
       const phone = (u.searchParams.get("phone") || "").replace(/\D/g, "");
       if (phone) {
-        const wa = new URL(`https://wa.me/${phone}`);
-        wa.searchParams.set("text", message);
-        return wa.toString();
+        return `https://wa.me/${phone}${text ? `?text=${encoded}` : ""}`;
       }
+      // sem phone: mantém host original, apenas troca o texto
+      const params = new URLSearchParams(u.search);
+      if (text) params.set("text", text);
+      params.delete("app_absent");
+      u.search = params.toString();
+      return u.toString();
     }
 
-    u.searchParams.set("text", message);
-    return u.toString();
+    // wa.me/<numero>  → força ?text=<encoded>
+    const base = `${u.origin}${u.pathname}`.replace(/\/+$/, "");
+    return text ? `${base}?text=${encoded}` : base;
   } catch {
-    return url;
+    return rawUrl;
   }
 };
 
