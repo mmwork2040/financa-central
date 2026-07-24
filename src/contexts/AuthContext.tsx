@@ -201,6 +201,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       setUserProfile(data);
+      // Sincroniza preferência de visibilidade do botão flutuante do WhatsApp
+      try {
+        const { setFloatingWAHidden } = await import("@/utils/floatingWhatsAppVisibility");
+        setFloatingWAHidden(!!(data as any).floating_wa_hidden);
+      } catch {}
       // Fetch plan controls based on profile
       fetchPlanControles(data);
       return data;
