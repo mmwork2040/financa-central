@@ -17,7 +17,7 @@ export const LancamentosHeader = () => {
   const { canPerformAction } = useAuth();
   const canIncluir = canPerformAction("lancamentos", "pode_incluir");
   const { visible, toggle } = useValuesVisibility();
-  const { chatLancamentosUrl } = useChatUrls();
+  
 
   const { 
     handleOpenModal, 
