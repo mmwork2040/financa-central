@@ -120,8 +120,9 @@ serve(async (req) => {
         nonPersonalCount = count || 0;
       }
 
-      // Determine max_empresas
+      // Determine max_empresas based on subscription/trial status
       let maxEmpresas = 1;
+      let blockReason: "expired" | "limit" | null = null;
 
       const status = perfil?.assinatura_status || "trial";
 
@@ -133,32 +134,46 @@ serve(async (req) => {
           .single();
 
         if (plano) {
-          maxEmpresas = plano.max_empresas === 0 ? Infinity : (plano.max_empresas ?? 999);
+          maxEmpresas = plano.max_empresas === 0 ? Infinity : (plano.max_empresas ?? 1);
         }
       } else if (status === "trial") {
         const trialStarted = perfil?.trial_started_at || perfil?.created_at;
+        let trialExpired = false;
         if (trialStarted) {
           const trialEnd = new Date(trialStarted);
           trialEnd.setDate(trialEnd.getDate() + 30);
-          if (new Date() > trialEnd) {
-            maxEmpresas = 0;
-          }
+          trialExpired = new Date() > trialEnd;
+        }
+        if (trialExpired) {
+          maxEmpresas = 0;
+          blockReason = "expired";
         }
       } else {
+        // expired / cancelled / suspended
         maxEmpresas = 0;
+        blockReason = "expired";
       }
 
-      // Per-user cap set by super admin (max_empresas_pj on perfil)
+      // Per-user cap set by super admin (max_empresas_pj on perfil) — applies on top of plan
       const perUserCap = (perfil as any)?.max_empresas_pj;
       if (typeof perUserCap === "number") {
         maxEmpresas = Math.min(maxEmpresas, perUserCap);
       }
 
+      if (blockReason === "expired") {
+        return new Response(JSON.stringify({
+          error: "Sua assinatura ou período de teste expirou. Renove seu plano para criar novas empresas.",
+          code: "subscription_expired",
+        }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (nonPersonalCount >= maxEmpresas) {
         const msg = maxEmpresas === 0
           ? "Você não tem permissão para criar empresas adicionais. Solicite ao administrador para liberar."
-          : `Você atingiu o limite de ${maxEmpresas} empresa(s). Solicite ao administrador aumento do limite ou faça upgrade do plano.`;
-        return new Response(JSON.stringify({ error: msg }), {
+          : `Você atingiu o limite de ${maxEmpresas} empresa(s) do seu plano. Faça upgrade para criar mais.`;
+        return new Response(JSON.stringify({ error: msg, code: "plan_limit_reached" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
