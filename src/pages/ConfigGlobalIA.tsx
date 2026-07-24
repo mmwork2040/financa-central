@@ -416,7 +416,9 @@ const ConfigGlobalIA = () => {
             </div>
           )}
         </CardContent>
-      </Card>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 };
