@@ -263,11 +263,20 @@ const ConfigGlobalIA = () => {
         </Card>
       </Collapsible>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg"><ShieldAlert className="h-4 w-4 text-amber-600" />Configuração da chave</CardTitle>
-          <CardDescription>A chave fica protegida — só o Super Admin pode lê-la/alterá-la. Empresas liberadas usam transparentemente.</CardDescription>
-        </CardHeader>
+      <Collapsible open={openKey} onOpenChange={setOpenKey}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/40 transition-colors">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg"><ShieldAlert className="h-4 w-4 text-amber-600" />Configuração da chave</CardTitle>
+                  <CardDescription>A chave fica protegida — só o Super Admin pode lê-la/alterá-la. Empresas liberadas usam transparentemente.</CardDescription>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${openKey ? "rotate-180" : ""}`} />
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
         <CardContent className="space-y-4">
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
@@ -314,14 +323,24 @@ const ConfigGlobalIA = () => {
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg"><BarChart3 className="h-4 w-4 text-primary" />Uso de tokens por empresa (mês atual)</CardTitle>
-          <CardDescription>Libere acesso, ajuste o limite manual e acompanhe o consumo. O limite efetivo segue o override; se vazio, vale o limite do plano.</CardDescription>
-        </CardHeader>
+      <Collapsible open={openUsage} onOpenChange={setOpenUsage}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/40 transition-colors">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg"><BarChart3 className="h-4 w-4 text-primary" />Uso de tokens por empresa (mês atual)</CardTitle>
+                  <CardDescription>Libere acesso, ajuste o limite manual e acompanhe o consumo. O limite efetivo segue o override; se vazio, vale o limite do plano.</CardDescription>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${openUsage ? "rotate-180" : ""}`} />
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
