@@ -8,6 +8,7 @@ import { SidebarProvider } from "@/contexts/SidebarContext";
 import { AppLayout } from "@/layouts/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import PageTransition from "@/components/common/PageTransition";
+import SessionManager from "@/components/auth/SessionManager";
 
 // Pages
 import LandingPage from "./pages/LandingPage";
@@ -58,6 +59,7 @@ const App = () => {
           <SidebarProvider>
             <TooltipProvider>
               <Sonner />
+              <SessionManager />
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
