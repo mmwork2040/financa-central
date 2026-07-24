@@ -336,15 +336,21 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
             const isSelf = user.id === currentUserId;
             const canModify = (!isTargetSuperAdmin || isSelf) && canAlterar;
             const canDeleteUser = (!isTargetSuperAdmin || isSelf) && canExcluir;
+            const expired = isUserExpired(user);
 
             return (
-              <TableRow key={user.id}>
+              <TableRow key={user.id} className={expired ? "bg-destructive/5 hover:bg-destructive/10" : ""}>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-primary/10 text-primary text-xs">{getInitials(user.nome)}</AvatarFallback>
                     </Avatar>
                     <span className="font-medium">{user.nome}</span>
+                    {expired && (
+                      <Badge variant="destructive" className="text-[10px] gap-1">
+                        <AlertTriangle className="h-3 w-3" /> Expirado
+                      </Badge>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
@@ -368,6 +374,9 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                       <Button size="icon" variant="ghost" onClick={() => onEdit(user)} className="h-8 w-8">
                         <Pencil className="h-4 w-4" />
                       </Button>
+                    )}
+                    {isSuperAdmin && expired && !isTargetSuperAdmin && (
+                      <RenewTrialButton user={user} onRefresh={onRefresh} />
                     )}
                     {isSuperAdmin && !isTargetSuperAdmin && (
                       <LimitesUsuarioButton userId={user.id} userName={user.nome} onSaved={onRefresh} />
