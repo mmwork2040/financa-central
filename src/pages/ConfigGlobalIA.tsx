@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Loader2, Save, Eye, EyeOff, ShieldAlert, BarChart3, AlertTriangle } from "lucide-react";
+import { Brain, Loader2, Save, Eye, EyeOff, ShieldAlert, BarChart3, AlertTriangle, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -38,6 +38,9 @@ const ConfigGlobalIA = () => {
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [usage, setUsage] = useState<Record<string, number>>({});
   const [planLimits, setPlanLimits] = useState<Record<string, number>>({}); // empresa_id -> limite do plano
+  const [globalChatUrl, setGlobalChatUrl] = useState("");
+  const [globalChatEmpresaId, setGlobalChatEmpresaId] = useState<string | null>(null);
+  const [savingChat, setSavingChat] = useState(false);
 
   const loadAll = async () => {
     setLoading(true);
@@ -79,6 +82,24 @@ const ConfigGlobalIA = () => {
       if (p.empresa_id && lim > (limitMap[p.empresa_id] || 0)) limitMap[p.empresa_id] = lim;
     });
     setPlanLimits(limitMap);
+
+    // Global WhatsApp/chat URL — stored on the earliest super_admin empresa
+    const { data: role } = await sb
+      .from("user_roles")
+      .select("empresa_id, created_at")
+      .eq("role", "super_admin")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (role?.empresa_id) {
+      setGlobalChatEmpresaId(role.empresa_id);
+      const { data: emp } = await supabase
+        .from("empresas")
+        .select("chat_lancamentos_url")
+        .eq("id", role.empresa_id)
+        .maybeSingle();
+      setGlobalChatUrl((emp as any)?.chat_lancamentos_url || "");
+    }
     setLoading(false);
   };
 
@@ -148,6 +169,28 @@ const ConfigGlobalIA = () => {
 
   const fmt = (n: number) => n.toLocaleString("pt-BR");
 
+  const handleSaveGlobalChat = async () => {
+    if (!globalChatEmpresaId) {
+      toast.error("Empresa super admin não encontrada");
+      return;
+    }
+    setSavingChat(true);
+    try {
+      const url = globalChatUrl.trim() || null;
+      const { error } = await supabase
+        .from("empresas")
+        .update({ chat_lancamentos_url: url } as any)
+        .eq("id", globalChatEmpresaId);
+      if (error) throw error;
+      toast.success("Link global do WhatsApp salvo");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar");
+    } finally {
+      setSavingChat(false);
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -160,6 +203,33 @@ const ConfigGlobalIA = () => {
 
         </div>
       </div>
+
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageCircle className="h-4 w-4 text-primary" />
+            Link global de lançamento (WhatsApp / Chat)
+          </CardTitle>
+          <CardDescription>
+            Usado por padrão em todas as empresas quando não houver link específico configurado. Aceita wa.me, Telegram ou qualquer URL de chat.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              value={globalChatUrl}
+              onChange={(e) => setGlobalChatUrl(e.target.value)}
+              placeholder="https://wa.me/5511999999999"
+              className="flex-1"
+            />
+            <Button onClick={handleSaveGlobalChat} disabled={savingChat || loading}>
+              {savingChat ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              Salvar link
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
