@@ -331,7 +331,40 @@ const ConfigGlobalIA = () => {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Modelo</Label>
-                  <Input value={model} onChange={e => setModel(e.target.value)} placeholder={PROVIDERS.find(p => p.value === provider)?.defaultModel} />
+                  {(() => {
+                    const current = PROVIDERS.find(p => p.value === provider);
+                    const models = current?.models || [];
+                    const isCustom = !!model && !models.includes(model);
+                    return (
+                      <Select
+                        value={isCustom ? "__custom__" : (model || current?.defaultModel || "")}
+                        onValueChange={(v) => {
+                          if (v === "__custom__") { setModel(""); return; }
+                          setModel(v);
+                        }}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Selecione o modelo" /></SelectTrigger>
+                        <SelectContent>
+                          {models.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                          <SelectItem value="__custom__">Outro (personalizado)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    );
+                  })()}
+                  {(() => {
+                    const current = PROVIDERS.find(p => p.value === provider);
+                    const models = current?.models || [];
+                    const isCustom = !!model && !models.includes(model);
+                    if (!isCustom && model) return null;
+                    return (
+                      <Input
+                        className="mt-2"
+                        value={model}
+                        onChange={e => setModel(e.target.value)}
+                        placeholder={current?.defaultModel}
+                      />
+                    );
+                  })()}
                 </div>
               </div>
               <div className="space-y-1.5">
