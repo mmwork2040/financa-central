@@ -16,6 +16,13 @@ import PageHeader from "@/components/common/PageHeader";
 import { phoneInputMask } from "@/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import {
+  isFloatingWAHidden,
+  setFloatingWAHidden,
+  FLOATING_WA_EVENT,
+  FLOATING_WA_STORAGE_KEY,
+} from "@/utils/floatingWhatsAppVisibility";
 
 const getInitials = (nome: string) =>
   nome.split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase();
@@ -47,6 +54,20 @@ const Profile = () => {
   const [savingWebhook, setSavingWebhook] = useState(false);
   const [planoNome, setPlanoNome] = useState<string | null>(null);
   const [inactivityTimeout, setInactivityTimeoutState] = useState<number>(getInactivityMinutes());
+  const [waBtnHidden, setWaBtnHidden] = useState<boolean>(() => isFloatingWAHidden());
+
+  useEffect(() => {
+    const sync = () => setWaBtnHidden(isFloatingWAHidden());
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === FLOATING_WA_STORAGE_KEY) sync();
+    };
+    window.addEventListener(FLOATING_WA_EVENT, sync);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(FLOATING_WA_EVENT, sync);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchPlano = async () => {
@@ -376,6 +397,39 @@ const Profile = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Botão flutuante do WhatsApp */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <MessageCircle className="h-4 w-4" />
+              Botão flutuante do WhatsApp
+            </CardTitle>
+            <CardDescription>
+              Controle a exibição do botão flutuante de lançamento via WhatsApp neste navegador.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label className="text-sm">Exibir botão flutuante</Label>
+                <p className="text-xs text-muted-foreground">
+                  Quando desativado, o botão fica oculto até ser reativado aqui.
+                </p>
+              </div>
+              <Switch
+                checked={!waBtnHidden}
+                onCheckedChange={(v) => {
+                  const hidden = !v;
+                  setWaBtnHidden(hidden);
+                  setFloatingWAHidden(hidden);
+                  toast.success(hidden ? "Botão ocultado" : "Botão exibido");
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
 
         {/* Segurança - Timeout de sessão */}
         <Card className="md:col-span-2">

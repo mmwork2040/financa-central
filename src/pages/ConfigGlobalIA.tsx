@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 import { normalizeWhatsAppUrl } from "@/utils/whatsapp";
-import { isFloatingWAHidden, setFloatingWAHidden, FLOATING_WA_EVENT, FLOATING_WA_STORAGE_KEY } from "@/utils/floatingWhatsAppVisibility";
+
 
 const PROVIDERS = [
   {
@@ -86,21 +86,8 @@ const ConfigGlobalIA = () => {
   const [openChat, setOpenChat] = useState(false);
   const [openKey, setOpenKey] = useState(false);
   const [openUsage, setOpenUsage] = useState(false);
-  const [openWaBtn, setOpenWaBtn] = useState(false);
-  const [waBtnHidden, setWaBtnHidden] = useState<boolean>(() => isFloatingWAHidden());
 
-  useEffect(() => {
-    const sync = () => setWaBtnHidden(isFloatingWAHidden());
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === FLOATING_WA_STORAGE_KEY) sync();
-    };
-    window.addEventListener(FLOATING_WA_EVENT, sync);
-    window.addEventListener("storage", onStorage);
-    return () => {
-      window.removeEventListener(FLOATING_WA_EVENT, sync);
-      window.removeEventListener("storage", onStorage);
-    };
-  }, []);
+
 
 
   const loadAll = async () => {
@@ -320,47 +307,6 @@ const ConfigGlobalIA = () => {
         </Card>
       </Collapsible>
 
-      <Collapsible open={openWaBtn} onOpenChange={setOpenWaBtn}>
-        <Card>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-muted/40 transition-colors">
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <MessageCircle className="h-4 w-4 text-primary" />
-                    Botão flutuante do WhatsApp
-                  </CardTitle>
-                  <CardDescription>
-                    Controle a exibição do botão flutuante de lançamento via WhatsApp para este navegador.
-                  </CardDescription>
-                </div>
-                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${openWaBtn ? "rotate-180" : ""}`} />
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <Label className="text-sm">Exibir botão flutuante</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Quando desativado, o botão fica oculto até ser reativado aqui.
-                  </p>
-                </div>
-                <Switch
-                  checked={!waBtnHidden}
-                  onCheckedChange={(v) => {
-                    const hidden = !v;
-                    setWaBtnHidden(hidden);
-                    setFloatingWAHidden(hidden);
-                    toast.success(hidden ? "Botão ocultado" : "Botão exibido");
-                  }}
-                />
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
 
       <Collapsible open={openKey} onOpenChange={setOpenKey}>
         <Card>
