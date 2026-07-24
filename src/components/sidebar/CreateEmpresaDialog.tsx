@@ -103,6 +103,27 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
             Crie uma nova empresa independente. Você será o administrador dela.
           </DialogDescription>
         </DialogHeader>
+        {isExpired ? (
+          <div className="space-y-4 pt-2">
+            <div className="flex items-start gap-3 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
+              <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-medium text-destructive">Assinatura expirada</p>
+                <p className="text-muted-foreground">
+                  Seu período de teste ou assinatura terminou. Renove seu plano para criar novas empresas.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+                Fechar
+              </Button>
+              <Button className="flex-1" onClick={() => { onOpenChange(false); navigate("/planos-expirados"); }}>
+                Ver planos
+              </Button>
+            </div>
+          </div>
+        ) : (
         <div className="space-y-4 pt-2">
           <div className="space-y-2">
             <Label htmlFor="nomeEmpresa">Nome da Empresa *</Label>
@@ -150,6 +171,7 @@ export const CreateEmpresaDialog = ({ open, onOpenChange }: CreateEmpresaDialogP
             {loading ? "Criando..." : "Criar Empresa"}
           </Button>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );
