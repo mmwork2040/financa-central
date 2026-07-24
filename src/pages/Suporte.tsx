@@ -16,6 +16,8 @@ const Suporte = () => {
   const [chatwootConfig, setChatwootConfig] = useState<{ baseUrl: string; websiteToken: string } | null>(null);
   const [aiActive, setAiActive] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [faqOpen, setFaqOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     if (!empresaId) return;
