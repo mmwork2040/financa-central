@@ -254,9 +254,10 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
           const isSelf = user.id === currentUserId;
           const canModify = (!isTargetSuperAdmin || isSelf) && canAlterar;
           const canDelete = (!isTargetSuperAdmin || isSelf) && canExcluir;
+          const expired = isUserExpired(user);
 
           return (
-            <Card key={user.id}>
+            <Card key={user.id} className={expired ? "border-destructive/50 bg-destructive/5" : ""}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex gap-3 flex-1 min-w-0">
@@ -269,11 +270,16 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                       {isSuperAdmin && (
                         <span className="text-[10px] text-muted-foreground">{user.empresa_nome || "Sem empresa"}</span>
                       )}
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-1 items-center">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getPermissaoClass(user.permissao)}`}>
                           {isTargetSuperAdmin ? "Super Admin" : getPermissaoLabel(user.permissao)}
                         </span>
                         <AssinaturaBadge user={user} isSuperAdmin={isSuperAdmin} onRefresh={onRefresh} />
+                        {expired && (
+                          <Badge variant="destructive" className="text-[10px] gap-1">
+                            <AlertTriangle className="h-3 w-3" /> Expirado
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -282,6 +288,9 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(user)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
+                    )}
+                    {isSuperAdmin && expired && !isTargetSuperAdmin && (
+                      <RenewTrialButton user={user} onRefresh={onRefresh} />
                     )}
                     {isSuperAdmin && !isTargetSuperAdmin && (
                       <LimitesUsuarioButton userId={user.id} userName={user.nome} onSaved={onRefresh} />
