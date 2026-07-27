@@ -235,9 +235,13 @@ const ConfiguracoesEmpresa = () => {
                 }} placeholder="00.000.000/0000-00" disabled={!isAdmin} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email da empresa</Label>
                 <Input id="email" type="email" value={empresa.email} onChange={(e) => handleChange("email", e.target.value)} disabled={!isAdmin} />
+                <p className="text-xs text-muted-foreground">
+                  Email comercial/institucional. Não afeta o email de acesso do usuário, mesmo que seja o mesmo endereço.
+                </p>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="telefone">Telefone</Label>
                 <Input
