@@ -295,6 +295,12 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                           </Badge>
                         )}
                       </div>
+                      {getTrialInfo(user) && (
+                        <p className={`text-[10px] ${getTrialInfo(user)!.expired ? "text-destructive" : "text-muted-foreground"}`}>
+                          {getTrialInfo(user)!.label}
+                        </p>
+                      )}
+
                     </div>
                   </div>
                   <div className="flex gap-0.5 ml-2">
