@@ -52,8 +52,22 @@ const isUserExpired = (user: User): boolean => {
     end.setDate(end.getDate() + 30);
     return new Date() > end;
   }
-  return false;
 }
+
+const getTrialInfo = (user: User): { label: string; expired: boolean } | null => {
+  if (user.is_super_admin) return null;
+  if ((user.assinatura_status || "trial") !== "trial") return null;
+  const started = user.trial_started_at || user.created_at;
+  if (!started) return null;
+  const end = new Date(started);
+  end.setDate(end.getDate() + 30);
+  const days = Math.ceil((end.getTime() - Date.now()) / 86400000);
+  const dateStr = end.toLocaleDateString("pt-BR");
+  return days > 0
+    ? { label: `Trial até ${dateStr} (${days} ${days === 1 ? "dia" : "dias"})`, expired: false }
+    : { label: `Trial expirado em ${dateStr}`, expired: true };
+}
+
 
 interface UsersListProps {
   users: User[];
@@ -281,6 +295,12 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                           </Badge>
                         )}
                       </div>
+                      {getTrialInfo(user) && (
+                        <p className={`text-[10px] ${getTrialInfo(user)!.expired ? "text-destructive" : "text-muted-foreground"}`}>
+                          {getTrialInfo(user)!.label}
+                        </p>
+                      )}
+
                     </div>
                   </div>
                   <div className="flex gap-0.5 ml-2">
@@ -352,6 +372,12 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                       </Badge>
                     )}
                   </div>
+                  {getTrialInfo(user) && (
+                    <span className={`block mt-1 ml-11 text-[10px] ${getTrialInfo(user)!.expired ? "text-destructive" : "text-muted-foreground"}`}>
+                      {getTrialInfo(user)!.label}
+                    </span>
+                  )}
+
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
                 {isSuperAdmin && (
