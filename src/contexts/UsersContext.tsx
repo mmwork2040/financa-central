@@ -34,6 +34,8 @@ const defaultContext: UsersContextType = {
   filteredUsers: [],
   searchQuery: "",
   setSearchQuery: () => {},
+  statusFilter: "todos",
+  setStatusFilter: () => {},
   getPermissaoLabel: () => "",
   getPermissaoClass: () => "",
 };
