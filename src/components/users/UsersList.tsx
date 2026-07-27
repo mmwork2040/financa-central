@@ -372,6 +372,12 @@ export const UsersList = ({ users, onEdit, onDelete, onRevoke, isSuperAdmin, cur
                       </Badge>
                     )}
                   </div>
+                  {getTrialInfo(user) && (
+                    <span className={`block mt-1 ml-11 text-[10px] ${getTrialInfo(user)!.expired ? "text-destructive" : "text-muted-foreground"}`}>
+                      {getTrialInfo(user)!.label}
+                    </span>
+                  )}
+
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
                 {isSuperAdmin && (
