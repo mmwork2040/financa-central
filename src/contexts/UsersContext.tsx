@@ -15,6 +15,8 @@ interface UsersContextType {
   filteredUsers: User[];
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  statusFilter: string;
+  setStatusFilter: (status: string) => void;
   getPermissaoLabel: (permissao: string) => string;
   getPermissaoClass: (permissao: string) => string;
 }
