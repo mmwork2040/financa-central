@@ -119,6 +119,8 @@ export const UsersProvider = ({ children }: UsersProviderProps) => {
     filteredUsers,
     searchQuery,
     setSearchQuery,
+    statusFilter,
+    setStatusFilter,
     getPermissaoLabel,
     getPermissaoClass
   };
